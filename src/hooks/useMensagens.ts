@@ -44,7 +44,7 @@ const MOCK_DATA: Record<string, string> = {
 export function replaceTags(text: string, data: Record<string, string> = MOCK_DATA): string {
   let result = text;
   for (const [tag, value] of Object.entries(data)) {
-    result = result.replaceAll(tag, value);
+    result = result.split(tag).join(value);
   }
   return result;
 }
