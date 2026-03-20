@@ -63,6 +63,7 @@ export type Database = {
       }
       clientes: {
         Row: {
+          auth_user_id: string | null
           contador_responsavel_id: string | null
           cpf: string
           created_at: string
@@ -77,6 +78,7 @@ export type Database = {
           token_convite_expira_em: string | null
         }
         Insert: {
+          auth_user_id?: string | null
           contador_responsavel_id?: string | null
           cpf: string
           created_at?: string
@@ -91,6 +93,7 @@ export type Database = {
           token_convite_expira_em?: string | null
         }
         Update: {
+          auth_user_id?: string | null
           contador_responsavel_id?: string | null
           cpf?: string
           created_at?: string
@@ -541,6 +544,7 @@ export type Database = {
           nome: string
         }[]
       }
+      get_user_cliente_id: { Args: never; Returns: string }
       get_user_escritorio_id: { Args: never; Returns: string }
       get_user_papel: { Args: never; Returns: string }
       has_role: {
@@ -550,10 +554,13 @@ export type Database = {
         }
         Returns: boolean
       }
-      limpar_token_convite: {
-        Args: { _cliente_id: string }
-        Returns: undefined
-      }
+      is_cliente: { Args: never; Returns: boolean }
+      limpar_token_convite:
+        | { Args: { _cliente_id: string }; Returns: undefined }
+        | {
+            Args: { _auth_user_id: string; _cliente_id: string }
+            Returns: undefined
+          }
     }
     Enums: {
       app_role: "dono" | "colaborador"
