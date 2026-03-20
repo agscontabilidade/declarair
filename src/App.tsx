@@ -17,6 +17,8 @@ import ConviteCliente from "./pages/cliente/ConviteCliente";
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
 import ClienteFormulario from "./pages/cliente/ClienteFormulario";
 import ClienteDocumentos from "./pages/cliente/ClienteDocumentos";
+import ClientePerfil from "./pages/ClientePerfil";
+import DeclaracaoDetalhe from "./pages/DeclaracaoDetalhe";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
