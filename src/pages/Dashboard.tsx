@@ -1,58 +1,59 @@
+import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, FileText, DollarSign, CheckCircle } from 'lucide-react';
+import { KpiCards } from '@/components/dashboard/KpiCards';
+import { KanbanBoard } from '@/components/dashboard/KanbanBoard';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/contexts/AuthContext';
 
-const kpis = [
-  { label: 'Total de Clientes', value: '0', icon: Users, color: 'text-accent' },
-  { label: 'Declarações', value: '0', icon: FileText, color: 'text-primary' },
-  { label: 'Transmitidas', value: '0', icon: CheckCircle, color: 'text-success' },
-  { label: 'Cobranças Pendentes', value: 'R$ 0,00', icon: DollarSign, color: 'text-warning' },
-];
-
-const statusColumns = [
-  { key: 'aguardando_documentos', label: 'Aguardando Documentos', color: 'bg-muted' },
-  { key: 'documentacao_recebida', label: 'Documentação Recebida', color: 'bg-accent/10' },
-  { key: 'declaracao_pronta', label: 'Declaração Pronta', color: 'bg-warning/10' },
-  { key: 'transmitida', label: 'Transmitida', color: 'bg-success/10' },
-];
+const years = [2023, 2024, 2025, 2026];
 
 export default function Dashboard() {
+  const currentYear = new Date().getFullYear();
+  const [anoBase, setAnoBase] = useState(currentYear);
+  const { kpis, declaracoes } = useDashboardData(anoBase);
+  const { profile, signOut } = useAuth();
+
+  const initials = profile.nome?.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?';
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
-
-        {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpis.map((kpi) => (
-            <Card key={kpi.label} className="shadow-sm">
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className={`p-3 rounded-xl bg-muted ${kpi.color}`}>
-                  <kpi.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                  <p className="text-2xl font-bold font-display">{kpi.value}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Kanban */}
-        <div>
-          <h2 className="font-display text-lg font-semibold mb-4">Declarações por Status</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {statusColumns.map((col) => (
-              <div key={col.key} className={`rounded-xl p-4 min-h-[200px] ${col.color}`}>
-                <h3 className="font-medium text-sm text-muted-foreground mb-3">{col.label}</h3>
-                <p className="text-xs text-muted-foreground/60 text-center mt-12">
-                  Nenhuma declaração
-                </p>
-              </div>
-            ))}
+        {/* Header */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <Select value={String(anoBase)} onValueChange={(v) => setAnoBase(Number(v))}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map(y => (
+                  <SelectItem key={y} value={String(y)}>Ano {y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                  {initials}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={signOut}>Sair</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+
+        <KpiCards data={kpis.data} isLoading={kpis.isLoading} />
+        <KanbanBoard items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} anoBase={anoBase} />
       </div>
     </DashboardLayout>
   );
