@@ -1,19 +1,128 @@
+import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent } from '@/components/ui/card';
-import { MessageSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Plus, MessageSquare } from 'lucide-react';
+import { useMensagens } from '@/hooks/useMensagens';
+import { TemplateList } from '@/components/mensagens/TemplateList';
+import { TemplateEditor } from '@/components/mensagens/TemplateEditor';
+import { TestarMensagemModal } from '@/components/mensagens/TestarMensagemModal';
+import { ConfirmModal } from '@/components/cobrancas/ConfirmModal';
+import { formatDate } from '@/lib/formatters';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Mensagens() {
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editData, setEditData] = useState<any>(null);
+  const [testTemplate, setTestTemplate] = useState<any>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const {
+    templates, loadingTemplates, mensagens, loadingMensagens,
+    criarTemplate, editarTemplate, toggleTemplate, deletarTemplate, enviarMensagem,
+  } = useMensagens();
+
+  const handleSave = (data: any) => {
+    if (data.id) {
+      editarTemplate.mutate(data, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
+    } else {
+      criarTemplate.mutate(data, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Mensagens</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="font-display text-2xl font-bold text-foreground">Mensagens</h1>
+          <Button onClick={() => { setEditData(null); setEditorOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" /> Novo Template
+          </Button>
+        </div>
+
+        {/* Templates */}
         <Card className="shadow-sm">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-4" />
-            <p className="text-muted-foreground font-medium">Nenhuma mensagem enviada</p>
+          <CardHeader>
+            <CardTitle className="text-lg">Templates</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TemplateList
+              templates={templates}
+              isLoading={loadingTemplates}
+              onEdit={(t) => { setEditData(t); setEditorOpen(true); }}
+              onDelete={(id) => setDeleteId(id)}
+              onToggle={(id, ativo) => toggleTemplate.mutate({ id, ativo })}
+              onTest={(t) => setTestTemplate(t)}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Histórico */}
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg">Histórico de Envios</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingMensagens ? (
+              <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+            ) : mensagens.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <MessageSquare className="h-10 w-10 text-muted-foreground/40 mb-3" />
+                <p className="text-muted-foreground">Nenhuma mensagem enviada ainda</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {mensagens.map((m: any) => (
+                  <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <Badge variant="outline" className="shrink-0">{m.canal === 'whatsapp' ? 'WhatsApp' : 'Email'}</Badge>
+                      <span className="text-sm font-medium shrink-0">{(m as any).clientes?.nome || '—'}</span>
+                      <span className="text-sm text-muted-foreground truncate">{m.conteudo_final.slice(0, 100)}...</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                      {formatDate(m.enviado_em)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      <TemplateEditor
+        open={editorOpen}
+        onOpenChange={(v) => { setEditorOpen(v); if (!v) setEditData(null); }}
+        onSave={handleSave}
+        loading={criarTemplate.isPending || editarTemplate.isPending}
+        editData={editData}
+      />
+
+      {testTemplate && (
+        <TestarMensagemModal
+          open={!!testTemplate}
+          onOpenChange={(v) => { if (!v) setTestTemplate(null); }}
+          template={testTemplate}
+          onEnviar={(clienteId, conteudo) => {
+            enviarMensagem.mutate({
+              cliente_id: clienteId,
+              template_id: testTemplate.id,
+              canal: testTemplate.canal,
+              conteudo_final: conteudo,
+            });
+          }}
+        />
+      )}
+
+      <ConfirmModal
+        open={!!deleteId}
+        onOpenChange={(v) => { if (!v) setDeleteId(null); }}
+        title="Excluir Template"
+        description="Tem certeza que deseja excluir este template?"
+        onConfirm={() => { if (deleteId) deletarTemplate.mutate(deleteId, { onSuccess: () => setDeleteId(null) }); }}
+        loading={deletarTemplate.isPending}
+      />
     </DashboardLayout>
   );
 }
