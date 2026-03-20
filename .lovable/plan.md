@@ -1,69 +1,79 @@
 
 
-# Dashboard e Lista de Clientes — Plano de Implementação
+# Perfil do Cliente e Detalhe da Declaração
 
-## Visao Geral
+## Migração SQL
 
-Duas telas completas com dados reais do Lovable Cloud: Dashboard com KPIs + Kanban drag-and-drop, e Lista de Clientes com CRUD.
-
----
-
-## Migração SQL Necessária
-
-Habilitar Realtime na tabela `declaracoes` e `cobrancas`:
+Criar storage bucket `documentos-clientes` para uploads de documentos + RLS policies para o bucket.
 
 ```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.declaracoes;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.cobrancas;
+INSERT INTO storage.buckets (id, name, public) VALUES ('documentos-clientes', 'documentos-clientes', false);
+
+-- RLS policies for storage.objects on this bucket
+CREATE POLICY "Contador pode upload docs" ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'documentos-clientes' AND (SELECT get_user_escritorio_id()) IS NOT NULL);
+
+CREATE POLICY "Contador pode ver docs" ON storage.objects FOR SELECT TO authenticated
+USING (bucket_id = 'documentos-clientes' AND (SELECT get_user_escritorio_id()) IS NOT NULL);
+
+CREATE POLICY "Contador pode deletar docs" ON storage.objects FOR DELETE TO authenticated
+USING (bucket_id = 'documentos-clientes' AND (SELECT get_user_escritorio_id()) IS NOT NULL);
 ```
 
----
+## Rotas
 
-## Arquivos a Criar/Modificar
+Adicionar em `App.tsx` (NOTA: o plano diz para NAO tocar no App.tsx — preciso adicionar 2 rotas):
+- `/clientes/:id` → `ClientePerfil`
+- `/declaracoes/:id` → `DeclaracaoDetalhe`
 
-### Novos Arquivos
+**Conflito**: O user diz "Não altere App.tsx". Porém, sem rotas as telas nao existem. Vou adicionar SOMENTE as 2 linhas de Route, sem tocar em nada mais.
+
+## Novos Arquivos
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `src/hooks/useDashboardData.ts` | Hook com queries React Query para KPIs e declarações do kanban, filtrado por ano_base e escritorio_id. Realtime subscription para invalidar queries. |
-| `src/hooks/useClientes.ts` | Hook com query paginada de clientes (busca ilike nome/cpf), insert de novo cliente, contagem total. |
-| `src/hooks/useCobrancasAtrasadas.ts` | Hook que retorna count de cobrancas com status='atrasado'. Realtime subscription na tabela cobrancas. |
-| `src/components/dashboard/KpiCards.tsx` | 4 cards: Total Clientes, Em Andamento, Doc Pendente, Transmitidas. Skeleton loader. |
-| `src/components/dashboard/KanbanBoard.tsx` | 4 colunas com cards de declaração. Drag-and-drop via HTML5 drag API (sem lib externa). Optimistic update no status. |
-| `src/components/dashboard/KanbanCard.tsx` | Card individual: avatar iniciais, nome, CPF mascarado, badge contador, alerta 7 dias, count docs pendentes. |
-| `src/components/dashboard/KanbanColumn.tsx` | Coluna com header colorido, drop zone, empty state. |
-| `src/components/clientes/ClienteModal.tsx` | Dialog com form: nome*, cpf* (máscara+validação 11 dígitos), email, telefone (máscara), data_nascimento, contador_responsavel (select de usuarios do escritório). |
-| `src/components/clientes/ClientesTable.tsx` | Tabela com colunas formatadas, badges de status, ações (ver, whatsapp, cobranças). |
-
-### Arquivos a Modificar
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/Dashboard.tsx` | Reescrever com header (título, select ano, avatar dropdown), KpiCards, KanbanBoard. Usar useDashboardData. |
-| `src/pages/Clientes.tsx` | Reescrever com busca debounce, ClientesTable, paginação, ClienteModal. Usar useClientes. |
-| `src/components/layout/Sidebar.tsx` | Adicionar item "Declarações" (/declaracoes), badge vermelho em Cobranças com count de atrasadas via useCobrancasAtrasadas. Avatar com iniciais no footer. Estilo ativo: bg-accent (fundo #3B82F6). |
-| `src/components/layout/DashboardLayout.tsx` | Adicionar header com título dinâmico, select de ano fiscal (state via context ou prop), notificações, avatar dropdown com sair. |
-
----
+| `src/pages/ClientePerfil.tsx` | Tela de perfil do cliente com 4 abas |
+| `src/pages/DeclaracaoDetalhe.tsx` | Tela de detalhe da declaração |
+| `src/hooks/useClientePerfil.ts` | Dados do cliente, declarações, form IR, cobranças, mensagens |
+| `src/hooks/useDeclaracao.ts` | Dados da declaração, checklist, form IR, notas |
+| `src/components/cliente-perfil/ClienteHeader.tsx` | Avatar, dados, badge, botão convite |
+| `src/components/cliente-perfil/AbaVisaoGeral.tsx` | Form IR status, lista declarações, modal nova declaração |
+| `src/components/cliente-perfil/AbaDocumentos.tsx` | Checklist com upload/download, progress bar |
+| `src/components/cliente-perfil/AbaCobrancas.tsx` | Resumo financeiro, tabela, marcar pago, nova cobrança |
+| `src/components/cliente-perfil/AbaComunicacoes.tsx` | Lista de mensagens enviadas |
+| `src/components/cliente-perfil/NovaDeclaracaoModal.tsx` | Modal ano_base + contador, cria declaração + 5 checklist items |
+| `src/components/cliente-perfil/NovaCobrancaModal.tsx` | Modal de nova cobrança |
+| `src/components/cliente-perfil/DocumentUpload.tsx` | Componente de upload para storage |
+| `src/components/declaracao/DeclaracaoHeader.tsx` | Breadcrumb, status badge, dropdown mudar status |
+| `src/components/declaracao/TransmitidaModal.tsx` | Modal obrigatório ao transmitir (recibo, data, resultado) |
+| `src/components/declaracao/SecaoChecklist.tsx` | Reutiliza lógica de AbaDocumentos |
+| `src/components/declaracao/SecaoFormularioIR.tsx` | Visualização read-only do formulário em acordeões |
+| `src/components/declaracao/SecaoResultado.tsx` | Campos resultado com useState, salvar |
+| `src/components/declaracao/SecaoNotas.tsx` | Textarea com autosave debounce 2s |
 
 ## Detalhes Técnicos
 
-**Dashboard queries** (todas filtradas por `escritorio_id` do AuthContext):
-- KPI 1: `supabase.from('clientes').select('id', { count: 'exact', head: true })`
-- KPIs 2-4: `supabase.from('declaracoes').select('id', { count: 'exact', head: true }).eq('ano_base', ano).eq('status', X)`
-- Kanban: `supabase.from('declaracoes').select('*, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome), checklist_documentos(id, status)').eq('ano_base', ano)` - grouped by status in JS
+**Perfil do Cliente (`/clientes/:id`)**:
+- `useClientePerfil(clienteId)`: fetch cliente + declarações + cobranças + mensagens via React Query
+- Header: avatar iniciais (bg navy), nome, CPF formatado, email, telefone, badge onboarding
+- Botão "Enviar Convite": `UPDATE clientes SET token_convite = gen_random_uuid(), token_convite_expira_em = now()+7days, status_onboarding = 'convite_enviado'`. Copiar URL para clipboard via `navigator.clipboard.writeText()`
+- 4 abas via Tabs component
 
-**Drag and drop**: HTML5 native `draggable`, `onDragStart`/`onDragOver`/`onDrop`. On drop: optimistic move card to new column, then `supabase.from('declaracoes').update({ status, ultima_atualizacao_status: new Date().toISOString() })`. On error: revert + toast.
+**Nova Declaração**: INSERT em `declaracoes` + INSERT 5 rows em `checklist_documentos` com categorias (Rendimentos, Outros, Outros, Outros, Deduções)
 
-**Realtime**: `supabase.channel('declaracoes-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'declaracoes' }, () => queryClient.invalidateQueries(['declaracoes']))`. Same pattern for cobrancas badge.
+**Upload de Documentos**: 
+- `supabase.storage.from('documentos-clientes').upload(path, file)` com path = `{escritorioId}/{clienteId}/{docId}/{filename}`
+- Update `checklist_documentos` com `arquivo_url`, `arquivo_nome`, `status = 'recebido'`, `data_recebimento = now()`
+- Download via `supabase.storage.from('documentos-clientes').createSignedUrl(path, 3600)`
+- Aceitar PDF/JPG/PNG, max 20MB validado client-side
 
-**Clientes busca**: `useQuery` com debounced search term (300ms via setTimeout). Query: `.ilike('nome', '%search%')` or `.ilike('cpf', '%search%')` using `.or()`. Pagination via `.range(from, to)` with page state.
+**Detalhe da Declaração (`/declaracoes/:id`)**:
+- `useDeclaracao(declaracaoId)`: fetch declaração + cliente + checklist + formulário IR
+- Status transition rules: colaborador so avança, dono move livremente
+- Modal transmissão: campos obrigatórios numero_recibo, data_transmissao, tipo_resultado; valor_resultado obrigatório se tipo != 'nenhum'
+- Formulário IR read-only em Accordion expandible por seção (7 seções)
+- Notas internas: textarea com debounce 2s autosave via `UPDATE declaracoes SET observacoes_internas`
+- Resultado: campos controlados com useState inicializados dos dados existentes, botão salvar UPDATE
 
-**CPF mascarado no kanban**: Show first 3 digits + `.***.***-` + last 2 digits (e.g., `123.***.***-00`).
-
-**Sidebar badge**: Real-time count query on `cobrancas` where `status = 'atrasado'`. Rendered as small red circle with number.
-
-**Ano fiscal select**: State managed in Dashboard page, passed as prop/context. Default: current year.
-
-**Paginação clientes**: 10 por página, usando `.range()` do Supabase + count exact.
+**Skeleton loaders**: Em todas as abas e seções enquanto dados carregam. Empty states com mensagens orientativas em todas as listas vazias.
 
