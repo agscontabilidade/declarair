@@ -1,106 +1,69 @@
 
 
-# DeclaraIR - Plano de Implementação (Passo 1-4)
+# Dashboard e Lista de Clientes — Plano de Implementação
 
-Este plano cobre a fundação completa: banco de dados, autenticação, RLS e design system.
+## Visao Geral
+
+Duas telas completas com dados reais do Lovable Cloud: Dashboard com KPIs + Kanban drag-and-drop, e Lista de Clientes com CRUD.
 
 ---
 
-## Passo 1 — Banco de Dados (Lovable Cloud)
+## Migração SQL Necessária
 
-Habilitar Lovable Cloud e criar **10 tabelas** via migrações SQL:
+Habilitar Realtime na tabela `declaracoes` e `cobrancas`:
 
-1. `escritorios` — dados do escritório contábil
-2. `usuarios` — contadores/donos (FK para auth.users)
-3. `clientes` — clientes do escritório com token de convite
-4. `declaracoes` — declarações IRPF com status kanban
-5. `checklist_documentos` — documentos necessários por declaração
-6. `formulario_ir` — formulário IR com campos JSONB (unique por declaração)
-7. `cobrancas` — cobranças vinculadas a cliente/declaração
-8. `templates_mensagem` — templates de email/whatsapp
-9. `mensagens_enviadas` — log de mensagens enviadas
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.declaracoes;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.cobrancas;
+```
 
-Adicionalmente:
-- Tabela `user_roles` com enum `app_role` (dono, colaborador) para controle de acesso seguro via função `has_role()` security definer
-- Storage bucket `documentos-clientes` para uploads
+---
 
-Duas funções security definer auxiliares:
-- `buscar_cliente_por_token(token)` — busca cliente sem RLS (para convite)
-- `limpar_token_convite(cliente_id)` — limpa token após aceite
+## Arquivos a Criar/Modificar
 
-## Passo 2 — Autenticação
-
-**Arquivos a criar:**
+### Novos Arquivos
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `src/integrations/supabase/client.ts` | Cliente Supabase |
-| `src/contexts/AuthContext.tsx` | Provider com session + perfil do usuário (tipo, escritorio_id, papel) |
-| `src/hooks/useAuth.ts` | Hook de conveniência |
-| `src/pages/Login.tsx` | Login/cadastro do contador com abas |
-| `src/pages/cliente/ClienteLogin.tsx` | Login do cliente |
-| `src/pages/cliente/ConviteCliente.tsx` | Aceite de convite com criação de senha |
-| `src/components/ProtectedRoute.tsx` | Guard de rotas por tipo de usuário |
+| `src/hooks/useDashboardData.ts` | Hook com queries React Query para KPIs e declarações do kanban, filtrado por ano_base e escritorio_id. Realtime subscription para invalidar queries. |
+| `src/hooks/useClientes.ts` | Hook com query paginada de clientes (busca ilike nome/cpf), insert de novo cliente, contagem total. |
+| `src/hooks/useCobrancasAtrasadas.ts` | Hook que retorna count de cobrancas com status='atrasado'. Realtime subscription na tabela cobrancas. |
+| `src/components/dashboard/KpiCards.tsx` | 4 cards: Total Clientes, Em Andamento, Doc Pendente, Transmitidas. Skeleton loader. |
+| `src/components/dashboard/KanbanBoard.tsx` | 4 colunas com cards de declaração. Drag-and-drop via HTML5 drag API (sem lib externa). Optimistic update no status. |
+| `src/components/dashboard/KanbanCard.tsx` | Card individual: avatar iniciais, nome, CPF mascarado, badge contador, alerta 7 dias, count docs pendentes. |
+| `src/components/dashboard/KanbanColumn.tsx` | Coluna com header colorido, drop zone, empty state. |
+| `src/components/clientes/ClienteModal.tsx` | Dialog com form: nome*, cpf* (máscara+validação 11 dígitos), email, telefone (máscara), data_nascimento, contador_responsavel (select de usuarios do escritório). |
+| `src/components/clientes/ClientesTable.tsx` | Tabela com colunas formatadas, badges de status, ações (ver, whatsapp, cobranças). |
 
-**Fluxo Contador:**
-- Cadastro: cria `escritorios` + `usuarios` (papel=dono) na mesma transação
-- Login: busca `usuarios` para metadata (escritorio_id, papel)
-- Redireciona para `/dashboard`
+### Arquivos a Modificar
 
-**Fluxo Cliente:**
-- Convite: busca via `buscar_cliente_por_token()`, cria conta com metadata `{tipo:'cliente', cliente_id}`
-- Login: verifica metadata tipo=cliente, redireciona `/cliente/dashboard`
-
-**Rotas em App.tsx:**
-- `/login`, `/cliente/login`, `/cliente/convite/:token` — públicas
-- `/dashboard`, `/clientes`, `/clientes/:id`, `/declaracoes/:id`, `/cobrancas`, `/mensagens`, `/capa`, `/configuracoes` — ProtectedRoute tipo=contador
-- `/cliente/dashboard`, `/cliente/formulario`, `/cliente/documentos` — ProtectedRoute tipo=cliente
-- `/` — redirect baseado no tipo
-
-## Passo 3 — RLS
-
-Ativar RLS em todas as tabelas. Políticas principais:
-
-- **escritorios**: SELECT/UPDATE onde `id` está no escritório do usuário autenticado (via `usuarios`)
-- **usuarios**: SELECT para mesmo escritório; INSERT/UPDATE apenas quem tem role `dono`
-- **clientes, declaracoes, cobrancas, checklist_documentos, templates_mensagem, mensagens_enviadas**: CRUD completo filtrado por `escritorio_id` do usuário
-- **formulario_ir**: SELECT para contador do escritório; INSERT/UPDATE para cliente owner (via JWT metadata `cliente_id`)
-
-Função `get_user_escritorio_id()` security definer para evitar recursão.
-
-## Passo 4 — Design System
-
-**CSS Variables (index.css):**
-- `--primary`: Navy #1E3A5F (hsl 213 52% 24%)
-- `--accent`: #3B82F6 (hsl 217 91% 60%)
-- `--sidebar-background`: #142840 (hsl 213 52% 17%)
-- `--background`: #F8FAFC
-- Success #10B981, Warning #F59E0B, Destructive #EF4444
-
-**Fontes (Google Fonts via index.html):**
-- Syne (600-800) para títulos
-- DM Sans (300-600) para corpo
-
-**Layout base:**
-- `src/components/layout/Sidebar.tsx` — 240px fixa, navy-dark, logo, navegação
-- `src/components/layout/Header.tsx` — 60px, nome do usuário, escritório
-- `src/components/layout/DashboardLayout.tsx` — wrapper sidebar+header+content
-- `src/components/layout/ClienteLayout.tsx` — layout simplificado para portal do cliente
-
-**Utilitários brasileiros:**
-- `src/lib/formatters.ts` — formatCPF, formatDate, formatCurrency, parseCPF
-
-**Páginas placeholder:**
-- Dashboard, Clientes, Configurações (contador)
-- ClienteDashboard (cliente)
+| Arquivo | Mudança |
+|---------|---------|
+| `src/pages/Dashboard.tsx` | Reescrever com header (título, select ano, avatar dropdown), KpiCards, KanbanBoard. Usar useDashboardData. |
+| `src/pages/Clientes.tsx` | Reescrever com busca debounce, ClientesTable, paginação, ClienteModal. Usar useClientes. |
+| `src/components/layout/Sidebar.tsx` | Adicionar item "Declarações" (/declaracoes), badge vermelho em Cobranças com count de atrasadas via useCobrancasAtrasadas. Avatar com iniciais no footer. Estilo ativo: bg-accent (fundo #3B82F6). |
+| `src/components/layout/DashboardLayout.tsx` | Adicionar header com título dinâmico, select de ano fiscal (state via context ou prop), notificações, avatar dropdown com sair. |
 
 ---
 
 ## Detalhes Técnicos
 
-**Migração SQL**: Uma única migração com todas as tabelas, enum, funções security definer e políticas RLS.
+**Dashboard queries** (todas filtradas por `escritorio_id` do AuthContext):
+- KPI 1: `supabase.from('clientes').select('id', { count: 'exact', head: true })`
+- KPIs 2-4: `supabase.from('declaracoes').select('id', { count: 'exact', head: true }).eq('ano_base', ano).eq('status', X)`
+- Kanban: `supabase.from('declaracoes').select('*, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome), checklist_documentos(id, status)').eq('ano_base', ano)` - grouped by status in JS
 
-**Dependência**: Instalar `@supabase/supabase-js` via Lovable Cloud.
+**Drag and drop**: HTML5 native `draggable`, `onDragStart`/`onDragOver`/`onDrop`. On drop: optimistic move card to new column, then `supabase.from('declaracoes').update({ status, ultima_atualizacao_status: new Date().toISOString() })`. On error: revert + toast.
 
-**Ordem de execução**: Migração → Auth context → Design system → Rotas → Páginas placeholder. Tudo no mesmo ciclo de implementação.
+**Realtime**: `supabase.channel('declaracoes-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'declaracoes' }, () => queryClient.invalidateQueries(['declaracoes']))`. Same pattern for cobrancas badge.
+
+**Clientes busca**: `useQuery` com debounced search term (300ms via setTimeout). Query: `.ilike('nome', '%search%')` or `.ilike('cpf', '%search%')` using `.or()`. Pagination via `.range(from, to)` with page state.
+
+**CPF mascarado no kanban**: Show first 3 digits + `.***.***-` + last 2 digits (e.g., `123.***.***-00`).
+
+**Sidebar badge**: Real-time count query on `cobrancas` where `status = 'atrasado'`. Rendered as small red circle with number.
+
+**Ano fiscal select**: State managed in Dashboard page, passed as prop/context. Default: current year.
+
+**Paginação clientes**: 10 por página, usando `.range()` do Supabase + count exact.
 
