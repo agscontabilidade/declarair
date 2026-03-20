@@ -55,6 +55,8 @@ const App = () => (
 
             {/* Contador routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><Dashboard /></ProtectedRoute>} />
+            <Route path="/clientes/:id" element={<ProtectedRoute allowedType="contador"><ClientePerfil /></ProtectedRoute>} />
+            <Route path="/declaracoes/:id" element={<ProtectedRoute allowedType="contador"><DeclaracaoDetalhe /></ProtectedRoute>} />
             <Route path="/clientes" element={<ProtectedRoute allowedType="contador"><Clientes /></ProtectedRoute>} />
             <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><Cobrancas /></ProtectedRoute>} />
             <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><Mensagens /></ProtectedRoute>} />
