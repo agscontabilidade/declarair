@@ -40,13 +40,22 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 const categorias = ['Rendimentos', 'Deduções', 'Bens', 'Outros'];
+const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+const MAX_SIZE = 20 * 1024 * 1024;
 
 export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAddItem, hasDeclaracao, onCreateDeclaracao }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bulkInputRef = useRef<HTMLInputElement>(null);
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [newDocNome, setNewDocNome] = useState('');
   const [newDocCategoria, setNewDocCategoria] = useState('Outros');
+
+  // Bulk upload state
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState<{ file: File; docId: string; error?: string }[]>([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
 
   if (isLoading) {
     return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>;
@@ -66,6 +75,7 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
     );
   }
 
+  const pendingItems = checklist.filter(i => i.status === 'pendente');
   const obrigatorios = checklist.filter(i => i.obrigatorio);
   const recebidos = obrigatorios.filter(i => i.status === 'recebido').length;
   const progressPercent = obrigatorios.length > 0 ? (recebidos / obrigatorios.length) * 100 : 0;
@@ -83,18 +93,8 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !uploadingDocId) return;
-
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error('Arquivo deve ter no máximo 20MB');
-      return;
-    }
-
-    const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (!allowed.includes(file.type)) {
-      toast.error('Apenas PDF, JPG ou PNG');
-      return;
-    }
-
+    if (file.size > MAX_SIZE) { toast.error('Arquivo deve ter no máximo 20MB'); return; }
+    if (!ALLOWED_TYPES.includes(file.type)) { toast.error('Apenas PDF, JPG, PNG ou WebP'); return; }
     onUpload(uploadingDocId, file);
     e.target.value = '';
   };
@@ -102,9 +102,7 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
   const handleDownload = async (item: ChecklistItem) => {
     if (!item.arquivo_url) return;
     try {
-      const { data, error } = await supabase.storage
-        .from('documentos-clientes')
-        .createSignedUrl(item.arquivo_url, 3600);
+      const { data, error } = await supabase.storage.from('documentos-clientes').createSignedUrl(item.arquivo_url, 3600);
       if (error) throw error;
       window.open(data.signedUrl, '_blank');
     } catch {
@@ -119,9 +117,82 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
     setAddModalOpen(false);
   };
 
+  // Bulk upload handlers
+  const handleBulkSelect = () => {
+    bulkInputRef.current?.click();
+  };
+
+  const handleBulkFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const mapped = files.map(file => {
+      let error: string | undefined;
+      if (file.size > MAX_SIZE) error = 'Arquivo muito grande (max 20MB)';
+      if (!ALLOWED_TYPES.includes(file.type)) error = 'Tipo não permitido';
+
+      // Auto-match: find pending checklist item whose name matches file name
+      const fileName = file.name.toLowerCase().replace(/\.[^.]+$/, '');
+      let matchedDocId = '';
+      for (const item of pendingItems) {
+        const docName = item.nome_documento.toLowerCase();
+        const words = docName.split(/\s+/);
+        const matches = words.filter(w => w.length > 3 && fileName.includes(w));
+        if (matches.length >= 1) {
+          matchedDocId = item.id;
+          break;
+        }
+      }
+
+      return { file, docId: matchedDocId, error };
+    });
+
+    setBulkFiles(mapped);
+    setBulkModalOpen(true);
+    e.target.value = '';
+  };
+
+  const updateBulkDocId = (index: number, docId: string) => {
+    setBulkFiles(prev => prev.map((f, i) => i === index ? { ...f, docId } : f));
+  };
+
+  const handleBulkUpload = async () => {
+    const valid = bulkFiles.filter(f => !f.error && f.docId);
+    if (valid.length === 0) { toast.error('Nenhum arquivo válido para enviar'); return; }
+
+    setBulkUploading(true);
+    setBulkProgress({ current: 0, total: valid.length });
+
+    let successCount = 0;
+    for (let i = 0; i < valid.length; i++) {
+      setBulkProgress({ current: i + 1, total: valid.length });
+      try {
+        onUpload(valid[i].docId, valid[i].file);
+        successCount++;
+        // Small delay between uploads
+        await new Promise(r => setTimeout(r, 500));
+      } catch {
+        // Continue with next
+      }
+    }
+
+    setBulkUploading(false);
+    setBulkModalOpen(false);
+    setBulkFiles([]);
+    toast.success(`${successCount} documento(s) enviado(s) com sucesso`);
+  };
+
   return (
     <div className="space-y-6">
-      <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} />
+      <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleFileChange} />
+      <input ref={bulkInputRef} type="file" multiple className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleBulkFilesChange} />
+
+      {/* Bulk upload button */}
+      {pendingItems.length > 0 && (
+        <Button variant="outline" onClick={handleBulkSelect} className="w-full gap-2">
+          <Upload className="h-4 w-4" /> Enviar Vários Documentos
+        </Button>
+      )}
 
       {/* Progress */}
       <Card>
@@ -157,12 +228,7 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
                         <Download className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleFileSelect(item.id)}
-                      disabled={uploading}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => handleFileSelect(item.id)} disabled={uploading}>
                       <Upload className="h-4 w-4" />
                     </Button>
                   </div>
@@ -178,6 +244,7 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
         <Plus className="h-4 w-4 mr-2" /> Adicionar Documento
       </Button>
 
+      {/* Add doc modal */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Adicionar Documento</DialogTitle></DialogHeader>
@@ -199,6 +266,46 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddModalOpen(false)}>Cancelar</Button>
             <Button onClick={handleAddDoc} disabled={!newDocNome.trim()}>Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk upload modal */}
+      <Dialog open={bulkModalOpen} onOpenChange={(v) => { if (!bulkUploading) setBulkModalOpen(v); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Enviar Vários Documentos</DialogTitle></DialogHeader>
+          <div className="space-y-3 max-h-80 overflow-y-auto py-2">
+            {bulkFiles.map((bf, i) => (
+              <div key={i} className={`flex items-center gap-3 p-3 border rounded-lg ${bf.error ? 'border-destructive/50 bg-destructive/5' : ''}`}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{bf.file.name}</p>
+                  <p className="text-xs text-muted-foreground">{(bf.file.size / 1024 / 1024).toFixed(1)} MB</p>
+                  {bf.error && <p className="text-xs text-destructive">{bf.error}</p>}
+                </div>
+                {!bf.error && (
+                  <Select value={bf.docId} onValueChange={(v) => updateBulkDocId(i, v)}>
+                    <SelectTrigger className="w-48"><SelectValue placeholder="Vincular a..." /></SelectTrigger>
+                    <SelectContent>
+                      {pendingItems.map(item => (
+                        <SelectItem key={item.id} value={item.id}>{item.nome_documento}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            ))}
+          </div>
+          {bulkUploading && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Enviando {bulkProgress.current} de {bulkProgress.total}...</p>
+              <Progress value={(bulkProgress.current / bulkProgress.total) * 100} className="h-2" />
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkModalOpen(false)} disabled={bulkUploading}>Cancelar</Button>
+            <Button onClick={handleBulkUpload} disabled={bulkUploading || bulkFiles.filter(f => !f.error && f.docId).length === 0}>
+              {bulkUploading ? 'Enviando...' : `Enviar ${bulkFiles.filter(f => !f.error && f.docId).length} Documento(s)`}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
