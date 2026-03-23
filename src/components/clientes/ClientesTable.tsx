@@ -58,8 +58,8 @@ export function ClientesTable({ clientes, isLoading }: { clientes: Cliente[]; is
         <TableRow>
           <TableHead>Nome</TableHead>
           <TableHead>CPF</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Telefone</TableHead>
+          <TableHead className="hidden md:table-cell">Email</TableHead>
+          <TableHead className="hidden md:table-cell">Telefone</TableHead>
           <TableHead>Onboarding</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow>
@@ -72,8 +72,8 @@ export function ClientesTable({ clientes, isLoading }: { clientes: Cliente[]; is
             <TableRow key={c.id}>
               <TableCell className="font-medium">{c.nome}</TableCell>
               <TableCell className="tabular-nums">{formatCPF(c.cpf)}</TableCell>
-              <TableCell>{c.email ?? '—'}</TableCell>
-              <TableCell className="tabular-nums">{formatTelefone(c.telefone)}</TableCell>
+              <TableCell className="hidden md:table-cell">{c.email ?? '—'}</TableCell>
+              <TableCell className="hidden md:table-cell tabular-nums">{formatTelefone(c.telefone)}</TableCell>
               <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">

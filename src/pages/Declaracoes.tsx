@@ -122,7 +122,7 @@ export default function Declaracoes() {
                   <TableRow>
                     <TableHead>Cliente</TableHead>
                     <TableHead>CPF</TableHead>
-                    <TableHead>Contador</TableHead>
+                    <TableHead className="hidden md:table-cell">Contador</TableHead>
                     <TableHead>Ano Base</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Última Atualização</TableHead>
@@ -134,7 +134,7 @@ export default function Declaracoes() {
                     <TableRow key={d.id}>
                       <TableCell className="font-medium">{d.clienteNome}</TableCell>
                       <TableCell className="tabular-nums">{maskCpf(d.clienteCpf)}</TableCell>
-                      <TableCell>{d.contadorNome}</TableCell>
+                      <TableCell className="hidden md:table-cell">{d.contadorNome}</TableCell>
                       <TableCell>{d.ano_base}</TableCell>
                       <TableCell>
                         <Badge className={STATUS_COLORS[d.status] || ''}>{STATUS_LABELS[d.status] || d.status}</Badge>

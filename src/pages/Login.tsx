@@ -72,7 +72,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative">
       <Card className="w-full max-w-md shadow-lg border-0">
         <CardHeader className="text-center pb-2">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -131,7 +131,7 @@ export default function Login() {
           </Tabs>
         </CardContent>
       </Card>
-      <p className="text-xs text-muted-foreground mt-4">© 2025–2026 DeclaraIR</p>
+      <p className="absolute bottom-4 text-xs text-muted-foreground">© 2025–2026 DeclaraIR</p>
     </div>
   );
 }

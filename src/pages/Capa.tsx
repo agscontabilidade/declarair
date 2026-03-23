@@ -55,7 +55,7 @@ export default function Capa() {
     <DashboardLayout>
       <div className="space-y-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Gerar Capa</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
           {/* Form */}
           <Card className="shadow-sm">
             <CardHeader><CardTitle className="text-lg">Dados da Capa</CardTitle></CardHeader>

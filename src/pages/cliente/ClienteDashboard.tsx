@@ -59,7 +59,7 @@ export default function ClienteDashboard() {
             {/* Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Documentos Pendentes */}
-              <Card className="shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/cliente/documentos')}>
+              <Card className="shadow-sm cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all duration-200" onClick={() => navigate('/cliente/documentos')}>
                 <CardContent className="flex flex-col items-center py-8 text-center">
                   <Upload className="h-10 w-10 text-accent mb-3" />
                   <p className="font-medium">Documentos</p>
@@ -75,7 +75,7 @@ export default function ClienteDashboard() {
 
               {/* Formulário IR */}
               <Card
-                className={`shadow-sm transition-shadow ${formulario?.status_preenchimento === 'concluido' ? 'opacity-80' : 'cursor-pointer hover:shadow-md'}`}
+                className={`shadow-sm transition-all duration-200 ${formulario?.status_preenchimento === 'concluido' ? 'opacity-80' : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md'}`}
                 onClick={() => formulario?.status_preenchimento !== 'concluido' && navigate('/cliente/formulario')}
               >
                 <CardContent className="flex flex-col items-center py-8 text-center">

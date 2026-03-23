@@ -105,6 +105,10 @@ export default {
           "60%": { transform: "scale(1.02) translateY(0)" },
           "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
         },
+        "pulse-badge": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.2)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -112,6 +116,7 @@ export default {
         "slide-in-left": "slide-in-left 0.3s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "card-drop": "card-drop 0.35s ease-out",
+        "pulse-badge": "pulse-badge 2s ease-in-out infinite",
       },
     },
   },

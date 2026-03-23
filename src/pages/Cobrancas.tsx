@@ -56,7 +56,7 @@ export default function Cobrancas() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-2xl font-bold text-foreground">Cobranças</h1>
-          <Button onClick={() => { setEditData(null); setModalOpen(true); }}>
+          <Button className="active:scale-[0.98]" onClick={() => { setEditData(null); setModalOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" /> Nova Cobrança
           </Button>
         </div>

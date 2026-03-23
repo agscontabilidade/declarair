@@ -38,7 +38,7 @@ export function KanbanCard({ item, onDragStart, onDragEnd, isDragging, isDropped
       draggable
       onDragStart={(e) => onDragStart(e, item.id)}
       onDragEnd={onDragEnd}
-      className={`bg-card rounded-lg p-3 shadow-sm border border-border/50 cursor-grab active:cursor-grabbing transition-all duration-200 ${animationClass} ${dragClass}`}
+      className={`bg-card rounded-lg p-3 md:p-3.5 shadow-sm border border-border/50 cursor-grab active:cursor-grabbing hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 ${animationClass} ${dragClass}`}
     >
       <div className="flex items-start gap-3">
         <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
