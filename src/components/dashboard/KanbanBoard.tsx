@@ -19,6 +19,9 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [optimisticItems, setOptimisticItems] = useState<DeclaracaoKanban[] | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [droppedId, setDroppedId] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
   const displayItems = optimisticItems ?? items;
 
@@ -29,13 +32,30 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
 
   const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('text/plain', id);
+    setDraggedId(id);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedId(null);
+    setDragOverCol(null);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, status: string) => {
+    e.preventDefault();
+    setDragOverCol(status);
   }, []);
 
   const handleDrop = useCallback(async (e: React.DragEvent, newStatus: string) => {
     e.preventDefault();
+    setDragOverCol(null);
+    setDraggedId(null);
     const id = e.dataTransfer.getData('text/plain');
     const item = displayItems.find(i => i.id === id);
     if (!item || item.status === newStatus) return;
+
+    // Trigger drop animation
+    setDroppedId(id);
+    setTimeout(() => setDroppedId(null), 400);
 
     // Optimistic update
     const prev = [...displayItems];
@@ -73,7 +93,7 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
   return (
     <div>
       <h2 className="font-display text-lg font-semibold mb-4">Declarações por Status</h2>
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto">
         {columns.map((col) => (
           <KanbanColumn
             key={col.status}
@@ -82,7 +102,12 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
             color={col.color}
             items={grouped[col.status] || []}
             onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragOver={handleDragOver}
             onDrop={handleDrop}
+            draggedId={draggedId}
+            droppedId={droppedId}
+            isDragOver={dragOverCol === col.status}
           />
         ))}
       </div>

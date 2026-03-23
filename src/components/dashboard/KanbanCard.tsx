@@ -17,16 +17,28 @@ function isStale(date: string) {
   return diff > 7 * 24 * 60 * 60 * 1000;
 }
 
-export function KanbanCard({ item, onDragStart }: { item: DeclaracaoKanban; onDragStart: (e: React.DragEvent, id: string) => void }) {
+interface Props {
+  item: DeclaracaoKanban;
+  onDragStart: (e: React.DragEvent, id: string) => void;
+  onDragEnd: () => void;
+  isDragging: boolean;
+  isDropped: boolean;
+}
+
+export function KanbanCard({ item, onDragStart, onDragEnd, isDragging, isDropped }: Props) {
   const nome = item.clientes?.nome ?? 'Cliente';
   const cpf = item.clientes?.cpf ?? '';
   const stale = isStale(item.ultima_atualizacao_status);
+
+  const animationClass = isDropped ? 'animate-card-drop' : '';
+  const dragClass = isDragging ? 'opacity-50 scale-95' : '';
 
   return (
     <div
       draggable
       onDragStart={(e) => onDragStart(e, item.id)}
-      className="bg-card rounded-lg p-3 shadow-sm border border-border/50 cursor-grab active:cursor-grabbing active:scale-[0.98] transition-transform"
+      onDragEnd={onDragEnd}
+      className={`bg-card rounded-lg p-3 shadow-sm border border-border/50 cursor-grab active:cursor-grabbing transition-all duration-200 ${animationClass} ${dragClass}`}
     >
       <div className="flex items-start gap-3">
         <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
