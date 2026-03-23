@@ -58,8 +58,8 @@ export function ClientesTable({ clientes, isLoading }: { clientes: Cliente[]; is
         <TableRow>
           <TableHead>Nome</TableHead>
           <TableHead>CPF</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Telefone</TableHead>
+          <TableHead className="hidden md:table-cell">Email</TableHead>
+          <TableHead className="hidden md:table-cell">Telefone</TableHead>
           <TableHead>Onboarding</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow>
