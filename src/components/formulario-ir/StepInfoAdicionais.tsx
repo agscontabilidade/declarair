@@ -17,6 +17,26 @@ export function StepInfoAdicionais({ data, onChange, confirmado, onConfirmChange
         <h2 className="font-display text-lg font-semibold">Informações Adicionais</h2>
         <p className="text-sm text-muted-foreground">Adicione qualquer informação relevante para o contador</p>
       </div>
+
+      {/* Informative checkboxes (not saved, just reminders) */}
+      <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+        <p className="text-sm font-medium text-foreground">Marque as situações que se aplicam a você (informativo para o contador):</p>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox />
+            Recebi rendimentos tributáveis acima de R$ 30.639,90
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox />
+            Possuo bens com valor total acima de R$ 800.000,00
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox />
+            Recebi rendimentos isentos acima de R$ 200.000,00
+          </label>
+        </div>
+      </div>
+
       <div>
         <Label>Observações</Label>
         <Textarea

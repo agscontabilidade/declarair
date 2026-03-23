@@ -37,6 +37,11 @@ export function StepDependentes({ data, onChange }: Props) {
         <h2 className="font-display text-lg font-semibold">Dependentes</h2>
         <p className="text-sm text-muted-foreground">Adicione seus dependentes. CPF é obrigatório para cada um.</p>
       </div>
+
+      <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+        ⚠️ A Receita Federal exige CPF para todos os dependentes. Certifique-se de preencher corretamente.
+      </div>
+
       {deps.map((dep: any, i: number) => (
         <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
           <div className="flex items-center justify-between">
@@ -51,7 +56,7 @@ export function StepDependentes({ data, onChange }: Props) {
               <Input value={dep.nome} onChange={(e) => updateDep(i, 'nome', e.target.value)} placeholder="Nome completo" maxLength={200} />
             </div>
             <div>
-              <Label>CPF *</Label>
+              <Label>CPF * <span className="text-destructive">(obrigatório)</span></Label>
               <Input
                 value={dep.cpf}
                 onChange={(e) => updateDep(i, 'cpf', maskCPF(e.target.value))}
@@ -59,7 +64,8 @@ export function StepDependentes({ data, onChange }: Props) {
                 maxLength={14}
                 className={dep.cpf && !isValidCPF(dep.cpf) ? 'border-destructive' : ''}
               />
-              {dep.cpf && !isValidCPF(dep.cpf) && <p className="text-xs text-destructive mt-1">CPF inválido</p>}
+              {dep.cpf && !isValidCPF(dep.cpf) && <p className="text-xs text-destructive mt-1">CPF inválido — deve conter 11 dígitos</p>}
+              {!dep.cpf && <p className="text-xs text-muted-foreground mt-1">Obrigatório pela Receita Federal</p>}
             </div>
             <div>
               <Label>Data de Nascimento</Label>

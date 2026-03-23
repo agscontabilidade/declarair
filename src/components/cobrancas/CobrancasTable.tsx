@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Check, Edit, X, Trash2, DollarSign } from 'lucide-react';
-import { formatCurrency, formatDate, formatCPF } from '@/lib/formatters';
+import { formatCurrency, formatDate } from '@/lib/formatters';
+import { usePermissoes } from '@/hooks/usePermissoes';
 
 const STATUS_COLORS: Record<string, string> = {
   pendente: 'bg-amber-100 text-amber-800',
@@ -29,6 +30,8 @@ interface CobrancasTableProps {
 }
 
 export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, onCancelar, onExcluir }: CobrancasTableProps) {
+  const { podeExcluirCobranca } = usePermissoes();
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -85,7 +88,7 @@ export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, o
                     </Button>
                   </>
                 )}
-                {c.status === 'cancelado' && (
+                {c.status === 'cancelado' && podeExcluirCobranca && (
                   <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onExcluir(c.id)} title="Excluir">
                     <Trash2 className="h-4 w-4" />
                   </Button>

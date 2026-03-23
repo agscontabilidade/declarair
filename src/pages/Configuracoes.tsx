@@ -10,12 +10,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Settings, Users, CreditCard, Puzzle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissoes } from '@/hooks/usePermissoes';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Configuracoes() {
   const { profile } = useAuth();
+  const { isDono } = usePermissoes();
   const escritorioId = profile.escritorioId;
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -65,7 +67,7 @@ export default function Configuracoes() {
   }, [escritorio]);
 
   async function handleSave() {
-    if (!escritorioId) return;
+    if (!escritorioId || !isDono) return;
     setSaving(true);
     const { error } = await supabase.from('escritorios').update({ nome, email, telefone, cnpj }).eq('id', escritorioId);
     if (error) toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
@@ -96,11 +98,12 @@ export default function Configuracoes() {
                   <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
                 ) : (
                   <div className="space-y-4 max-w-lg">
-                    <div className="space-y-2"><Label>Nome</Label><Input value={nome} onChange={e => setNome(e.target.value)} /></div>
-                    <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} /></div>
-                    <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} /></div>
-                    <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} /></div>
-                    <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar Alterações'}</Button>
+                    <div className="space-y-2"><Label>Nome</Label><Input value={nome} onChange={e => setNome(e.target.value)} readOnly={!isDono} /></div>
+                    <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} readOnly={!isDono} /></div>
+                    <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} readOnly={!isDono} /></div>
+                    <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} readOnly={!isDono} /></div>
+                    {!isDono && <p className="text-sm text-muted-foreground">Apenas o dono pode alterar os dados do escritório.</p>}
+                    <Button onClick={handleSave} disabled={saving || !isDono}>{saving ? 'Salvando...' : 'Salvar Alterações'}</Button>
                   </div>
                 )}
               </CardContent>
@@ -109,7 +112,12 @@ export default function Configuracoes() {
 
           <TabsContent value="usuarios">
             <Card className="shadow-sm">
-              <CardHeader><CardTitle className="text-lg">Equipe</CardTitle></CardHeader>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Equipe</CardTitle>
+                  {isDono && <Button size="sm" disabled>Convidar Colaborador</Button>}
+                </div>
+              </CardHeader>
               <CardContent>
                 {loadingUsers ? (
                   <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
@@ -143,7 +151,12 @@ export default function Configuracoes() {
 
           <TabsContent value="plano">
             <Card className="shadow-sm">
-              <CardHeader><CardTitle className="text-lg">Plano Atual</CardTitle></CardHeader>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Plano Atual</CardTitle>
+                  {isDono && <Button size="sm" disabled>Upgrade</Button>}
+                </div>
+              </CardHeader>
               <CardContent>
                 {loadingEsc ? (
                   <Skeleton className="h-20 w-full" />

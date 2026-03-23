@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { FormularioData } from '@/hooks/useFormularioIR';
 
 interface Props {
@@ -21,6 +21,12 @@ export function StepDeducoes({ data, onChange }: Props) {
   const addEducacao = () => onChange('despesas_educacao', [...educacao, { instituicao: '', valor: '' }]);
   const updateEducacao = (i: number, f: string, v: string) => onChange('despesas_educacao', educacao.map((e: any, idx: number) => idx === i ? { ...e, [f]: v } : e));
   const removeEducacao = (i: number) => onChange('despesas_educacao', educacao.filter((_: any, idx: number) => idx !== i));
+
+  // Calculate total education expenses for warning
+  const totalEducacao = educacao.reduce((sum: number, e: any) => {
+    const val = parseFloat(String(e.valor).replace(/\D/g, '')) / 100 || parseFloat(e.valor) || 0;
+    return sum + val;
+  }, 0);
 
   return (
     <div className="space-y-8">
@@ -43,6 +49,9 @@ export function StepDeducoes({ data, onChange }: Props) {
           </div>
         ))}
         <Button variant="outline" size="sm" onClick={addMedica}><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>
+        <div className="flex items-center gap-1.5 text-xs text-emerald-600">
+          <CheckCircle2 className="h-3.5 w-3.5" /> Despesas médicas não possuem limite de dedução.
+        </div>
       </div>
 
       {/* Educação */}
@@ -61,6 +70,12 @@ export function StepDeducoes({ data, onChange }: Props) {
           </div>
         ))}
         <Button variant="outline" size="sm" onClick={addEducacao}><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>
+        {totalEducacao > 3561.50 && (
+          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800 flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>⚠️ O limite de dedução com educação é R$ 3.561,50 por pessoa/ano. O total informado ({totalEducacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}) pode exceder o limite. Verifique com seu contador.</span>
+          </div>
+        )}
       </div>
 
       {/* PGBL */}
@@ -75,6 +90,7 @@ export function StepDeducoes({ data, onChange }: Props) {
           <Label>Valor Total PGBL (R$)</Label>
           <Input value={prev.valor || ''} onChange={(e) => onChange('previdencia_privada', { ...prev, valor: e.target.value })} placeholder="0,00" className="max-w-xs" />
         </div>
+        <p className="text-xs text-muted-foreground">ℹ️ A dedução do PGBL é limitada a 12% da renda bruta tributável.</p>
       </div>
     </div>
   );
