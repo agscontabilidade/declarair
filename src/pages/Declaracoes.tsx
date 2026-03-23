@@ -122,7 +122,7 @@ export default function Declaracoes() {
                   <TableRow>
                     <TableHead>Cliente</TableHead>
                     <TableHead>CPF</TableHead>
-                    <TableHead>Contador</TableHead>
+                    <TableHead className="hidden md:table-cell">Contador</TableHead>
                     <TableHead>Ano Base</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Última Atualização</TableHead>
