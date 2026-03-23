@@ -105,6 +105,10 @@ export default {
           "60%": { transform: "scale(1.02) translateY(0)" },
           "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
         },
+        "pulse-badge": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.2)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
