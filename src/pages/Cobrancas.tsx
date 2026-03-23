@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useCobrancas } from '@/hooks/useCobrancas';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { CobrancasTable } from '@/components/cobrancas/CobrancasTable';
 import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
 import { ConfirmModal } from '@/components/cobrancas/ConfirmModal';
@@ -16,8 +19,20 @@ export default function Cobrancas() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
+  const { profile } = useAuth();
 
   const { cobrancas, isLoading, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
+
+  // Check if Inter is configured
+  const { data: interAtivo } = useQuery({
+    queryKey: ['inter-ativo', profile.escritorioId],
+    queryFn: async () => {
+      if (!profile.escritorioId) return false;
+      const { data } = await (supabase as any).from('configuracoes_escritorio').select('valor').eq('escritorio_id', profile.escritorioId).eq('chave', 'inter_ativo').single();
+      return data?.valor === 'true';
+    },
+    enabled: !!profile.escritorioId,
+  });
 
   const handleSave = (data: any) => {
     if (data.id) {
@@ -113,6 +128,7 @@ export default function Cobrancas() {
               onEditar={(c) => { setEditData(c); setModalOpen(true); }}
               onCancelar={(id) => setConfirmAction({ type: 'cancelar', id })}
               onExcluir={(id) => setConfirmAction({ type: 'excluir', id })}
+              interAtivo={interAtivo || false}
             />
           </CardContent>
         </Card>

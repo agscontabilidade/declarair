@@ -126,7 +126,12 @@ export type Database = {
       }
       cobrancas: {
         Row: {
+          boleto_codigo_barras: string | null
+          boleto_linha_digitavel: string | null
+          boleto_pdf_url: string | null
           cliente_id: string
+          cobranca_externa_id: string | null
+          cobranca_externa_status: string | null
           created_at: string
           data_pagamento: string | null
           data_vencimento: string
@@ -134,11 +139,18 @@ export type Database = {
           descricao: string
           escritorio_id: string
           id: string
+          pix_qrcode: string | null
+          pix_qrcode_url: string | null
           status: string
           valor: number
         }
         Insert: {
+          boleto_codigo_barras?: string | null
+          boleto_linha_digitavel?: string | null
+          boleto_pdf_url?: string | null
           cliente_id: string
+          cobranca_externa_id?: string | null
+          cobranca_externa_status?: string | null
           created_at?: string
           data_pagamento?: string | null
           data_vencimento: string
@@ -146,11 +158,18 @@ export type Database = {
           descricao: string
           escritorio_id: string
           id?: string
+          pix_qrcode?: string | null
+          pix_qrcode_url?: string | null
           status?: string
           valor: number
         }
         Update: {
+          boleto_codigo_barras?: string | null
+          boleto_linha_digitavel?: string | null
+          boleto_pdf_url?: string | null
           cliente_id?: string
+          cobranca_externa_id?: string | null
+          cobranca_externa_status?: string | null
           created_at?: string
           data_pagamento?: string | null
           data_vencimento?: string
@@ -158,6 +177,8 @@ export type Database = {
           descricao?: string
           escritorio_id?: string
           id?: string
+          pix_qrcode?: string | null
+          pix_qrcode_url?: string | null
           status?: string
           valor?: number
         }
@@ -178,6 +199,38 @@ export type Database = {
           },
           {
             foreignKeyName: "cobrancas_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      configuracoes_escritorio: {
+        Row: {
+          chave: string
+          created_at: string
+          escritorio_id: string
+          id: string
+          valor: string | null
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          escritorio_id: string
+          id?: string
+          valor?: string | null
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          escritorio_id?: string
+          id?: string
+          valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_escritorio_escritorio_id_fkey"
             columns: ["escritorio_id"]
             isOneToOne: false
             referencedRelation: "escritorios"
