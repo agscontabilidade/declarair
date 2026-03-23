@@ -153,6 +153,19 @@ export function useFormularioIR() {
         .from('clientes')
         .update({ status_onboarding: 'concluido' })
         .eq('id', clienteId);
+
+      // Create notification for the accountant
+      if (declaracao) {
+        try {
+          await (supabase as any).from('notificacoes').insert({
+            escritorio_id: declaracao.escritorio_id,
+            titulo: 'Formulário IR concluído',
+            mensagem: 'O cliente finalizou o preenchimento do formulário IRPF.',
+            link_destino: `/declaracoes/${declaracao.id}`,
+          });
+        } catch { /* notification is best-effort */ }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['formulario-ir'] });
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
       return true;
@@ -160,7 +173,7 @@ export function useFormularioIR() {
       toast.error('Erro ao finalizar formulário');
       return false;
     }
-  }, [formulario?.id, clienteId, queryClient]);
+  }, [formulario?.id, clienteId, declaracao, queryClient]);
 
   return {
     formData, updateField, formulario, declaracao, isLoading, saving, lastSaved, finalizar,

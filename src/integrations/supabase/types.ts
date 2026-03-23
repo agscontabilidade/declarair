@@ -520,6 +520,44 @@ export type Database = {
           },
         ]
       }
+      notificacoes: {
+        Row: {
+          created_at: string
+          escritorio_id: string
+          id: string
+          lida: boolean
+          link_destino: string | null
+          mensagem: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          escritorio_id: string
+          id?: string
+          lida?: boolean
+          link_destino?: string | null
+          mensagem: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          escritorio_id?: string
+          id?: string
+          lida?: boolean
+          link_destino?: string | null
+          mensagem?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
