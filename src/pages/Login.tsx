@@ -52,7 +52,7 @@ export default function Login() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Erro ao criar conta');
 
-      const { error: rpcError } = await supabase.rpc('handle_new_accountant_signup', {
+      const { error: rpcError } = await supabase.rpc('handle_new_accountant_signup' as any, {
         p_user_id: authData.user.id,
         p_nome: nome,
         p_nome_escritorio: nomeEscritorio,
