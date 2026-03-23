@@ -52,31 +52,13 @@ export default function Login() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Erro ao criar conta');
 
-      // Create escritório
-      const { data: escritorio, error: escError } = await supabase
-        .from('escritorios')
-        .insert({ nome: nomeEscritorio })
-        .select('id')
-        .single();
-      if (escError) throw escError;
-
-      // Create usuario
-      const { error: userError } = await supabase
-        .from('usuarios')
-        .insert({
-          id: authData.user.id,
-          escritorio_id: escritorio.id,
-          nome,
-          email: signupEmail,
-          papel: 'dono',
-        });
-      if (userError) throw userError;
-
-      // Create role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({ user_id: authData.user.id, role: 'dono' });
-      if (roleError) throw roleError;
+      const { error: rpcError } = await supabase.rpc('handle_new_accountant_signup', {
+        p_user_id: authData.user.id,
+        p_nome: nome,
+        p_nome_escritorio: nomeEscritorio,
+        p_email: signupEmail,
+      });
+      if (rpcError) throw rpcError;
 
       toast({
         title: 'Conta criada!',
