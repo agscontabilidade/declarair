@@ -62,6 +62,7 @@ const App = () => (
             <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><Cobrancas /></ProtectedRoute>} />
             <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><Mensagens /></ProtectedRoute>} />
             <Route path="/configuracoes" element={<ProtectedRoute allowedType="contador"><Configuracoes /></ProtectedRoute>} />
+            <Route path="/capa" element={<ProtectedRoute allowedType="contador"><Capa /></ProtectedRoute>} />
 
             {/* Cliente routes */}
             <Route path="/cliente/dashboard" element={<ProtectedRoute allowedType="cliente"><ClienteDashboard /></ProtectedRoute>} />

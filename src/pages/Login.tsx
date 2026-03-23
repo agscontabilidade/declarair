@@ -131,6 +131,7 @@ export default function Login() {
           </Tabs>
         </CardContent>
       </Card>
+      <p className="text-xs text-muted-foreground mt-4">© 2025–2026 DeclaraIR</p>
     </div>
   );
 }
