@@ -92,10 +92,26 @@ export default {
             height: "0",
           },
         },
+        "slide-in-left": {
+          from: { opacity: "0", transform: "translateX(-16px)" },
+          to: { opacity: "1", transform: "translateX(0)" },
+        },
+        "slide-in-right": {
+          from: { opacity: "0", transform: "translateX(16px)" },
+          to: { opacity: "1", transform: "translateX(0)" },
+        },
+        "card-drop": {
+          "0%": { opacity: "0", transform: "scale(0.95) translateY(-8px)" },
+          "60%": { transform: "scale(1.02) translateY(0)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "slide-in-left": "slide-in-left 0.3s ease-out",
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "card-drop": "card-drop 0.35s ease-out",
       },
     },
   },
