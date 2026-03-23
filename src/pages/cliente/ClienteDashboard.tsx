@@ -74,10 +74,13 @@ export default function ClienteDashboard() {
               </Card>
 
               {/* Formulário IR */}
-              <Card className="shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/cliente/formulario')}>
+              <Card
+                className={`shadow-sm transition-shadow ${formulario?.status_preenchimento === 'concluido' ? 'opacity-80' : 'cursor-pointer hover:shadow-md'}`}
+                onClick={() => formulario?.status_preenchimento !== 'concluido' && navigate('/cliente/formulario')}
+              >
                 <CardContent className="flex flex-col items-center py-8 text-center">
                   <ClipboardList className="h-10 w-10 text-primary mb-3" />
-                  <p className="font-medium">Formulário IR</p>
+                  <p className="font-medium">{formulario?.status_preenchimento === 'concluido' ? 'Formulário Enviado ✓' : 'Formulário IR'}</p>
                   <Badge className={`mt-2 ${
                     formulario?.status_preenchimento === 'concluido' ? 'bg-emerald-100 text-emerald-800' :
                     formulario?.status_preenchimento === 'em_andamento' ? 'bg-amber-100 text-amber-800' :
