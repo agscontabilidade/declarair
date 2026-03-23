@@ -31,7 +31,7 @@ export function KanbanColumn({ title, status, color, items, onDragStart, onDragE
           </span>
         </div>
       </div>
-      <div className={`flex-1 p-2 space-y-2 transition-colors duration-200 ${isDragOver ? 'bg-accent/5' : 'bg-muted/30'}`}>
+      <div className={`flex-1 p-2 space-y-2 transition-colors duration-200 ${isDragOver ? 'bg-accent/5 border-2 border-dashed border-accent/30' : 'bg-muted/30'}`}>
         {items.length === 0 ? (
           <p className="text-xs text-muted-foreground/50 text-center py-8">
             Nenhuma declaração

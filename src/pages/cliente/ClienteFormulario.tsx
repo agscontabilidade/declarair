@@ -112,16 +112,16 @@ export default function ClienteFormulario() {
         </Card>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
             <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
           </Button>
           {step < 6 ? (
-            <Button onClick={() => setStep(step + 1)}>
+            <Button className="w-full sm:w-auto active:scale-[0.98]" onClick={() => setStep(step + 1)}>
               Próximo <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleFinalizar} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={handleFinalizar} disabled={saving} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98]">
               <CheckCircle2 className="h-4 w-4 mr-2" /> Finalizar
             </Button>
           )}

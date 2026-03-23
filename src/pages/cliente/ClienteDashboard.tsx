@@ -75,7 +75,7 @@ export default function ClienteDashboard() {
 
               {/* Formulário IR */}
               <Card
-                className={`shadow-sm transition-shadow ${formulario?.status_preenchimento === 'concluido' ? 'opacity-80' : 'cursor-pointer hover:shadow-md'}`}
+                className={`shadow-sm transition-all duration-200 ${formulario?.status_preenchimento === 'concluido' ? 'opacity-80' : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md'}`}
                 onClick={() => formulario?.status_preenchimento !== 'concluido' && navigate('/cliente/formulario')}
               >
                 <CardContent className="flex flex-col items-center py-8 text-center">

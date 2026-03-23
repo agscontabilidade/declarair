@@ -101,6 +101,7 @@ export function TemplateEditor({ open, onOpenChange, onSave, loading, editData }
           <div>
             <Label>Corpo da mensagem *</Label>
             <Textarea ref={textareaRef} value={corpo} onChange={(e) => setCorpo(e.target.value)} rows={5} placeholder="Digite a mensagem..." className="font-mono text-sm" maxLength={2000} />
+            <p className="text-xs text-muted-foreground mt-1">{corpo.length} / {canal === 'whatsapp' ? '1000' : '2000'} caracteres</p>
           </div>
           {corpo && (
             <div>

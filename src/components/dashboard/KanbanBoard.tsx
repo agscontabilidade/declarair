@@ -93,7 +93,7 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
   return (
     <div>
       <h2 className="font-display text-lg font-semibold mb-4">Declarações por Status</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto min-w-0">
         {columns.map((col) => (
           <KanbanColumn
             key={col.status}

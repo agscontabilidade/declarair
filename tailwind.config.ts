@@ -116,6 +116,7 @@ export default {
         "slide-in-left": "slide-in-left 0.3s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "card-drop": "card-drop 0.35s ease-out",
+        "pulse-badge": "pulse-badge 2s ease-in-out infinite",
       },
     },
   },
