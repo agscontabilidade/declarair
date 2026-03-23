@@ -666,6 +666,15 @@ export type Database = {
       get_user_cliente_id: { Args: never; Returns: string }
       get_user_escritorio_id: { Args: never; Returns: string }
       get_user_papel: { Args: never; Returns: string }
+      handle_new_accountant_signup: {
+        Args: {
+          p_email: string
+          p_nome: string
+          p_nome_escritorio: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
