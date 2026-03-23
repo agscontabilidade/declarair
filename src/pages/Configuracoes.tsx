@@ -179,12 +179,7 @@ export default function Configuracoes() {
           </TabsContent>
 
           <TabsContent value="integracoes">
-            <Card className="shadow-sm">
-              <CardHeader><CardTitle className="text-lg">Integrações</CardTitle></CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">Em breve: integrações com WhatsApp Business, serviços de email e mais.</p>
-              </CardContent>
-            </Card>
+            <IntegracoesTab escritorioId={escritorioId} isDono={isDono} />
           </TabsContent>
         </Tabs>
       </div>
