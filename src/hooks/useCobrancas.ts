@@ -68,6 +68,17 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
         .update({ status: 'pago', data_pagamento: new Date().toISOString().split('T')[0] })
         .eq('id', id);
       if (error) throw error;
+
+      // Create notification
+      if (escritorioId) {
+        try {
+          await (supabase as any).from('notificacoes').insert({
+            escritorio_id: escritorioId,
+            titulo: 'Cobrança paga',
+            mensagem: 'Uma cobrança foi marcada como paga.',
+          });
+        } catch { /* best-effort */ }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] });
