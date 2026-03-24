@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,6 +55,9 @@ export default function ClienteLogin() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
+            <Link to="/recuperar-senha" className="block text-center">
+              <span className="text-sm text-muted-foreground hover:text-primary transition-colors">Esqueceu sua senha?</span>
+            </Link>
           </form>
         </CardContent>
       </Card>
