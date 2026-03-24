@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Settings, Users, CreditCard, Puzzle, Palette, Bell } from 'lucide-react';
+import { buscarCNPJ } from '@/lib/apiBrasil';
 import { IntegracoesTab } from '@/components/configuracoes/IntegracoesTab';
 import { WhitelabelTab } from '@/components/configuracoes/WhitelabelTab';
 import { NotificacoesTab } from '@/components/configuracoes/NotificacoesTab';
@@ -59,6 +60,30 @@ export default function Configuracoes() {
   const [telefone, setTelefone] = useState('');
   const [cnpj, setCnpj] = useState('');
   const [saving, setSaving] = useState(false);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+
+  function formatCnpj(value: string) {
+    const digits = value.replace(/\D/g, '').slice(0, 14);
+    return digits
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2');
+  }
+
+  async function handleBuscarCnpj() {
+    const clean = cnpj.replace(/\D/g, '');
+    if (clean.length !== 14 || !isDono) return;
+    setBuscandoCnpj(true);
+    const dados = await buscarCNPJ(clean);
+    if (dados) {
+      if (!nome && dados.razao_social) setNome(dados.razao_social);
+      if (!email && dados.email) setEmail(dados.email);
+      if (!telefone && dados.ddd_telefone_1) setTelefone(dados.ddd_telefone_1);
+      toast({ title: 'Dados do CNPJ preenchidos automaticamente!' });
+    }
+    setBuscandoCnpj(false);
+  }
 
   useEffect(() => {
     if (escritorio) {
@@ -106,7 +131,7 @@ export default function Configuracoes() {
                     <div className="space-y-2"><Label>Nome</Label><Input value={nome} onChange={e => setNome(e.target.value)} readOnly={!isDono} /></div>
                     <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} readOnly={!isDono} /></div>
                     <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} readOnly={!isDono} /></div>
-                    <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} readOnly={!isDono} /></div>
+                    <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} readOnly={!isDono} disabled={buscandoCnpj} placeholder="00.000.000/0000-00" maxLength={18} /></div>
                     {!isDono && <p className="text-sm text-muted-foreground">Apenas o dono pode alterar os dados do escritório.</p>}
                     <Button onClick={handleSave} disabled={saving || !isDono}>{saving ? 'Salvando...' : 'Salvar Alterações'}</Button>
                   </div>

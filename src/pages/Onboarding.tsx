@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
+import { buscarCNPJ, buscarCEP } from '@/lib/apiBrasil';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import {
@@ -72,18 +73,38 @@ export default function Onboarding() {
       .replace(/(\d{4})(\d)/, '$1-$2');
   }
 
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+
+  async function handleBuscarCnpj() {
+    const clean = cnpj.replace(/\D/g, '');
+    if (clean.length !== 14) return;
+    setBuscandoCnpj(true);
+    const dados = await buscarCNPJ(clean);
+    if (dados) {
+      setRazaoSocial(dados.razao_social || '');
+      if (dados.nome_fantasia) setNomeFantasia(dados.nome_fantasia);
+      if (dados.email) setEmailEmpresa(dados.email);
+      if (dados.ddd_telefone_1) setTelefoneEmpresa(dados.ddd_telefone_1);
+      if (dados.cep) setCep(dados.cep);
+      if (dados.logradouro) setLogradouro(dados.logradouro);
+      if (dados.numero) setNumero(dados.numero);
+      if (dados.complemento) setComplemento(dados.complemento);
+      if (dados.bairro) setBairro(dados.bairro);
+      if (dados.municipio) setCidade(dados.municipio);
+      if (dados.uf) setUf(dados.uf);
+      toast({ title: 'Dados do CNPJ preenchidos automaticamente!' });
+    }
+    setBuscandoCnpj(false);
+  }
+
   async function buscarCep() {
-    if (cep.replace(/\D/g, '').length !== 8) return;
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${cep.replace(/\D/g, '')}/json/`);
-      const data = await res.json();
-      if (!data.erro) {
-        setLogradouro(data.logradouro || '');
-        setBairro(data.bairro || '');
-        setCidade(data.localidade || '');
-        setUf(data.uf || '');
-      }
-    } catch {}
+    const dados = await buscarCEP(cep);
+    if (dados) {
+      setLogradouro(dados.logradouro || '');
+      setBairro(dados.bairro || '');
+      setCidade(dados.localidade || '');
+      setUf(dados.uf || '');
+    }
   }
 
   function handleStep3Next() {
@@ -282,7 +303,7 @@ export default function Onboarding() {
                 </div>
                 <div className="space-y-2">
                   <Label>CNPJ *</Label>
-                  <Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} placeholder="00.000.000/0000-00" maxLength={18} />
+                  <Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} placeholder="00.000.000/0000-00" maxLength={18} disabled={buscandoCnpj} />
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
