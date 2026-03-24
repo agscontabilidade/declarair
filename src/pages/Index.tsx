@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
+import logoHero from '@/assets/logo-hero.png';
 
 const features = [
   { icon: Layout, title: 'Dashboard Kanban', desc: 'Visualize todas as declarações em um quadro intuitivo com drag & drop e KPIs em tempo real.' },
