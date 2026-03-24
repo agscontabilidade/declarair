@@ -73,18 +73,38 @@ export default function Onboarding() {
       .replace(/(\d{4})(\d)/, '$1-$2');
   }
 
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+
+  async function handleBuscarCnpj() {
+    const clean = cnpj.replace(/\D/g, '');
+    if (clean.length !== 14) return;
+    setBuscandoCnpj(true);
+    const dados = await buscarCNPJ(clean);
+    if (dados) {
+      setRazaoSocial(dados.razao_social || '');
+      if (dados.nome_fantasia) setNomeFantasia(dados.nome_fantasia);
+      if (dados.email) setEmailEmpresa(dados.email);
+      if (dados.ddd_telefone_1) setTelefoneEmpresa(dados.ddd_telefone_1);
+      if (dados.cep) setCep(dados.cep);
+      if (dados.logradouro) setLogradouro(dados.logradouro);
+      if (dados.numero) setNumero(dados.numero);
+      if (dados.complemento) setComplemento(dados.complemento);
+      if (dados.bairro) setBairro(dados.bairro);
+      if (dados.municipio) setCidade(dados.municipio);
+      if (dados.uf) setUf(dados.uf);
+      toast({ title: 'Dados do CNPJ preenchidos automaticamente!' });
+    }
+    setBuscandoCnpj(false);
+  }
+
   async function buscarCep() {
-    if (cep.replace(/\D/g, '').length !== 8) return;
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${cep.replace(/\D/g, '')}/json/`);
-      const data = await res.json();
-      if (!data.erro) {
-        setLogradouro(data.logradouro || '');
-        setBairro(data.bairro || '');
-        setCidade(data.localidade || '');
-        setUf(data.uf || '');
-      }
-    } catch {}
+    const dados = await buscarCEP(cep);
+    if (dados) {
+      setLogradouro(dados.logradouro || '');
+      setBairro(dados.bairro || '');
+      setCidade(dados.localidade || '');
+      setUf(dados.uf || '');
+    }
   }
 
   function handleStep3Next() {
