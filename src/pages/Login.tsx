@@ -35,9 +35,8 @@ export default function Login() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative">
       <Card className="w-full max-w-md shadow-lg border-0">
         <CardHeader className="text-center pb-2">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <FileText className="h-8 w-8 text-accent" />
-            <span className="font-display text-2xl font-bold text-primary">DeclaraIR</span>
+          <div className="flex items-center justify-center mb-4">
+            <img src={logoFull} alt="DeclaraIR" className="h-12" />
           </div>
           <CardTitle className="font-display text-xl">Área do Contador</CardTitle>
           <CardDescription>Gerencie declarações IRPF do seu escritório</CardDescription>

@@ -244,7 +244,7 @@ export default function Index() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded bg-accent flex items-center justify-center text-accent-foreground text-[10px] font-bold">DI</div>
+              <img src={logoIcon} alt="DeclaraIR" className="h-6 w-6" />
               <span className="font-display text-sm font-bold text-foreground">DeclaraIR</span>
             </div>
             <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} DeclaraIR. Todos os direitos reservados.</p>
