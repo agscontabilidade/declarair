@@ -1,10 +1,24 @@
 import { BarChart3, Users, FileText, CheckCircle2, TrendingUp } from 'lucide-react';
+import heroPerson from '@/assets/hero-person.jpg';
 
 export default function HeroMockup() {
   return (
     <div className="relative w-full h-[500px] lg:h-[560px]">
+      {/* Person background behind mockups */}
+      <div className="absolute inset-0 rounded-3xl overflow-hidden">
+        <img
+          src={heroPerson}
+          alt="Contador usando notebook"
+          className="w-full h-full object-cover object-top"
+          width={960}
+          height={640}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
+        <div className="absolute inset-0 bg-gradient-to-l from-transparent to-background/50" />
+      </div>
+
       {/* Main dashboard mockup */}
-      <div className="absolute top-8 left-0 right-0 lg:left-4 lg:right-auto w-[90%] lg:w-[420px] glass-card rounded-2xl mockup-shadow animate-float p-0 overflow-hidden">
+      <div className="absolute top-8 left-0 right-0 lg:left-4 lg:right-auto w-[90%] lg:w-[420px] glass-card-strong rounded-2xl mockup-shadow animate-float p-0 overflow-hidden">
         {/* Title bar */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-border/30">
           <div className="flex gap-1.5">
@@ -21,7 +35,7 @@ export default function HeroMockup() {
             { label: 'Transmitidas', value: '189', icon: CheckCircle2, color: 'text-success' },
             { label: 'Clientes', value: '142', icon: Users, color: 'text-primary' },
           ].map((kpi) => (
-            <div key={kpi.label} className="bg-background/60 rounded-lg p-2.5 text-center">
+            <div key={kpi.label} className="bg-background/80 rounded-lg p-2.5 text-center">
               <kpi.icon className={`h-3.5 w-3.5 mx-auto mb-1 ${kpi.color}`} />
               <p className="font-display font-bold text-foreground text-sm">{kpi.value}</p>
               <p className="text-[9px] text-muted-foreground">{kpi.label}</p>
@@ -30,7 +44,7 @@ export default function HeroMockup() {
         </div>
         {/* Mini chart */}
         <div className="px-3 pb-3">
-          <div className="bg-background/60 rounded-lg p-3">
+          <div className="bg-background/80 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-medium text-foreground">Declarações por mês</span>
               <BarChart3 className="h-3 w-3 text-muted-foreground" />
@@ -55,7 +69,7 @@ export default function HeroMockup() {
           <span className="text-[10px] font-semibold text-foreground">Em andamento</span>
         </div>
         {['João Silva — 2025', 'Maria Santos — 2025'].map((name) => (
-          <div key={name} className="bg-background/70 rounded-md p-2 mb-1.5 last:mb-0">
+          <div key={name} className="bg-background/80 rounded-md p-2 mb-1.5 last:mb-0">
             <p className="text-[9px] font-medium text-foreground truncate">{name}</p>
             <div className="flex gap-1 mt-1">
               <span className="text-[8px] bg-accent/10 text-accent px-1.5 rounded">3/5 docs</span>
