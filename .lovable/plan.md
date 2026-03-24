@@ -1,99 +1,59 @@
 
 
-# Plano: Onboarding Guiado para Contadores (Cadastro + Configuração Inicial)
+# Plano: Aplicar Marca Correta + Tipografia Poppins
 
-## Visao Geral
+## O Que Está Errado Hoje
 
-Transformar o fluxo atual de cadastro (um formulario simples em Login.tsx) em um wizard completo de 3 etapas no cadastro + 4 etapas de configuracao inicial pos-login, inspirado no concorrente mas superior.
+1. **Logo pequeno demais** — `h-8 w-8` (32px) na sidebar, header, etc.
+2. **Nome "DeclaraIR" é texto** — deveria ser a imagem da wordmark (image-14.png) em todos os lugares
+3. **Tipografia errada** — usa DM Sans (body) e Syne (headings), precisa ser **Poppins** em tudo
 
-O contador NAO acessa o dashboard ate completar o onboarding. Um campo `onboarding_completo` na tabela `escritorios` controla isso.
+## Mudanças
 
-## Arquitetura do Fluxo
+### 1. Copiar Assets da Marca
 
-```text
-Landing Page → /cadastro (wizard 3 steps) → Login → /onboarding (wizard 4 steps) → Dashboard
+- `image-16.png` → `src/assets/logo-icon.png` (ícone "D" com seta, quadrado, para sidebar collapsed/favicon)
+- `image-14.png` → `src/assets/logo-full.png` (wordmark "DeclaraIR" texto)
+- `image-13.png` → `src/assets/logo-hero.png` (logo 3D grande para landing page hero)
+- `image-16.png` → `public/favicon.png` (favicon)
 
-CADASTRO (/cadastro):
-  Step 1: Dados pessoais (nome, email, telefone, CPF, senha)
-  Step 2: Escolha do plano (cards selecionaveis, popup upsell ao escolher gratis)
-  Step 3: Revisao + Criar Conta
+### 2. Tipografia Global → Poppins
 
-ONBOARDING (/onboarding) — pos-login, modal fullscreen:
-  Step 1: Bem-vindo — overview do que sera configurado
-  Step 2: Perfil — foto do contador (upload avatar)
-  Step 3: Dados da Empresa — razao social*, CNPJ*, nome fantasia, email, telefone, whatsapp, chave PIX, endereco completo (CEP, logradouro, numero, complemento, bairro, cidade, UF), logo
-  Step 4: Identidade Visual — cores e whitelabel (simplificado)
+**`src/index.css`**: Trocar import do Google Fonts para Poppins (300-800). Remover DM Sans e Syne. Body e headings usam Poppins.
 
-  * Razao social e CNPJ sao obrigatorios — nao avanca sem preencher.
-```
+**`tailwind.config.ts`**: Trocar `fontFamily.display` e `fontFamily.body` para Poppins.
 
-## Mudancas no Banco de Dados
+A classe `font-display` continua existindo mas agora aponta para Poppins (weight 600-800 para headings).
 
-**Migration**: Adicionar coluna `onboarding_completo` (boolean default false) + campos de endereco na tabela `escritorios`:
-- `onboarding_completo` boolean default false
-- `razao_social` text
-- `nome_fantasia` text
-- `whatsapp` text
-- `chave_pix` text
-- `endereco_cep` text
-- `endereco_logradouro` text
-- `endereco_numero` text
-- `endereco_complemento` text
-- `endereco_bairro` text
-- `endereco_cidade` text
-- `endereco_uf` text
+### 3. Aplicar Logo nos Componentes
 
-Adicionar campo `telefone` e `avatar_url` na tabela `usuarios`.
+| Local | Antes | Depois |
+|-------|-------|--------|
+| **Sidebar** header | icon 32px + texto "DeclaraIR" | icon **40px** + wordmark img **h-7** |
+| **Landing** header | icon 32px + texto | icon **36px** + wordmark img **h-7** |
+| **Landing** footer | icon 24px + texto | icon **28px** + wordmark img **h-5** |
+| **Landing** hero | sem logo grande | adicionar `logo-hero.png` **h-24** acima do título |
+| **Login** | logo-full 48px | wordmark img **h-10** |
+| **Cadastro** desktop | icon 36px + texto | icon **44px** + wordmark img **h-8** |
+| **Cadastro** mobile | icon 32px + texto | icon **40px** + wordmark img **h-7** |
+| **Onboarding** header | icon 32px + texto | icon **40px** + wordmark img **h-7** |
 
-## Arquivos a Criar
+Em todos os locais, **remover o `<span>DeclaraIR</span>`** e substituir por `<img src={logoFull} className="h-7" />` (a wordmark real da marca).
 
-1. **`src/pages/Cadastro.tsx`** — Wizard de 3 steps com layout split (ilustracao a esquerda, formulario a direita). Stepper visual (Dados → Plano → Pagamento). Inclui:
-   - Step 1: nome, email, telefone, CPF do contador, senha
-   - Step 2: Cards de plano selecionaveis (Gratuito, Start, Profissional, Enterprise). Ao selecionar Gratuito e clicar Continuar, popup Dialog "Antes de continuar..." induzindo upgrade ao Profissional com timer e beneficios
-   - Step 3: Resumo dos dados + plano selecionado com botoes "Editar" e "Alterar". Botao "Criar Conta Gratis" / "Assinar [Plano]"
+### 4. Arquivos Modificados
 
-2. **`src/pages/Onboarding.tsx`** — Modal fullscreen (Dialog sem fechar) com 4 steps e barra de progresso. Header com logo DeclaraIR + "Configuracao Inicial" + "Passo X de 4". Inclui:
-   - Step 1: Boas-vindas com overview das etapas (Perfil, Empresa, Identidade)
-   - Step 2: Upload de foto de perfil (avatar circular com dashed border + botao "Subir Foto")
-   - Step 3: Dados da empresa (logo, razao social*, nome fantasia, CNPJ*, email, telefone, whatsapp, chave PIX, endereco completo). Validacao: nao avanca sem razao social e CNPJ. Toast de erro se tentar avancar sem
-   - Step 4: Cores primarias e finalizacao. Botao "Concluir e Acessar o Dashboard"
-
-3. **`src/components/cadastro/UpsellModal.tsx`** — Dialog "Antes de continuar..." com beneficios do plano Profissional, timer de oferta, botoes "Assinar o Profissional" e "Continuar com o gratis"
-
-## Arquivos a Modificar
-
-1. **`src/App.tsx`** — Adicionar rota `/cadastro` e `/onboarding`
-2. **`src/pages/Login.tsx`** — Remover aba "Criar Conta", adicionar link "Criar conta" apontando para `/cadastro`
-3. **`src/contexts/AuthContext.tsx`** — Carregar `onboarding_completo` do escritorio no profile
-4. **`src/components/ProtectedRoute.tsx`** — Se `onboarding_completo === false`, redirecionar para `/onboarding` ao inves do dashboard
-5. **`src/pages/Index.tsx`** — Trocar links de "Comecar Gratis" de `/login` para `/cadastro`
-
-## Design
-
-- Layout split: lado esquerdo cinza claro com ilustracao line-art + texto motivacional ("Comece sua jornada"), lado direito branco com formulario
-- Stepper circular no topo (numeros com check quando completado, linha conectando)
-- Cards de plano com borda highlight verde quando selecionado, badge "Popular" no Profissional
-- Onboarding como overlay fullscreen branco (sem sidebar), nao permite fechar
-- Botoes primarios verde escuro (#3d5a50) seguindo o padrao do concorrente
-
-## Logica de Bloqueio
-
-No `ProtectedRoute`, apos autenticar como contador:
-- Buscar `escritorios.onboarding_completo` via query
-- Se `false`, redirecionar para `/onboarding`
-- No step 3 do onboarding, validar razao_social e cnpj antes de avancar
-- Ao concluir step 4, setar `onboarding_completo = true` e redirecionar ao dashboard
-
-## Resumo de Entregas
-
-| Entrega | Arquivo | Tipo |
-|---------|---------|------|
-| Migration DB | migration SQL | Novo |
-| Wizard de Cadastro | `src/pages/Cadastro.tsx` | Novo |
-| Modal Upsell | `src/components/cadastro/UpsellModal.tsx` | Novo |
-| Wizard Onboarding | `src/pages/Onboarding.tsx` | Novo |
-| ProtectedRoute bloqueio | `src/components/ProtectedRoute.tsx` | Editar |
-| AuthContext + profile | `src/contexts/AuthContext.tsx` | Editar |
-| Login simplificado | `src/pages/Login.tsx` | Editar |
-| Rotas + links | `src/App.tsx`, `src/pages/Index.tsx` | Editar |
+| Arquivo | Mudança |
+|---------|---------|
+| `src/index.css` | Font import → Poppins, body/headings font-family |
+| `tailwind.config.ts` | fontFamily.display e .body → Poppins |
+| `src/assets/logo-icon.png` | Substituir pelo image-16 |
+| `src/assets/logo-full.png` | Substituir pelo image-14 (wordmark) |
+| `src/assets/logo-hero.png` | Novo — image-13 (3D grande) |
+| `public/favicon.png` | Substituir pelo image-16 |
+| `src/components/layout/Sidebar.tsx` | Logo maior + wordmark img |
+| `src/pages/Index.tsx` | Logo maior + wordmark em header/footer + hero logo |
+| `src/pages/Login.tsx` | Wordmark maior |
+| `src/pages/Cadastro.tsx` | Logo + wordmark maiores |
+| `src/pages/Onboarding.tsx` | Logo + wordmark maiores |
+| `src/pages/RedefinirSenha.tsx` | Trocar ícone por logo real |
 
