@@ -5,14 +5,24 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClientePortal } from '@/hooks/useClientePortal';
 import { StatusStepper } from '@/components/cliente-portal/StatusStepper';
+import { ChatFlutuante } from '@/components/cliente-portal/ChatFlutuante';
 import { FileText, ClipboardList, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { useNavigate } from 'react-router-dom';
+import { useChat } from '@/hooks/useChat';
 
 export default function ClienteDashboard() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { declaracao, checklist, formulario, statusStep, pendentes, isLoading } = useClientePortal();
   const navigate = useNavigate();
+
+  const { unreadCount } = useChat(
+    declaracao?.id,
+    declaracao?.escritorio_id,
+    profile.clienteId || undefined,
+    'cliente',
+    user?.id
+  );
 
   if (isLoading) {
     return (
@@ -64,9 +74,9 @@ export default function ClienteDashboard() {
                   <Upload className="h-10 w-10 text-accent mb-3" />
                   <p className="font-medium">Documentos</p>
                   {pendentes.length > 0 ? (
-                    <Badge className="mt-2 bg-amber-100 text-amber-800">{pendentes.length} pendente(s)</Badge>
+                    <Badge className="mt-2 bg-warning/15 text-warning">{pendentes.length} pendente(s)</Badge>
                   ) : (
-                    <div className="flex items-center gap-1 mt-2 text-emerald-600 text-sm">
+                    <div className="flex items-center gap-1 mt-2 text-success text-sm">
                       <CheckCircle2 className="h-4 w-4" /> Tudo em dia
                     </div>
                   )}
@@ -82,9 +92,9 @@ export default function ClienteDashboard() {
                   <ClipboardList className="h-10 w-10 text-primary mb-3" />
                   <p className="font-medium">{formulario?.status_preenchimento === 'concluido' ? 'Formulário Enviado ✓' : 'Formulário IR'}</p>
                   <Badge className={`mt-2 ${
-                    formulario?.status_preenchimento === 'concluido' ? 'bg-emerald-100 text-emerald-800' :
-                    formulario?.status_preenchimento === 'em_andamento' ? 'bg-amber-100 text-amber-800' :
-                    'bg-gray-100 text-gray-600'
+                    formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success' :
+                    formulario?.status_preenchimento === 'em_andamento' ? 'bg-warning/15 text-warning' :
+                    'bg-muted text-muted-foreground'
                   }`}>
                     {STATUS_LABELS[formulario?.status_preenchimento || 'nao_iniciado']}
                   </Badge>
@@ -94,10 +104,10 @@ export default function ClienteDashboard() {
               {/* Resultado */}
               <Card className="shadow-sm">
                 <CardContent className="flex flex-col items-center py-8 text-center">
-                  <FileText className="h-10 w-10 text-emerald-500 mb-3" />
+                  <FileText className="h-10 w-10 text-success mb-3" />
                   <p className="font-medium">Resultado</p>
                   {declaracao.status === 'transmitida' && declaracao.tipo_resultado ? (
-                    <p className={`text-lg font-bold mt-1 ${declaracao.tipo_resultado === 'restituicao' ? 'text-emerald-600' : declaracao.tipo_resultado === 'pagamento' ? 'text-red-600' : 'text-muted-foreground'}`}>
+                    <p className={`text-lg font-bold mt-1 ${declaracao.tipo_resultado === 'restituicao' ? 'text-success' : declaracao.tipo_resultado === 'pagamento' ? 'text-destructive' : 'text-muted-foreground'}`}>
                       {STATUS_LABELS[declaracao.tipo_resultado]}: {declaracao.valor_resultado ? formatCurrency(Number(declaracao.valor_resultado)) : '—'}
                     </p>
                   ) : (
@@ -112,7 +122,7 @@ export default function ClienteDashboard() {
               <Card className="shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-amber-500" />
+                    <AlertCircle className="h-5 w-5 text-warning" />
                     Documentos Pendentes
                   </CardTitle>
                 </CardHeader>
@@ -120,7 +130,7 @@ export default function ClienteDashboard() {
                   <ul className="space-y-2">
                     {pendentes.map((doc: any) => (
                       <li key={doc.id} className="flex items-center gap-2 text-sm">
-                        <div className="h-2 w-2 rounded-full bg-amber-400" />
+                        <div className="h-2 w-2 rounded-full bg-warning" />
                         {doc.nome_documento}
                         {doc.obrigatorio && <Badge variant="outline" className="text-[10px] py-0">Obrigatório</Badge>}
                       </li>
@@ -128,6 +138,16 @@ export default function ClienteDashboard() {
                   </ul>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Floating chat */}
+            {profile.clienteId && (
+              <ChatFlutuante
+                declaracaoId={declaracao.id}
+                escritorioId={declaracao.escritorio_id}
+                clienteId={profile.clienteId}
+                unreadCount={unreadCount}
+              />
             )}
           </>
         )}
