@@ -1,59 +1,82 @@
 
 
-# Plano: Aplicar Marca Correta + Tipografia Poppins
+# Plano: Landing Page Premium — Redesign Completo
 
-## O Que Está Errado Hoje
+## Conceito
 
-1. **Logo pequeno demais** — `h-8 w-8` (32px) na sidebar, header, etc.
-2. **Nome "DeclaraIR" é texto** — deveria ser a imagem da wordmark (image-14.png) em todos os lugares
-3. **Tipografia errada** — usa DM Sans (body) e Syne (headings), precisa ser **Poppins** em tudo
+Reescrever `src/pages/Index.tsx` inteiramente, inspirado nos dois designs de referencia (Base e Apptek), misturando:
+- **Layout split hero** (texto esquerda + mockups flutuantes direita) como Base
+- **Formas organicas e floating badges** como Apptek
+- **Glassmorfismo** em cards, navbar e elementos flutuantes
+- **Animacoes CSS suaves** (float, fade-in on scroll, parallax leve)
+- **Screenshots reais do sistema** (dashboard, kanban, chat) como mockups no hero e secoes
 
-## Mudanças
+## Estrutura das Secoes
 
-### 1. Copiar Assets da Marca
+```text
+1. HEADER — glassmorfismo (bg-white/70 backdrop-blur-xl), logo maior, nav suave
+2. HERO — split layout:
+   - Esquerda: badge "Temporada IRPF 2026", h1 grande, subtitulo, 2 botoes (CTA primario + ghost)
+   - Direita: composicao de mockups flutuantes (screenshot do dashboard em card glass + mini cards com metricas flutuando ao redor com animacao float)
+   - Background: gradient mesh sutil com blobs animados (accent/primary)
+3. SOCIAL PROOF BAR — logos de parceiros/midias em faixa com gradiente accent
+4. SECAO "COMO FUNCIONA" — layout alternado (imagem esquerda + texto direita, depois inverte):
+   - Bloco 1: Screenshot do Kanban + texto "Organize todas as declaracoes"
+   - Bloco 2: Texto + Screenshot do Portal do Cliente
+   - Cada bloco com bullet points com icone check accent
+   - Cards com glassmorfismo (bg-white/60 backdrop-blur)
+5. FEATURES GRID — 6 cards com glassmorfismo, icone em circulo gradient, hover com scale + shadow
+6. METRICAS — fundo gradient primary, numeros grandes animados (counter), glass cards
+7. TESTIMONIALS — cards glass com foto avatar, estrelas, quote
+8. PRICING — igual atual mas com glassmorfismo nos cards
+9. FAQ — igual atual
+10. CTA FINAL — gradient accent->primary, botao grande
+11. FOOTER — mais completo com colunas (Produto, Empresa, Legal)
+```
 
-- `image-16.png` → `src/assets/logo-icon.png` (ícone "D" com seta, quadrado, para sidebar collapsed/favicon)
-- `image-14.png` → `src/assets/logo-full.png` (wordmark "DeclaraIR" texto)
-- `image-13.png` → `src/assets/logo-hero.png` (logo 3D grande para landing page hero)
-- `image-16.png` → `public/favicon.png` (favicon)
+## Tecnicas Visuais
 
-### 2. Tipografia Global → Poppins
+### Glassmorfismo
+- Navbar: `bg-white/70 backdrop-blur-xl border-b border-white/20`
+- Feature cards: `bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl`
+- Floating badges: `bg-white/80 backdrop-blur-md rounded-2xl shadow-lg`
 
-**`src/index.css`**: Trocar import do Google Fonts para Poppins (300-800). Remover DM Sans e Syne. Body e headings usam Poppins.
+### Animacoes CSS (em `src/index.css`)
+- `@keyframes float` — translateY sutil 6px, 3s infinite (para mockups)
+- `@keyframes float-delayed` — mesmo mas com delay
+- `@keyframes blob` — scale e translate suaves em blobs de fundo
+- `@keyframes counter` — para numeros das metricas
+- Intersection Observer hook para fade-in on scroll nos blocos
 
-**`tailwind.config.ts`**: Trocar `fontFamily.display` e `fontFamily.body` para Poppins.
+### Mockups do Sistema
+- Capturas de tela renderizadas como `<div>` estilizados (nao imagens), simulando:
+  - Dashboard com KPI cards e grafico de barras
+  - Kanban com colunas e cards coloridos
+  - Chat com baloes de mensagem
+- Envoltos em glass cards com sombra e rotacao leve (perspective + rotateY)
 
-A classe `font-display` continua existindo mas agora aponta para Poppins (weight 600-800 para headings).
+### Elementos Decorativos
+- Blobs gradient (accent/primary) com blur grande no background do hero
+- Circulos e dots decorativos flutuando (como Apptek)
+- Linhas de grid sutis no fundo (como Base)
 
-### 3. Aplicar Logo nos Componentes
+## Arquivos
 
-| Local | Antes | Depois |
-|-------|-------|--------|
-| **Sidebar** header | icon 32px + texto "DeclaraIR" | icon **40px** + wordmark img **h-7** |
-| **Landing** header | icon 32px + texto | icon **36px** + wordmark img **h-7** |
-| **Landing** footer | icon 24px + texto | icon **28px** + wordmark img **h-5** |
-| **Landing** hero | sem logo grande | adicionar `logo-hero.png` **h-24** acima do título |
-| **Login** | logo-full 48px | wordmark img **h-10** |
-| **Cadastro** desktop | icon 36px + texto | icon **44px** + wordmark img **h-8** |
-| **Cadastro** mobile | icon 32px + texto | icon **40px** + wordmark img **h-7** |
-| **Onboarding** header | icon 32px + texto | icon **40px** + wordmark img **h-7** |
+| Arquivo | Acao |
+|---------|------|
+| `src/pages/Index.tsx` | Reescrever completo |
+| `src/index.css` | Adicionar keyframes (float, blob, fade-in-up) e classes glass |
+| `src/hooks/useScrollReveal.ts` | Novo — hook com IntersectionObserver para animar elementos ao scroll |
 
-Em todos os locais, **remover o `<span>DeclaraIR</span>`** e substituir por `<img src={logoFull} className="h-7" />` (a wordmark real da marca).
+## Componentes Internos ao Index.tsx
 
-### 4. Arquivos Modificados
+Para manter organizado, o arquivo tera componentes inline:
+- `HeroMockup` — composicao de cards simulando telas do sistema
+- `FeatureShowcase` — bloco alternado imagem+texto
+- `MetricCounter` — numero animado com contagem
+- `GlassCard` — wrapper reutilizavel com glassmorfismo
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/index.css` | Font import → Poppins, body/headings font-family |
-| `tailwind.config.ts` | fontFamily.display e .body → Poppins |
-| `src/assets/logo-icon.png` | Substituir pelo image-16 |
-| `src/assets/logo-full.png` | Substituir pelo image-14 (wordmark) |
-| `src/assets/logo-hero.png` | Novo — image-13 (3D grande) |
-| `public/favicon.png` | Substituir pelo image-16 |
-| `src/components/layout/Sidebar.tsx` | Logo maior + wordmark img |
-| `src/pages/Index.tsx` | Logo maior + wordmark em header/footer + hero logo |
-| `src/pages/Login.tsx` | Wordmark maior |
-| `src/pages/Cadastro.tsx` | Logo + wordmark maiores |
-| `src/pages/Onboarding.tsx` | Logo + wordmark maiores |
-| `src/pages/RedefinirSenha.tsx` | Trocar ícone por logo real |
+## Dados Mantidos
+
+Todos os arrays de dados (features, plans, faqs, testimonials, metrics) permanecem iguais. Apenas o layout e visual mudam.
 
