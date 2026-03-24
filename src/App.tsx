@@ -32,6 +32,9 @@ import ClienteDocumentos from "./pages/cliente/ClienteDocumentos";
 import ClientePerfil from "./pages/ClientePerfil";
 import DeclaracaoDetalhe from "./pages/DeclaracaoDetalhe";
 import NotFound from "./pages/NotFound";
+import TermosDeUso from "./pages/TermosDeUso";
+import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
+import PoliticaLGPD from "./pages/PoliticaLGPD";
 
 const queryClient = new QueryClient();
 
