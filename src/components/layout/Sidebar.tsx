@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
+import logoIcon from '@/assets/logo-icon.png';
+import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
 import {
   Sidebar as ShadcnSidebar,
   SidebarContent,
