@@ -181,11 +181,29 @@ export default function Planos() {
                   </div>
                   <div className="mt-6">
                     {isCurrent ? (
-                      <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
+                      <div className="space-y-2">
+                        <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
+                        {planoAtual !== 'gratuito' && subData?.assinatura && (
+                          <Button
+                            className="w-full"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => cancelSub.mutate()}
+                            disabled={cancelSub.isPending}
+                          >
+                            Cancelar assinatura
+                          </Button>
+                        )}
+                      </div>
                     ) : plano.id === 'enterprise' ? (
                       <Button className="w-full" variant="outline">Falar com Vendas</Button>
+                    ) : plano.id === 'gratuito' ? (
+                      <Button className="w-full" variant="ghost" disabled>—</Button>
                     ) : (
-                      <Button className={`w-full ${plano.destaque ? 'bg-accent hover:bg-accent/90' : ''}`}>
+                      <Button
+                        className={`w-full ${plano.destaque ? 'bg-accent hover:bg-accent/90' : ''}`}
+                        onClick={() => navigate(`/checkout?plano=${plano.id}`)}
+                      >
                         {planoAtual === 'gratuito' ? 'Começar' : 'Upgrade'}
                       </Button>
                     )}
