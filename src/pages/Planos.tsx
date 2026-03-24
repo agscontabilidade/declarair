@@ -122,6 +122,7 @@ function FeatureValue({ value }: { value: boolean | string }) {
 }
 
 export default function Planos() {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const escritorioId = profile.escritorioId;
 
@@ -134,6 +135,8 @@ export default function Planos() {
     enabled: !!escritorioId,
   });
 
+  const { data: subData } = useSubscription();
+  const cancelSub = useCancelSubscription();
   const planoAtual = escritorio?.plano || 'gratuito';
 
   return (
