@@ -103,6 +103,22 @@ export default function Dashboard() {
             <Button onClick={() => setShowModal(true)} size="sm" className="gap-2">
               <Plus className="h-4 w-4" /> Nova Declaração
             </Button>
+            <div className="flex items-center border border-border rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`p-2 transition-colors ${viewMode === 'kanban' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                title="Visualização Kanban"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('lista')}
+                className={`p-2 transition-colors ${viewMode === 'lista' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                title="Visualização Lista"
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
             <Select value={String(anoBase)} onValueChange={(v) => setAnoBase(Number(v))}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
