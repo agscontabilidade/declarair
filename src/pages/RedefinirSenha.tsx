@@ -54,6 +54,7 @@ export default function RedefinirSenha() {
     try {
       const { error } = await supabase.auth.updateUser({ password: novaSenha });
       if (error) throw error;
+      await supabase.auth.signOut();
       toast({ title: 'Senha redefinida com sucesso!' });
       navigate('/login');
     } catch (err: any) {
