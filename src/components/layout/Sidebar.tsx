@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
+import logoIcon from '@/assets/logo-icon.png';
 import {
   Sidebar as ShadcnSidebar,
   SidebarContent,
@@ -40,9 +41,7 @@ export function AppSidebar() {
   return (
     <ShadcnSidebar collapsible="icon" className="border-r-0 bg-sidebar">
       <div className="flex h-16 items-center gap-3 px-4 border-b border-sidebar-border">
-        <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center text-accent-foreground text-xs font-bold shrink-0">
-          DI
-        </div>
+        <img src={logoIcon} alt="DeclaraIR" className="h-8 w-8 shrink-0" />
         {!collapsed && (
           <span className="font-display text-lg font-bold text-sidebar-foreground tracking-tight">
             DeclaraIR

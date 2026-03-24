@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
+import logoIcon from '@/assets/logo-icon.png';
 import {
   FileText, ArrowRight, ArrowLeft, Upload, User, Building2, Palette,
   CheckCircle2, Phone, Mail, MapPin, Camera
@@ -167,7 +168,7 @@ export default function Onboarding() {
       {/* Header */}
       <header className="border-b bg-card px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center text-accent-foreground text-xs font-bold">DI</div>
+          <img src={logoIcon} alt="DeclaraIR" className="h-8 w-8" />
           <span className="font-display text-lg font-bold text-foreground">DeclaraIR</span>
           <span className="text-muted-foreground text-sm ml-2">· Configuração Inicial</span>
         </div>

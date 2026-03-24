@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import logoIcon from '@/assets/logo-icon.png';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -175,7 +176,7 @@ export default function Cadastro() {
         <div className="absolute bottom-32 -left-16 w-56 h-56 rounded-3xl border border-primary-foreground/10 rotate-12" />
         <div className="relative z-10">
           <div className="flex items-center gap-2.5 mb-2">
-            <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center text-accent-foreground text-sm font-bold">DI</div>
+            <img src={logoIcon} alt="DeclaraIR" className="h-9 w-9" />
             <span className="font-display text-2xl font-bold text-primary-foreground">DeclaraIR</span>
           </div>
         </div>
@@ -199,7 +200,7 @@ export default function Cadastro() {
         <div className="w-full max-w-lg">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center text-accent-foreground text-xs font-bold">DI</div>
+            <img src={logoIcon} alt="DeclaraIR" className="h-8 w-8" />
             <span className="font-display text-xl font-bold text-foreground">DeclaraIR</span>
           </div>
 
