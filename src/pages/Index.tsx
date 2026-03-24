@@ -20,7 +20,6 @@ import avatarRoberto from '@/assets/avatar-roberto.jpg';
 import HeroMockup from '@/components/landing/HeroMockup';
 import GlassCard from '@/components/landing/GlassCard';
 import FeatureShowcase from '@/components/landing/FeatureShowcase';
-import FeatureShowcase from '@/components/landing/FeatureShowcase';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 /* ── Data ── */
