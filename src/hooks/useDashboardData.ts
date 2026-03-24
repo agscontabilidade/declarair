@@ -12,6 +12,7 @@ export interface DeclaracaoKanban {
   clientes: { nome: string; cpf: string } | null;
   contador: { nome: string } | null;
   pendingDocs: number;
+  totalDocs: number;
 }
 
 export function useDashboardData(anoBase: number) {
