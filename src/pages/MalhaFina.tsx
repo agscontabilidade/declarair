@@ -13,6 +13,16 @@ import { Shield, Search, RefreshCw, AlertTriangle, CheckCircle2, Clock, XCircle 
 import { useMalhaFina } from '@/hooks/useMalhaFina';
 import { formatCPF } from '@/lib/formatters';
 
+type ConsultaItem = {
+  id: string;
+  clientes?: { nome: string } | null;
+  cpf: string;
+  ano_base: number;
+  status_rfb: string;
+  ultimo_resultado?: string | null;
+  ultima_consulta?: string | null;
+};
+
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   nao_consultado: { label: 'Não Consultado', color: 'bg-muted text-muted-foreground', icon: Clock },
   em_processamento: { label: 'Em Processamento', color: 'bg-blue-100 text-blue-800', icon: Clock },
