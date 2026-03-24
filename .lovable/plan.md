@@ -1,134 +1,79 @@
 
 
-# Plano — Completar a Plataforma DeclaraIR
+# Plano — Recuperação de Senha
 
 ## Resumo
 
-7 blocos de correções e melhorias para tornar a plataforma 100% funcional. Nenhuma alteração de layout ou design system.
+Implementar fluxo completo de "Esqueci minha senha" para ambos os portais (Contador e Cliente), com 3 partes: link na tela de login, envio do email de reset, e página para definir nova senha.
 
 ---
 
-## Bloco A — Modal "Nova Declaração" no Dashboard
+## 1. Criar página `/recuperar-senha` (solicitar reset)
 
-**Arquivo: `src/pages/Dashboard.tsx`**
+**Novo arquivo: `src/pages/RecuperarSenha.tsx`**
 
-Adicionar estado `showNovaDeclaracao`, botão "Nova Declaração" no header ao lado do select de ano, e um modal inline (Dialog) com:
-- Select de cliente (query `clientes` do escritório)
-- Select de ano base (2023-2025)
-- Select de contador responsável (query `usuarios` do escritório)
+Página pública com o mesmo visual dos logins (Card centralizado, logo DeclaraIR). Campos:
+- Input de email
+- Botão "Enviar link de recuperação"
 
-Ao salvar:
-1. INSERT em `declaracoes` (cliente_id, escritorio_id, contador_id, ano_base, status='aguardando_documentos')
-2. INSERT em massa em `checklist_documentos` com os 10 itens padrão especificados
-3. INSERT em `formulario_ir` (declaracao_id, cliente_id, ano_base, status_preenchimento='nao_iniciado')
-4. Fechar modal, toast sucesso, invalidar queries
+Ao submeter, chama:
+```typescript
+await supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: `${window.location.origin}/redefinir-senha`
+});
+```
 
-Usa `supabase` diretamente no handler (mesmo padrão de `useClientePerfil.criarDeclaracao`). Importa `useClientes` para lista de clientes e `useQuery` para contadores.
-
----
-
-## Bloco B — Portal do Cliente Dashboard (dados reais)
-
-**Arquivo: `src/pages/cliente/ClienteDashboard.tsx`**
-
-O arquivo já usa `useClientePortal` que busca dados reais (declaração, checklist, formulário). Análise mostra que está **já conectado** corretamente:
-- `statusStep` calculado dinamicamente do status real
-- `pendentes` filtrado do checklist real
-- Empty state quando sem declaração
-- Skeleton durante loading
-
-**Ajuste necessário**: No card "Formulário IR", quando `formulario?.status_preenchimento === 'concluido'`, trocar texto para "Formulário Enviado ✓" e desabilitar o `onClick` de navegação. Atualmente o card é clicável independente do status.
+Após sucesso, exibe mensagem: "Se este email estiver cadastrado, você receberá um link para redefinir sua senha." Toast de sucesso. Botão "Voltar ao login".
 
 ---
 
-## Bloco C — Fix do Formulário IR (salvamento)
+## 2. Criar página `/redefinir-senha` (definir nova senha)
 
-**Arquivo: `src/hooks/useFormularioIR.ts`**
+**Novo arquivo: `src/pages/RedefinirSenha.tsx`**
 
-O hook já está correto — cria formulário com `cliente_id`, `declaracao_id`, `ano_base` (todos obrigatórios na tabela). O `saveToDb` faz UPDATE com o campo correto via `updateField(field, value)`. A interface `FormularioData` mapeia diretamente para as colunas do banco.
-
-**Nenhuma mudança necessária** — os campos já salvam nas colunas corretas (estado_civil, conjuge_nome, dependentes jsonb, etc.). O autosave com debounce 1.5s já funciona.
-
----
-
-## Bloco D — Declaração Detalhe (salvar resultado + ver formulário)
-
-**Arquivo: `src/pages/DeclaracaoDetalhe.tsx`**
-
-Já implementado corretamente:
-- `SecaoResultado` usa `useState` com `useEffect` para sincronizar (linhas 18-26 do componente)
-- `SecaoFormularioIR` mostra dados em acordeões quando concluído
-- `SecaoNotas` com autosave debounce 2s
-- `DeclaracaoHeader` com breadcrumb e dropdown de status
-
-**Nenhuma mudança necessária** — os componentes já estão conectados ao hook `useDeclaracao` que faz UPDATE real.
+Página pública que:
+1. No `useEffect`, detecta o evento `PASSWORD_RECOVERY` via `onAuthStateChange`
+2. Exibe formulário com dois campos: "Nova senha" e "Confirmar nova senha"
+3. Validações: mínimo 6 caracteres, senhas devem coincidir
+4. Ao submeter, chama `supabase.auth.updateUser({ password: novaSenha })`
+5. Após sucesso, toast "Senha redefinida com sucesso!" e redireciona para `/login`
+6. Se não houver sessão de recovery, exibe mensagem "Link inválido ou expirado" com botão para solicitar novo link
 
 ---
 
-## Bloco E — Configurações conectadas ao Supabase
+## 3. Adicionar link "Esqueci minha senha" nos logins
 
-**Arquivo: `src/pages/Configuracoes.tsx`** — Reescrever completamente
+**`src/pages/Login.tsx`** — Abaixo do botão "Entrar" (dentro da tab "entrar"), adicionar:
+```
+<button className="text-sm text-muted-foreground hover:text-primary">
+  Esqueceu sua senha?
+</button>
+```
+Ao clicar, navega para `/recuperar-senha`.
 
-4 abas usando Tabs component:
-
-**Aba Escritório:**
-- `useQuery(['escritorio', escritorioId])` → SELECT de `escritorios`
-- useState para cada campo (nome, email, telefone, cnpj)
-- Botão "Salvar" → UPDATE `escritorios`
-
-**Aba Usuários:**
-- Reutilizar query de `usuarios` do escritório (mesma do `useClientes.contadores`)
-- Tabela read-only: nome, email, papel, ativo (badge)
-
-**Aba Plano:**
-- Buscar `escritorio.plano` e `escritorio.limite_declaracoes`
-- Count de declarações do ano corrente: `SELECT count(*) FROM declaracoes WHERE escritorio_id AND ano_base = currentYear`
-- Mostrar uso: "X de Y declarações usadas"
-
-**Aba Integrações:** Manter placeholder "Em breve"
+**`src/pages/cliente/ClienteLogin.tsx`** — Mesmo link abaixo do botão "Entrar".
 
 ---
 
-## Bloco F — Gerador de Capa com auto-fill
+## 4. Registrar rotas no App.tsx
 
-Não existe nenhuma página de Capa no projeto (não há rota `/capa` no App.tsx, nem arquivo). A sidebar referencia `/capa` mas leva a 404.
-
-**Criar `src/pages/Capa.tsx`** — Página de geração de capa para declarações IRPF:
-- Select "Selecionar Cliente" que auto-preenche nome e CPF
-- Buscar nome do escritório do Supabase
-- Campos: nomeCliente, cpfCliente, anoBase, nomeEscritorio, nomeContador
-- Input de logo com preview via `URL.createObjectURL`
-- Preview visual da capa em card estilizado
-- Botão para imprimir (window.print)
-
-**Adicionar rota `/capa`** no App.tsx (única mudança no App.tsx)
-
----
-
-## Bloco G — Polimento Geral
-
-| Mudança | Arquivo |
-|---------|---------|
-| `overflow-x-auto` no container do grid do kanban | `src/components/dashboard/KanbanBoard.tsx` |
-| NotFound em português | `src/pages/NotFound.tsx` |
-| Footer do login © 2025–2026 | `src/pages/Login.tsx` (não tem footer atualmente, adicionar) |
-| Formulário IR card desabilitado quando concluído | `src/pages/cliente/ClienteDashboard.tsx` |
+Adicionar duas rotas públicas:
+```tsx
+<Route path="/recuperar-senha" element={<RecuperarSenha />} />
+<Route path="/redefinir-senha" element={<RedefinirSenha />} />
+```
 
 ---
 
 ## Resumo de Arquivos
 
-**Criar:**
-- `src/pages/Capa.tsx`
+| Ação | Arquivo |
+|------|---------|
+| Criar | `src/pages/RecuperarSenha.tsx` |
+| Criar | `src/pages/RedefinirSenha.tsx` |
+| Editar | `src/pages/Login.tsx` — link "Esqueceu sua senha?" |
+| Editar | `src/pages/cliente/ClienteLogin.tsx` — mesmo link |
+| Editar | `src/App.tsx` — 2 rotas públicas |
 
-**Modificar:**
-- `src/pages/Dashboard.tsx` — adicionar modal nova declaração
-- `src/pages/Configuracoes.tsx` — reescrever com 4 abas conectadas
-- `src/pages/cliente/ClienteDashboard.tsx` — ajuste card formulário concluído
-- `src/components/dashboard/KanbanBoard.tsx` — overflow-x-auto
-- `src/pages/NotFound.tsx` — traduzir para português
-- `src/pages/Login.tsx` — footer com ano
-- `src/App.tsx` — adicionar rota `/capa` (única adição)
-
-**Não modificar:** AuthContext, Sidebar, Header, DashboardLayout, hooks existentes, componentes de formulário IR, declaração detalhe, client portal.
+Nenhuma alteração de banco, design system ou dependências.
 
