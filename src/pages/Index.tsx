@@ -524,22 +524,6 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ── METRICS ── */}
-      <Section className="py-20 bg-gradient-to-br from-primary to-primary/90 relative overflow-hidden">
-        {/* Decorative */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent/5 rounded-full blur-3xl" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <h2 className="font-display text-3xl font-bold text-primary-foreground text-center mb-14">
-            Resultados que falam por si
-          </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {metrics.map((m) => (
-              <MetricCounter key={m.label} end={m.value} suffix={m.suffix} label={m.label} />
-            ))}
-          </div>
-        </div>
-      </Section>
 
       {/* ── TESTIMONIALS ── */}
       <Section className="py-20 lg:py-28">
