@@ -176,7 +176,7 @@ export default function Cadastro() {
         <div className="absolute bottom-32 -left-16 w-56 h-56 rounded-3xl border border-primary-foreground/10 rotate-12" />
         <div className="relative z-10">
           <div className="flex items-center gap-2.5 mb-2">
-            <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center text-accent-foreground text-sm font-bold">DI</div>
+            <img src={logoIcon} alt="DeclaraIR" className="h-9 w-9" />
             <span className="font-display text-2xl font-bold text-primary-foreground">DeclaraIR</span>
           </div>
         </div>
