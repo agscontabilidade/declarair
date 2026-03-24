@@ -98,7 +98,7 @@ export function useMalhaFina() {
 
   const consultarTodosMutation = useMutation({
     mutationFn: async () => {
-      for (const c of consultas) {
+      for (const c of consultas as any[]) {
         await consultMutation.mutateAsync(c.id);
         await new Promise(r => setTimeout(r, 300));
       }

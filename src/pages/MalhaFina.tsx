@@ -38,7 +38,7 @@ export default function MalhaFina() {
   const [selectedConsulta, setSelectedConsulta] = useState<any>(null);
   const [busca, setBusca] = useState('');
 
-  const items = consultas as ConsultaItem[];
+  const items = (consultas as unknown) as ConsultaItem[];
 
   const filtered = items.filter(c => {
     if (busca && !c.clientes?.nome?.toLowerCase().includes(busca.toLowerCase()) && !c.cpf.includes(busca.replace(/\D/g, ''))) return false;
