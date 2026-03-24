@@ -58,7 +58,7 @@ export default function Index() {
       <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-lg border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center text-accent-foreground text-xs font-bold">DI</div>
+            <img src={logoIcon} alt="DeclaraIR" className="h-8 w-8" />
             <span className="font-display text-xl font-bold text-foreground">DeclaraIR</span>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
