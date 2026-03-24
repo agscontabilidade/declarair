@@ -79,6 +79,7 @@ export default function Index() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 relative">
           <div className="text-center max-w-3xl mx-auto">
+            <img src={logoHero} alt="DeclaraIR" className="h-28 sm:h-36 mx-auto mb-8" />
             <Badge variant="secondary" className="mb-6 text-sm px-4 py-1.5">
               <Zap className="h-3.5 w-3.5 mr-1.5" /> Temporada IRPF 2026
             </Badge>
