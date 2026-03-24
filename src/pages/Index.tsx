@@ -197,7 +197,7 @@ export default function Index() {
                       </li>
                     ))}
                   </ul>
-                  <Link to="/login" className="block mt-6">
+                  <Link to="/cadastro" className="block mt-6">
                     <Button className="w-full" variant={p.popular ? 'default' : 'outline'}>{p.cta}</Button>
                   </Link>
                 </CardContent>
