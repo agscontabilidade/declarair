@@ -1,56 +1,71 @@
 
 
-# Plano: Auto-preenchimento de CNPJ e CEP
+# Plano: Adicionar Vida à Landing Page com Pessoas e Elementos Visuais
 
-## APIs Gratuitas
+## Conceito
 
-1. **CEP** — `https://viacep.com.br/ws/{cep}/json/` (ja usada no Onboarding)
-2. **CNPJ** — `https://brasilapi.com.br/api/cnpj/v1/{cnpj}` (gratuita, sem chave, retorna razao_social, nome_fantasia, logradouro, municipio, uf, cep, telefone, email)
+Inspirado na referencia (Biru), adicionar fotos reais de pessoas usando notebooks/celulares em posicoes estrategicas, mantendo as cores e marca. Usar imagens do Unsplash (gratuitas, sem chave) via URL direta.
 
-## Onde Aplicar
+## Mudancas
 
-| Local | Campo | API |
-|-------|-------|-----|
-| `src/pages/Onboarding.tsx` | CNPJ do escritorio | BrasilAPI CNPJ → preenche razao_social, nome_fantasia, email, telefone, cep, logradouro, bairro, cidade, uf |
-| `src/pages/Onboarding.tsx` | CEP | ViaCEP (ja existe, manter) |
-| `src/pages/Configuracoes.tsx` | CNPJ do escritorio | BrasilAPI CNPJ → preenche nome, email |
+### 1. Hero Section — Pessoa com Notebook ao Fundo do Mockup
 
-## Implementacao
+Adicionar uma foto de profissional (contador) com notebook como background da area direita do hero, por tras dos mockups flutuantes. A pessoa fica com opacidade parcial e um gradient overlay nas cores da marca, dando contexto humano sem competir com os mockups.
 
-### 1. Criar `src/lib/apiBrasil.ts` — Utilitarios compartilhados
-
-```typescript
-// Busca CNPJ na BrasilAPI (gratis, sem chave)
-export async function buscarCNPJ(cnpj: string) { ... }
-
-// Busca CEP na ViaCEP (gratis, sem chave)  
-export async function buscarCEP(cep: string) { ... }
+```text
+┌─────────────────────────────────────────────┐
+│  Texto CTA          │  [Foto pessoa]        │
+│  Badge IRPF 2026    │    ┌─────────┐        │
+│  H1 grande          │    │ Mockup  │ float  │
+│  Botoes             │    └─────────┘        │
+│                     │      ┌────┐ float     │
+│                     │      │KPI │           │
+│                     │      └────┘           │
+└─────────────────────────────────────────────┘
 ```
 
-Ambas funcoes retornam dados tipados ou `null` em caso de erro. Tratamento de loading e toast ficam no componente.
+### 2. Nova Secao "Deixe o Trabalho Pesado Conosco" (Inspirada na Referencia)
 
-### 2. `src/pages/Onboarding.tsx`
+Secao split com fundo primary, foto de pessoa usando celular no centro, e cards de beneficios flutuantes ao lado direito (como na referencia Biru — "Let us do the work"). Usa glassmorfismo nos cards.
 
-- Adicionar funcao `buscarCnpj()` chamada no `onBlur` do campo CNPJ
-- Quando CNPJ tem 14 digitos, chama BrasilAPI e preenche automaticamente: razaoSocial, nomeFantasia, emailEmpresa, telefoneEmpresa, cep, logradouro, bairro, cidade, uf
-- Apos preencher CEP vindo do CNPJ, nao precisa chamar ViaCEP novamente (ja vem do CNPJ)
-- Manter `buscarCep()` existente para edicao manual do CEP
-- Adicionar mascara CNPJ no onChange (ja existe `formatCnpj`)
-- Toast de feedback: "Dados do CNPJ preenchidos automaticamente"
+```text
+┌──────────────────────────────────────────────┐
+│ bg-primary/95                                │
+│ "Deixe a burocracia    [Foto pessoa     ┌──┐│
+│  conosco. Foque no      com celular]    │📱││
+│  que importa."                          └──┘│
+│                                        ┌──┐ │
+│ [Botao CTA]                            │💻│ │
+│                                        └──┘ │
+└──────────────────────────────────────────────┘
+```
 
-### 3. `src/pages/Configuracoes.tsx`
+### 3. Testimonials — Fotos Reais nos Avatares
 
-- Adicionar `onBlur` no campo CNPJ para buscar dados via BrasilAPI
-- Preencher nome e email do escritorio se estiverem vazios
-- Toast de feedback
+Substituir as iniciais por fotos de pessoas profissionais (Unsplash) nos depoimentos, dando mais credibilidade.
 
-### 4. Arquivos
+### 4. Social Proof — Logos de "Parceiros" Placeholder
+
+Adicionar faixa "Utilizado por +500 escritorios" com logos placeholder estilizados (usando texto/icones, sem imagens externas), similar a referencia.
+
+### 5. CTA Final — Background com Pessoa
+
+Adicionar imagem sutil de contador satisfeito no background do CTA final, com overlay gradient mantendo legibilidade.
+
+## Imagens (Unsplash — gratuitas)
+
+Usar URLs diretas do Unsplash para fotos profissionais:
+- Hero: Homem com notebook (business/tech)
+- Secao split: Pessoa com celular
+- Testimonials: 3 fotos de profissionais
+- CTA: Profissional sorrindo
+
+## Arquivos Modificados
 
 | Arquivo | Acao |
 |---------|------|
-| `src/lib/apiBrasil.ts` | Novo — funcoes `buscarCNPJ` e `buscarCEP` |
-| `src/pages/Onboarding.tsx` | Adicionar auto-fill CNPJ no onBlur, usar `buscarCNPJ` |
-| `src/pages/Configuracoes.tsx` | Adicionar auto-fill CNPJ no onBlur |
+| `src/pages/Index.tsx` | Adicionar secao split com pessoa, fotos nos testimonials, imagem no hero e CTA |
+| `src/components/landing/HeroMockup.tsx` | Adicionar foto de pessoa como background por tras dos mockups |
 
-Nenhuma chave de API necessaria. Ambas APIs sao 100% gratuitas e publicas.
+Nenhum arquivo novo. Apenas enriquecimento visual com imagens estrategicas de pessoas.
 
