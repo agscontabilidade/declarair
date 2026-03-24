@@ -1,79 +1,26 @@
 
 
-# Plano — Recuperação de Senha
+# Plano — Corrigir erro "Invalid login credentials" após redefinição de senha
 
-## Resumo
+## Diagnóstico
 
-Implementar fluxo completo de "Esqueci minha senha" para ambos os portais (Contador e Cliente), com 3 partes: link na tela de login, envio do email de reset, e página para definir nova senha.
+O problema ocorre porque, após `supabase.auth.updateUser({ password })` ter sucesso, o código faz `navigate('/login')` **sem encerrar a sessão de recovery**. O usuário chega na tela de login ainda com uma sessão ativa (do token de recovery). Ao tentar logar com a nova senha, o estado da sessão conflita e resulta em "Invalid login credentials".
 
----
+Além disso, o `AuthContext` também escuta `onAuthStateChange` e tenta carregar o perfil durante o evento `PASSWORD_RECOVERY`, criando uma condição de corrida.
 
-## 1. Criar página `/recuperar-senha` (solicitar reset)
+## Correção
 
-**Novo arquivo: `src/pages/RecuperarSenha.tsx`**
+**Arquivo: `src/pages/RedefinirSenha.tsx`** — Uma mudança no `handleSubmit`:
 
-Página pública com o mesmo visual dos logins (Card centralizado, logo DeclaraIR). Campos:
-- Input de email
-- Botão "Enviar link de recuperação"
+Após `updateUser` ter sucesso, chamar `supabase.auth.signOut()` **antes** de navegar para `/login`. Isso limpa a sessão de recovery e garante que o usuário possa fazer login limpo com a nova senha.
 
-Ao submeter, chama:
 ```typescript
-await supabase.auth.resetPasswordForEmail(email, {
-  redirectTo: `${window.location.origin}/redefinir-senha`
-});
+const { error } = await supabase.auth.updateUser({ password: novaSenha });
+if (error) throw error;
+await supabase.auth.signOut();  // ← adicionar esta linha
+toast({ title: 'Senha redefinida com sucesso!' });
+navigate('/login');
 ```
 
-Após sucesso, exibe mensagem: "Se este email estiver cadastrado, você receberá um link para redefinir sua senha." Toast de sucesso. Botão "Voltar ao login".
-
----
-
-## 2. Criar página `/redefinir-senha` (definir nova senha)
-
-**Novo arquivo: `src/pages/RedefinirSenha.tsx`**
-
-Página pública que:
-1. No `useEffect`, detecta o evento `PASSWORD_RECOVERY` via `onAuthStateChange`
-2. Exibe formulário com dois campos: "Nova senha" e "Confirmar nova senha"
-3. Validações: mínimo 6 caracteres, senhas devem coincidir
-4. Ao submeter, chama `supabase.auth.updateUser({ password: novaSenha })`
-5. Após sucesso, toast "Senha redefinida com sucesso!" e redireciona para `/login`
-6. Se não houver sessão de recovery, exibe mensagem "Link inválido ou expirado" com botão para solicitar novo link
-
----
-
-## 3. Adicionar link "Esqueci minha senha" nos logins
-
-**`src/pages/Login.tsx`** — Abaixo do botão "Entrar" (dentro da tab "entrar"), adicionar:
-```
-<button className="text-sm text-muted-foreground hover:text-primary">
-  Esqueceu sua senha?
-</button>
-```
-Ao clicar, navega para `/recuperar-senha`.
-
-**`src/pages/cliente/ClienteLogin.tsx`** — Mesmo link abaixo do botão "Entrar".
-
----
-
-## 4. Registrar rotas no App.tsx
-
-Adicionar duas rotas públicas:
-```tsx
-<Route path="/recuperar-senha" element={<RecuperarSenha />} />
-<Route path="/redefinir-senha" element={<RedefinirSenha />} />
-```
-
----
-
-## Resumo de Arquivos
-
-| Ação | Arquivo |
-|------|---------|
-| Criar | `src/pages/RecuperarSenha.tsx` |
-| Criar | `src/pages/RedefinirSenha.tsx` |
-| Editar | `src/pages/Login.tsx` — link "Esqueceu sua senha?" |
-| Editar | `src/pages/cliente/ClienteLogin.tsx` — mesmo link |
-| Editar | `src/App.tsx` — 2 rotas públicas |
-
-Nenhuma alteração de banco, design system ou dependências.
+Nenhum outro arquivo precisa ser alterado.
 
