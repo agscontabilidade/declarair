@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      assinaturas: {
+        Row: {
+          asaas_subscription_id: string | null
+          cancelado_em: string | null
+          ciclo: string
+          created_at: string
+          escritorio_id: string
+          id: string
+          plano: string
+          proxima_cobranca: string | null
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          asaas_subscription_id?: string | null
+          cancelado_em?: string | null
+          ciclo?: string
+          created_at?: string
+          escritorio_id: string
+          id?: string
+          plano?: string
+          proxima_cobranca?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          asaas_subscription_id?: string | null
+          cancelado_em?: string | null
+          ciclo?: string
+          created_at?: string
+          escritorio_id?: string
+          id?: string
+          plano?: string
+          proxima_cobranca?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinaturas_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: true
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_documentos: {
         Row: {
           arquivo_nome: string | null
@@ -435,6 +485,7 @@ export type Database = {
       }
       escritorios: {
         Row: {
+          asaas_customer_id: string | null
           chave_pix: string | null
           cnpj: string | null
           cor_fundo_portal: string | null
@@ -468,6 +519,7 @@ export type Database = {
           whitelabel_ativo: boolean | null
         }
         Insert: {
+          asaas_customer_id?: string | null
           chave_pix?: string | null
           cnpj?: string | null
           cor_fundo_portal?: string | null
@@ -501,6 +553,7 @@ export type Database = {
           whitelabel_ativo?: boolean | null
         }
         Update: {
+          asaas_customer_id?: string | null
           chave_pix?: string | null
           cnpj?: string | null
           cor_fundo_portal?: string | null
@@ -827,6 +880,72 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "notificacoes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagamentos_assinatura: {
+        Row: {
+          asaas_payment_id: string | null
+          assinatura_id: string | null
+          boleto_linha_digitavel: string | null
+          boleto_url: string | null
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string
+          escritorio_id: string
+          forma_pagamento: string | null
+          id: string
+          pix_qrcode: string | null
+          pix_qrcode_url: string | null
+          status: string
+          valor: number
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          assinatura_id?: string | null
+          boleto_linha_digitavel?: string | null
+          boleto_url?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          escritorio_id: string
+          forma_pagamento?: string | null
+          id?: string
+          pix_qrcode?: string | null
+          pix_qrcode_url?: string | null
+          status?: string
+          valor: number
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          assinatura_id?: string | null
+          boleto_linha_digitavel?: string | null
+          boleto_url?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          escritorio_id?: string
+          forma_pagamento?: string | null
+          id?: string
+          pix_qrcode?: string | null
+          pix_qrcode_url?: string | null
+          status?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_assinatura_assinatura_id_fkey"
+            columns: ["assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "assinaturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_assinatura_escritorio_id_fkey"
             columns: ["escritorio_id"]
             isOneToOne: false
             referencedRelation: "escritorios"

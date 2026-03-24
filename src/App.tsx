@@ -20,6 +20,8 @@ import Declaracoes from "./pages/Declaracoes";
 import Capa from "./pages/Capa";
 import Perfil from "./pages/Perfil";
 import Planos from "./pages/Planos";
+import Checkout from "./pages/Checkout";
+import Upgrade from "./pages/Upgrade";
 import Cadastro from "./pages/Cadastro";
 import Onboarding from "./pages/Onboarding";
 import MalhaFina from "./pages/MalhaFina";
@@ -86,6 +88,8 @@ const App = () => (
               <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><Mensagens /></ProtectedRoute>} />
               <Route path="/configuracoes" element={<ProtectedRoute allowedType="contador"><Configuracoes /></ProtectedRoute>} />
               <Route path="/planos" element={<ProtectedRoute allowedType="contador"><Planos /></ProtectedRoute>} />
+              <Route path="/checkout" element={<ProtectedRoute allowedType="contador"><Checkout /></ProtectedRoute>} />
+              <Route path="/upgrade" element={<ProtectedRoute allowedType="contador"><Upgrade /></ProtectedRoute>} />
               <Route path="/capa" element={<ProtectedRoute allowedType="contador"><Capa /></ProtectedRoute>} />
               <Route path="/malha-fina" element={<ProtectedRoute allowedType="contador"><MalhaFina /></ProtectedRoute>} />
               <Route path="/drive" element={<ProtectedRoute allowedType="contador"><Drive /></ProtectedRoute>} />

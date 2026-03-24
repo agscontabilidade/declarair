@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +7,7 @@ import { Check, X, Crown, Zap, Building2, Rocket } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubscription, useCancelSubscription } from '@/hooks/useBilling';
 
 const PLANOS = [
   {
@@ -120,6 +122,7 @@ function FeatureValue({ value }: { value: boolean | string }) {
 }
 
 export default function Planos() {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const escritorioId = profile.escritorioId;
 
@@ -132,6 +135,8 @@ export default function Planos() {
     enabled: !!escritorioId,
   });
 
+  const { data: subData } = useSubscription();
+  const cancelSub = useCancelSubscription();
   const planoAtual = escritorio?.plano || 'gratuito';
 
   return (
@@ -176,11 +181,29 @@ export default function Planos() {
                   </div>
                   <div className="mt-6">
                     {isCurrent ? (
-                      <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
+                      <div className="space-y-2">
+                        <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
+                        {planoAtual !== 'gratuito' && subData?.assinatura && (
+                          <Button
+                            className="w-full"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => cancelSub.mutate()}
+                            disabled={cancelSub.isPending}
+                          >
+                            Cancelar assinatura
+                          </Button>
+                        )}
+                      </div>
                     ) : plano.id === 'enterprise' ? (
                       <Button className="w-full" variant="outline">Falar com Vendas</Button>
+                    ) : plano.id === 'gratuito' ? (
+                      <Button className="w-full" variant="ghost" disabled>—</Button>
                     ) : (
-                      <Button className={`w-full ${plano.destaque ? 'bg-accent hover:bg-accent/90' : ''}`}>
+                      <Button
+                        className={`w-full ${plano.destaque ? 'bg-accent hover:bg-accent/90' : ''}`}
+                        onClick={() => navigate(`/checkout?plano=${plano.id}`)}
+                      >
                         {planoAtual === 'gratuito' ? 'Começar' : 'Upgrade'}
                       </Button>
                     )}
