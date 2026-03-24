@@ -74,7 +74,7 @@ export default function ClienteFormulario() {
       <ClienteLayout>
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="animate-in zoom-in-50 duration-500">
-            <CheckCircle2 className="h-20 w-20 text-emerald-500 mb-6" />
+            <CheckCircle2 className="h-20 w-20 text-success mb-6" />
           </div>
           <h2 className="font-display text-2xl font-bold text-foreground mb-2">Formulário Enviado!</h2>
           <p className="text-muted-foreground max-w-md">
