@@ -152,6 +152,10 @@ export default function Configuracoes() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="marca">
+            {escritorioId && <WhitelabelTab escritorioId={escritorioId} isDono={isDono} />}
+          </TabsContent>
+
           <TabsContent value="plano">
             <Card className="shadow-sm">
               <CardHeader>

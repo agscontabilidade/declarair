@@ -10,6 +10,8 @@ import { SecaoFormularioIR } from '@/components/declaracao/SecaoFormularioIR';
 import { SecaoResultado } from '@/components/declaracao/SecaoResultado';
 import { SecaoNotas } from '@/components/declaracao/SecaoNotas';
 import { SecaoCalculoIR } from '@/components/declaracao/SecaoCalculoIR';
+import { SecaoChat } from '@/components/declaracao/SecaoChat';
+import { SecaoTimeline } from '@/components/declaracao/SecaoTimeline';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -108,6 +110,9 @@ export default function DeclaracaoDetalhe() {
     );
   }
 
+  const clienteId = hook.declaracao?.clientes?.id;
+  const escritorioId = hook.declaracao?.escritorio_id;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -118,11 +123,13 @@ export default function DeclaracaoDetalhe() {
         />
 
         <Tabs defaultValue="documentos" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
-            <TabsTrigger value="formulario">Formulário IR</TabsTrigger>
+            <TabsTrigger value="formulario">Formulário</TabsTrigger>
             <TabsTrigger value="calculo">Cálculo IR</TabsTrigger>
-            <TabsTrigger value="resultado">Resultado & Notas</TabsTrigger>
+            <TabsTrigger value="resultado">Resultado</TabsTrigger>
+            <TabsTrigger value="chat">Mensagens</TabsTrigger>
+            <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
 
           <TabsContent value="documentos" className="mt-4">
@@ -163,6 +170,22 @@ export default function DeclaracaoDetalhe() {
               observacoes={hook.declaracao?.observacoes_internas ?? null}
               onSave={handleSaveNotas}
             />
+          </TabsContent>
+
+          <TabsContent value="chat" className="mt-4">
+            {clienteId && escritorioId && id ? (
+              <SecaoChat
+                declaracaoId={id}
+                escritorioId={escritorioId}
+                clienteId={clienteId}
+              />
+            ) : (
+              <p className="text-muted-foreground text-sm text-center py-8">Chat indisponível</p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="historico" className="mt-4">
+            {id && <SecaoTimeline declaracaoId={id} />}
           </TabsContent>
         </Tabs>
 
