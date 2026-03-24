@@ -53,8 +53,8 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
   const sendMessage = useMutation({
     mutationFn: async (conteudo: string) => {
       if (!declaracaoId || !escritorioId || !clienteId || !senderId) throw new Error('Dados incompletos');
-      const { error } = await supabase
-        .from('mensagens_chat' as any)
+      const { error } = await (supabase as any)
+        .from('mensagens_chat')
         .insert({
           declaracao_id: declaracaoId,
           escritorio_id: escritorioId,
