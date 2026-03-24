@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import logoIcon from '@/assets/logo-icon.png';
+import logoFull from '@/assets/logo-full.png';
 import {
   FileText, ArrowRight, ArrowLeft, Upload, User, Building2, Palette,
   CheckCircle2, Phone, Mail, MapPin, Camera
