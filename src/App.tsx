@@ -63,6 +63,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<RootRedirect />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/cadastro" element={<Cadastro />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/recuperar-senha" element={<RecuperarSenha />} />
               <Route path="/redefinir-senha" element={<RedefinirSenha />} />
               <Route path="/cliente/login" element={<ClienteLogin />} />

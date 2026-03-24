@@ -228,7 +228,7 @@ export default function Index() {
           <div className="bg-primary rounded-2xl p-10 sm:p-14 text-center">
             <h2 className="font-display text-3xl font-bold text-primary-foreground">Pronto para transformar sua temporada de IRPF?</h2>
             <p className="mt-4 text-primary-foreground/80 max-w-xl mx-auto">Crie sua conta gratuita em 30 segundos. Sem cartão de crédito.</p>
-            <Link to="/login">
+            <Link to="/cadastro">
               <Button size="lg" variant="secondary" className="mt-8 text-base px-8 h-12">
                 Começar Agora <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
