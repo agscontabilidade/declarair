@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import logoIcon from '@/assets/logo-icon.png';
+import logoFull from '@/assets/logo-full.png';
 
 export default function RedefinirSenha() {
   const navigate = useNavigate();
@@ -76,9 +78,9 @@ export default function RedefinirSenha() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-lg border-0">
         <CardHeader className="text-center pb-2">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <FileText className="h-8 w-8 text-accent" />
-            <span className="font-display text-2xl font-bold text-primary">DeclaraIR</span>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <img src={logoIcon} alt="DeclaraIR" className="h-11 w-11" />
+            <img src={logoFull} alt="DeclaraIR" className="h-10" />
           </div>
           <CardTitle className="font-display text-xl">
             {recovery ? 'Redefinir Senha' : 'Link Inválido'}

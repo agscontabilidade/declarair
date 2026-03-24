@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
+import logoHero from '@/assets/logo-hero.png';
 
 const features = [
   { icon: Layout, title: 'Dashboard Kanban', desc: 'Visualize todas as declarações em um quadro intuitivo com drag & drop e KPIs em tempo real.' },
@@ -57,9 +58,9 @@ export default function Index() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-lg border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={logoIcon} alt="DeclaraIR" className="h-8 w-8" />
-            <span className="font-display text-xl font-bold text-foreground">DeclaraIR</span>
+          <div className="flex items-center gap-2.5">
+            <img src={logoIcon} alt="DeclaraIR" className="h-9 w-9" />
+            <img src={logoFull} alt="DeclaraIR" className="h-7" />
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#features" className="hover:text-foreground transition-colors">Funcionalidades</a>
@@ -78,6 +79,7 @@ export default function Index() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 relative">
           <div className="text-center max-w-3xl mx-auto">
+            <img src={logoHero} alt="DeclaraIR" className="h-28 sm:h-36 mx-auto mb-8" />
             <Badge variant="secondary" className="mb-6 text-sm px-4 py-1.5">
               <Zap className="h-3.5 w-3.5 mr-1.5" /> Temporada IRPF 2026
             </Badge>
@@ -243,9 +245,9 @@ export default function Index() {
       <footer className="border-t py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <img src={logoIcon} alt="DeclaraIR" className="h-6 w-6" />
-              <span className="font-display text-sm font-bold text-foreground">DeclaraIR</span>
+            <div className="flex items-center gap-2.5">
+              <img src={logoIcon} alt="DeclaraIR" className="h-7 w-7" />
+              <img src={logoFull} alt="DeclaraIR" className="h-5" />
             </div>
             <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} DeclaraIR. Todos os direitos reservados.</p>
           </div>

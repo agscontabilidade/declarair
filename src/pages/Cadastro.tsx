@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import logoIcon from '@/assets/logo-icon.png';
+import logoFull from '@/assets/logo-full.png';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -175,9 +176,9 @@ export default function Cadastro() {
         <div className="absolute top-20 -right-20 w-72 h-72 rounded-full border border-primary-foreground/10" />
         <div className="absolute bottom-32 -left-16 w-56 h-56 rounded-3xl border border-primary-foreground/10 rotate-12" />
         <div className="relative z-10">
-          <div className="flex items-center gap-2.5 mb-2">
-            <img src={logoIcon} alt="DeclaraIR" className="h-9 w-9" />
-            <span className="font-display text-2xl font-bold text-primary-foreground">DeclaraIR</span>
+          <div className="flex items-center gap-3 mb-2">
+            <img src={logoIcon} alt="DeclaraIR" className="h-11 w-11" />
+            <img src={logoFull} alt="DeclaraIR" className="h-8 brightness-0 invert" />
           </div>
         </div>
         <div className="relative z-10 space-y-6">
@@ -199,9 +200,9 @@ export default function Cadastro() {
       <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 overflow-y-auto">
         <div className="w-full max-w-lg">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <img src={logoIcon} alt="DeclaraIR" className="h-8 w-8" />
-            <span className="font-display text-xl font-bold text-foreground">DeclaraIR</span>
+          <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
+            <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10" />
+            <img src={logoFull} alt="DeclaraIR" className="h-7" />
           </div>
 
           <StepIndicator currentStep={step} />

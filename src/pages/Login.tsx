@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import logoFull from '@/assets/logo-full.png';
+import logoIcon from '@/assets/logo-icon.png';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -35,8 +36,9 @@ export default function Login() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative">
       <Card className="w-full max-w-md shadow-lg border-0">
         <CardHeader className="text-center pb-2">
-          <div className="flex items-center justify-center mb-4">
-            <img src={logoFull} alt="DeclaraIR" className="h-12" />
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <img src={logoIcon} alt="DeclaraIR" className="h-11 w-11" />
+            <img src={logoFull} alt="DeclaraIR" className="h-10" />
           </div>
           <CardTitle className="font-display text-xl">Área do Contador</CardTitle>
           <CardDescription>Gerencie declarações IRPF do seu escritório</CardDescription>

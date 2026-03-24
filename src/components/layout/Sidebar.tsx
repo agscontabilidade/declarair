@@ -4,6 +4,7 @@ import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
 import logoIcon from '@/assets/logo-icon.png';
+import logoFull from '@/assets/logo-full.png';
 import {
   Sidebar as ShadcnSidebar,
   SidebarContent,
@@ -41,11 +42,9 @@ export function AppSidebar() {
   return (
     <ShadcnSidebar collapsible="icon" className="border-r-0 bg-sidebar">
       <div className="flex h-16 items-center gap-3 px-4 border-b border-sidebar-border">
-        <img src={logoIcon} alt="DeclaraIR" className="h-8 w-8 shrink-0" />
+        <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10 shrink-0" />
         {!collapsed && (
-          <span className="font-display text-lg font-bold text-sidebar-foreground tracking-tight">
-            DeclaraIR
-          </span>
+          <img src={logoFull} alt="DeclaraIR" className="h-7" />
         )}
       </div>
 

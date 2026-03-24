@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import logoIcon from '@/assets/logo-icon.png';
+import logoFull from '@/assets/logo-full.png';
 import {
   FileText, ArrowRight, ArrowLeft, Upload, User, Building2, Palette,
   CheckCircle2, Phone, Mail, MapPin, Camera
@@ -167,9 +168,9 @@ export default function Onboarding() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b bg-card px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <img src={logoIcon} alt="DeclaraIR" className="h-8 w-8" />
-          <span className="font-display text-lg font-bold text-foreground">DeclaraIR</span>
+        <div className="flex items-center gap-3">
+          <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10" />
+          <img src={logoFull} alt="DeclaraIR" className="h-7" />
           <span className="text-muted-foreground text-sm ml-2">· Configuração Inicial</span>
         </div>
         <span className="text-sm text-muted-foreground">Passo {step + 1} de {STEPS.length}</span>

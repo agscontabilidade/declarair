@@ -1,4 +1,6 @@
-import { FileText, Home, ClipboardList, Upload, LogOut } from 'lucide-react';
+import { Home, ClipboardList, Upload, LogOut } from 'lucide-react';
+import logoIcon from '@/assets/logo-icon.png';
+import logoFull from '@/assets/logo-full.png';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -49,16 +51,20 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
       <header className="h-16 flex items-center justify-between border-b bg-card px-6 shrink-0">
         <div className="flex items-center gap-3">
           {whitelabelAtivo && logoUrl ? (
-            <img src={logoUrl} alt={nomePortal} className="h-8 w-8 rounded-lg object-contain" />
+            <img src={logoUrl} alt={nomePortal} className="h-10 w-10 rounded-lg object-contain" />
           ) : (
-            <FileText className="h-6 w-6 text-accent" />
+            <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10" />
           )}
-          <span
-            className="font-display text-lg font-bold"
-            style={whitelabelAtivo ? { color: corPrimaria } : undefined}
-          >
-            {nomePortal}
-          </span>
+          {whitelabelAtivo ? (
+            <span
+              className="font-display text-lg font-bold"
+              style={{ color: corPrimaria }}
+            >
+              {nomePortal}
+            </span>
+          ) : (
+            <img src={logoFull} alt="DeclaraIR" className="h-7" />
+          )}
         </div>
         <nav className="flex items-center gap-1">
           {navItems.map((item) => (
