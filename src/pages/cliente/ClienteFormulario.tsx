@@ -30,14 +30,14 @@ export default function ClienteFormulario() {
   const [step, setStep] = useState(0);
   const [confirmado, setConfirmado] = useState(false);
   const [concluido, setConcluido] = useState(false);
-  const [perfilFiscal, setPerfilFiscal] = useState<PerfilFiscal>(
-    (formulario as any)?.perfil_fiscal && Object.keys((formulario as any).perfil_fiscal).length > 0
-      ? (formulario as any).perfil_fiscal
-      : DEFAULT_PERFIL
-  );
+  const [perfilFiscal, setPerfilFiscal] = useState<PerfilFiscal>(DEFAULT_PERFIL);
 
   // Sync perfil when formulario loads
-  useState(() => {
+  useEffect(() => {
+    if ((formulario as any)?.perfil_fiscal && Object.keys((formulario as any).perfil_fiscal).length > 0) {
+      setPerfilFiscal((formulario as any).perfil_fiscal);
+    }
+  }, [formulario]);
     if ((formulario as any)?.perfil_fiscal && Object.keys((formulario as any).perfil_fiscal).length > 0) {
       setPerfilFiscal((formulario as any).perfil_fiscal);
     }
