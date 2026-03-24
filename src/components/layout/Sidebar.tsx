@@ -30,6 +30,7 @@ const navItems = [
 export function AppSidebar() {
   const { profile, signOut } = useAuth();
   const { state } = useSidebar();
+  const navigate = useNavigate();
   const collapsed = state === 'collapsed';
   const atrasadas = useCobrancasAtrasadas();
 
