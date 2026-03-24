@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import {
   FileText, Shield, Zap, Users, Bell, CheckCircle2,
   ArrowRight, Star, Layout, MessageSquare, Send, Monitor, Smartphone, Lock,
-  Clock, Briefcase, TrendingUp,
+  Clock, Briefcase, TrendingUp, BarChart3, FolderCheck, Receipt, Palette,
 } from 'lucide-react';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
