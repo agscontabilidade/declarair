@@ -66,7 +66,7 @@ export default function Index() {
           </nav>
           <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" size="sm">Entrar</Button></Link>
-            <Link to="/login"><Button size="sm">Começar Grátis</Button></Link>
+            <Link to="/cadastro"><Button size="sm">Começar Grátis</Button></Link>
           </div>
         </div>
       </header>
@@ -87,7 +87,7 @@ export default function Index() {
               Plataforma completa para escritórios de contabilidade: do checklist inteligente à transmissão, com portal do cliente whitelabel e monitoramento de malha fina.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/login">
+              <Link to="/cadastro">
                 <Button size="lg" className="text-base px-8 h-12">
                   Começar Grátis <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -197,7 +197,7 @@ export default function Index() {
                       </li>
                     ))}
                   </ul>
-                  <Link to="/login" className="block mt-6">
+                  <Link to="/cadastro" className="block mt-6">
                     <Button className="w-full" variant={p.popular ? 'default' : 'outline'}>{p.cta}</Button>
                   </Link>
                 </CardContent>
@@ -228,7 +228,7 @@ export default function Index() {
           <div className="bg-primary rounded-2xl p-10 sm:p-14 text-center">
             <h2 className="font-display text-3xl font-bold text-primary-foreground">Pronto para transformar sua temporada de IRPF?</h2>
             <p className="mt-4 text-primary-foreground/80 max-w-xl mx-auto">Crie sua conta gratuita em 30 segundos. Sem cartão de crédito.</p>
-            <Link to="/login">
+            <Link to="/cadastro">
               <Button size="lg" variant="secondary" className="mt-8 text-base px-8 h-12">
                 Começar Agora <ArrowRight className="h-4 w-4 ml-2" />
               </Button>

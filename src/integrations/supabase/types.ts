@@ -435,66 +435,102 @@ export type Database = {
       }
       escritorios: {
         Row: {
+          chave_pix: string | null
           cnpj: string | null
           cor_fundo_portal: string | null
           cor_primaria: string | null
           created_at: string
           declaracoes_utilizadas: number | null
           email: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_complemento: string | null
+          endereco_logradouro: string | null
+          endereco_numero: string | null
+          endereco_uf: string | null
           favicon_url: string | null
           id: string
           limite_declaracoes: number | null
           logo_url: string | null
           nome: string
+          nome_fantasia: string | null
           nome_portal: string | null
+          onboarding_completo: boolean
           plano: string | null
           plano_expira_em: string | null
+          razao_social: string | null
           storage_limite_mb: number | null
           telefone: string | null
           texto_boas_vindas: string | null
           usuarios_limite: number | null
+          whatsapp: string | null
           whitelabel_ativo: boolean | null
         }
         Insert: {
+          chave_pix?: string | null
           cnpj?: string | null
           cor_fundo_portal?: string | null
           cor_primaria?: string | null
           created_at?: string
           declaracoes_utilizadas?: number | null
           email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_complemento?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
+          endereco_uf?: string | null
           favicon_url?: string | null
           id?: string
           limite_declaracoes?: number | null
           logo_url?: string | null
           nome: string
+          nome_fantasia?: string | null
           nome_portal?: string | null
+          onboarding_completo?: boolean
           plano?: string | null
           plano_expira_em?: string | null
+          razao_social?: string | null
           storage_limite_mb?: number | null
           telefone?: string | null
           texto_boas_vindas?: string | null
           usuarios_limite?: number | null
+          whatsapp?: string | null
           whitelabel_ativo?: boolean | null
         }
         Update: {
+          chave_pix?: string | null
           cnpj?: string | null
           cor_fundo_portal?: string | null
           cor_primaria?: string | null
           created_at?: string
           declaracoes_utilizadas?: number | null
           email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_complemento?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
+          endereco_uf?: string | null
           favicon_url?: string | null
           id?: string
           limite_declaracoes?: number | null
           logo_url?: string | null
           nome?: string
+          nome_fantasia?: string | null
           nome_portal?: string | null
+          onboarding_completo?: boolean
           plano?: string | null
           plano_expira_em?: string | null
+          razao_social?: string | null
           storage_limite_mb?: number | null
           telefone?: string | null
           texto_boas_vindas?: string | null
           usuarios_limite?: number | null
+          whatsapp?: string | null
           whitelabel_ativo?: boolean | null
         }
         Relationships: []
@@ -884,30 +920,36 @@ export type Database = {
       usuarios: {
         Row: {
           ativo: boolean
+          avatar_url: string | null
           created_at: string
           email: string
           escritorio_id: string
           id: string
           nome: string
           papel: string
+          telefone: string | null
         }
         Insert: {
           ativo?: boolean
+          avatar_url?: string | null
           created_at?: string
           email: string
           escritorio_id: string
           id: string
           nome: string
           papel?: string
+          telefone?: string | null
         }
         Update: {
           ativo?: boolean
+          avatar_url?: string | null
           created_at?: string
           email?: string
           escritorio_id?: string
           id?: string
           nome?: string
           papel?: string
+          telefone?: string | null
         }
         Relationships: [
           {

@@ -9,6 +9,7 @@ interface UserProfile {
   papel: string | null;
   nome: string | null;
   clienteId: string | null;
+  onboardingCompleto: boolean | null;
 }
 
 interface AuthContextType {
@@ -24,7 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   userType: null,
-  profile: { escritorioId: null, papel: null, nome: null, clienteId: null },
+  profile: { escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null },
   loading: true,
   signOut: async () => {},
 });
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     papel: null,
     nome: null,
     clienteId: null,
+    onboardingCompleto: null,
   });
   const [loading, setLoading] = useState(true);
 
@@ -50,12 +52,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .maybeSingle();
 
     if (usuario) {
+      // Fetch onboarding status from escritorio
+      let onboardingCompleto: boolean | null = null;
+      if (usuario.escritorio_id) {
+        const { data: esc } = await supabase
+          .from('escritorios')
+          .select('onboarding_completo')
+          .eq('id', usuario.escritorio_id)
+          .maybeSingle();
+        onboardingCompleto = (esc as any)?.onboarding_completo ?? false;
+      }
+
       setUserType('contador');
       setProfile({
         escritorioId: usuario.escritorio_id,
         papel: usuario.papel,
         nome: usuario.nome,
         clienteId: null,
+        onboardingCompleto,
       });
       return;
     }
@@ -74,12 +88,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         papel: null,
         nome: cliente.nome,
         clienteId: cliente.id,
+        onboardingCompleto: null,
       });
       return;
     }
 
     setUserType(null);
-    setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null });
+    setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null });
   }
 
   useEffect(() => {
@@ -92,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTimeout(() => loadProfile(newSession.user), 0);
         } else {
           setUserType(null);
-          setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null });
+          setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null });
           setLoading(false);
         }
       }
