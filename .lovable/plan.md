@@ -1,54 +1,99 @@
 
 
-# Plano — Redesign da Capa IR + Perfil do Usuário Logado
+# Plano: Onboarding Guiado para Contadores (Cadastro + Configuração Inicial)
 
-## 1. Redesign da Capa IR (`src/pages/Capa.tsx`)
+## Visao Geral
 
-**Referência**: A capa PDF do AGSCont tem layout profissional com fundo gradiente azul escuro/azul, formas geométricas decorativas (retângulos arredondados), logo no topo, título grande "IMPOSTO DE RENDA 2025", nome do cliente em destaque, contador, e rodapé com telefone/email/endereço.
+Transformar o fluxo atual de cadastro (um formulario simples em Login.tsx) em um wizard completo de 3 etapas no cadastro + 4 etapas de configuracao inicial pos-login, inspirado no concorrente mas superior.
 
-**O que mudar no preview da capa:**
+O contador NAO acessa o dashboard ate completar o onboarding. Um campo `onboarding_completo` na tabela `escritorios` controla isso.
 
-- Substituir o card branco simples por um layout A4 vertical (aspect-ratio 210/297) com fundo gradiente navy → azul (`from-[#1a2a4a] via-[#1e3a6e] to-[#2563eb]`)
-- Adicionar formas geométricas decorativas (rounded-rect outlines) posicionadas com absolute nas bordas (canto superior direito, inferior esquerdo, centro direito) — puro CSS/divs
-- Logo do escritório no topo esquerdo (grande, com fallback para nome)
-- Título "IMPOSTO DE RENDA {ano}" em fonte bold branca com o ano em cor accent/cyan
-- Nome do cliente centralizado, grande, branco
-- Seção "Contador(a): NOME" alinhada à esquerda
-- Rodapé com ícones de telefone, email e endereço do escritório (buscar da tabela `escritorios`)
-- Adicionar campos no formulário: telefone e email do escritório (pré-preenchidos do cadastro)
-- CSS `@media print` para garantir que a capa imprima em A4 perfeita, sem header/sidebar, com cores mantidas (`-webkit-print-color-adjust: exact`)
+## Arquitetura do Fluxo
 
-**Formulário (lado esquerdo) — melhorias:**
-- Adicionar campos: Telefone e Email do escritório
-- Manter auto-preenchimento ao selecionar cliente
-- Buscar dados do escritório (telefone, email) automaticamente
+```text
+Landing Page → /cadastro (wizard 3 steps) → Login → /onboarding (wizard 4 steps) → Dashboard
 
-## 2. Página de Perfil do Usuário Logado
+CADASTRO (/cadastro):
+  Step 1: Dados pessoais (nome, email, telefone, CPF, senha)
+  Step 2: Escolha do plano (cards selecionaveis, popup upsell ao escolher gratis)
+  Step 3: Revisao + Criar Conta
 
-**Referência**: A imagem mostra a aba "Usuários" em Configurações com uma tabela básica. O pedido é ter uma configuração completa do perfil individual.
+ONBOARDING (/onboarding) — pos-login, modal fullscreen:
+  Step 1: Bem-vindo — overview do que sera configurado
+  Step 2: Perfil — foto do contador (upload avatar)
+  Step 3: Dados da Empresa — razao social*, CNPJ*, nome fantasia, email, telefone, whatsapp, chave PIX, endereco completo (CEP, logradouro, numero, complemento, bairro, cidade, UF), logo
+  Step 4: Identidade Visual — cores e whitelabel (simplificado)
 
-**Criar nova rota `/perfil` ou expandir o footer da sidebar:**
+  * Razao social e CNPJ sao obrigatorios — nao avanca sem preencher.
+```
 
-Ao clicar no avatar/nome no footer da sidebar, abrir página `/perfil` com:
+## Mudancas no Banco de Dados
 
-- **Card "Meu Perfil"**: Avatar (iniciais), nome, email, papel (badge), status
-- **Dados pessoais editáveis**: Nome completo, email (readonly, vem do auth), telefone
-- **Seção "Minhas Declarações"**: Lista das declarações atribuídas ao contador logado, com status e link direto
-- **Seção "Permissões"**: Exibição visual do nível de acesso (Dono/Admin/Contador/Operador) com lista de o que pode e não pode fazer
-- **Seção "Atividade Recente"**: Últimas ações (declarações movidas, documentos aprovados)
-- **Botão "Alterar Senha"**: Redireciona para fluxo de recuperação
+**Migration**: Adicionar coluna `onboarding_completo` (boolean default false) + campos de endereco na tabela `escritorios`:
+- `onboarding_completo` boolean default false
+- `razao_social` text
+- `nome_fantasia` text
+- `whatsapp` text
+- `chave_pix` text
+- `endereco_cep` text
+- `endereco_logradouro` text
+- `endereco_numero` text
+- `endereco_complemento` text
+- `endereco_bairro` text
+- `endereco_cidade` text
+- `endereco_uf` text
 
-**Arquivos:**
-- Criar `src/pages/Perfil.tsx`
-- Editar `src/components/layout/Sidebar.tsx` — link no avatar/nome para `/perfil`
-- Editar `src/App.tsx` — adicionar rota `/perfil`
+Adicionar campo `telefone` e `avatar_url` na tabela `usuarios`.
+
+## Arquivos a Criar
+
+1. **`src/pages/Cadastro.tsx`** — Wizard de 3 steps com layout split (ilustracao a esquerda, formulario a direita). Stepper visual (Dados → Plano → Pagamento). Inclui:
+   - Step 1: nome, email, telefone, CPF do contador, senha
+   - Step 2: Cards de plano selecionaveis (Gratuito, Start, Profissional, Enterprise). Ao selecionar Gratuito e clicar Continuar, popup Dialog "Antes de continuar..." induzindo upgrade ao Profissional com timer e beneficios
+   - Step 3: Resumo dos dados + plano selecionado com botoes "Editar" e "Alterar". Botao "Criar Conta Gratis" / "Assinar [Plano]"
+
+2. **`src/pages/Onboarding.tsx`** — Modal fullscreen (Dialog sem fechar) com 4 steps e barra de progresso. Header com logo DeclaraIR + "Configuracao Inicial" + "Passo X de 4". Inclui:
+   - Step 1: Boas-vindas com overview das etapas (Perfil, Empresa, Identidade)
+   - Step 2: Upload de foto de perfil (avatar circular com dashed border + botao "Subir Foto")
+   - Step 3: Dados da empresa (logo, razao social*, nome fantasia, CNPJ*, email, telefone, whatsapp, chave PIX, endereco completo). Validacao: nao avanca sem razao social e CNPJ. Toast de erro se tentar avancar sem
+   - Step 4: Cores primarias e finalizacao. Botao "Concluir e Acessar o Dashboard"
+
+3. **`src/components/cadastro/UpsellModal.tsx`** — Dialog "Antes de continuar..." com beneficios do plano Profissional, timer de oferta, botoes "Assinar o Profissional" e "Continuar com o gratis"
+
+## Arquivos a Modificar
+
+1. **`src/App.tsx`** — Adicionar rota `/cadastro` e `/onboarding`
+2. **`src/pages/Login.tsx`** — Remover aba "Criar Conta", adicionar link "Criar conta" apontando para `/cadastro`
+3. **`src/contexts/AuthContext.tsx`** — Carregar `onboarding_completo` do escritorio no profile
+4. **`src/components/ProtectedRoute.tsx`** — Se `onboarding_completo === false`, redirecionar para `/onboarding` ao inves do dashboard
+5. **`src/pages/Index.tsx`** — Trocar links de "Comecar Gratis" de `/login` para `/cadastro`
+
+## Design
+
+- Layout split: lado esquerdo cinza claro com ilustracao line-art + texto motivacional ("Comece sua jornada"), lado direito branco com formulario
+- Stepper circular no topo (numeros com check quando completado, linha conectando)
+- Cards de plano com borda highlight verde quando selecionado, badge "Popular" no Profissional
+- Onboarding como overlay fullscreen branco (sem sidebar), nao permite fechar
+- Botoes primarios verde escuro (#3d5a50) seguindo o padrao do concorrente
+
+## Logica de Bloqueio
+
+No `ProtectedRoute`, apos autenticar como contador:
+- Buscar `escritorios.onboarding_completo` via query
+- Se `false`, redirecionar para `/onboarding`
+- No step 3 do onboarding, validar razao_social e cnpj antes de avancar
+- Ao concluir step 4, setar `onboarding_completo = true` e redirecionar ao dashboard
 
 ## Resumo de Entregas
 
-| Entrega | Arquivo | Complexidade |
-|---------|---------|-------------|
-| Capa redesenhada estilo profissional | `src/pages/Capa.tsx` | Média |
-| CSS print otimizado para A4 | `src/pages/Capa.tsx` + `src/App.css` | Baixa |
-| Página de perfil do usuário | `src/pages/Perfil.tsx` (novo) | Média |
-| Rota + sidebar link | `App.tsx` + `Sidebar.tsx` | Baixa |
+| Entrega | Arquivo | Tipo |
+|---------|---------|------|
+| Migration DB | migration SQL | Novo |
+| Wizard de Cadastro | `src/pages/Cadastro.tsx` | Novo |
+| Modal Upsell | `src/components/cadastro/UpsellModal.tsx` | Novo |
+| Wizard Onboarding | `src/pages/Onboarding.tsx` | Novo |
+| ProtectedRoute bloqueio | `src/components/ProtectedRoute.tsx` | Editar |
+| AuthContext + profile | `src/contexts/AuthContext.tsx` | Editar |
+| Login simplificado | `src/pages/Login.tsx` | Editar |
+| Rotas + links | `src/App.tsx`, `src/pages/Index.tsx` | Editar |
 
