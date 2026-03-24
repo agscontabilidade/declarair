@@ -76,8 +76,8 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
     const field = senderType === 'contador' ? 'lida_pelo_contador' : 'lida_por_cliente';
     const unread = messages.filter(m => !(m as any)[field] && m.remetente_tipo !== senderType);
     if (unread.length === 0) return;
-    await supabase
-      .from('mensagens_chat' as any)
+    await (supabase as any)
+      .from('mensagens_chat')
       .update({ [field]: true })
       .in('id', unread.map(m => m.id));
   }, [declaracaoId, messages, senderType]);

@@ -22,9 +22,9 @@ interface Props {
 }
 
 export function SecaoChat({ declaracaoId, escritorioId, clienteId }: Props) {
-  const { profile } = useAuth();
-  const senderId = profile.userId;
-  const senderType = profile.userType === 'cliente' ? 'cliente' as const : 'contador' as const;
+  const { profile, user } = useAuth();
+  const senderId = user?.id;
+  const senderType = profile.clienteId ? 'cliente' as const : 'contador' as const;
   const { messages, isLoading, sendMessage, markRead, unreadCount } = useChat(
     declaracaoId, escritorioId, clienteId, senderType, senderId
   );
