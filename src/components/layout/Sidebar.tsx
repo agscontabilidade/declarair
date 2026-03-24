@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, FileText, DollarSign, MessageSquare, Settings, LogOut, Newspaper } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, DollarSign, MessageSquare, Settings, LogOut, Newspaper, Shield, FolderOpen } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
@@ -19,6 +19,8 @@ const navItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
   { title: 'Declarações', url: '/declaracoes', icon: FileText },
   { title: 'Cobranças', url: '/cobrancas', icon: DollarSign, badge: true },
+  { title: 'Malha Fina', url: '/malha-fina', icon: Shield },
+  { title: 'Drive', url: '/drive', icon: FolderOpen },
   { title: 'Mensagens', url: '/mensagens', icon: MessageSquare },
   { title: 'Capa', url: '/capa', icon: Newspaper },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },

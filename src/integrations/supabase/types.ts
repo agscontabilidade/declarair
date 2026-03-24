@@ -238,6 +238,41 @@ export type Database = {
           },
         ]
       }
+      declaracao_atividades: {
+        Row: {
+          created_at: string
+          declaracao_id: string
+          descricao: string
+          id: string
+          tipo: string
+          usuario_nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          declaracao_id: string
+          descricao: string
+          id?: string
+          tipo: string
+          usuario_nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          declaracao_id?: string
+          descricao?: string
+          id?: string
+          tipo?: string
+          usuario_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "declaracao_atividades_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: false
+            referencedRelation: "declaracoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       declaracoes: {
         Row: {
           ano_base: number
@@ -401,36 +436,66 @@ export type Database = {
       escritorios: {
         Row: {
           cnpj: string | null
+          cor_fundo_portal: string | null
+          cor_primaria: string | null
           created_at: string
+          declaracoes_utilizadas: number | null
           email: string | null
+          favicon_url: string | null
           id: string
           limite_declaracoes: number | null
           logo_url: string | null
           nome: string
+          nome_portal: string | null
           plano: string | null
+          plano_expira_em: string | null
+          storage_limite_mb: number | null
           telefone: string | null
+          texto_boas_vindas: string | null
+          usuarios_limite: number | null
+          whitelabel_ativo: boolean | null
         }
         Insert: {
           cnpj?: string | null
+          cor_fundo_portal?: string | null
+          cor_primaria?: string | null
           created_at?: string
+          declaracoes_utilizadas?: number | null
           email?: string | null
+          favicon_url?: string | null
           id?: string
           limite_declaracoes?: number | null
           logo_url?: string | null
           nome: string
+          nome_portal?: string | null
           plano?: string | null
+          plano_expira_em?: string | null
+          storage_limite_mb?: number | null
           telefone?: string | null
+          texto_boas_vindas?: string | null
+          usuarios_limite?: number | null
+          whitelabel_ativo?: boolean | null
         }
         Update: {
           cnpj?: string | null
+          cor_fundo_portal?: string | null
+          cor_primaria?: string | null
           created_at?: string
+          declaracoes_utilizadas?: number | null
           email?: string | null
+          favicon_url?: string | null
           id?: string
           limite_declaracoes?: number | null
           logo_url?: string | null
           nome?: string
+          nome_portal?: string | null
           plano?: string | null
+          plano_expira_em?: string | null
+          storage_limite_mb?: number | null
           telefone?: string | null
+          texto_boas_vindas?: string | null
+          usuarios_limite?: number | null
+          whitelabel_ativo?: boolean | null
         }
         Relationships: []
       }
@@ -520,6 +585,122 @@ export type Database = {
             columns: ["declaracao_id"]
             isOneToOne: true
             referencedRelation: "declaracoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      malha_fina_consultas: {
+        Row: {
+          ano_base: number
+          cliente_id: string
+          cpf: string
+          created_at: string
+          declaracao_id: string
+          escritorio_id: string
+          id: string
+          status_rfb: string
+          ultima_consulta: string | null
+          ultimo_resultado: string | null
+        }
+        Insert: {
+          ano_base: number
+          cliente_id: string
+          cpf: string
+          created_at?: string
+          declaracao_id: string
+          escritorio_id: string
+          id?: string
+          status_rfb?: string
+          ultima_consulta?: string | null
+          ultimo_resultado?: string | null
+        }
+        Update: {
+          ano_base?: number
+          cliente_id?: string
+          cpf?: string
+          created_at?: string
+          declaracao_id?: string
+          escritorio_id?: string
+          id?: string
+          status_rfb?: string
+          ultima_consulta?: string | null
+          ultimo_resultado?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "malha_fina_consultas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "malha_fina_consultas_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: false
+            referencedRelation: "declaracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "malha_fina_consultas_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mensagens_chat: {
+        Row: {
+          cliente_id: string
+          conteudo: string
+          created_at: string
+          declaracao_id: string
+          escritorio_id: string
+          id: string
+          remetente_id: string | null
+          remetente_tipo: string
+        }
+        Insert: {
+          cliente_id: string
+          conteudo: string
+          created_at?: string
+          declaracao_id: string
+          escritorio_id: string
+          id?: string
+          remetente_id?: string | null
+          remetente_tipo?: string
+        }
+        Update: {
+          cliente_id?: string
+          conteudo?: string
+          created_at?: string
+          declaracao_id?: string
+          escritorio_id?: string
+          id?: string
+          remetente_id?: string | null
+          remetente_tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensagens_chat_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensagens_chat_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: false
+            referencedRelation: "declaracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensagens_chat_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
         ]

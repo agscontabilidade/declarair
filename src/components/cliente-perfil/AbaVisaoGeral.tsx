@@ -82,23 +82,30 @@ export function AbaVisaoGeral({ declaracoes, isLoading, contadores, onCriarDecla
             </div>
           ) : (
             <div className="space-y-3">
-              {declaracoes.map((d) => (
-                <div key={d.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <span className="font-display font-bold text-lg">{d.ano_base}</span>
-                    <Badge className={statusColors[d.status] || 'bg-muted text-muted-foreground'}>
-                      {STATUS_LABELS[d.status] || d.status}
-                    </Badge>
-                    {d.status === 'transmitida' && d.tipo_resultado && (
-                      <span className={`text-sm font-medium ${d.tipo_resultado === 'restituicao' ? 'text-emerald-600' : d.tipo_resultado === 'pagamento' ? 'text-red-600' : 'text-muted-foreground'}`}>
-                        {STATUS_LABELS[d.tipo_resultado]}{d.valor_resultado ? `: ${formatCurrency(d.valor_resultado)}` : ''}
-                      </span>
-                    )}
+              {declaracoes.map((d, i) => (
+                <div key={d.id} className="flex items-center gap-4">
+                  {/* Timeline connector */}
+                  <div className="flex flex-col items-center">
+                    <div className={`h-3 w-3 rounded-full ${i === 0 ? 'bg-accent' : 'bg-muted-foreground/30'}`} />
+                    {i < declaracoes.length - 1 && <div className="w-0.5 h-full min-h-[40px] bg-muted-foreground/20" />}
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/declaracoes/${d.id}`)}>
-                    <Eye className="h-4 w-4 mr-1" />
-                    Ver
-                  </Button>
+                  <div className="flex-1 flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <span className="font-display font-bold text-lg">{d.ano_base}</span>
+                      <Badge className={statusColors[d.status] || 'bg-muted text-muted-foreground'}>
+                        {STATUS_LABELS[d.status] || d.status}
+                      </Badge>
+                      {d.status === 'transmitida' && d.tipo_resultado && (
+                        <span className={`text-sm font-medium ${d.tipo_resultado === 'restituicao' ? 'text-emerald-600' : d.tipo_resultado === 'pagamento' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {STATUS_LABELS[d.tipo_resultado]}{d.valor_resultado ? `: ${formatCurrency(d.valor_resultado)}` : ''}
+                        </span>
+                      )}
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/declaracoes/${d.id}`)}>
+                      <Eye className="h-4 w-4 mr-1" />
+                      Ver
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
