@@ -1,82 +1,99 @@
 
 
-# Plano: Landing Page Premium — Redesign Completo
+# Plano: Padronizar Login/Auth com Design do Cadastro
 
-## Conceito
+## Problema
 
-Reescrever `src/pages/Index.tsx` inteiramente, inspirado nos dois designs de referencia (Base e Apptek), misturando:
-- **Layout split hero** (texto esquerda + mockups flutuantes direita) como Base
-- **Formas organicas e floating badges** como Apptek
-- **Glassmorfismo** em cards, navbar e elementos flutuantes
-- **Animacoes CSS suaves** (float, fade-in on scroll, parallax leve)
-- **Screenshots reais do sistema** (dashboard, kanban, chat) como mockups no hero e secoes
+A tela `/cadastro` tem layout split premium (branding esquerda + formulario direita), enquanto as demais telas de auth sao simples cards centralizados sem identidade visual forte:
+- `/login` — card simples centralizado
+- `/cliente/login` — card simples com icone FileText generico
+- `/recuperar-senha` — card simples com icone FileText generico
+- `/redefinir-senha` — card simples (ja usa logo mas sem split)
+- `/cliente/convite/:token` — card simples com icone FileText generico
 
-## Estrutura das Secoes
+## Design Alvo
+
+Todas seguirao o mesmo padrao do `/cadastro`:
 
 ```text
-1. HEADER — glassmorfismo (bg-white/70 backdrop-blur-xl), logo maior, nav suave
-2. HERO — split layout:
-   - Esquerda: badge "Temporada IRPF 2026", h1 grande, subtitulo, 2 botoes (CTA primario + ghost)
-   - Direita: composicao de mockups flutuantes (screenshot do dashboard em card glass + mini cards com metricas flutuando ao redor com animacao float)
-   - Background: gradient mesh sutil com blobs animados (accent/primary)
-3. SOCIAL PROOF BAR — logos de parceiros/midias em faixa com gradiente accent
-4. SECAO "COMO FUNCIONA" — layout alternado (imagem esquerda + texto direita, depois inverte):
-   - Bloco 1: Screenshot do Kanban + texto "Organize todas as declaracoes"
-   - Bloco 2: Texto + Screenshot do Portal do Cliente
-   - Cada bloco com bullet points com icone check accent
-   - Cards com glassmorfismo (bg-white/60 backdrop-blur)
-5. FEATURES GRID — 6 cards com glassmorfismo, icone em circulo gradient, hover com scale + shadow
-6. METRICAS — fundo gradient primary, numeros grandes animados (counter), glass cards
-7. TESTIMONIALS — cards glass com foto avatar, estrelas, quote
-8. PRICING — igual atual mas com glassmorfismo nos cards
-9. FAQ — igual atual
-10. CTA FINAL — gradient accent->primary, botao grande
-11. FOOTER — mais completo com colunas (Produto, Empresa, Legal)
+┌──────────────────┬────────────────────────┐
+│                  │                        │
+│   BRANDING       │     FORMULARIO         │
+│   bg-primary     │     bg-background      │
+│   gradient       │                        │
+│   logo grande    │     logo (mobile)      │
+│   frase          │     titulo             │
+│   decorativos    │     campos             │
+│   copyright      │     botoes             │
+│                  │                        │
+│   42% width      │     58% width          │
+│   (hidden <lg)   │                        │
+└──────────────────┴────────────────────────┘
 ```
 
-## Tecnicas Visuais
+- Lado esquerdo: `hidden lg:flex lg:w-[42%] bg-primary` com gradient, logo, frase motivacional, circulos decorativos e copyright
+- Lado direito: formulario centralizado com logo mobile no topo (visivel so em mobile)
+- Animacao `animate-in fade-in slide-in-from-right-4`
 
-### Glassmorfismo
-- Navbar: `bg-white/70 backdrop-blur-xl border-b border-white/20`
-- Feature cards: `bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl`
-- Floating badges: `bg-white/80 backdrop-blur-md rounded-2xl shadow-lg`
+## Mudancas por Arquivo
 
-### Animacoes CSS (em `src/index.css`)
-- `@keyframes float` — translateY sutil 6px, 3s infinite (para mockups)
-- `@keyframes float-delayed` — mesmo mas com delay
-- `@keyframes blob` — scale e translate suaves em blobs de fundo
-- `@keyframes counter` — para numeros das metricas
-- Intersection Observer hook para fade-in on scroll nos blocos
+### 1. `src/pages/Login.tsx`
+- Remover layout card centralizado
+- Adicionar split layout identico ao Cadastro
+- Lado esquerdo: logo + frase "Gerencie declaracoes IRPF com eficiencia"
+- Lado direito: formulario de login com animacao
 
-### Mockups do Sistema
-- Capturas de tela renderizadas como `<div>` estilizados (nao imagens), simulando:
-  - Dashboard com KPI cards e grafico de barras
-  - Kanban com colunas e cards coloridos
-  - Chat com baloes de mensagem
-- Envoltos em glass cards com sombra e rotacao leve (perspective + rotateY)
+### 2. `src/pages/cliente/ClienteLogin.tsx`
+- Mesmo split layout
+- Lado esquerdo: frase "Acesse seus documentos e declaracoes"
+- Trocar `FileText` por logo real (logo-icon + logo-full)
 
-### Elementos Decorativos
-- Blobs gradient (accent/primary) com blur grande no background do hero
-- Circulos e dots decorativos flutuando (como Apptek)
-- Linhas de grid sutis no fundo (como Base)
+### 3. `src/pages/RecuperarSenha.tsx`
+- Mesmo split layout
+- Lado esquerdo: frase "Vamos te ajudar a recuperar o acesso"
+- Trocar `FileText` por logo real
+- Manter logica do estado `enviado`
 
-## Arquivos
+### 4. `src/pages/RedefinirSenha.tsx`
+- Mesmo split layout
+- Lado esquerdo: frase "Defina sua nova senha com seguranca"
+- Manter logica de recovery/checking
+
+### 5. `src/pages/cliente/ConviteCliente.tsx`
+- Mesmo split layout
+- Lado esquerdo: frase "Bem-vindo ao portal do seu contador"
+- Trocar `FileText` por logo real
+- Manter logica de loading/cliente invalido
+
+## Estrutura Reutilizada (copiar do Cadastro)
+
+Cada pagina tera a mesma estrutura de branding no lado esquerdo:
+```tsx
+<div className="hidden lg:flex lg:w-[42%] bg-primary relative flex-col justify-between p-10 overflow-hidden">
+  <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-accent/30" />
+  <div className="absolute top-20 -right-20 w-72 h-72 rounded-full border border-primary-foreground/10" />
+  <div className="absolute bottom-32 -left-16 w-56 h-56 rounded-3xl border border-primary-foreground/10 rotate-12" />
+  <div className="relative z-10">
+    <img logo-icon h-11 + logo-full h-8 brightness-0 invert />
+  </div>
+  <div className="relative z-10 space-y-6">
+    <h2>Frase contextual</h2>
+    <p>Subtitulo contextual</p>
+    <CheckCircle2 + beneficio />
+  </div>
+  <p copyright />
+</div>
+```
+
+## Arquivos Modificados
 
 | Arquivo | Acao |
 |---------|------|
-| `src/pages/Index.tsx` | Reescrever completo |
-| `src/index.css` | Adicionar keyframes (float, blob, fade-in-up) e classes glass |
-| `src/hooks/useScrollReveal.ts` | Novo — hook com IntersectionObserver para animar elementos ao scroll |
+| `src/pages/Login.tsx` | Reescrever com split layout |
+| `src/pages/cliente/ClienteLogin.tsx` | Reescrever com split layout |
+| `src/pages/RecuperarSenha.tsx` | Reescrever com split layout |
+| `src/pages/RedefinirSenha.tsx` | Reescrever com split layout |
+| `src/pages/cliente/ConviteCliente.tsx` | Reescrever com split layout |
 
-## Componentes Internos ao Index.tsx
-
-Para manter organizado, o arquivo tera componentes inline:
-- `HeroMockup` — composicao de cards simulando telas do sistema
-- `FeatureShowcase` — bloco alternado imagem+texto
-- `MetricCounter` — numero animado com contagem
-- `GlassCard` — wrapper reutilizavel com glassmorfismo
-
-## Dados Mantidos
-
-Todos os arrays de dados (features, plans, faqs, testimonials, metrics) permanecem iguais. Apenas o layout e visual mudam.
+Nenhum arquivo novo. Nenhuma mudanca de logica — apenas visual.
 
