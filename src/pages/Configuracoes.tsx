@@ -60,6 +60,30 @@ export default function Configuracoes() {
   const [telefone, setTelefone] = useState('');
   const [cnpj, setCnpj] = useState('');
   const [saving, setSaving] = useState(false);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+
+  function formatCnpj(value: string) {
+    const digits = value.replace(/\D/g, '').slice(0, 14);
+    return digits
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2');
+  }
+
+  async function handleBuscarCnpj() {
+    const clean = cnpj.replace(/\D/g, '');
+    if (clean.length !== 14 || !isDono) return;
+    setBuscandoCnpj(true);
+    const dados = await buscarCNPJ(clean);
+    if (dados) {
+      if (!nome && dados.razao_social) setNome(dados.razao_social);
+      if (!email && dados.email) setEmail(dados.email);
+      if (!telefone && dados.ddd_telefone_1) setTelefone(dados.ddd_telefone_1);
+      toast({ title: 'Dados do CNPJ preenchidos automaticamente!' });
+    }
+    setBuscandoCnpj(false);
+  }
 
   useEffect(() => {
     if (escritorio) {
