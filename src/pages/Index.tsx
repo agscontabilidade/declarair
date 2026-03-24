@@ -232,38 +232,162 @@ export default function Index() {
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF BAR ── */}
-      <Section className="py-12 lg:py-16 bg-primary relative overflow-hidden">
-        {/* Decorative glow */}
+      {/* ── BENEFIT SHOWCASES — Rich visual feature sections ── */}
+      <Section className="py-20 lg:py-28 bg-primary relative overflow-hidden">
         <div className="absolute top-[-50%] left-[20%] w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-50%] right-[20%] w-72 h-72 bg-accent/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-50%] right-[10%] w-72 h-72 bg-accent/8 rounded-full blur-3xl" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <p className="text-center text-xs text-primary-foreground/50 font-medium uppercase tracking-wider mb-8">
-            Utilizado por escritórios de contabilidade em todo o Brasil
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            {metrics.map((m, i) => {
-              const icons = [Clock, TrendingUp, Shield, Monitor];
-              const Icon = icons[i];
-              return (
-                <div
-                  key={m.label}
-                  className="relative group rounded-2xl p-5 text-center border border-primary-foreground/10 bg-primary-foreground/[0.06] backdrop-blur-md hover:bg-primary-foreground/[0.1] hover:border-primary-foreground/20 transition-all duration-300 hover:scale-[1.03]"
-                >
-                  <div className="h-10 w-10 rounded-full bg-accent/15 flex items-center justify-center mx-auto mb-3">
-                    <Icon className="h-4.5 w-4.5 text-accent" />
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-accent/20 text-accent border-accent/30 hover:bg-accent/30 text-xs">
+              Por que o DeclaraIR?
+            </Badge>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground">
+              Cada detalhe pensado para{' '}
+              <span className="text-accent">você produzir mais</span>
+            </h2>
+          </div>
+
+          {/* Feature 1 — Dashboard */}
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 mb-20">
+            <div className="flex-1 relative w-full max-w-md lg:max-w-none">
+              <div className="relative rounded-3xl overflow-hidden">
+                <img src={featureDashboard} alt="Contadora usando dashboard" className="w-full h-[360px] lg:h-[400px] object-cover" loading="lazy" width={960} height={640} />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/50 via-transparent to-transparent" />
+              </div>
+              {/* Floating card */}
+              <div className="absolute top-5 right-4 glass-card-strong rounded-xl mockup-shadow animate-float p-3 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
+                    <BarChart3 className="h-4 w-4 text-accent" />
                   </div>
-                  <p className="font-display text-2xl sm:text-3xl font-extrabold text-primary-foreground">{m.value}{m.suffix}</p>
-                  <p className="mt-1.5 text-[11px] text-primary-foreground/60 leading-snug">{m.label}</p>
+                  <div>
+                    <p className="font-display font-bold text-foreground text-sm">189</p>
+                    <p className="text-[9px] text-muted-foreground">declarações ativas</p>
+                  </div>
                 </div>
-              );
-            })}
+              </div>
+              <div className="absolute bottom-10 left-4 glass-card-strong rounded-xl mockup-shadow animate-float-delayed p-3 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-success/15 flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-success" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-foreground text-sm">+34%</p>
+                    <p className="text-[9px] text-muted-foreground">produtividade</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 text-center lg:text-left">
+              <h3 className="font-display text-2xl sm:text-3xl font-bold text-primary-foreground">Dashboard inteligente com KPIs em tempo real</h3>
+              <p className="mt-4 text-primary-foreground/70 leading-relaxed">
+                Visualize a operação inteira em um único quadro Kanban. Acompanhe prazos, identifique gargalos e tome decisões baseadas em dados reais.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {['KPIs atualizados automaticamente', 'Filtro por contador, status e urgência', 'Drag & drop entre etapas da declaração'].map(b => (
+                  <li key={b} className="flex items-start gap-3 text-sm text-primary-foreground/80">
+                    <CheckCircle2 className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Feature 2 — Mobile / Portal */}
+          <div className="flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-16 mb-20">
+            <div className="flex-1 relative w-full max-w-md lg:max-w-none">
+              <div className="relative rounded-3xl overflow-hidden">
+                <img src={featureMobile} alt="Cliente enviando documentos pelo celular" className="w-full h-[360px] lg:h-[400px] object-cover" loading="lazy" width={960} height={640} />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/50 via-transparent to-transparent" />
+              </div>
+              <div className="absolute top-5 left-4 glass-card-strong rounded-xl mockup-shadow animate-float p-3 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-warning/15 flex items-center justify-center">
+                    <FolderCheck className="h-4 w-4 text-warning" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-foreground text-sm">12/14</p>
+                    <p className="text-[9px] text-muted-foreground">docs recebidos</p>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute bottom-10 right-4 glass-card-strong rounded-xl mockup-shadow animate-float-delayed p-3 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-accent" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-foreground text-sm">-85%</p>
+                    <p className="text-[9px] text-muted-foreground">tempo de coleta</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 text-center lg:text-left">
+              <h3 className="font-display text-2xl sm:text-3xl font-bold text-primary-foreground">Seu cliente envia tudo pelo celular</h3>
+              <p className="mt-4 text-primary-foreground/70 leading-relaxed">
+                Chega de WhatsApp e e-mail para pedir documentos. O portal do cliente é 100% mobile, guiado e com checklist inteligente.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {['Upload direto pelo celular com câmera', 'Checklist gerado pelo perfil fiscal', 'Notificações automáticas de pendência'].map(b => (
+                  <li key={b} className="flex items-start gap-3 text-sm text-primary-foreground/80">
+                    <CheckCircle2 className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Feature 3 — Team / Whitelabel */}
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            <div className="flex-1 relative w-full max-w-md lg:max-w-none">
+              <div className="relative rounded-3xl overflow-hidden">
+                <img src={featureTeam} alt="Equipe de contadores colaborando" className="w-full h-[360px] lg:h-[400px] object-cover" loading="lazy" width={960} height={640} />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/50 via-transparent to-transparent" />
+              </div>
+              <div className="absolute top-5 right-4 glass-card-strong rounded-xl mockup-shadow animate-float p-3 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
+                    <Palette className="h-4 w-4 text-accent" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-foreground text-sm">100%</p>
+                    <p className="text-[9px] text-muted-foreground">sua marca</p>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute bottom-10 left-4 glass-card-strong rounded-xl mockup-shadow animate-float-delayed p-3 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-success/15 flex items-center justify-center">
+                    <Receipt className="h-4 w-4 text-success" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-foreground text-sm">Pix/Boleto</p>
+                    <p className="text-[9px] text-muted-foreground">cobranças integradas</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 text-center lg:text-left">
+              <h3 className="font-display text-2xl sm:text-3xl font-bold text-primary-foreground">Whitelabel + cobranças em um só lugar</h3>
+              <p className="mt-4 text-primary-foreground/70 leading-relaxed">
+                Personalize o portal com sua marca, gere cobranças via Pix e boleto e gerencie a equipe inteira com permissões granulares.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {['Portal com logo, cores e nome do escritório', 'Cobranças via Pix e boleto integradas', 'Gestão de equipe com papéis e permissões'].map(b => (
+                  <li key={b} className="flex items-start gap-3 text-sm text-primary-foreground/80">
+                    <CheckCircle2 className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </Section>
-
-      {/* ── COMO FUNCIONA ── */}
       <section id="como-funciona" className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
           <div className="text-center max-w-2xl mx-auto">
