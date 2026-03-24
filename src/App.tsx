@@ -18,6 +18,7 @@ import Mensagens from "./pages/Mensagens";
 import Configuracoes from "./pages/Configuracoes";
 import Declaracoes from "./pages/Declaracoes";
 import Capa from "./pages/Capa";
+import Perfil from "./pages/Perfil";
 import Planos from "./pages/Planos";
 import MalhaFina from "./pages/MalhaFina";
 import Drive from "./pages/Drive";
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="/capa" element={<ProtectedRoute allowedType="contador"><Capa /></ProtectedRoute>} />
               <Route path="/malha-fina" element={<ProtectedRoute allowedType="contador"><MalhaFina /></ProtectedRoute>} />
               <Route path="/drive" element={<ProtectedRoute allowedType="contador"><Drive /></ProtectedRoute>} />
+              <Route path="/perfil" element={<ProtectedRoute allowedType="contador"><Perfil /></ProtectedRoute>} />
 
               {/* Cliente routes */}
               <Route path="/cliente/dashboard" element={<ProtectedRoute allowedType="cliente"><ClienteDashboard /></ProtectedRoute>} />

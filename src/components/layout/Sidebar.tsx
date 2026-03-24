@@ -1,4 +1,5 @@
-import { LayoutDashboard, Users, FileText, DollarSign, MessageSquare, Settings, LogOut, Newspaper, Shield, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, DollarSign, MessageSquare, Settings, LogOut, Newspaper, Shield, FolderOpen, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
@@ -29,6 +30,7 @@ const navItems = [
 export function AppSidebar() {
   const { profile, signOut } = useAuth();
   const { state } = useSidebar();
+  const navigate = useNavigate();
   const collapsed = state === 'collapsed';
   const atrasadas = useCobrancasAtrasadas();
 
@@ -80,17 +82,20 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
-        <div className="flex items-center gap-3 px-1 mb-2">
+        <button
+          onClick={() => navigate('/perfil')}
+          className="flex items-center gap-3 px-1 mb-2 w-full rounded-lg hover:bg-sidebar-accent/50 transition-colors py-1"
+        >
           <div className="h-8 w-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold shrink-0">
             {initials}
           </div>
           {!collapsed && (
-            <div className="min-w-0">
+            <div className="min-w-0 text-left">
               <p className="text-sm text-sidebar-foreground font-medium truncate">{profile.nome ?? '—'}</p>
               <p className="text-[10px] text-sidebar-foreground/50">{papel}</p>
             </div>
           )}
-        </div>
+        </button>
         <button
           onClick={signOut}
           className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-sm"
