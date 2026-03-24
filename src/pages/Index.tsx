@@ -5,10 +5,15 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import {
   FileText, Shield, Zap, Users, Bell, CheckCircle2,
   ArrowRight, Star, Layout, MessageSquare, Send, Monitor, Smartphone, Lock,
+  Clock, Briefcase, TrendingUp,
 } from 'lucide-react';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import logoHero from '@/assets/logo-hero.png';
+import ctaPerson from '@/assets/cta-person.jpg';
+import avatarCarlos from '@/assets/avatar-carlos.jpg';
+import avatarAna from '@/assets/avatar-ana.jpg';
+import avatarRoberto from '@/assets/avatar-roberto.jpg';
 import HeroMockup from '@/components/landing/HeroMockup';
 import GlassCard from '@/components/landing/GlassCard';
 import MetricCounter from '@/components/landing/MetricCounter';
@@ -51,9 +56,9 @@ const faqs = [
 ];
 
 const testimonials = [
-  { name: 'Carlos Silva', role: 'Contador — SP', text: 'Reduzi de 3 dias para 4 horas o tempo de coleta de documentos por cliente. O checklist inteligente é genial.', stars: 5 },
-  { name: 'Ana Beatriz', role: 'Escritório ContaFácil — MG', text: 'O portal whitelabel deu outra cara pro meu escritório. Meus clientes acham que é um sistema próprio.', stars: 5 },
-  { name: 'Roberto Mendes', role: 'Contador autônomo — RJ', text: 'O monitoramento de malha fina me salvou de uma dor de cabeça enorme. Fui alertado antes do cliente.', stars: 5 },
+  { name: 'Carlos Silva', role: 'Contador — SP', text: 'Reduzi de 3 dias para 4 horas o tempo de coleta de documentos por cliente. O checklist inteligente é genial.', stars: 5, avatar: avatarCarlos },
+  { name: 'Ana Beatriz', role: 'Escritório ContaFácil — MG', text: 'O portal whitelabel deu outra cara pro meu escritório. Meus clientes acham que é um sistema próprio.', stars: 5, avatar: avatarAna },
+  { name: 'Roberto Mendes', role: 'Contador autônomo — RJ', text: 'O monitoramento de malha fina me salvou de uma dor de cabeça enorme. Fui alertado antes do cliente.', stars: 5, avatar: avatarRoberto },
 ];
 
 /* ── Showcase Mockups ── */
@@ -107,7 +112,6 @@ function PortalMockup() {
       <div className="p-4 space-y-3">
         <div className="bg-background/70 rounded-lg p-3">
           <p className="text-[10px] font-semibold text-foreground mb-2">Sua Declaração IRPF 2025</p>
-          {/* Stepper */}
           <div className="flex items-center gap-1">
             {['Docs', 'Recebido', 'Pronta', 'Enviada'].map((s, i) => (
               <div key={s} className="flex-1 flex flex-col items-center">
@@ -280,6 +284,76 @@ export default function Index() {
         </div>
       </section>
 
+      {/* ── DEIXE A BUROCRACIA CONOSCO — Split Section ── */}
+      <Section className="py-20 lg:py-28 bg-primary relative overflow-hidden">
+        {/* Decorative blobs */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent/5 rounded-full blur-3xl" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            {/* Left — Text */}
+            <div className="flex-1 text-center lg:text-left">
+              <Badge className="mb-6 bg-accent/20 text-accent border-accent/30 hover:bg-accent/30">
+                <Briefcase className="h-3 w-3 mr-1.5" /> Foque no que importa
+              </Badge>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
+                Deixe a burocracia{' '}
+                <span className="text-accent">conosco</span>
+              </h2>
+              <p className="mt-5 text-primary-foreground/70 text-lg leading-relaxed max-w-md">
+                Enquanto o DeclaraIR cuida do fluxo de documentos, cobranças e comunicação, você se concentra em entregar o melhor serviço aos seus clientes.
+              </p>
+              <Link to="/cadastro">
+                <Button size="lg" variant="secondary" className="mt-8 text-base px-8 h-12 shadow-xl">
+                  Experimentar Grátis <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Right — Person with floating cards */}
+            <div className="flex-1 relative w-full max-w-md lg:max-w-none">
+              <div className="relative rounded-3xl overflow-hidden">
+                <img
+                  src={ctaPerson}
+                  alt="Profissional usando celular"
+                  className="w-full h-[400px] lg:h-[460px] object-cover object-top"
+                  loading="lazy"
+                  width={1280}
+                  height={640}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />
+              </div>
+
+              {/* Floating benefit cards */}
+              <div className="absolute top-6 right-4 glass-card-strong rounded-xl mockup-shadow animate-float p-3 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-success/15 flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-success" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-foreground text-sm">-85%</p>
+                    <p className="text-[9px] text-muted-foreground">tempo de coleta</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute bottom-12 left-4 glass-card-strong rounded-xl mockup-shadow animate-float-delayed p-3 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-accent" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-foreground text-sm">3x mais</p>
+                    <p className="text-[9px] text-muted-foreground">produtividade</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Section>
+
       {/* ── FEATURES GRID ── */}
       <Section id="features" className="py-20 lg:py-28 bg-gradient-to-b from-background to-secondary/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -293,7 +367,7 @@ export default function Index() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f, i) => (
+            {features.map((f) => (
               <GlassCard
                 key={f.title}
                 className="p-6 group hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
@@ -343,9 +417,14 @@ export default function Index() {
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">"{t.text}"</p>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center">
-                    <span className="font-display font-bold text-sm text-foreground">{t.name.charAt(0)}</span>
-                  </div>
+                  <img
+                    src={t.avatar}
+                    alt={t.name}
+                    className="h-10 w-10 rounded-full object-cover ring-2 ring-accent/20"
+                    loading="lazy"
+                    width={40}
+                    height={40}
+                  />
                   <div>
                     <p className="font-medium text-foreground text-sm">{t.name}</p>
                     <p className="text-xs text-muted-foreground">{t.role}</p>
@@ -426,24 +505,39 @@ export default function Index() {
       {/* ── CTA FINAL ── */}
       <Section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative bg-gradient-to-br from-primary via-primary to-accent/80 rounded-3xl p-10 sm:p-16 text-center overflow-hidden">
-            {/* Decorative */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
+          <div className="relative rounded-3xl overflow-hidden">
+            {/* Background image */}
+            <div className="absolute inset-0">
+              <img
+                src={ctaPerson}
+                alt=""
+                className="w-full h-full object-cover"
+                loading="lazy"
+                width={1280}
+                height={640}
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/95 via-primary/90 to-accent/70" />
+            </div>
 
-            <div className="relative">
-              <img src={logoHero} alt="DeclaraIR" className="h-16 sm:h-20 mx-auto mb-6 drop-shadow-2xl" />
-              <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground">
-                Pronto para transformar sua temporada de IRPF?
-              </h2>
-              <p className="mt-4 text-primary-foreground/80 max-w-xl mx-auto text-lg">
-                Crie sua conta gratuita em 30 segundos. Sem cartão de crédito.
-              </p>
-              <Link to="/cadastro">
-                <Button size="lg" variant="secondary" className="mt-8 text-base px-10 h-13 shadow-xl">
-                  Começar Agora <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
+            <div className="relative p-10 sm:p-16 text-center">
+              {/* Decorative */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
+
+              <div className="relative">
+                <img src={logoHero} alt="DeclaraIR" className="h-16 sm:h-20 mx-auto mb-6 drop-shadow-2xl" />
+                <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground">
+                  Pronto para transformar sua temporada de IRPF?
+                </h2>
+                <p className="mt-4 text-primary-foreground/80 max-w-xl mx-auto text-lg">
+                  Crie sua conta gratuita em 30 segundos. Sem cartão de crédito.
+                </p>
+                <Link to="/cadastro">
+                  <Button size="lg" variant="secondary" className="mt-8 text-base px-10 h-13 shadow-xl">
+                    Começar Agora <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
