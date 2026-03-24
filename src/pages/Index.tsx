@@ -230,18 +230,32 @@ export default function Index() {
       </section>
 
       {/* ── SOCIAL PROOF BAR ── */}
-      <Section className="border-y bg-gradient-to-r from-primary/[0.03] to-accent/[0.03]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <p className="text-center text-xs text-muted-foreground font-medium uppercase tracking-wider mb-6">
+      <Section className="py-12 lg:py-16 bg-primary relative overflow-hidden">
+        {/* Decorative glow */}
+        <div className="absolute top-[-50%] left-[20%] w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-50%] right-[20%] w-72 h-72 bg-accent/8 rounded-full blur-3xl" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <p className="text-center text-xs text-primary-foreground/50 font-medium uppercase tracking-wider mb-8">
             Utilizado por escritórios de contabilidade em todo o Brasil
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {metrics.map((m) => (
-              <div key={m.label} className="text-center">
-                <p className="font-display text-3xl sm:text-4xl font-extrabold text-accent">{m.value}{m.suffix}</p>
-                <p className="mt-2 text-xs text-muted-foreground">{m.label}</p>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+            {metrics.map((m, i) => {
+              const icons = [Clock, TrendingUp, Shield, Monitor];
+              const Icon = icons[i];
+              return (
+                <div
+                  key={m.label}
+                  className="relative group rounded-2xl p-5 text-center border border-primary-foreground/10 bg-primary-foreground/[0.06] backdrop-blur-md hover:bg-primary-foreground/[0.1] hover:border-primary-foreground/20 transition-all duration-300 hover:scale-[1.03]"
+                >
+                  <div className="h-10 w-10 rounded-full bg-accent/15 flex items-center justify-center mx-auto mb-3">
+                    <Icon className="h-4.5 w-4.5 text-accent" />
+                  </div>
+                  <p className="font-display text-2xl sm:text-3xl font-extrabold text-primary-foreground">{m.value}{m.suffix}</p>
+                  <p className="mt-1.5 text-[11px] text-primary-foreground/60 leading-snug">{m.label}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </Section>
