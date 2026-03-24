@@ -38,10 +38,8 @@ export default function ClienteFormulario() {
       setPerfilFiscal((formulario as any).perfil_fiscal);
     }
   }, [formulario]);
-    if ((formulario as any)?.perfil_fiscal && Object.keys((formulario as any).perfil_fiscal).length > 0) {
-      setPerfilFiscal((formulario as any).perfil_fiscal);
-    }
-  });
+
+  const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
 
   const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
 
