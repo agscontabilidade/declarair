@@ -16,59 +16,8 @@ export default function Login() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginSenha, setLoginSenha] = useState('');
 
-  // Signup state
-  const [nome, setNome] = useState('');
-  const [nomeEscritorio, setNomeEscritorio] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
-  const [signupSenha, setSignupSenha] = useState('');
 
   async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginSenha,
-      });
-      if (error) throw error;
-      navigate('/dashboard');
-    } catch (err: any) {
-      toast({ title: 'Erro ao entrar', description: err.message, variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleSignup(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: signupEmail,
-        password: signupSenha,
-        options: { emailRedirectTo: window.location.origin },
-      });
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Erro ao criar conta');
-
-      const { error: rpcError } = await supabase.rpc('handle_new_accountant_signup' as any, {
-        p_user_id: authData.user.id,
-        p_nome: nome,
-        p_nome_escritorio: nomeEscritorio,
-        p_email: signupEmail,
-      });
-      if (rpcError) throw rpcError;
-
-      toast({
-        title: 'Conta criada!',
-        description: 'Verifique seu email para confirmar a conta.',
-      });
-    } catch (err: any) {
-      toast({ title: 'Erro ao criar conta', description: err.message, variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative">
