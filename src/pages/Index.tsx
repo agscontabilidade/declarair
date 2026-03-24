@@ -245,7 +245,7 @@ export default function Index() {
       {/* ── COMO FUNCIONA ── */}
       <section id="como-funciona" className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
-          <div className="text-center max-w-2xl mx-auto scroll-reveal" ref={undefined}>
+          <div className="text-center max-w-2xl mx-auto">
             <Badge variant="secondary" className="mb-4 text-xs">Como funciona</Badge>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
               Do documento à transmissão,{' '}
