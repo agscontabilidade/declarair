@@ -200,7 +200,7 @@ export default function Cadastro() {
         <div className="w-full max-w-lg">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center text-accent-foreground text-xs font-bold">DI</div>
+            <img src={logoIcon} alt="DeclaraIR" className="h-8 w-8" />
             <span className="font-display text-xl font-bold text-foreground">DeclaraIR</span>
           </div>
 
