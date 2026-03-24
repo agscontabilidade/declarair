@@ -32,6 +32,9 @@ import ClienteDocumentos from "./pages/cliente/ClienteDocumentos";
 import ClientePerfil from "./pages/ClientePerfil";
 import DeclaracaoDetalhe from "./pages/DeclaracaoDetalhe";
 import NotFound from "./pages/NotFound";
+import TermosDeUso from "./pages/TermosDeUso";
+import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
+import PoliticaLGPD from "./pages/PoliticaLGPD";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +72,9 @@ const App = () => (
               <Route path="/redefinir-senha" element={<RedefinirSenha />} />
               <Route path="/cliente/login" element={<ClienteLogin />} />
               <Route path="/cliente/convite/:token" element={<ConviteCliente />} />
+              <Route path="/termos-de-uso" element={<TermosDeUso />} />
+              <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
+              <Route path="/politica-lgpd" element={<PoliticaLGPD />} />
 
               {/* Contador routes */}
               <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><Dashboard /></ProtectedRoute>} />
