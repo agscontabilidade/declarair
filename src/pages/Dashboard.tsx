@@ -146,7 +146,11 @@ export default function Dashboard() {
         </div>
 
         <KpiCards data={kpis.data} isLoading={kpis.isLoading} />
-        <KanbanBoard items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} anoBase={anoBase} />
+        {viewMode === 'kanban' ? (
+          <KanbanBoard items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} anoBase={anoBase} />
+        ) : (
+          <DeclaracoesListView items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} />
+        )}
       </div>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>

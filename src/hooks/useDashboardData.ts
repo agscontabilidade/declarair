@@ -55,18 +55,21 @@ export function useDashboardData(anoBase: number) {
 
       if (error) throw error;
 
-      // Fetch pending docs counts
+      // Fetch doc counts (total + pending)
       const ids = (data || []).map(d => d.id);
       let pendingMap: Record<string, number> = {};
+      let totalMap: Record<string, number> = {};
       if (ids.length > 0) {
         const { data: docs } = await supabase
           .from('checklist_documentos')
           .select('declaracao_id, status')
-          .in('declaracao_id', ids)
-          .eq('status', 'pendente');
+          .in('declaracao_id', ids);
         if (docs) {
           for (const doc of docs) {
-            pendingMap[doc.declaracao_id] = (pendingMap[doc.declaracao_id] || 0) + 1;
+            totalMap[doc.declaracao_id] = (totalMap[doc.declaracao_id] || 0) + 1;
+            if (doc.status === 'pendente') {
+              pendingMap[doc.declaracao_id] = (pendingMap[doc.declaracao_id] || 0) + 1;
+            }
           }
         }
       }
@@ -80,6 +83,7 @@ export function useDashboardData(anoBase: number) {
         clientes: d.clientes,
         contador: d.usuarios ? { nome: d.usuarios.nome } : null,
         pendingDocs: pendingMap[d.id] || 0,
+        totalDocs: totalMap[d.id] || 0,
       }));
     },
     enabled: !!escritorioId,
