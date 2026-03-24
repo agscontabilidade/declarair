@@ -41,8 +41,6 @@ export default function ClienteFormulario() {
 
   const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
 
-  const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
-
   if (isLoading) {
     return (
       <ClienteLayout>
