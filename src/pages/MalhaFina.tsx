@@ -38,15 +38,17 @@ export default function MalhaFina() {
   const [selectedConsulta, setSelectedConsulta] = useState<any>(null);
   const [busca, setBusca] = useState('');
 
-  const filtered = consultas.filter(c => {
+  const items = consultas as ConsultaItem[];
+
+  const filtered = items.filter(c => {
     if (busca && !c.clientes?.nome?.toLowerCase().includes(busca.toLowerCase()) && !c.cpf.includes(busca.replace(/\D/g, ''))) return false;
     if (filtroStatus && filtroStatus !== 'todos' && c.status_rfb !== filtroStatus) return false;
     return true;
   });
 
-  const emMalha = consultas.filter(c => c.status_rfb === 'em_malha').length;
-  const processadas = consultas.filter(c => c.status_rfb === 'processada').length;
-  const pendentes = consultas.filter(c => c.status_rfb === 'nao_consultado').length;
+  const emMalha = items.filter(c => c.status_rfb === 'em_malha').length;
+  const processadas = items.filter(c => c.status_rfb === 'processada').length;
+  const pendentes = items.filter(c => c.status_rfb === 'nao_consultado').length;
 
   return (
     <DashboardLayout>
