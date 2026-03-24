@@ -22,8 +22,8 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
     queryKey: ['chat-messages', declaracaoId],
     queryFn: async () => {
       if (!declaracaoId) return [];
-      const { data, error } = await supabase
-        .from('mensagens_chat' as any)
+      const { data, error } = await (supabase as any)
+        .from('mensagens_chat')
         .select('*')
         .eq('declaracao_id', declaracaoId)
         .order('created_at', { ascending: true });
