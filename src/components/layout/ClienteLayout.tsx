@@ -1,6 +1,8 @@
 import { FileText, Home, ClipboardList, Upload, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const navItems = [
   { title: 'Início', url: '/cliente/dashboard', icon: Home },
@@ -11,12 +13,52 @@ const navItems = [
 export function ClienteLayout({ children }: { children: React.ReactNode }) {
   const { profile, signOut } = useAuth();
 
+  // Fetch escritorio branding for whitelabel
+  const { data: clienteData } = useQuery({
+    queryKey: ['cliente-escritorio', profile.clienteId],
+    queryFn: async () => {
+      if (!profile.clienteId) return null;
+      const { data: cliente } = await supabase
+        .from('clientes')
+        .select('escritorio_id')
+        .eq('id', profile.clienteId)
+        .single();
+      if (!cliente) return null;
+      const { data: esc } = await supabase
+        .from('escritorios')
+        .select('*')
+        .eq('id', cliente.escritorio_id)
+        .single();
+      return esc;
+    },
+    enabled: !!profile.clienteId,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const esc = clienteData as any;
+  const whitelabelAtivo = esc?.whitelabel_ativo === true;
+  const corPrimaria = esc?.cor_primaria || '#1E3A5F';
+  const logoUrl = esc?.logo_url;
+  const nomePortal = esc?.nome_portal || 'DeclaraIR';
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div
+      className="min-h-screen flex flex-col bg-background"
+      style={whitelabelAtivo ? { '--color-brand': corPrimaria } as React.CSSProperties : undefined}
+    >
       <header className="h-16 flex items-center justify-between border-b bg-card px-6 shrink-0">
         <div className="flex items-center gap-3">
-          <FileText className="h-6 w-6 text-accent" />
-          <span className="font-display text-lg font-bold text-foreground">DeclaraIR</span>
+          {whitelabelAtivo && logoUrl ? (
+            <img src={logoUrl} alt={nomePortal} className="h-8 w-8 rounded-lg object-contain" />
+          ) : (
+            <FileText className="h-6 w-6 text-accent" />
+          )}
+          <span
+            className="font-display text-lg font-bold"
+            style={whitelabelAtivo ? { color: corPrimaria } : undefined}
+          >
+            {nomePortal}
+          </span>
         </div>
         <nav className="flex items-center gap-1">
           {navItems.map((item) => (

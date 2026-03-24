@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Settings, Users, CreditCard, Puzzle, Palette } from 'lucide-react';
+import { Settings, Users, CreditCard, Puzzle, Palette, Bell } from 'lucide-react';
 import { IntegracoesTab } from '@/components/configuracoes/IntegracoesTab';
 import { WhitelabelTab } from '@/components/configuracoes/WhitelabelTab';
+import { NotificacoesTab } from '@/components/configuracoes/NotificacoesTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -85,10 +86,11 @@ export default function Configuracoes() {
       <div className="space-y-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Configurações</h1>
         <Tabs defaultValue="escritorio">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="escritorio" className="gap-2"><Settings className="h-4 w-4" /> Escritório</TabsTrigger>
             <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
             <TabsTrigger value="marca" className="gap-2"><Palette className="h-4 w-4" /> Marca</TabsTrigger>
+            <TabsTrigger value="notificacoes" className="gap-2"><Bell className="h-4 w-4" /> Notificações</TabsTrigger>
             <TabsTrigger value="plano" className="gap-2"><CreditCard className="h-4 w-4" /> Plano</TabsTrigger>
             <TabsTrigger value="integracoes" className="gap-2"><Puzzle className="h-4 w-4" /> Integrações</TabsTrigger>
           </TabsList>
@@ -142,7 +144,7 @@ export default function Configuracoes() {
                           <TableCell className="font-medium">{u.nome}</TableCell>
                           <TableCell>{u.email}</TableCell>
                           <TableCell><Badge variant="outline">{u.papel === 'dono' ? 'Dono' : 'Colaborador'}</Badge></TableCell>
-                          <TableCell><Badge className={u.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}>{u.ativo ? 'Ativo' : 'Inativo'}</Badge></TableCell>
+                          <TableCell><Badge className={u.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-muted text-muted-foreground'}>{u.ativo ? 'Ativo' : 'Inativo'}</Badge></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -154,6 +156,10 @@ export default function Configuracoes() {
 
           <TabsContent value="marca">
             {escritorioId && <WhitelabelTab escritorioId={escritorioId} isDono={isDono} />}
+          </TabsContent>
+
+          <TabsContent value="notificacoes">
+            <NotificacoesTab escritorioId={escritorioId} isDono={isDono} />
           </TabsContent>
 
           <TabsContent value="plano">

@@ -19,6 +19,8 @@ const navItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
   { title: 'Declarações', url: '/declaracoes', icon: FileText },
   { title: 'Cobranças', url: '/cobrancas', icon: DollarSign, badge: true },
+  { title: 'Malha Fina', url: '/malha-fina', icon: Shield },
+  { title: 'Drive', url: '/drive', icon: FolderOpen },
   { title: 'Mensagens', url: '/mensagens', icon: MessageSquare },
   { title: 'Capa', url: '/capa', icon: Newspaper },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },

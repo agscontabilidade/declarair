@@ -5,7 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
+import Index from "./pages/Index";
 import Login from "./pages/Login";
 import RecuperarSenha from "./pages/RecuperarSenha";
 import RedefinirSenha from "./pages/RedefinirSenha";
@@ -17,6 +19,8 @@ import Configuracoes from "./pages/Configuracoes";
 import Declaracoes from "./pages/Declaracoes";
 import Capa from "./pages/Capa";
 import Planos from "./pages/Planos";
+import MalhaFina from "./pages/MalhaFina";
+import Drive from "./pages/Drive";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ConviteCliente from "./pages/cliente/ConviteCliente";
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
@@ -39,50 +43,54 @@ function RootRedirect() {
     );
   }
 
-  if (!session) return <Navigate to="/login" replace />;
+  if (!session) return <Index />;
   if (userType === 'contador') return <Navigate to="/dashboard" replace />;
   if (userType === 'cliente') return <Navigate to="/cliente/dashboard" replace />;
-  return <Navigate to="/login" replace />;
+  return <Index />;
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<RootRedirect />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/recuperar-senha" element={<RecuperarSenha />} />
-            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
-            <Route path="/cliente/login" element={<ClienteLogin />} />
-            <Route path="/cliente/convite/:token" element={<ConviteCliente />} />
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<RootRedirect />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+              <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+              <Route path="/cliente/login" element={<ClienteLogin />} />
+              <Route path="/cliente/convite/:token" element={<ConviteCliente />} />
 
-            {/* Contador routes */}
-            <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><Dashboard /></ProtectedRoute>} />
-            <Route path="/clientes/:id" element={<ProtectedRoute allowedType="contador"><ClientePerfil /></ProtectedRoute>} />
-            <Route path="/declaracoes/:id" element={<ProtectedRoute allowedType="contador"><DeclaracaoDetalhe /></ProtectedRoute>} />
-            <Route path="/declaracoes" element={<ProtectedRoute allowedType="contador"><Declaracoes /></ProtectedRoute>} />
-            <Route path="/clientes" element={<ProtectedRoute allowedType="contador"><Clientes /></ProtectedRoute>} />
-            <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><Cobrancas /></ProtectedRoute>} />
-            <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><Mensagens /></ProtectedRoute>} />
-            <Route path="/configuracoes" element={<ProtectedRoute allowedType="contador"><Configuracoes /></ProtectedRoute>} />
-            <Route path="/planos" element={<ProtectedRoute allowedType="contador"><Planos /></ProtectedRoute>} />
-            <Route path="/capa" element={<ProtectedRoute allowedType="contador"><Capa /></ProtectedRoute>} />
+              {/* Contador routes */}
+              <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><Dashboard /></ProtectedRoute>} />
+              <Route path="/clientes/:id" element={<ProtectedRoute allowedType="contador"><ClientePerfil /></ProtectedRoute>} />
+              <Route path="/declaracoes/:id" element={<ProtectedRoute allowedType="contador"><DeclaracaoDetalhe /></ProtectedRoute>} />
+              <Route path="/declaracoes" element={<ProtectedRoute allowedType="contador"><Declaracoes /></ProtectedRoute>} />
+              <Route path="/clientes" element={<ProtectedRoute allowedType="contador"><Clientes /></ProtectedRoute>} />
+              <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><Cobrancas /></ProtectedRoute>} />
+              <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><Mensagens /></ProtectedRoute>} />
+              <Route path="/configuracoes" element={<ProtectedRoute allowedType="contador"><Configuracoes /></ProtectedRoute>} />
+              <Route path="/planos" element={<ProtectedRoute allowedType="contador"><Planos /></ProtectedRoute>} />
+              <Route path="/capa" element={<ProtectedRoute allowedType="contador"><Capa /></ProtectedRoute>} />
+              <Route path="/malha-fina" element={<ProtectedRoute allowedType="contador"><MalhaFina /></ProtectedRoute>} />
+              <Route path="/drive" element={<ProtectedRoute allowedType="contador"><Drive /></ProtectedRoute>} />
 
-            {/* Cliente routes */}
-            <Route path="/cliente/dashboard" element={<ProtectedRoute allowedType="cliente"><ClienteDashboard /></ProtectedRoute>} />
-            <Route path="/cliente/formulario" element={<ProtectedRoute allowedType="cliente"><ClienteFormulario /></ProtectedRoute>} />
-            <Route path="/cliente/documentos" element={<ProtectedRoute allowedType="cliente"><ClienteDocumentos /></ProtectedRoute>} />
+              {/* Cliente routes */}
+              <Route path="/cliente/dashboard" element={<ProtectedRoute allowedType="cliente"><ClienteDashboard /></ProtectedRoute>} />
+              <Route path="/cliente/formulario" element={<ProtectedRoute allowedType="cliente"><ClienteFormulario /></ProtectedRoute>} />
+              <Route path="/cliente/documentos" element={<ProtectedRoute allowedType="cliente"><ClienteDocumentos /></ProtectedRoute>} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
