@@ -303,7 +303,7 @@ export default function Onboarding() {
                 </div>
                 <div className="space-y-2">
                   <Label>CNPJ *</Label>
-                  <Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} placeholder="00.000.000/0000-00" maxLength={18} />
+                  <Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} placeholder="00.000.000/0000-00" maxLength={18} disabled={buscandoCnpj} />
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
