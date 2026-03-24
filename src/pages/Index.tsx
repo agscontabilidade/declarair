@@ -66,7 +66,7 @@ export default function Index() {
           </nav>
           <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" size="sm">Entrar</Button></Link>
-            <Link to="/login"><Button size="sm">Começar Grátis</Button></Link>
+            <Link to="/cadastro"><Button size="sm">Começar Grátis</Button></Link>
           </div>
         </div>
       </header>
