@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Settings, Users, CreditCard, Puzzle } from 'lucide-react';
+import { Settings, Users, CreditCard, Puzzle, Palette } from 'lucide-react';
 import { IntegracoesTab } from '@/components/configuracoes/IntegracoesTab';
+import { WhitelabelTab } from '@/components/configuracoes/WhitelabelTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -84,9 +85,10 @@ export default function Configuracoes() {
       <div className="space-y-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Configurações</h1>
         <Tabs defaultValue="escritorio">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="escritorio" className="gap-2"><Settings className="h-4 w-4" /> Escritório</TabsTrigger>
             <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
+            <TabsTrigger value="marca" className="gap-2"><Palette className="h-4 w-4" /> Marca</TabsTrigger>
             <TabsTrigger value="plano" className="gap-2"><CreditCard className="h-4 w-4" /> Plano</TabsTrigger>
             <TabsTrigger value="integracoes" className="gap-2"><Puzzle className="h-4 w-4" /> Integrações</TabsTrigger>
           </TabsList>
@@ -148,6 +150,10 @@ export default function Configuracoes() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="marca">
+            {escritorioId && <WhitelabelTab escritorioId={escritorioId} isDono={isDono} />}
           </TabsContent>
 
           <TabsContent value="plano">

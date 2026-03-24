@@ -16,6 +16,7 @@ import Mensagens from "./pages/Mensagens";
 import Configuracoes from "./pages/Configuracoes";
 import Declaracoes from "./pages/Declaracoes";
 import Capa from "./pages/Capa";
+import Planos from "./pages/Planos";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ConviteCliente from "./pages/cliente/ConviteCliente";
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><Cobrancas /></ProtectedRoute>} />
             <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><Mensagens /></ProtectedRoute>} />
             <Route path="/configuracoes" element={<ProtectedRoute allowedType="contador"><Configuracoes /></ProtectedRoute>} />
+            <Route path="/planos" element={<ProtectedRoute allowedType="contador"><Planos /></ProtectedRoute>} />
             <Route path="/capa" element={<ProtectedRoute allowedType="contador"><Capa /></ProtectedRoute>} />
 
             {/* Cliente routes */}
