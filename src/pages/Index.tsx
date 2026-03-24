@@ -87,7 +87,7 @@ export default function Index() {
               Plataforma completa para escritórios de contabilidade: do checklist inteligente à transmissão, com portal do cliente whitelabel e monitoramento de malha fina.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/login">
+              <Link to="/cadastro">
                 <Button size="lg" className="text-base px-8 h-12">
                   Começar Grátis <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
