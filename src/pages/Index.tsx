@@ -245,9 +245,9 @@ export default function Index() {
       <footer className="border-t py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <img src={logoIcon} alt="DeclaraIR" className="h-6 w-6" />
-              <span className="font-display text-sm font-bold text-foreground">DeclaraIR</span>
+            <div className="flex items-center gap-2.5">
+              <img src={logoIcon} alt="DeclaraIR" className="h-7 w-7" />
+              <img src={logoFull} alt="DeclaraIR" className="h-5" />
             </div>
             <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} DeclaraIR. Todos os direitos reservados.</p>
           </div>

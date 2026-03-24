@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import logoFull from '@/assets/logo-full.png';
+import logoIcon from '@/assets/logo-icon.png';
 
 export default function Login() {
   const navigate = useNavigate();

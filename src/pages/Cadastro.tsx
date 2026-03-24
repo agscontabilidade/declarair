@@ -200,9 +200,9 @@ export default function Cadastro() {
       <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 overflow-y-auto">
         <div className="w-full max-w-lg">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <img src={logoIcon} alt="DeclaraIR" className="h-8 w-8" />
-            <span className="font-display text-xl font-bold text-foreground">DeclaraIR</span>
+          <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
+            <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10" />
+            <img src={logoFull} alt="DeclaraIR" className="h-7" />
           </div>
 
           <StepIndicator currentStep={step} />
