@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ClienteLayout } from '@/components/layout/ClienteLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClipboardList, ChevronLeft, ChevronRight, CheckCircle2, Save } from 'lucide-react';
 import { useFormularioIR } from '@/hooks/useFormularioIR';
+import { StepPerfilFiscal } from '@/components/formulario-ir/StepPerfilFiscal';
 import { StepDadosPessoais } from '@/components/formulario-ir/StepDadosPessoais';
 import { StepDependentes } from '@/components/formulario-ir/StepDependentes';
 import { StepRendimentos } from '@/components/formulario-ir/StepRendimentos';
@@ -14,19 +15,31 @@ import { StepDividasOnus } from '@/components/formulario-ir/StepDividasOnus';
 import { StepDeducoes } from '@/components/formulario-ir/StepDeducoes';
 import { StepInfoAdicionais } from '@/components/formulario-ir/StepInfoAdicionais';
 import { toast } from 'sonner';
+import { DEFAULT_PERFIL, gerarChecklistPorPerfil, type PerfilFiscal } from '@/lib/checklistPorPerfil';
+import { supabase } from '@/integrations/supabase/client';
 
 const STEP_LABELS = [
-  'Dados Pessoais', 'Dependentes', 'Rendimentos', 'Bens e Direitos',
+  'Perfil Fiscal', 'Dados Pessoais', 'Dependentes', 'Rendimentos', 'Bens e Direitos',
   'Dívidas e Ônus', 'Deduções', 'Informações Adicionais',
 ];
 
+const TOTAL_STEPS = STEP_LABELS.length;
+
 export default function ClienteFormulario() {
-  const { formData, updateField, declaracao, isLoading, saving, lastSaved, finalizar } = useFormularioIR();
+  const { formData, updateField, declaracao, formulario, isLoading, saving, lastSaved, finalizar } = useFormularioIR();
   const [step, setStep] = useState(0);
   const [confirmado, setConfirmado] = useState(false);
   const [concluido, setConcluido] = useState(false);
+  const [perfilFiscal, setPerfilFiscal] = useState<PerfilFiscal>(DEFAULT_PERFIL);
 
-  const progress = Math.round(((step + 1) / 7) * 100);
+  // Sync perfil when formulario loads
+  useEffect(() => {
+    if ((formulario as any)?.perfil_fiscal && Object.keys((formulario as any).perfil_fiscal).length > 0) {
+      setPerfilFiscal((formulario as any).perfil_fiscal);
+    }
+  }, [formulario]);
+
+  const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
 
   if (isLoading) {
     return (
@@ -59,7 +72,7 @@ export default function ClienteFormulario() {
       <ClienteLayout>
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="animate-in zoom-in-50 duration-500">
-            <CheckCircle2 className="h-20 w-20 text-emerald-500 mb-6" />
+            <CheckCircle2 className="h-20 w-20 text-success mb-6" />
           </div>
           <h2 className="font-display text-2xl font-bold text-foreground mb-2">Formulário Enviado!</h2>
           <p className="text-muted-foreground max-w-md">
@@ -69,6 +82,42 @@ export default function ClienteFormulario() {
       </ClienteLayout>
     );
   }
+
+  const handlePerfilChange = async (newPerfil: PerfilFiscal) => {
+    setPerfilFiscal(newPerfil);
+    // Save perfil to DB
+    if (formulario?.id) {
+      await supabase
+        .from('formulario_ir')
+        .update({ perfil_fiscal: newPerfil } as any)
+        .eq('id', formulario.id);
+    }
+  };
+
+  const handleNextFromPerfil = async () => {
+    // Generate checklist based on perfil and update declaracao's checklist
+    if (declaracao?.id) {
+      const checklistItems = gerarChecklistPorPerfil(perfilFiscal);
+
+      // Check if checklist already has items
+      const { data: existing } = await supabase
+        .from('checklist_documentos')
+        .select('id')
+        .eq('declaracao_id', declaracao.id)
+        .limit(1);
+
+      // Only regenerate if no checklist exists yet or user confirms
+      if (!existing || existing.length === 0) {
+        const items = checklistItems.map(item => ({
+          ...item,
+          declaracao_id: declaracao.id,
+        }));
+        await supabase.from('checklist_documentos').insert(items);
+        toast.success(`Checklist personalizado gerado com ${checklistItems.length} documentos!`);
+      }
+    }
+    setStep(1);
+  };
 
   const handleFinalizar = async () => {
     if (!confirmado) {
@@ -86,7 +135,7 @@ export default function ClienteFormulario() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Formulário IR {declaracao.ano_base}</h1>
-            <p className="text-sm text-muted-foreground mt-1">Etapa {step + 1} de 7 — {STEP_LABELS[step]}</p>
+            <p className="text-sm text-muted-foreground mt-1">Etapa {step + 1} de {TOTAL_STEPS} — {STEP_LABELS[step]}</p>
           </div>
           {lastSaved && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -101,13 +150,14 @@ export default function ClienteFormulario() {
         {/* Step Content */}
         <Card className="shadow-sm">
           <CardContent className="p-6">
-            {step === 0 && <StepDadosPessoais data={formData} onChange={updateField} />}
-            {step === 1 && <StepDependentes data={formData} onChange={updateField} />}
-            {step === 2 && <StepRendimentos data={formData} onChange={updateField} />}
-            {step === 3 && <StepBensDireitos data={formData} onChange={updateField} />}
-            {step === 4 && <StepDividasOnus data={formData} onChange={updateField} />}
-            {step === 5 && <StepDeducoes data={formData} onChange={updateField} />}
-            {step === 6 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
+            {step === 0 && <StepPerfilFiscal perfil={perfilFiscal} onChange={handlePerfilChange} />}
+            {step === 1 && <StepDadosPessoais data={formData} onChange={updateField} />}
+            {step === 2 && <StepDependentes data={formData} onChange={updateField} />}
+            {step === 3 && <StepRendimentos data={formData} onChange={updateField} />}
+            {step === 4 && <StepBensDireitos data={formData} onChange={updateField} />}
+            {step === 5 && <StepDividasOnus data={formData} onChange={updateField} />}
+            {step === 6 && <StepDeducoes data={formData} onChange={updateField} />}
+            {step === 7 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
           </CardContent>
         </Card>
 
@@ -116,12 +166,16 @@ export default function ClienteFormulario() {
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
             <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
           </Button>
-          {step < 6 ? (
+          {step === 0 ? (
+            <Button className="w-full sm:w-auto active:scale-[0.98]" onClick={handleNextFromPerfil}>
+              Próximo <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          ) : step < TOTAL_STEPS - 1 ? (
             <Button className="w-full sm:w-auto active:scale-[0.98]" onClick={() => setStep(step + 1)}>
               Próximo <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleFinalizar} disabled={saving} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98]">
+            <Button onClick={handleFinalizar} disabled={saving} className="w-full sm:w-auto bg-success hover:bg-success/90 active:scale-[0.98]">
               <CheckCircle2 className="h-4 w-4 mr-2" /> Finalizar
             </Button>
           )}

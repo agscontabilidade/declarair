@@ -246,6 +246,7 @@ export type Database = {
           created_at: string
           data_transmissao: string | null
           escritorio_id: string
+          forma_tributacao: string | null
           id: string
           numero_recibo: string | null
           observacoes_internas: string | null
@@ -261,6 +262,7 @@ export type Database = {
           created_at?: string
           data_transmissao?: string | null
           escritorio_id: string
+          forma_tributacao?: string | null
           id?: string
           numero_recibo?: string | null
           observacoes_internas?: string | null
@@ -276,6 +278,7 @@ export type Database = {
           created_at?: string
           data_transmissao?: string | null
           escritorio_id?: string
+          forma_tributacao?: string | null
           id?: string
           numero_recibo?: string | null
           observacoes_internas?: string | null
@@ -448,6 +451,7 @@ export type Database = {
           id: string
           informacoes_adicionais: string | null
           outros_rendimentos: Json
+          perfil_fiscal: Json
           previdencia_privada: Json
           rendimentos_aluguel: Json
           rendimentos_autonomo: Json
@@ -471,6 +475,7 @@ export type Database = {
           id?: string
           informacoes_adicionais?: string | null
           outros_rendimentos?: Json
+          perfil_fiscal?: Json
           previdencia_privada?: Json
           rendimentos_aluguel?: Json
           rendimentos_autonomo?: Json
@@ -494,6 +499,7 @@ export type Database = {
           id?: string
           informacoes_adicionais?: string | null
           outros_rendimentos?: Json
+          perfil_fiscal?: Json
           previdencia_privada?: Json
           rendimentos_aluguel?: Json
           rendimentos_autonomo?: Json

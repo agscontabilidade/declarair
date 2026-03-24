@@ -2,20 +2,26 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DeclaracaoHeader } from '@/components/declaracao/DeclaracaoHeader';
 import { TransmitidaModal } from '@/components/declaracao/TransmitidaModal';
 import { AbaDocumentos } from '@/components/cliente-perfil/AbaDocumentos';
 import { SecaoFormularioIR } from '@/components/declaracao/SecaoFormularioIR';
 import { SecaoResultado } from '@/components/declaracao/SecaoResultado';
 import { SecaoNotas } from '@/components/declaracao/SecaoNotas';
+import { SecaoCalculoIR } from '@/components/declaracao/SecaoCalculoIR';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 export default function DeclaracaoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const hook = useDeclaracao(id);
+  const queryClient = useQueryClient();
   const [transmitidaModalOpen, setTransmitidaModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [savingForma, setSavingForma] = useState(false);
 
   const handleChangeStatus = (newStatus: string) => {
     if (newStatus === 'transmitida') {
@@ -72,6 +78,24 @@ export default function DeclaracaoDetalhe() {
     });
   };
 
+  const handleSaveForma = async (forma: string) => {
+    if (!id) return;
+    setSavingForma(true);
+    try {
+      const { error } = await supabase
+        .from('declaracoes')
+        .update({ forma_tributacao: forma } as any)
+        .eq('id', id);
+      if (error) throw error;
+      toast.success(`Forma de tributação definida: ${forma === 'completa' ? 'Completa' : 'Simplificada'}`);
+      queryClient.invalidateQueries({ queryKey: ['declaracao', id] });
+    } catch {
+      toast.error('Erro ao salvar forma de tributação');
+    } finally {
+      setSavingForma(false);
+    }
+  };
+
   if (hook.isLoading) {
     return (
       <DashboardLayout>
@@ -93,41 +117,54 @@ export default function DeclaracaoDetalhe() {
           onChangeStatus={handleChangeStatus}
         />
 
-        {/* Checklist */}
-        <div>
-          <h2 className="font-display text-lg font-bold mb-3">Checklist de Documentos</h2>
-          <AbaDocumentos
-            checklist={hook.checklist}
-            isLoading={hook.checklistLoading}
-            declaracaoId={id}
-            onUpload={handleUpload}
-            uploading={hook.uploadDoc.isPending}
-            onAddItem={handleAddDocItem}
-            hasDeclaracao={true}
-          />
-        </div>
+        <Tabs defaultValue="documentos" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="documentos">Documentos</TabsTrigger>
+            <TabsTrigger value="formulario">Formulário IR</TabsTrigger>
+            <TabsTrigger value="calculo">Cálculo IR</TabsTrigger>
+            <TabsTrigger value="resultado">Resultado & Notas</TabsTrigger>
+          </TabsList>
 
-        {/* Formulário IR */}
-        <div>
-          <h2 className="font-display text-lg font-bold mb-3">Formulário IR</h2>
-          <SecaoFormularioIR
-            formulario={hook.formularioIR}
-            isLoading={hook.formularioLoading}
-          />
-        </div>
+          <TabsContent value="documentos" className="mt-4">
+            <AbaDocumentos
+              checklist={hook.checklist}
+              isLoading={hook.checklistLoading}
+              declaracaoId={id}
+              onUpload={handleUpload}
+              uploading={hook.uploadDoc.isPending}
+              onAddItem={handleAddDocItem}
+              hasDeclaracao={true}
+            />
+          </TabsContent>
 
-        {/* Resultado */}
-        <SecaoResultado
-          declaracao={hook.declaracao}
-          onSave={handleSaveResultado}
-          saving={hook.saveResultado.isPending}
-        />
+          <TabsContent value="formulario" className="mt-4">
+            <SecaoFormularioIR
+              formulario={hook.formularioIR}
+              isLoading={hook.formularioLoading}
+            />
+          </TabsContent>
 
-        {/* Notas */}
-        <SecaoNotas
-          observacoes={hook.declaracao?.observacoes_internas ?? null}
-          onSave={handleSaveNotas}
-        />
+          <TabsContent value="calculo" className="mt-4">
+            <SecaoCalculoIR
+              formulario={hook.formularioIR}
+              declaracao={hook.declaracao}
+              onSaveForma={handleSaveForma}
+              savingForma={savingForma}
+            />
+          </TabsContent>
+
+          <TabsContent value="resultado" className="mt-4 space-y-6">
+            <SecaoResultado
+              declaracao={hook.declaracao}
+              onSave={handleSaveResultado}
+              saving={hook.saveResultado.isPending}
+            />
+            <SecaoNotas
+              observacoes={hook.declaracao?.observacoes_internas ?? null}
+              onSave={handleSaveNotas}
+            />
+          </TabsContent>
+        </Tabs>
 
         <TransmitidaModal
           open={transmitidaModalOpen}

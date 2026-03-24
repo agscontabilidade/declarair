@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { KpiCards } from '@/components/dashboard/KpiCards';
 import { KanbanBoard } from '@/components/dashboard/KanbanBoard';
+import { DeclaracoesListView } from '@/components/dashboard/DeclaracoesListView';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Plus } from 'lucide-react';
+import { Bell, Plus, LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -40,6 +41,7 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   const [showModal, setShowModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'kanban' | 'lista'>('kanban');
   const [novoClienteId, setNovoClienteId] = useState('');
   const [novoAno, setNovoAno] = useState(String(currentYear));
   const [novoContadorId, setNovoContadorId] = useState('');
@@ -101,6 +103,22 @@ export default function Dashboard() {
             <Button onClick={() => setShowModal(true)} size="sm" className="gap-2">
               <Plus className="h-4 w-4" /> Nova Declaração
             </Button>
+            <div className="flex items-center border border-border rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`p-2 transition-colors ${viewMode === 'kanban' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                title="Visualização Kanban"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('lista')}
+                className={`p-2 transition-colors ${viewMode === 'lista' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                title="Visualização Lista"
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
             <Select value={String(anoBase)} onValueChange={(v) => setAnoBase(Number(v))}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
@@ -128,7 +146,11 @@ export default function Dashboard() {
         </div>
 
         <KpiCards data={kpis.data} isLoading={kpis.isLoading} />
-        <KanbanBoard items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} anoBase={anoBase} />
+        {viewMode === 'kanban' ? (
+          <KanbanBoard items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} anoBase={anoBase} />
+        ) : (
+          <DeclaracoesListView items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} />
+        )}
       </div>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
