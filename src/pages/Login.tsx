@@ -11,13 +11,25 @@ import { toast } from '@/hooks/use-toast';
 export default function Login() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-
-  // Login state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginSenha, setLoginSenha] = useState('');
 
-
   async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginSenha,
+      });
+      if (error) throw error;
+      navigate('/dashboard');
+    } catch (err: any) {
+      toast({ title: 'Erro ao entrar', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative">
