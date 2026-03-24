@@ -18,6 +18,7 @@ import Mensagens from "./pages/Mensagens";
 import Configuracoes from "./pages/Configuracoes";
 import Declaracoes from "./pages/Declaracoes";
 import Capa from "./pages/Capa";
+import Perfil from "./pages/Perfil";
 import Planos from "./pages/Planos";
 import MalhaFina from "./pages/MalhaFina";
 import Drive from "./pages/Drive";
