@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedType }: ProtectedRouteProps) {
-  const { session, userType, loading } = useAuth();
+  const { session, userType, profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -25,6 +25,11 @@ export function ProtectedRoute({ children, allowedType }: ProtectedRouteProps) {
     if (userType === 'contador') return <Navigate to="/dashboard" replace />;
     if (userType === 'cliente') return <Navigate to="/cliente/dashboard" replace />;
     return <Navigate to="/login" replace />;
+  }
+
+  // Block contador from dashboard if onboarding not complete
+  if (allowedType === 'contador' && profile.onboardingCompleto === false) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;

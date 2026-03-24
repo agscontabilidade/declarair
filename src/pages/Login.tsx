@@ -83,55 +83,28 @@ export default function Login() {
           <CardDescription>Gerencie declarações IRPF do seu escritório</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="entrar">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="entrar">Entrar</TabsTrigger>
-              <TabsTrigger value="criar">Criar Conta</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="entrar">
-              <form onSubmit={handleLogin} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input id="login-email" type="email" required value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="seu@email.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-senha">Senha</Label>
-                  <Input id="login-senha" type="password" required value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} placeholder="••••••••" />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Entrando...' : 'Entrar'}
-                </Button>
-                <Link to="/recuperar-senha" className="block text-center">
-                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors">Esqueceu sua senha?</span>
-                </Link>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="criar">
-              <form onSubmit={handleSignup} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nome">Seu nome</Label>
-                  <Input id="nome" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="João Silva" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="escritorio">Nome do escritório</Label>
-                  <Input id="escritorio" required value={nomeEscritorio} onChange={(e) => setNomeEscritorio(e.target.value)} placeholder="Contabilidade Silva" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input id="signup-email" type="email" required value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} placeholder="seu@email.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-senha">Senha</Label>
-                  <Input id="signup-senha" type="password" required minLength={6} value={signupSenha} onChange={(e) => setSignupSenha(e.target.value)} placeholder="Mínimo 6 caracteres" />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Criando...' : 'Criar Conta'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          <form onSubmit={handleLogin} className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label htmlFor="login-email">Email</Label>
+              <Input id="login-email" type="email" required value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="seu@email.com" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="login-senha">Senha</Label>
+              <Input id="login-senha" type="password" required value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} placeholder="••••••••" />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Entrando...' : 'Entrar'}
+            </Button>
+            <Link to="/recuperar-senha" className="block text-center">
+              <span className="text-sm text-muted-foreground hover:text-primary transition-colors">Esqueceu sua senha?</span>
+            </Link>
+            <div className="text-center pt-2 border-t">
+              <p className="text-sm text-muted-foreground">
+                Não tem uma conta?{' '}
+                <Link to="/cadastro" className="text-accent hover:underline font-medium">Criar conta</Link>
+              </p>
+            </div>
+          </form>
         </CardContent>
       </Card>
       <p className="absolute bottom-4 text-xs text-muted-foreground">© 2025–2026 DeclaraIR</p>
