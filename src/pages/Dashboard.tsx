@@ -41,6 +41,7 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   const [showModal, setShowModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'kanban' | 'lista'>('kanban');
   const [novoClienteId, setNovoClienteId] = useState('');
   const [novoAno, setNovoAno] = useState(String(currentYear));
   const [novoContadorId, setNovoContadorId] = useState('');
