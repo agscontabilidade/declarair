@@ -1,4 +1,6 @@
-import { FileText, Home, ClipboardList, Upload, LogOut } from 'lucide-react';
+import { Home, ClipboardList, Upload, LogOut } from 'lucide-react';
+import logoIcon from '@/assets/logo-icon.png';
+import logoFull from '@/assets/logo-full.png';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
