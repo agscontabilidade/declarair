@@ -20,6 +20,8 @@ import Declaracoes from "./pages/Declaracoes";
 import Capa from "./pages/Capa";
 import Perfil from "./pages/Perfil";
 import Planos from "./pages/Planos";
+import Checkout from "./pages/Checkout";
+import Upgrade from "./pages/Upgrade";
 import Cadastro from "./pages/Cadastro";
 import Onboarding from "./pages/Onboarding";
 import MalhaFina from "./pages/MalhaFina";
