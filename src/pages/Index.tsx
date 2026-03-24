@@ -33,12 +33,6 @@ const features = [
   { icon: Bell, title: 'Notificações Automáticas', desc: 'Emails e alertas disparados automaticamente a cada mudança de status.' },
 ];
 
-const metrics = [
-  { value: '85', suffix: '%', label: 'Redução no tempo de coleta de documentos' },
-  { value: '3', suffix: 'x', label: 'Mais declarações processadas por contador' },
-  { value: '0', suffix: '', label: 'Declarações perdidas em malha fina sem aviso' },
-  { value: '100', suffix: '%', label: 'Whitelabel — sua marca, seu portal' },
-];
 
 const plans = [
   { name: 'Gratuito', price: 'R$ 0', period: '/mês', declaracoes: '10', usuarios: '1', features: ['Dashboard Kanban', 'Portal do Cliente', 'Checklist Dinâmico'], cta: 'Começar Grátis', popular: false },
