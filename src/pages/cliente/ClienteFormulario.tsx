@@ -177,7 +177,7 @@ export default function ClienteFormulario() {
               Próximo <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleFinalizar} disabled={saving} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98]">
+            <Button onClick={handleFinalizar} disabled={saving} className="w-full sm:w-auto bg-success hover:bg-success/90 active:scale-[0.98]">
               <CheckCircle2 className="h-4 w-4 mr-2" /> Finalizar
             </Button>
           )}
