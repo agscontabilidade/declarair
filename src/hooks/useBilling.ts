@@ -72,3 +72,24 @@ export function useCancelSubscription() {
     },
   });
 }
+
+export function useRegisterWebhook() {
+  return useMutation({
+    mutationFn: () => billingAction('register-webhook'),
+    onSuccess: (data) => {
+      toast.success(data.message || 'Webhook registrado!');
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Erro ao registrar webhook');
+    },
+  });
+}
+
+export function useListWebhooks() {
+  const { profile } = useAuth();
+  return useQuery({
+    queryKey: ['asaas-webhooks', profile.escritorioId],
+    queryFn: () => billingAction('list-webhooks'),
+    enabled: !!profile.escritorioId,
+  });
+}

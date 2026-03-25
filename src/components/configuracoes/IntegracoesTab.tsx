@@ -7,10 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Eye, EyeOff, Upload, Check, X, Shield, HelpCircle } from 'lucide-react';
+import { Eye, EyeOff, Upload, Check, X, Shield, HelpCircle, Webhook, Loader2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useRegisterWebhook, useListWebhooks } from '@/hooks/useBilling';
 
 const BANCOS = [
   { key: 'nenhum', nome: 'Nenhum (controle manual)', desc: 'Registre cobranças e marque como pagas manualmente', available: true },
@@ -287,6 +288,68 @@ export function IntegracoesTab({ escritorioId, isDono }: Props) {
             </Accordion>
           </CardContent>
         </Card>
+      )}
+
+      {/* Asaas Webhook Registration */}
+      <Card className="shadow-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Webhook className="h-5 w-5" /> Webhook de Pagamentos (Asaas)
+            </CardTitle>
+            <WebhookStatus escritorioId={escritorioId} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            Registre o webhook para receber notificações automáticas de pagamentos, cobranças e assinaturas do Asaas.
+          </p>
+          <WebhookActions isDono={isDono} />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function WebhookStatus({ escritorioId }: { escritorioId: string | null | undefined }) {
+  const { data, isLoading } = useListWebhooks();
+  if (isLoading) return <Badge variant="outline" className="text-muted-foreground">Verificando...</Badge>;
+  const webhooks = data?.webhooks || [];
+  const active = webhooks.find((w: any) => w.url?.includes('billing-webhook') && w.enabled);
+  if (active) return <Badge className="bg-emerald-100 text-emerald-800">Ativo</Badge>;
+  return <Badge variant="outline" className="text-destructive">Não registrado</Badge>;
+}
+
+function WebhookActions({ isDono }: { isDono: boolean }) {
+  const registerMutation = useRegisterWebhook();
+  const { data, isLoading, refetch } = useListWebhooks();
+  const webhooks = data?.webhooks || [];
+  const active = webhooks.find((w: any) => w.url?.includes('billing-webhook') && w.enabled);
+
+  const handleRegister = async () => {
+    await registerMutation.mutateAsync();
+    refetch();
+  };
+
+  return (
+    <div className="space-y-3">
+      {active ? (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+          <p className="text-sm font-medium text-emerald-800">✓ Webhook registrado e ativo</p>
+          <p className="text-xs text-emerald-600 mt-1">URL: {active.url}</p>
+          <p className="text-xs text-emerald-600">Eventos: {active.events?.length || 0} configurados</p>
+        </div>
+      ) : (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-sm font-medium text-amber-800">⚠ Webhook não registrado</p>
+          <p className="text-xs text-amber-600 mt-1">Sem o webhook, o sistema não receberá confirmações de pagamento automaticamente.</p>
+        </div>
+      )}
+      {isDono && (
+        <Button onClick={handleRegister} disabled={registerMutation.isPending || isLoading} variant={active ? 'outline' : 'default'}>
+          {registerMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Webhook className="h-4 w-4 mr-2" />}
+          {active ? 'Re-registrar Webhook' : 'Registrar Webhook'}
+        </Button>
       )}
     </div>
   );
