@@ -275,6 +275,51 @@ async function getPayments(escritorio: any, admin: any) {
   return { pagamentos: pagamentos || [] };
 }
 
+const WEBHOOK_URL = "https://bykqurgeptipguqvxwiq.supabase.co/functions/v1/billing-webhook";
+
+const WEBHOOK_EVENTS = [
+  "PAYMENT_CREATED",
+  "PAYMENT_RECEIVED",
+  "PAYMENT_CONFIRMED",
+  "PAYMENT_OVERDUE",
+  "PAYMENT_REFUNDED",
+  "PAYMENT_CHARGEBACK",
+  "PAYMENT_DELETED",
+  "SUBSCRIPTION_DELETED",
+  "SUBSCRIPTION_INACTIVATED",
+];
+
+async function listWebhooks() {
+  const data = await asaasRequest("/webhooks");
+  return { webhooks: data?.data || [] };
+}
+
+async function registerWebhook(escritorio: any) {
+  // Check for existing webhook with same URL
+  const existing = await asaasRequest("/webhooks");
+  const alreadyRegistered = (existing?.data || []).find(
+    (w: any) => w.url === WEBHOOK_URL && w.enabled
+  );
+  if (alreadyRegistered) {
+    return { success: true, message: "Webhook já registrado", webhook: alreadyRegistered };
+  }
+
+  const webhook = await asaasRequest("/webhooks", {
+    method: "POST",
+    body: JSON.stringify({
+      name: "DeclaraIR Billing Webhook",
+      url: WEBHOOK_URL,
+      email: escritorio.email || "",
+      enabled: true,
+      interrupted: false,
+      sendType: "SEQUENTIALLY",
+      events: WEBHOOK_EVENTS,
+    }),
+  });
+
+  return { success: true, message: "Webhook registrado com sucesso", webhook };
+}
+
 async function getSubscription(escritorio: any, admin: any) {
   const { data: assinatura } = await admin
     .from("assinaturas")
