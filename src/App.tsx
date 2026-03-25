@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { BillingGate } from "@/components/billing/BillingGate";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import Index from "./pages/Index";
@@ -78,21 +79,23 @@ const App = () => (
               <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
               <Route path="/politica-lgpd" element={<PoliticaLGPD />} />
 
-              {/* Contador routes */}
-              <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><Dashboard /></ProtectedRoute>} />
-              <Route path="/clientes/:id" element={<ProtectedRoute allowedType="contador"><ClientePerfil /></ProtectedRoute>} />
-              <Route path="/declaracoes/:id" element={<ProtectedRoute allowedType="contador"><DeclaracaoDetalhe /></ProtectedRoute>} />
-              <Route path="/declaracoes" element={<ProtectedRoute allowedType="contador"><Declaracoes /></ProtectedRoute>} />
-              <Route path="/clientes" element={<ProtectedRoute allowedType="contador"><Clientes /></ProtectedRoute>} />
-              <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><Cobrancas /></ProtectedRoute>} />
-              <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><Mensagens /></ProtectedRoute>} />
+              {/* Contador routes - billing gated */}
+              <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><BillingGate><Dashboard /></BillingGate></ProtectedRoute>} />
+              <Route path="/clientes/:id" element={<ProtectedRoute allowedType="contador"><BillingGate><ClientePerfil /></BillingGate></ProtectedRoute>} />
+              <Route path="/declaracoes/:id" element={<ProtectedRoute allowedType="contador"><BillingGate><DeclaracaoDetalhe /></BillingGate></ProtectedRoute>} />
+              <Route path="/declaracoes" element={<ProtectedRoute allowedType="contador"><BillingGate><Declaracoes /></BillingGate></ProtectedRoute>} />
+              <Route path="/clientes" element={<ProtectedRoute allowedType="contador"><BillingGate><Clientes /></BillingGate></ProtectedRoute>} />
+              <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><BillingGate><Cobrancas /></BillingGate></ProtectedRoute>} />
+              <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><BillingGate><Mensagens /></BillingGate></ProtectedRoute>} />
+              <Route path="/capa" element={<ProtectedRoute allowedType="contador"><BillingGate><Capa /></BillingGate></ProtectedRoute>} />
+              <Route path="/malha-fina" element={<ProtectedRoute allowedType="contador"><BillingGate><MalhaFina /></BillingGate></ProtectedRoute>} />
+              <Route path="/drive" element={<ProtectedRoute allowedType="contador"><BillingGate><Drive /></BillingGate></ProtectedRoute>} />
+
+              {/* Contador routes - always accessible */}
               <Route path="/configuracoes" element={<ProtectedRoute allowedType="contador"><Configuracoes /></ProtectedRoute>} />
               <Route path="/planos" element={<ProtectedRoute allowedType="contador"><Planos /></ProtectedRoute>} />
               <Route path="/checkout" element={<ProtectedRoute allowedType="contador"><Checkout /></ProtectedRoute>} />
               <Route path="/upgrade" element={<ProtectedRoute allowedType="contador"><Upgrade /></ProtectedRoute>} />
-              <Route path="/capa" element={<ProtectedRoute allowedType="contador"><Capa /></ProtectedRoute>} />
-              <Route path="/malha-fina" element={<ProtectedRoute allowedType="contador"><MalhaFina /></ProtectedRoute>} />
-              <Route path="/drive" element={<ProtectedRoute allowedType="contador"><Drive /></ProtectedRoute>} />
               <Route path="/perfil" element={<ProtectedRoute allowedType="contador"><Perfil /></ProtectedRoute>} />
 
               {/* Cliente routes */}
