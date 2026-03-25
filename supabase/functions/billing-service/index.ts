@@ -361,6 +361,12 @@ Deno.serve(async (req) => {
       case "get-subscription":
         result = await getSubscription(escritorio, admin);
         break;
+      case "register-webhook":
+        result = await registerWebhook(escritorio);
+        break;
+      case "list-webhooks":
+        result = await listWebhooks();
+        break;
       default:
         throw new Error(`Unknown action: ${action}`);
     }
