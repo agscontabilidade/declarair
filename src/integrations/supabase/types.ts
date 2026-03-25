@@ -1105,6 +1105,7 @@ export type Database = {
       get_user_cliente_id: { Args: never; Returns: string }
       get_user_escritorio_id: { Args: never; Returns: string }
       get_user_papel: { Args: never; Returns: string }
+      get_user_papel_safe: { Args: never; Returns: string }
       handle_new_accountant_signup: {
         Args: {
           p_email: string
