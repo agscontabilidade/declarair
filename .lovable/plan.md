@@ -1,71 +1,56 @@
 
 
-# Plano: Adicionar Vida à Landing Page com Pessoas e Elementos Visuais
+# Plan: Register Asaas Webhook via API
 
-## Conceito
+## What
+Add a `register-webhook` action to the `billing-service` edge function that calls the Asaas API (`POST /v3/webhooks`) to automatically register the billing-webhook URL for all relevant payment and subscription events.
 
-Inspirado na referencia (Biru), adicionar fotos reais de pessoas usando notebooks/celulares em posicoes estrategicas, mantendo as cores e marca. Usar imagens do Unsplash (gratuitas, sem chave) via URL direta.
+## Why
+Currently the webhook endpoint exists but is not registered with Asaas. Without this registration, Asaas won't send payment events to the system.
 
-## Mudancas
+## Implementation
 
-### 1. Hero Section — Pessoa com Notebook ao Fundo do Mockup
+### Step 1: Add `register-webhook` handler to `billing-service/index.ts`
 
-Adicionar uma foto de profissional (contador) com notebook como background da area direita do hero, por tras dos mockups flutuantes. A pessoa fica com opacidade parcial e um gradient overlay nas cores da marca, dando contexto humano sem competir com os mockups.
+Add a new handler function that calls `POST https://sandbox.asaas.com/api/v3/webhooks` with:
 
-```text
-┌─────────────────────────────────────────────┐
-│  Texto CTA          │  [Foto pessoa]        │
-│  Badge IRPF 2026    │    ┌─────────┐        │
-│  H1 grande          │    │ Mockup  │ float  │
-│  Botoes             │    └─────────┘        │
-│                     │      ┌────┐ float     │
-│                     │      │KPI │           │
-│                     │      └────┘           │
-└─────────────────────────────────────────────┘
+```json
+{
+  "name": "DeclaraIR Billing Webhook",
+  "url": "https://bykqurgeptipguqvxwiq.supabase.co/functions/v1/billing-webhook",
+  "email": "<escritorio email>",
+  "enabled": true,
+  "interrupted": false,
+  "sendType": "SEQUENTIALLY",
+  "events": [
+    "PAYMENT_CREATED",
+    "PAYMENT_RECEIVED",
+    "PAYMENT_CONFIRMED",
+    "PAYMENT_OVERDUE",
+    "PAYMENT_REFUNDED",
+    "PAYMENT_CHARGEBACK",
+    "PAYMENT_DELETED",
+    "SUBSCRIPTION_DELETED",
+    "SUBSCRIPTION_INACTIVATED"
+  ]
+}
 ```
 
-### 2. Nova Secao "Deixe o Trabalho Pesado Conosco" (Inspirada na Referencia)
+Also add a `list-webhooks` action (GET `/v3/webhooks`) to check existing registrations and avoid duplicates.
 
-Secao split com fundo primary, foto de pessoa usando celular no centro, e cards de beneficios flutuantes ao lado direito (como na referencia Biru — "Let us do the work"). Usa glassmorfismo nos cards.
+### Step 2: Add route in the switch statement
 
-```text
-┌──────────────────────────────────────────────┐
-│ bg-primary/95                                │
-│ "Deixe a burocracia    [Foto pessoa     ┌──┐│
-│  conosco. Foque no      com celular]    │📱││
-│  que importa."                          └──┘│
-│                                        ┌──┐ │
-│ [Botao CTA]                            │💻│ │
-│                                        └──┘ │
-└──────────────────────────────────────────────┘
-```
+Add `register-webhook` and `list-webhooks` cases to the existing action router in `billing-service`.
 
-### 3. Testimonials — Fotos Reais nos Avatares
+### Step 3: Add admin UI trigger (optional)
 
-Substituir as iniciais por fotos de pessoas profissionais (Unsplash) nos depoimentos, dando mais credibilidade.
+Add a button in `/configuracoes` or `/planos` page to trigger webhook registration, or auto-register on first subscription creation.
 
-### 4. Social Proof — Logos de "Parceiros" Placeholder
+## Technical Details
 
-Adicionar faixa "Utilizado por +500 escritorios" com logos placeholder estilizados (usando texto/icones, sem imagens externas), similar a referencia.
-
-### 5. CTA Final — Background com Pessoa
-
-Adicionar imagem sutil de contador satisfeito no background do CTA final, com overlay gradient mantendo legibilidade.
-
-## Imagens (Unsplash — gratuitas)
-
-Usar URLs diretas do Unsplash para fotos profissionais:
-- Hero: Homem com notebook (business/tech)
-- Secao split: Pessoa com celular
-- Testimonials: 3 fotos de profissionais
-- CTA: Profissional sorrindo
-
-## Arquivos Modificados
-
-| Arquivo | Acao |
-|---------|------|
-| `src/pages/Index.tsx` | Adicionar secao split com pessoa, fotos nos testimonials, imagem no hero e CTA |
-| `src/components/landing/HeroMockup.tsx` | Adicionar foto de pessoa como background por tras dos mockups |
-
-Nenhum arquivo novo. Apenas enriquecimento visual com imagens estrategicas de pessoas.
+- Reuses existing `asaasRequest()` helper -- no new dependencies
+- The Asaas sandbox base URL is already configured
+- Events list matches exactly what `billing-webhook/index.ts` handles
+- No database changes needed
+- No new secrets needed (uses existing `ASAAS_API_KEY`)
 
