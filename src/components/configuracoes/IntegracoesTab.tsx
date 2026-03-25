@@ -7,10 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Eye, EyeOff, Upload, Check, X, Shield, HelpCircle } from 'lucide-react';
+import { Eye, EyeOff, Upload, Check, X, Shield, HelpCircle, Webhook, Loader2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useRegisterWebhook, useListWebhooks } from '@/hooks/useBilling';
 
 const BANCOS = [
   { key: 'nenhum', nome: 'Nenhum (controle manual)', desc: 'Registre cobranças e marque como pagas manualmente', available: true },
