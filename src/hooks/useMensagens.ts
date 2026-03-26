@@ -2,12 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { PORTAL_BASE_URL } from '@/lib/constants';
 
 const DEFAULT_TEMPLATES = [
   {
     nome: 'Boas-vindas ao Portal',
     canal: 'whatsapp' as const,
-    corpo: 'Olá {nome_cliente}! Seu acesso ao portal do {nome_escritorio} está pronto: {link_portal}',
+    corpo: 'Olá {nome_cliente}! Seu acesso ao portal do {nome_escritorio} está pronto: {link_portal}\n\nCrie sua senha e envie seus documentos com segurança.',
   },
   {
     nome: 'Documentação Pendente',
@@ -24,7 +25,7 @@ const DEFAULT_TEMPLATES = [
 export const AVAILABLE_TAGS = [
   '{nome_cliente}', '{cpf_cliente}', '{ano_base}', '{status_declaracao}',
   '{tipo_resultado}', '{valor_resultado}', '{data_transmissao}', '{numero_recibo}',
-  '{nome_contador}', '{nome_escritorio}', '{link_portal}',
+  '{nome_contador}', '{nome_escritorio}', '{link_portal}', '{link_convite}',
 ];
 
 const MOCK_DATA: Record<string, string> = {
