@@ -34,8 +34,9 @@ export default function ClienteFormulario() {
 
   // Sync perfil when formulario loads
   useEffect(() => {
-    if ((formulario as any)?.perfil_fiscal && Object.keys((formulario as any).perfil_fiscal).length > 0) {
-      setPerfilFiscal((formulario as any).perfil_fiscal);
+    const pf = formulario?.perfil_fiscal;
+    if (pf && typeof pf === 'object' && !Array.isArray(pf) && Object.keys(pf).length > 0) {
+      setPerfilFiscal(pf as unknown as PerfilFiscal);
     }
   }, [formulario]);
 
@@ -89,7 +90,7 @@ export default function ClienteFormulario() {
     if (formulario?.id) {
       await supabase
         .from('formulario_ir')
-        .update({ perfil_fiscal: newPerfil } as any)
+        .update({ perfil_fiscal: newPerfil as unknown as import('@/integrations/supabase/types').Json })
         .eq('id', formulario.id);
     }
   };

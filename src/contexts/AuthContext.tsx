@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .select('onboarding_completo')
           .eq('id', usuario.escritorio_id)
           .maybeSingle();
-        onboardingCompleto = (esc as any)?.onboarding_completo ?? false;
+        onboardingCompleto = esc?.onboarding_completo ?? false;
       }
 
       setUserType('contador');

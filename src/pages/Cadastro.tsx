@@ -133,7 +133,7 @@ export default function Cadastro() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Erro ao criar conta');
 
-      const { error: rpcError } = await supabase.rpc('handle_new_accountant_signup' as any, {
+      const { error: rpcError } = await supabase.rpc('handle_new_accountant_signup', {
         p_user_id: authData.user.id,
         p_nome: nome,
         p_nome_escritorio: nomeEscritorio,
@@ -143,7 +143,7 @@ export default function Cadastro() {
 
       // Update telefone on usuarios if provided
       if (telefone.trim()) {
-        await supabase.from('usuarios').update({ telefone } as any).eq('id', authData.user.id);
+        await supabase.from('usuarios').update({ telefone }).eq('id', authData.user.id);
       }
 
       // Update plano on escritorios

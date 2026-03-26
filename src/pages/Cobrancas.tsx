@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function Cobrancas() {
   const [statusFilter, setStatusFilter] = useState('todos');
   const [modalOpen, setModalOpen] = useState(false);
-  const [editData, setEditData] = useState<any>(null);
+  const [editData, setEditData] = useState<Record<string, unknown> | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
   const { profile } = useAuth();
 
@@ -28,15 +28,15 @@ export default function Cobrancas() {
     queryKey: ['inter-ativo', profile.escritorioId],
     queryFn: async () => {
       if (!profile.escritorioId) return false;
-      const { data } = await (supabase as any).from('configuracoes_escritorio').select('valor').eq('escritorio_id', profile.escritorioId).eq('chave', 'inter_ativo').single();
+      const { data } = await supabase.from('configuracoes_escritorio').select('valor').eq('escritorio_id', profile.escritorioId).eq('chave', 'inter_ativo').single();
       return data?.valor === 'true';
     },
     enabled: !!profile.escritorioId,
   });
 
-  const handleSave = (data: any) => {
+  const handleSave = (data: { id?: string; cliente_id: string; declaracao_id?: string; descricao: string; valor: number; data_vencimento: string }) => {
     if (data.id) {
-      editar.mutate(data, { onSuccess: () => { setModalOpen(false); setEditData(null); } });
+      editar.mutate({ ...data, id: data.id }, { onSuccess: () => { setModalOpen(false); setEditData(null); } });
     } else {
       criar.mutate(data, { onSuccess: () => { setModalOpen(false); setEditData(null); } });
     }
