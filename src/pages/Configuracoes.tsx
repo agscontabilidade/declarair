@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Settings, Users, CreditCard, Puzzle, Palette, Bell, MessageSquare } from 'lucide-react';
 import { buscarCNPJ } from '@/lib/apiBrasil';
 import { IntegracoesTab } from '@/components/configuracoes/IntegracoesTab';
+import AbaEquipe from '@/components/configuracoes/AbaEquipe';
 import { WhitelabelTab } from '@/components/configuracoes/WhitelabelTab';
 import { NotificacoesTab } from '@/components/configuracoes/NotificacoesTab';
 import { AutomacoesWhatsAppTab } from '@/components/configuracoes/AutomacoesWhatsAppTab';
