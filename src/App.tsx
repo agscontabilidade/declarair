@@ -28,6 +28,7 @@ import Onboarding from "./pages/Onboarding";
 import MalhaFina from "./pages/MalhaFina";
 import Drive from "./pages/Drive";
 import Addons from "./pages/Addons";
+import WhatsApp from "./pages/WhatsApp";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ConviteCliente from "./pages/cliente/ConviteCliente";
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
