@@ -182,9 +182,34 @@ export default function Capa() {
               </div>
             </div>
 
-            <Button className="w-full gap-2" onClick={() => window.print()}>
-              <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
-            </Button>
+            <div className="flex gap-3">
+              <Button className="flex-1 gap-2" variant="outline" onClick={() => window.print()}>
+                <Printer className="h-4 w-4" /> Imprimir
+              </Button>
+              <Button
+                className="flex-1 gap-2"
+                onClick={async () => {
+                  try {
+                    await gerarCapaIR({
+                      nomeCliente,
+                      cpfCliente,
+                      anoBase,
+                      nomeEscritorio,
+                      nomeContador,
+                      telefoneEscritorio,
+                      emailEscritorio,
+                      logoUrl,
+                    });
+                    toast.success('PDF gerado com sucesso!');
+                  } catch (err) {
+                    console.error(err);
+                    toast.error('Erro ao gerar PDF');
+                  }
+                }}
+              >
+                <FileDown className="h-4 w-4" /> Baixar PDF
+              </Button>
+            </div>
           </div>
         </div>
       </div>
