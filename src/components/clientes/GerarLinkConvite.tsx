@@ -30,7 +30,7 @@ export default function GerarLinkConvite() {
   });
 
   const handleGerar = async () => {
-    if (!profile?.escritorio_id) return;
+    if (!profile?.escritorioId) return;
     setLoading(true);
     try {
       const token = crypto.randomUUID() + '-' + Date.now().toString(36);
@@ -38,9 +38,9 @@ export default function GerarLinkConvite() {
       const { error } = await supabase
         .from('convites_cliente' as any)
         .insert({
-          escritorio_id: profile.escritorio_id,
+          escritorio_id: profile.escritorioId,
           token,
-          created_by: profile.id,
+          created_by: null,
           nome_sugerido: formData.nome_sugerido || null,
           cpf_sugerido: formData.cpf_sugerido || null,
           email_sugerido: formData.email_sugerido || null,
