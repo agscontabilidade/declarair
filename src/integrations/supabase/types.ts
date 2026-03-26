@@ -1048,6 +1048,30 @@ export type Database = {
         }
         Relationships: []
       }
+      system_logs: {
+        Row: {
+          created_at: string
+          id: string
+          mensagem: string | null
+          metadata: Json | null
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mensagem?: string | null
+          metadata?: Json | null
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mensagem?: string | null
+          metadata?: Json | null
+          tipo?: string
+        }
+        Relationships: []
+      }
       templates_mensagem: {
         Row: {
           assunto: string | null
@@ -1203,6 +1227,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      atualizar_cobrancas_vencidas: { Args: never; Returns: undefined }
       buscar_cliente_por_token: {
         Args: { _token: string }
         Returns: {
