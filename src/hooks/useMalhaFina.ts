@@ -3,8 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import type { Tables } from '@/integrations/supabase/types';
 
-const SIMULATED_STATUSES = ['em_processamento', 'processada', 'em_malha', 'com_pendencias'];
+type MalhaFinaConsulta = Tables<'malha_fina_consultas'> & {
+  clientes: { nome: string } | null;
+};
+
+const SIMULATED_STATUSES = ['em_processamento', 'processada', 'em_malha', 'com_pendencias'] as const;
 
 export function useMalhaFina() {
   const { profile } = useAuth();
@@ -29,36 +34,36 @@ export function useMalhaFina() {
 
       // Get existing malha_fina records
       const { data: existing } = await supabase
-        .from('malha_fina_consultas' as any)
+        .from('malha_fina_consultas')
         .select('*')
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', anoBase);
 
-      const existingMap = new Map((existing || []).map((e: any) => [e.declaracao_id, e]));
+      const existingMap = new Map((existing || []).map((e) => [e.declaracao_id, e]));
 
       // Create records for new transmissions
       const toInsert = decls.filter(d => !existingMap.has(d.id)).map(d => ({
         declaracao_id: d.id,
         escritorio_id: escritorioId,
         cliente_id: d.cliente_id,
-        cpf: (d.clientes as any)?.cpf || '',
+        cpf: d.clientes?.cpf || '',
         ano_base: anoBase,
         status_rfb: 'nao_consultado',
       }));
 
       if (toInsert.length) {
-        await supabase.from('malha_fina_consultas' as any).insert(toInsert);
+        await supabase.from('malha_fina_consultas').insert(toInsert);
       }
 
       // Re-fetch all
       const { data: all } = await supabase
-        .from('malha_fina_consultas' as any)
+        .from('malha_fina_consultas')
         .select('*, clientes(nome)')
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', anoBase)
         .order('created_at', { ascending: false });
 
-      return all || [];
+      return (all || []) as MalhaFinaConsulta[];
     },
     enabled: !!escritorioId,
   });
@@ -76,7 +81,7 @@ export function useMalhaFina() {
         : 'Declaração em processamento pela RFB.';
 
       const { error } = await supabase
-        .from('malha_fina_consultas' as any)
+        .from('malha_fina_consultas')
         .update({
           status_rfb: newStatus,
           ultimo_resultado: resultado,
@@ -98,7 +103,7 @@ export function useMalhaFina() {
 
   const consultarTodosMutation = useMutation({
     mutationFn: async () => {
-      for (const c of consultas as any[]) {
+      for (const c of consultas) {
         await consultMutation.mutateAsync(c.id);
         await new Promise(r => setTimeout(r, 300));
       }

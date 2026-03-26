@@ -34,7 +34,7 @@ export default function Cobrancas() {
     enabled: !!profile.escritorioId,
   });
 
-  const handleSave = (data: any) => {
+  const handleSave = (data: { id?: string; cliente_id: string; declaracao_id?: string; descricao: string; valor: number; data_vencimento: string }) => {
     if (data.id) {
       editar.mutate(data, { onSuccess: () => { setModalOpen(false); setEditData(null); } });
     } else {

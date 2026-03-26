@@ -90,7 +90,7 @@ export default function ClienteFormulario() {
     if (formulario?.id) {
       await supabase
         .from('formulario_ir')
-        .update({ perfil_fiscal: newPerfil } as any)
+        .update({ perfil_fiscal: newPerfil as unknown as import('@/integrations/supabase/types').Json })
         .eq('id', formulario.id);
     }
   };
