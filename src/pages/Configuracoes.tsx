@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Settings, Users, CreditCard, Puzzle, Palette, Bell, MessageSquare } from 'lucide-react';
 import { buscarCNPJ } from '@/lib/apiBrasil';
 import { IntegracoesTab } from '@/components/configuracoes/IntegracoesTab';
+import AbaEquipe from '@/components/configuracoes/AbaEquipe';
 import { WhitelabelTab } from '@/components/configuracoes/WhitelabelTab';
 import { NotificacoesTab } from '@/components/configuracoes/NotificacoesTab';
 import { AutomacoesWhatsAppTab } from '@/components/configuracoes/AutomacoesWhatsAppTab';
@@ -143,42 +144,7 @@ export default function Configuracoes() {
           </TabsContent>
 
           <TabsContent value="usuarios">
-            <Card className="shadow-sm">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Equipe</CardTitle>
-                  {isDono && <Button size="sm" disabled>Convidar Colaborador</Button>}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {loadingUsers ? (
-                  <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-                ) : !usuarios?.length ? (
-                  <p className="text-muted-foreground text-sm">Nenhum usuário encontrado.</p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Papel</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {usuarios.map(u => (
-                        <TableRow key={u.id}>
-                          <TableCell className="font-medium">{u.nome}</TableCell>
-                          <TableCell>{u.email}</TableCell>
-                          <TableCell><Badge variant="outline">{u.papel === 'dono' ? 'Dono' : 'Colaborador'}</Badge></TableCell>
-                          <TableCell><Badge className={u.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-muted text-muted-foreground'}>{u.ativo ? 'Ativo' : 'Inativo'}</Badge></TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+            <AbaEquipe escritorioId={escritorioId} isDono={isDono} usuarios={usuarios} loadingUsers={loadingUsers} />
           </TabsContent>
 
           <TabsContent value="marca">

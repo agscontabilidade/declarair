@@ -292,6 +292,56 @@ export type Database = {
           },
         ]
       }
+      colaborador_convites: {
+        Row: {
+          created_at: string
+          email: string
+          enviado_por: string
+          escritorio_id: string
+          expira_em: string
+          id: string
+          nome: string
+          papel: string
+          token: string
+          usado: boolean
+          usado_em: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          enviado_por: string
+          escritorio_id: string
+          expira_em: string
+          id?: string
+          nome: string
+          papel?: string
+          token: string
+          usado?: boolean
+          usado_em?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          enviado_por?: string
+          escritorio_id?: string
+          expira_em?: string
+          id?: string
+          nome?: string
+          papel?: string
+          token?: string
+          usado?: boolean
+          usado_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_convites_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracoes_escritorio: {
         Row: {
           chave: string
