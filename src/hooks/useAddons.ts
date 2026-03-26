@@ -42,10 +42,10 @@ export function useAddons() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('escritorio_addons')
-        .select('*')
+        .select('*, addons(*)')
         .eq('escritorio_id', profile.escritorioId!);
       if (error) throw error;
-      return data as EscritorioAddon[];
+      return data as (EscritorioAddon & { addons: Addon })[];
     },
     enabled: !!profile.escritorioId,
   });

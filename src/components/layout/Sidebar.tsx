@@ -25,7 +25,7 @@ const navItems = [
   { title: 'Cobranças', url: '/cobrancas', icon: DollarSign, badge: true },
   { title: 'Malha Fina', url: '/malha-fina', icon: Shield },
   { title: 'Drive', url: '/drive', icon: FolderOpen },
-  { title: 'Mensagens', url: '/mensagens', icon: MessageSquare },
+  { title: 'Comunicação', url: '/mensagens', icon: MessageSquare },
   { title: 'Capa', url: '/capa', icon: Newspaper },
   { title: 'WhatsApp', url: '/whatsapp', icon: Phone },
   { title: 'Recursos Extras', url: '/addons', icon: Puzzle },
