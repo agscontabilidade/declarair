@@ -55,7 +55,7 @@ export default function Checkout() {
     if (result.paymentInfo) {
       setPaymentResult(result.paymentInfo);
     } else {
-      navigate('/planos');
+      navigate('/meus-planos');
     }
   };
 

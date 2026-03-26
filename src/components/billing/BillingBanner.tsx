@@ -22,7 +22,7 @@ export function BillingBanner() {
       <Button
         size="sm"
         variant={isBlocked ? 'destructive' : 'outline'}
-        onClick={() => navigate('/planos')}
+        onClick={() => navigate('/meus-planos')}
         className="shrink-0 gap-2"
       >
         <CreditCard className="h-4 w-4" /> Regularizar

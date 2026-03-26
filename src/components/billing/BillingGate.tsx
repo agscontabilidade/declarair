@@ -17,7 +17,7 @@ export function BillingGate({ children, allowWhenBlocked = false }: BillingGateP
   if (loading) return null;
 
   if (isBlocked && !allowWhenBlocked) {
-    return <Navigate to="/planos" replace />;
+    return <Navigate to="/meus-planos" replace />;
   }
 
   return <>{children}</>;
