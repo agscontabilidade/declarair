@@ -104,16 +104,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      async (event, newSession) => {
+        console.log('[AuthContext] Auth event:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
-        if (newSession?.user) {
-          setTimeout(() => loadProfile(newSession.user), 0);
-        } else {
+        if (event === 'SIGNED_IN' && newSession?.user) {
+          setLoading(true);
+          try {
+            await loadProfile(newSession.user);
+          } catch (error) {
+            console.error('[AuthContext] Error loading profile:', error);
+          } finally {
+            setLoading(false);
+          }
+        } else if (event === 'SIGNED_OUT') {
           setUserType(null);
           setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null });
           setLoading(false);
+        } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
+          // Silently refresh profile without loading state
+          await loadProfile(newSession.user);
         }
       }
     );
