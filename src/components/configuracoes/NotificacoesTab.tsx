@@ -9,16 +9,21 @@ import { useToast } from '@/hooks/use-toast';
 import { useWhatsAppStatus } from '@/hooks/useWhatsApp';
 
 const ETAPAS = [
-  { key: 'aguardando_documentos', label: 'Aguardando Documentos' },
-  { key: 'documentacao_recebida', label: 'Documentação Recebida' },
-  { key: 'declaracao_pronta', label: 'Declaração Pronta' },
-  { key: 'transmitida', label: 'Transmitida' },
+  { key: 'aguardando_documentos', label: 'Aguardando Documentos', group: 'Declaração' },
+  { key: 'documentacao_recebida', label: 'Documentação Recebida', group: 'Declaração' },
+  { key: 'declaracao_pronta', label: 'Declaração Pronta', group: 'Declaração' },
+  { key: 'transmitida', label: 'Transmitida', group: 'Declaração' },
+  { key: 'pendencias', label: 'Pendências na Declaração', group: 'Pendências' },
+  { key: 'cobranca_gerada', label: 'Cobrança Gerada', group: 'Cobranças' },
+  { key: 'cobranca_vencida', label: 'Cobrança Vencida / Atrasada', group: 'Cobranças' },
+  { key: 'cobranca_paga', label: 'Pagamento Confirmado', group: 'Cobranças' },
+  { key: 'documentos_recebidos', label: 'Novos Documentos Recebidos', group: 'Documentos' },
 ];
 
 const BASE_CANAIS = [
   { key: 'email_cliente', label: 'Email p/ Cliente' },
   { key: 'email_contador', label: 'Email p/ Contador' },
-  { key: 'notificacao_app', label: 'Notificação In-App' },
+  { key: 'notificacao_app', label: 'In-App' },
 ];
 
 interface Props {
@@ -51,7 +56,7 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
     const cfg: Record<string, Record<string, boolean>> = {};
     ETAPAS.forEach(e => {
       cfg[e.key] = {};
-      CANAIS.forEach(c => { cfg[e.key][c.key] = true; }); // default on
+      CANAIS.forEach(c => { cfg[e.key][c.key] = true; });
     });
 
     (data || []).forEach((d: any) => {
@@ -92,40 +97,49 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
     setSaving(false);
   }
 
+  const groups = [...new Set(ETAPAS.map(e => e.group))];
+
   return (
     <Card className="shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Bell className="h-5 w-5 text-accent" />
-          Notificações por Etapa
+          Notificações por Evento
         </CardTitle>
-        <p className="text-sm text-muted-foreground">Configure quais notificações são enviadas a cada mudança de status no Kanban.</p>
+        <p className="text-sm text-muted-foreground">Configure quais notificações são enviadas em cada evento do sistema.</p>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-3 pr-4 font-medium text-foreground">Etapa</th>
+                <th className="text-left py-3 pr-4 font-medium text-foreground">Evento</th>
                 {CANAIS.map(c => (
-                  <th key={c.key} className="text-center py-3 px-4 font-medium text-foreground">{c.label}</th>
+                  <th key={c.key} className="text-center py-3 px-3 font-medium text-foreground whitespace-nowrap">{c.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {ETAPAS.map(e => (
-                <tr key={e.key} className="border-b last:border-0">
-                  <td className="py-3 pr-4 text-foreground">{e.label}</td>
-                  {CANAIS.map(c => (
-                    <td key={c.key} className="text-center py-3 px-4">
-                      <Switch
-                        checked={config[e.key]?.[c.key] ?? true}
-                        onCheckedChange={() => toggle(e.key, c.key)}
-                        disabled={!isDono}
-                      />
-                    </td>
+              {groups.map(group => (
+                <>
+                  <tr key={`group-${group}`}>
+                    <td colSpan={CANAIS.length + 1} className="pt-4 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group}</td>
+                  </tr>
+                  {ETAPAS.filter(e => e.group === group).map(e => (
+                    <tr key={e.key} className="border-b last:border-0">
+                      <td className="py-3 pr-4 text-foreground">{e.label}</td>
+                      {CANAIS.map(c => (
+                        <td key={c.key} className="text-center py-3 px-3">
+                          <Switch
+                            checked={config[e.key]?.[c.key] ?? true}
+                            onCheckedChange={() => toggle(e.key, c.key)}
+                            disabled={!isDono}
+                          />
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
+                </>
               ))}
             </tbody>
           </table>

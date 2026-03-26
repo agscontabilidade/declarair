@@ -14,10 +14,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Link } from 'react-router-dom';
 
 const ETAPAS_KANBAN = [
-  { key: 'aguardando_documentos', label: 'Aguardando Documentos' },
-  { key: 'documentacao_recebida', label: 'Documentação Recebida' },
-  { key: 'declaracao_pronta', label: 'Declaração Pronta' },
-  { key: 'transmitida', label: 'Transmitida' },
+  { key: 'aguardando_documentos', label: 'Aguardando Documentos', group: 'Declaração' },
+  { key: 'documentacao_recebida', label: 'Documentação Recebida', group: 'Declaração' },
+  { key: 'declaracao_pronta', label: 'Declaração Pronta', group: 'Declaração' },
+  { key: 'transmitida', label: 'Transmitida', group: 'Declaração' },
+  { key: 'pendencias', label: 'Pendências na Declaração', group: 'Pendências' },
+  { key: 'cobranca_gerada', label: 'Cobrança Gerada', group: 'Cobranças' },
+  { key: 'cobranca_vencida', label: 'Cobrança Vencida / Atrasada', group: 'Cobranças' },
+  { key: 'cobranca_paga', label: 'Pagamento Confirmado', group: 'Cobranças' },
+  { key: 'documentos_recebidos', label: 'Novos Documentos Recebidos', group: 'Documentos' },
 ];
 
 interface Props {
@@ -30,7 +35,9 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
   const { data: whatsappStatus } = useWhatsAppStatus();
   const { myAddons } = useAddons();
   const isConnected = whatsappStatus?.status === 'connected';
-  const hasAddon = myAddons.some((a) => a.status === 'ativo' && (a as any).addons?.nome?.toLowerCase().includes('whatsapp'));
+  const hasAddon = myAddons.some(
+    (a) => a.status === 'ativo' && (a as any).addons?.nome?.toLowerCase().includes('whatsapp')
+  );
 
   const [config, setConfig] = useState<Record<string, { ativo: boolean; templateId: string }>>({});
   const [lembreteAtivo, setLembreteAtivo] = useState(false);
@@ -125,12 +132,14 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
       <Card className="shadow-sm">
         <CardContent className="py-12 text-center">
           <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-          <p className="text-muted-foreground mb-3">Conecte seu WhatsApp primeiro para configurar automações.</p>
+          <p className="text-muted-foreground mb-3">Conecte e escaneie seu WhatsApp primeiro para configurar automações.</p>
           <Button asChild><Link to="/whatsapp">Conectar WhatsApp</Link></Button>
         </CardContent>
       </Card>
     );
   }
+
+  const groups = [...new Set(ETAPAS_KANBAN.map((e) => e.group))];
 
   return (
     <Card className="shadow-sm">
@@ -139,49 +148,50 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
           <MessageSquare className="h-5 w-5 text-primary" />
           Automações via WhatsApp
         </CardTitle>
-        <p className="text-sm text-muted-foreground">Envie mensagens automáticas quando o status da declaração mudar no Kanban.</p>
+        <p className="text-sm text-muted-foreground">Envie mensagens automáticas quando eventos importantes acontecerem.</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Per-stage automation */}
-        <div className="space-y-4">
-          <Label className="text-sm font-semibold">Notificar cliente por WhatsApp ao mudar status</Label>
-          {ETAPAS_KANBAN.map((etapa) => (
-            <div key={etapa.key} className="flex items-center gap-4 p-3 rounded-lg border bg-card">
-              <Switch
-                checked={config[etapa.key]?.ativo ?? false}
-                onCheckedChange={(checked) =>
-                  setConfig((prev) => ({
-                    ...prev,
-                    [etapa.key]: { ...prev[etapa.key], ativo: checked },
-                  }))
-                }
-                disabled={!isDono}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">{etapa.label}</p>
+        {groups.map((group) => (
+          <div key={group} className="space-y-3">
+            <Label className="text-sm font-semibold text-foreground">{group}</Label>
+            {ETAPAS_KANBAN.filter((e) => e.group === group).map((etapa) => (
+              <div key={etapa.key} className="flex items-center gap-4 p-3 rounded-lg border bg-card">
+                <Switch
+                  checked={config[etapa.key]?.ativo ?? false}
+                  onCheckedChange={(checked) =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      [etapa.key]: { ...prev[etapa.key], ativo: checked },
+                    }))
+                  }
+                  disabled={!isDono}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{etapa.label}</p>
+                </div>
+                <Select
+                  value={config[etapa.key]?.templateId || ''}
+                  onValueChange={(val) =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      [etapa.key]: { ...prev[etapa.key], templateId: val },
+                    }))
+                  }
+                  disabled={!isDono || !config[etapa.key]?.ativo}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((t: any) => (
+                      <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Select
-                value={config[etapa.key]?.templateId || ''}
-                onValueChange={(val) =>
-                  setConfig((prev) => ({
-                    ...prev,
-                    [etapa.key]: { ...prev[etapa.key], templateId: val },
-                  }))
-                }
-                disabled={!isDono || !config[etapa.key]?.ativo}
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Template" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map((t: any) => (
-                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ))}
 
         {/* Document reminder */}
         <div className="space-y-3 pt-4 border-t">
