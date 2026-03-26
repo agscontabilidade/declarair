@@ -123,9 +123,11 @@ async function createInAppNotification(escritorioId: string, declaracaoId: strin
       transmitida: 'Transmitida',
     };
 
+    const clienteNome = decl?.clientes ? (decl.clientes as unknown as { nome: string }).nome : 'Cliente';
+
     await supabase.from('notificacoes').insert({
       escritorio_id: escritorioId,
-      titulo: `Declaração movida: ${(decl.clientes as any)?.nome || 'Cliente'}`,
+      titulo: `Declaração movida: ${clienteNome}`,
       mensagem: `A declaração ${decl.ano_base} foi movida para "${statusLabels[newStatus] || newStatus}".`,
       link_destino: `/declaracoes/${declaracaoId}`,
     });
