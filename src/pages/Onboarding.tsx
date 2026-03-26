@@ -171,7 +171,7 @@ export default function Onboarding() {
         cor_primaria: corPrimaria,
         logo_url: logoUrl || undefined,
         onboarding_completo: true,
-      } as any).eq('id', profile.escritorioId);
+      }).eq('id', profile.escritorioId);
 
       toast({ title: 'Configuração concluída!', description: 'Bem-vindo ao DeclaraIR!' });
       // Force full reload so AuthContext picks up onboarding_completo = true
