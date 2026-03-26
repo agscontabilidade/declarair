@@ -176,10 +176,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    if (!validateWebhook(req)) {
-      console.error("Invalid webhook token");
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
+    const auth = validateWebhook(req);
+    if (!auth.valid) {
+      return new Response(JSON.stringify({ error: auth.error || "Forbidden" }), {
+        status: auth.error?.includes("não configurado") ? 500 : 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
