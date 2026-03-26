@@ -78,6 +78,16 @@ export default function Drive() {
     return File;
   };
 
+  const handleDownload = useCallback(async (arquivoUrl: string) => {
+    try {
+      const { data, error } = await supabase.storage.from('documentos-clientes').createSignedUrl(arquivoUrl, 3600);
+      if (error) throw error;
+      window.open(data.signedUrl, '_blank');
+    } catch {
+      toast.error('Erro ao baixar arquivo');
+    }
+  }, []);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
