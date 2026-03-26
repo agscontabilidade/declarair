@@ -4,7 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Eye, EyeOff, CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface ConviteData {
@@ -33,6 +36,7 @@ export default function CadastroCliente() {
   const [convite, setConvite] = useState<ConviteData | null>(null);
   const [escritorio, setEscritorio] = useState<EscritorioData | null>(null);
   const [invalido, setInvalido] = useState(false);
+  const [erros, setErros] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
     nome: '',
@@ -41,6 +45,7 @@ export default function CadastroCliente() {
     telefone: '',
     senha: '',
     confirmarSenha: '',
+    aceitouTermos: false,
   });
 
   useEffect(() => {
@@ -60,7 +65,7 @@ export default function CadastroCliente() {
           setForm((f) => ({
             ...f,
             nome: data.convite.nome_sugerido || '',
-            cpf: data.convite.cpf_sugerido || '',
+            cpf: data.convite.cpf_sugerido ? formatarCPF(data.convite.cpf_sugerido) : '',
             email: data.convite.email_sugerido || '',
           }));
         }
@@ -81,14 +86,35 @@ export default function CadastroCliente() {
       .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
   };
 
+  const formatarTelefone = (valor: string) => {
+    const numeros = valor.replace(/\D/g, '').slice(0, 11);
+    return numeros
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2');
+  };
+
+  const validarCampos = (): boolean => {
+    const novosErros: Record<string, string> = {};
+
+    if (!form.nome.trim()) novosErros.nome = 'Nome é obrigatório';
+    if (!form.cpf.trim()) novosErros.cpf = 'CPF é obrigatório';
+    else if (form.cpf.replace(/\D/g, '').length !== 11) novosErros.cpf = 'CPF inválido';
+    if (!form.email.trim()) novosErros.email = 'Email é obrigatório';
+    else if (!/\S+@\S+\.\S+/.test(form.email)) novosErros.email = 'Email inválido';
+    if (!form.telefone.trim()) novosErros.telefone = 'Telefone é obrigatório';
+    if (!form.senha) novosErros.senha = 'Senha é obrigatória';
+    else if (form.senha.length < 6) novosErros.senha = 'Mínimo 6 caracteres';
+    if (form.senha !== form.confirmarSenha) novosErros.confirmarSenha = 'Senhas não conferem';
+    if (!form.aceitouTermos) novosErros.termos = 'Você deve aceitar os termos';
+
+    setErros(novosErros);
+    return Object.keys(novosErros).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.senha !== form.confirmarSenha) {
-      toast({ title: 'Senhas não conferem', variant: 'destructive' });
-      return;
-    }
-    if (form.senha.length < 6) {
-      toast({ title: 'A senha deve ter pelo menos 6 caracteres', variant: 'destructive' });
+    if (!validarCampos()) {
+      toast({ title: 'Corrija os erros no formulário', variant: 'destructive' });
       return;
     }
 
@@ -97,9 +123,9 @@ export default function CadastroCliente() {
       const { data, error } = await supabase.functions.invoke('register-from-invite', {
         body: {
           token,
-          nome: form.nome,
+          nome: form.nome.trim(),
           cpf: form.cpf,
-          email: form.email,
+          email: form.email.trim(),
           telefone: form.telefone || null,
           senha: form.senha,
         },
@@ -108,8 +134,20 @@ export default function CadastroCliente() {
       if (error) throw new Error(error.message || 'Erro ao cadastrar');
       if (data?.error) throw new Error(data.error);
 
-      toast({ title: 'Conta criada com sucesso!', description: 'Faça login para acessar o portal.' });
-      navigate('/cliente/login');
+      // Auto-login
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: form.email.trim(),
+        password: form.senha,
+      });
+
+      if (signInError) {
+        toast({ title: 'Conta criada!', description: 'Faça login para acessar o portal.' });
+        navigate('/cliente/login');
+        return;
+      }
+
+      toast({ title: 'Conta criada com sucesso!', description: 'Redirecionando para o portal...' });
+      setTimeout(() => navigate('/cliente/dashboard'), 1500);
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message, variant: 'destructive' });
     } finally {
@@ -120,7 +158,10 @@ export default function CadastroCliente() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-muted-foreground">Validando convite...</p>
+        </div>
       </div>
     );
   }
@@ -128,13 +169,18 @@ export default function CadastroCliente() {
   if (invalido || !convite) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
-        <div className="w-full max-w-md text-center space-y-4">
-          <h1 className="font-display text-2xl font-bold text-destructive">Link Inválido</h1>
-          <p className="text-muted-foreground">Este link de convite expirou ou já foi utilizado.</p>
-          <Button variant="outline" onClick={() => navigate('/cliente/login')}>
-            Ir para Login
-          </Button>
-        </div>
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <XCircle className="h-16 w-16 text-destructive mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Link Inválido</h2>
+            <p className="text-muted-foreground mb-6">
+              Este link de convite é inválido, expirou ou já foi utilizado.
+            </p>
+            <Button variant="outline" onClick={() => navigate('/cliente/login')}>
+              Ir para Login
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -163,11 +209,15 @@ export default function CadastroCliente() {
 
         <div className="relative z-10 space-y-6">
           <h2 className="font-display text-3xl font-bold text-white leading-tight">
-            Crie sua conta<br />e declare seu IR
+            Bem-vindo!<br />Crie sua conta
           </h2>
-          {convite.mensagem_personalizada && (
+          {convite.mensagem_personalizada ? (
             <p className="text-white/70 text-lg leading-relaxed max-w-sm">
               {convite.mensagem_personalizada}
+            </p>
+          ) : (
+            <p className="text-white/70 text-lg leading-relaxed max-w-sm">
+              Complete seu cadastro para iniciar sua declaração de Imposto de Renda.
             </p>
           )}
           <div className="space-y-2">
@@ -192,7 +242,7 @@ export default function CadastroCliente() {
       </div>
 
       {/* Right side - form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 overflow-y-auto">
         <div className="w-full max-w-md">
           <div className="lg:hidden text-center mb-8">
             {escritorio?.logo_url ? (
@@ -204,106 +254,148 @@ export default function CadastroCliente() {
             )}
           </div>
 
-          <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-5">
-            <div className="text-center mb-6">
-              <h1 className="font-display text-2xl font-bold text-foreground">Crie sua conta</h1>
-              <p className="text-muted-foreground mt-1">
-                Preencha seus dados para acessar o portal
-              </p>
-            </div>
+          {convite.mensagem_personalizada && (
+            <Alert className="mb-6">
+              <AlertDescription>{convite.mensagem_personalizada}</AlertDescription>
+            </Alert>
+          )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="nome">Nome completo *</Label>
-                <Input
-                  id="nome"
-                  required
-                  value={form.nome}
-                  onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                  placeholder="Seu nome completo"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cpf">CPF *</Label>
-                <Input
-                  id="cpf"
-                  required
-                  value={form.cpf}
-                  onChange={(e) => setForm({ ...form, cpf: formatarCPF(e.target.value) })}
-                  placeholder="000.000.000-00"
-                  maxLength={14}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="seu@email.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
-                  value={form.telefone}
-                  onChange={(e) => setForm({ ...form, telefone: e.target.value })}
-                  placeholder="(11) 99999-9999"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="senha">Senha *</Label>
-                <div className="relative">
+          <Card>
+            <CardHeader>
+              <CardTitle>Criar sua conta</CardTitle>
+              <CardDescription>Preencha os dados abaixo para começar</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nome">Nome Completo *</Label>
                   <Input
-                    id="senha"
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    minLength={6}
-                    value={form.senha}
-                    onChange={(e) => setForm({ ...form, senha: e.target.value })}
-                    placeholder="Mínimo 6 caracteres"
+                    id="nome"
+                    value={form.nome}
+                    onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                    placeholder="João da Silva"
+                    className={erros.nome ? 'border-destructive' : ''}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+                  {erros.nome && <p className="text-xs text-destructive">{erros.nome}</p>}
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmar">Confirmar senha *</Label>
-                <Input
-                  id="confirmar"
-                  type="password"
-                  required
-                  value={form.confirmarSenha}
-                  onChange={(e) => setForm({ ...form, confirmarSenha: e.target.value })}
-                  placeholder="Repita a senha"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF *</Label>
+                  <Input
+                    id="cpf"
+                    value={form.cpf}
+                    onChange={(e) => setForm({ ...form, cpf: formatarCPF(e.target.value) })}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    className={erros.cpf ? 'border-destructive' : ''}
+                  />
+                  {erros.cpf && <p className="text-xs text-destructive">{erros.cpf}</p>}
+                </div>
 
-              <Button type="submit" className="w-full h-11" disabled={submitting}>
-                {submitting ? 'Criando conta...' : 'Criar Conta'}
-              </Button>
-            </form>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="seu@email.com"
+                    className={erros.email ? 'border-destructive' : ''}
+                  />
+                  {erros.email && <p className="text-xs text-destructive">{erros.email}</p>}
+                </div>
 
-            <p className="text-center text-sm text-muted-foreground">
-              Já tem uma conta?{' '}
-              <a href="/cliente/login" className="text-primary hover:underline font-medium">
-                Fazer login
-              </a>
-            </p>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">Telefone *</Label>
+                  <Input
+                    id="telefone"
+                    value={form.telefone}
+                    onChange={(e) => setForm({ ...form, telefone: formatarTelefone(e.target.value) })}
+                    placeholder="(00) 00000-0000"
+                    maxLength={15}
+                    className={erros.telefone ? 'border-destructive' : ''}
+                  />
+                  {erros.telefone && <p className="text-xs text-destructive">{erros.telefone}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="senha">Senha *</Label>
+                  <div className="relative">
+                    <Input
+                      id="senha"
+                      type={showPassword ? 'text' : 'password'}
+                      value={form.senha}
+                      onChange={(e) => setForm({ ...form, senha: e.target.value })}
+                      placeholder="Mínimo 6 caracteres"
+                      className={erros.senha ? 'border-destructive' : ''}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {erros.senha && <p className="text-xs text-destructive">{erros.senha}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmar">Confirmar Senha *</Label>
+                  <Input
+                    id="confirmar"
+                    type="password"
+                    value={form.confirmarSenha}
+                    onChange={(e) => setForm({ ...form, confirmarSenha: e.target.value })}
+                    placeholder="Repita a senha"
+                    className={erros.confirmarSenha ? 'border-destructive' : ''}
+                  />
+                  {erros.confirmarSenha && <p className="text-xs text-destructive">{erros.confirmarSenha}</p>}
+                </div>
+
+                <div className="flex items-start gap-2 pt-2">
+                  <Checkbox
+                    id="termos"
+                    checked={form.aceitouTermos}
+                    onCheckedChange={(checked) => setForm({ ...form, aceitouTermos: !!checked })}
+                  />
+                  <label htmlFor="termos" className="text-sm leading-tight cursor-pointer">
+                    Li e aceito os{' '}
+                    <a href="/termos-de-uso" target="_blank" className="text-primary hover:underline">
+                      Termos de Uso
+                    </a>{' '}
+                    e a{' '}
+                    <a href="/politica-de-privacidade" target="_blank" className="text-primary hover:underline">
+                      Política de Privacidade
+                    </a>
+                  </label>
+                </div>
+                {erros.termos && <p className="text-xs text-destructive">{erros.termos}</p>}
+
+                <Button type="submit" className="w-full h-11" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Criando conta...
+                    </>
+                  ) : (
+                    'Criar Minha Conta'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            Já tem uma conta?{' '}
+            <a href="/cliente/login" className="text-primary hover:underline font-medium">
+              Fazer login
+            </a>
+          </p>
+
+          <p className="text-center text-xs text-muted-foreground mt-4 flex items-center justify-center gap-1">
+            🔒 Seus dados estão protegidos e serão usados apenas para sua declaração
+          </p>
         </div>
       </div>
     </div>
