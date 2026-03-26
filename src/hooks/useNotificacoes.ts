@@ -44,11 +44,11 @@ export function useNotificacoes() {
 
   const marcarComoLida = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.rpc('marcar_notificacao_lida' as any, { _id: id });
-      // Fallback: direct update
-      if (error) {
-        await (supabase as any).from('notificacoes').update({ lida: true }).eq('id', id);
-      }
+      const { error } = await supabase
+        .from('notificacoes')
+        .update({ lida: true })
+        .eq('id', id);
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notificacoes'] }),
   });
