@@ -288,6 +288,293 @@ export function IntegracoesTab({ escritorioId, isDono }: Props) {
           </CardContent>
         </Card>
       )}
+
+      {bancoAtivo === 'conta_azul' && (
+        <ContaAzulSection escritorioId={escritorioId} isDono={isDono} />
+      )}
     </div>
+  );
+}
+
+/* ── Conta Azul sub-component ── */
+
+function ContaAzulSection({ escritorioId, isDono }: { escritorioId: string | null | undefined; isDono: boolean }) {
+  const queryClient = useQueryClient();
+  const [caClientId, setCaClientId] = useState('');
+  const [caClientSecret, setCaClientSecret] = useState('');
+  const [showCaSecret, setShowCaSecret] = useState(false);
+  const [savingCa, setSavingCa] = useState(false);
+
+  const { data: caConfig, isLoading: loadingCa } = useQuery({
+    queryKey: ['integracao-contaazul', escritorioId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('integracoes_contaazul' as string)
+        .select('*')
+        .eq('escritorio_id', escritorioId!)
+        .maybeSingle();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data as Record<string, unknown> | null;
+    },
+    enabled: !!escritorioId,
+  });
+
+  useEffect(() => {
+    if (caConfig) {
+      setCaClientId((caConfig.client_id as string) || '');
+      setCaClientSecret((caConfig.client_secret_encrypted as string) || '');
+    }
+  }, [caConfig]);
+
+  const salvarCredenciais = async () => {
+    if (!escritorioId || !isDono || !caClientId || !caClientSecret) return;
+    setSavingCa(true);
+    try {
+      const { error } = await supabase.functions.invoke('contaazul-sync', {
+        body: {
+          acao: 'save_credentials',
+          escritorio_id: escritorioId,
+          client_id: caClientId,
+          client_secret: caClientSecret,
+        },
+      });
+      if (error) throw error;
+      toast.success('Credenciais salvas com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['integracao-contaazul', escritorioId] });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar credenciais');
+    }
+    setSavingCa(false);
+  };
+
+  const iniciarOAuth = async () => {
+    if (!escritorioId) return;
+    try {
+      const redirectUri = `${window.location.origin}/configuracoes?ca_callback=1`;
+      const { data, error } = await supabase.functions.invoke('contaazul-sync', {
+        body: {
+          acao: 'get_auth_url',
+          escritorio_id: escritorioId,
+          redirect_uri: redirectUri,
+        },
+      });
+      if (error) throw error;
+      if (data?.auth_url) {
+        window.location.href = data.auth_url;
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao iniciar autorização');
+    }
+  };
+
+  // Handle OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const isCallback = params.get('ca_callback');
+    if (code && isCallback && escritorioId) {
+      const redirectUri = `${window.location.origin}/configuracoes?ca_callback=1`;
+      supabase.functions.invoke('contaazul-sync', {
+        body: {
+          acao: 'exchange_code',
+          escritorio_id: escritorioId,
+          code,
+          redirect_uri: redirectUri,
+        },
+      }).then(({ error }) => {
+        if (error) {
+          toast.error('Erro ao autorizar Conta Azul');
+        } else {
+          toast.success('Conta Azul conectada com sucesso!');
+          queryClient.invalidateQueries({ queryKey: ['integracao-contaazul', escritorioId] });
+        }
+        // Clean URL
+        window.history.replaceState({}, '', '/configuracoes');
+      });
+    }
+  }, [escritorioId]);
+
+  const sincronizar = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('contaazul-sync', {
+        body: {
+          acao: 'sincronizar_clientes',
+          escritorio_id: escritorioId,
+        },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success(`${data.importados} clientes importados, ${data.atualizados} atualizados`);
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['integracao-contaazul', escritorioId] });
+    },
+    onError: (error: Error) => {
+      toast.error('Erro na sincronização', { description: error.message });
+    },
+  });
+
+  const desconectar = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.functions.invoke('contaazul-sync', {
+        body: { acao: 'desconectar', escritorio_id: escritorioId },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Conta Azul desconectada');
+      queryClient.invalidateQueries({ queryKey: ['integracao-contaazul', escritorioId] });
+    },
+  });
+
+  const isConectado = caConfig?.ativo === true;
+
+  if (loadingCa) {
+    return <Card className="shadow-sm"><CardContent className="p-6"><Skeleton className="h-32 w-full" /></CardContent></Card>;
+  }
+
+  return (
+    <Card className="shadow-sm">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">Integração — Conta Azul</CardTitle>
+          {isConectado ? (
+            <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <CheckCircle2 className="mr-1 h-3 w-3" /> Conectado
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-muted-foreground">
+              <XCircle className="mr-1 h-3 w-3" /> Desconectado
+            </Badge>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Sincronize clientes e cobranças automaticamente com o Conta Azul.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {!isDono && (
+          <p className="text-sm bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 p-3 rounded-lg">
+            Apenas o dono do escritório pode alterar as configurações de integração.
+          </p>
+        )}
+
+        {!isConectado ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Client ID *</Label>
+                <Input
+                  value={caClientId}
+                  onChange={e => setCaClientId(e.target.value)}
+                  placeholder="Cole seu Client ID do Conta Azul"
+                  readOnly={!isDono}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Client Secret *</Label>
+                <div className="relative">
+                  <Input
+                    type={showCaSecret ? 'text' : 'password'}
+                    value={caClientSecret}
+                    onChange={e => setCaClientSecret(e.target.value)}
+                    placeholder="Cole seu Client Secret"
+                    readOnly={!isDono}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCaSecret(!showCaSecret)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showCaSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {isDono && (
+              <div className="flex gap-3 pt-2">
+                <Button onClick={salvarCredenciais} disabled={savingCa || !caClientId || !caClientSecret}>
+                  {savingCa ? 'Salvando...' : 'Salvar Credenciais'}
+                </Button>
+                {caConfig && (
+                  <Button variant="outline" onClick={iniciarOAuth}>
+                    <ExternalLink className="h-4 w-4 mr-2" /> Autorizar no Conta Azul
+                  </Button>
+                )}
+              </div>
+            )}
+
+            <Accordion type="single" collapsible className="mt-4">
+              <AccordionItem value="guia-ca">
+                <AccordionTrigger className="text-sm">
+                  <div className="flex items-center gap-2"><HelpCircle className="h-4 w-4" /> Como configurar</div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="text-sm text-muted-foreground space-y-2 pl-1">
+                    <p>1. Acesse o <a href="https://developers.contaazul.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Portal de Desenvolvedores do Conta Azul</a></p>
+                    <p>2. Crie um novo aplicativo</p>
+                    <p>3. Configure a URL de redirecionamento como: <code className="bg-muted px-1 rounded text-xs">{window.location.origin}/configuracoes?ca_callback=1</code></p>
+                    <p>4. Copie o Client ID e Client Secret e cole nos campos acima</p>
+                    <p>5. Clique em "Salvar Credenciais" e depois em "Autorizar no Conta Azul"</p>
+                    <p>6. Você será redirecionado para o Conta Azul para autorizar o acesso</p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg">
+              <div>
+                <p className="font-semibold text-foreground">Integração Ativa</p>
+                <p className="text-sm text-muted-foreground">
+                  Última sincronização:{' '}
+                  {caConfig?.ultima_sincronizacao
+                    ? new Date(caConfig.ultima_sincronizacao as string).toLocaleString('pt-BR')
+                    : 'Nunca'}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => sincronizar.mutate()}
+                  disabled={sincronizar.isPending}
+                  size="sm"
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${sincronizar.isPending ? 'animate-spin' : ''}`} />
+                  Sincronizar
+                </Button>
+                {isDono && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm('Deseja desconectar a integração com o Conta Azul?')) {
+                        desconectar.mutate();
+                      }
+                    }}
+                    disabled={desconectar.isPending}
+                  >
+                    <Unlink className="h-4 w-4 mr-1" /> Desconectar
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm font-medium text-foreground">Clientes</p>
+                <p className="text-xs text-muted-foreground">Importação e exportação bidirecional</p>
+              </div>
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm font-medium text-foreground">Cobranças</p>
+                <p className="text-xs text-muted-foreground">Sincronização automática</p>
+              </div>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
