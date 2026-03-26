@@ -48,7 +48,7 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
     staleTime: 60000,
   });
 
-  const { data: cobrancas = [], isLoading } = useQuery({
+  const { data: cobrancas = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['cobrancas', escritorioId, statusFilter, periodoInicio, periodoFim],
     queryFn: async () => {
       if (!escritorioId) return [];
