@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Shield, Search, RefreshCw, AlertTriangle, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { useMalhaFina } from '@/hooks/useMalhaFina';
 import { formatCPF } from '@/lib/formatters';
+import { QueryError } from '@/components/ui/QueryError';
 
 type ConsultaItem = {
   id: string;
@@ -33,7 +34,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 };
 
 export default function MalhaFina() {
-  const { consultas, isLoading, anoBase, setAnoBase, filtroStatus, setFiltroStatus, consultarIndividual, consultarTodos, consultando } = useMalhaFina();
+  const { consultas, isLoading, isError, error, refetch, anoBase, setAnoBase, filtroStatus, setFiltroStatus, consultarIndividual, consultarTodos, consultando } = useMalhaFina();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedConsulta, setSelectedConsulta] = useState<any>(null);
   const [busca, setBusca] = useState('');
@@ -75,6 +76,10 @@ export default function MalhaFina() {
           </div>
         </div>
 
+        {isError ? (
+          <QueryError message={error?.message} onRetry={() => refetch()} />
+        ) : (
+          <>
         {/* KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-foreground">{consultas.length}</p><p className="text-xs text-muted-foreground">Total Transmitidas</p></CardContent></Card>
@@ -151,6 +156,8 @@ export default function MalhaFina() {
             )}
           </CardContent>
         </Card>
+          </>
+        )}
 
         {/* Modal Consulta Individual */}
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>

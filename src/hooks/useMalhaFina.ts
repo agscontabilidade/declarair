@@ -18,7 +18,7 @@ export function useMalhaFina() {
   const [anoBase, setAnoBase] = useState(new Date().getFullYear());
   const [filtroStatus, setFiltroStatus] = useState('todos');
 
-  const { data: consultas = [], isLoading } = useQuery({
+  const { data: consultas = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['malha-fina', escritorioId, anoBase],
     queryFn: async () => {
       if (!escritorioId) return [];
@@ -113,6 +113,9 @@ export function useMalhaFina() {
   return {
     consultas,
     isLoading,
+    isError,
+    error,
+    refetch,
     anoBase,
     setAnoBase,
     filtroStatus,

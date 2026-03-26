@@ -15,6 +15,7 @@ import { useClientes } from '@/hooks/useClientes';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { QueryError } from '@/components/ui/QueryError';
 
 const years = [2023, 2024, 2025, 2026];
 
@@ -145,8 +146,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <KpiCards data={kpis.data} isLoading={kpis.isLoading} />
-        {viewMode === 'kanban' ? (
+        {kpis.isError ? (
+          <QueryError message={kpis.error?.message} onRetry={() => kpis.refetch()} />
+        ) : (
+          <KpiCards data={kpis.data} isLoading={kpis.isLoading} />
+        )}
+        {declaracoes.isError ? (
+          <QueryError message={declaracoes.error?.message} onRetry={() => declaracoes.refetch()} />
+        ) : viewMode === 'kanban' ? (
           <KanbanBoard items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} anoBase={anoBase} />
         ) : (
           <DeclaracoesListView items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} />

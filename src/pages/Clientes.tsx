@@ -7,10 +7,22 @@ import { Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useClientes } from '@/hooks/useClientes';
 import { ClientesTable } from '@/components/clientes/ClientesTable';
 import { ClienteModal } from '@/components/clientes/ClienteModal';
+import { QueryError } from '@/components/ui/QueryError';
 
 export default function Clientes() {
-  const { clientes, isLoading, search, setSearch, page, setPage, totalPages, contadores, createCliente } = useClientes();
+  const { clientes, isLoading, isError, error, refetch, search, setSearch, page, setPage, totalPages, contadores, createCliente } = useClientes();
   const [modalOpen, setModalOpen] = useState(false);
+
+  if (isError) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <h1 className="font-display text-2xl font-bold text-foreground">Clientes</h1>
+          <QueryError message={error?.message} onRetry={() => refetch()} />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

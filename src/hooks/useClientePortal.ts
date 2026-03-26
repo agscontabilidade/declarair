@@ -6,7 +6,7 @@ export function useClientePortal() {
   const { profile } = useAuth();
   const clienteId = profile.clienteId;
 
-  const { data: declaracao, isLoading: loadingDeclaracao } = useQuery({
+  const { data: declaracao, isLoading: loadingDeclaracao, isError: errorDeclaracao, error: declError, refetch: refetchDeclaracao } = useQuery({
     queryKey: ['cliente-declaracao', clienteId],
     queryFn: async () => {
       if (!clienteId) return null;
@@ -65,5 +65,8 @@ export function useClientePortal() {
   return {
     declaracao, checklist, formulario, statusStep, pendentes,
     isLoading: loadingDeclaracao || loadingChecklist || loadingFormulario,
+    isError: errorDeclaracao,
+    error: declError,
+    refetch: refetchDeclaracao,
   };
 }

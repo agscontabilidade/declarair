@@ -10,10 +10,11 @@ import { FileText, ClipboardList, Upload, AlertCircle, CheckCircle2 } from 'luci
 import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '@/hooks/useChat';
+import { QueryError } from '@/components/ui/QueryError';
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
-  const { declaracao, checklist, formulario, statusStep, pendentes, isLoading } = useClientePortal();
+  const { declaracao, checklist, formulario, statusStep, pendentes, isLoading, isError, error, refetch } = useClientePortal();
   const navigate = useNavigate();
 
   const { unreadCount } = useChat(
@@ -23,6 +24,14 @@ export default function ClienteDashboard() {
     'cliente',
     user?.id
   );
+
+  if (isError) {
+    return (
+      <ClienteLayout>
+        <QueryError message={error?.message} onRetry={() => refetch()} />
+      </ClienteLayout>
+    );
+  }
 
   if (isLoading) {
     return (

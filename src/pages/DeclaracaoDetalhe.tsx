@@ -16,6 +16,7 @@ import { useDeclaracao } from '@/hooks/useDeclaracao';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { QueryError } from '@/components/ui/QueryError';
 
 export default function DeclaracaoDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -97,6 +98,14 @@ export default function DeclaracaoDetalhe() {
       setSavingForma(false);
     }
   };
+
+  if (hook.isError) {
+    return (
+      <DashboardLayout>
+        <QueryError message={hook.error?.message} onRetry={() => hook.refetch()} />
+      </DashboardLayout>
+    );
+  }
 
   if (hook.isLoading) {
     return (

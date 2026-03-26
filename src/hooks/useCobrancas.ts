@@ -48,7 +48,7 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
     staleTime: 60000,
   });
 
-  const { data: cobrancas = [], isLoading } = useQuery({
+  const { data: cobrancas = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['cobrancas', escritorioId, statusFilter, periodoInicio, periodoFim],
     queryFn: async () => {
       if (!escritorioId) return [];
@@ -162,5 +162,5 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
     onError: () => toast.error('Erro ao atualizar cobrança'),
   });
 
-  return { cobrancas, isLoading, kpis, marcarPago, cancelar, excluir, criar, editar };
+  return { cobrancas, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar };
 }

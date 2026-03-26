@@ -13,6 +13,7 @@ import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
 import { ConfirmModal } from '@/components/cobrancas/ConfirmModal';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
+import { QueryError } from '@/components/ui/QueryError';
 
 export default function Cobrancas() {
   const [statusFilter, setStatusFilter] = useState('todos');
@@ -21,7 +22,7 @@ export default function Cobrancas() {
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
   const { profile } = useAuth();
 
-  const { cobrancas, isLoading, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
+  const { cobrancas, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
 
   // Check if Inter is configured
   const { data: interAtivo } = useQuery({
@@ -61,7 +62,11 @@ export default function Cobrancas() {
           </Button>
         </div>
 
-        {/* KPIs */}
+        {isError ? (
+          <QueryError message={error?.message} onRetry={() => refetch()} />
+        ) : (
+          <>
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {isLoading ? (
             [...Array(3)].map((_, i) => <Skeleton key={i} className="h-24" />)
@@ -132,6 +137,8 @@ export default function Cobrancas() {
             />
           </CardContent>
         </Card>
+          </>
+        )}
       </div>
 
       <CobrancaModal
