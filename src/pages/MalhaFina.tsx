@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Shield, Search, RefreshCw, AlertTriangle, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { useMalhaFina } from '@/hooks/useMalhaFina';
 import { formatCPF } from '@/lib/formatters';
+import { QueryError } from '@/components/ui/QueryError';
 
 type ConsultaItem = {
   id: string;
