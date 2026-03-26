@@ -1158,6 +1158,8 @@ export type Database = {
           id: string
           instance_name: string
           phone: string | null
+          profile_name: string | null
+          profile_picture_url: string | null
           qrcode_base64: string | null
           status: string
           updated_at: string
@@ -1168,6 +1170,8 @@ export type Database = {
           id?: string
           instance_name: string
           phone?: string | null
+          profile_name?: string | null
+          profile_picture_url?: string | null
           qrcode_base64?: string | null
           status?: string
           updated_at?: string
@@ -1178,6 +1182,8 @@ export type Database = {
           id?: string
           instance_name?: string
           phone?: string | null
+          profile_name?: string | null
+          profile_picture_url?: string | null
           qrcode_base64?: string | null
           status?: string
           updated_at?: string

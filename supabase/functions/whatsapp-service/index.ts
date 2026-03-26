@@ -174,16 +174,47 @@ serve(async (req) => {
           const connected = evoResult?.state === "open" || evoResult?.instance?.state === "open";
           const newStatus = connected ? "connected" : "disconnected";
 
-          if (inst.status !== newStatus) {
-            await supabaseAdmin
-              .from("whatsapp_instances")
-              .update({ status: newStatus, updated_at: new Date().toISOString() })
-              .eq("id", inst.id);
+          const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+          if (inst.status !== newStatus) updateData.status = newStatus;
+
+          // Fetch profile details when connected
+          let profileData: Record<string, unknown> = {};
+          if (connected) {
+            try {
+              const instances = await evoFetch(`/instance/fetchInstances?instanceName=${inst.instance_name}`);
+              const detail = Array.isArray(instances) ? instances[0] : instances;
+              const owner = detail?.instance?.owner || detail?.owner || "";
+              const phone = owner.replace(/@.*$/, "");
+              const profileName = detail?.instance?.profileName || detail?.profileName || null;
+              const profilePictureUrl = detail?.instance?.profilePictureUrl || detail?.profilePictureUrl || null;
+
+              if (phone) updateData.phone = phone;
+              if (profileName) updateData.profile_name = profileName;
+              if (profilePictureUrl) updateData.profile_picture_url = profilePictureUrl;
+
+              profileData = { phone, profileName, profilePictureUrl };
+            } catch (e) {
+              console.error("Failed to fetch instance details:", e);
+            }
           }
+
+          await supabaseAdmin
+            .from("whatsapp_instances")
+            .update(updateData)
+            .eq("id", inst.id);
+
+          // Count messages sent
+          const { count: msgCount } = await supabaseAdmin
+            .from("mensagens_enviadas")
+            .select("id", { count: "exact", head: true })
+            .eq("escritorio_id", usuario.escritorio_id)
+            .eq("canal", "whatsapp");
 
           return jsonResponse({
             status: newStatus,
-            instance: { ...inst, status: newStatus },
+            instance: { ...inst, status: newStatus, ...updateData },
+            profile: profileData,
+            mensagensEnviadas: msgCount || 0,
             raw: evoResult,
           });
         } catch {
