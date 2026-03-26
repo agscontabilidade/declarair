@@ -53,6 +53,14 @@ export function useAddons() {
   return { catalog: catalogQuery.data || [], myAddons: myAddonsQuery.data || [], isLoading: catalogQuery.isLoading || myAddonsQuery.isLoading };
 }
 
+/** Check if a specific addon is active by keyword in addon name */
+export function useHasAddon(keyword: string): boolean {
+  const { myAddons } = useAddons();
+  return myAddons.some(
+    (a) => a.status === 'ativo' && a.addons?.nome?.toLowerCase().includes(keyword.toLowerCase())
+  );
+}
+
 export function useToggleAddon() {
   const qc = useQueryClient();
   const { profile } = useAuth();
@@ -62,7 +70,6 @@ export function useToggleAddon() {
       if (!profile.escritorioId) throw new Error('Sem escritório');
 
       if (!currentStatus) {
-        // Activate
         const { error } = await supabase.from('escritorio_addons').insert({
           escritorio_id: profile.escritorioId,
           addon_id: addonId,
@@ -70,7 +77,6 @@ export function useToggleAddon() {
         });
         if (error) throw error;
       } else if (currentStatus === 'ativo') {
-        // Deactivate
         const { error } = await supabase
           .from('escritorio_addons')
           .update({ status: 'inativo', desativado_em: new Date().toISOString() })
@@ -78,7 +84,6 @@ export function useToggleAddon() {
           .eq('addon_id', addonId);
         if (error) throw error;
       } else {
-        // Reactivate
         const { error } = await supabase
           .from('escritorio_addons')
           .update({ status: 'ativo', ativado_em: new Date().toISOString(), desativado_em: null })
@@ -89,7 +94,7 @@ export function useToggleAddon() {
     },
     onSuccess: (_, { currentStatus }) => {
       qc.invalidateQueries({ queryKey: ['my-addons'] });
-      toast.success(!currentStatus || currentStatus === 'inativo' ? 'Add-on ativado!' : 'Add-on desativado');
+      toast.success(!currentStatus || currentStatus === 'inativo' ? 'Recurso ativado!' : 'Recurso desativado');
     },
     onError: (err: Error) => toast.error(err.message),
   });

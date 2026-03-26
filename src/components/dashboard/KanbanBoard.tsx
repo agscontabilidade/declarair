@@ -14,6 +14,124 @@ const columns = [
   { status: 'transmitida', title: 'Transmitidas', color: 'bg-muted' },
 ];
 
+async function triggerStatusAutomation(
+  escritorioId: string,
+  declaracaoId: string,
+  newStatus: string,
+  accessToken: string
+) {
+  try {
+    // Check if automation is configured for this status
+    const { data: configs } = await supabase
+      .from('configuracoes_escritorio')
+      .select('chave, valor')
+      .eq('escritorio_id', escritorioId)
+      .in('chave', [
+        `whatsapp_auto_${newStatus}_ativo`,
+        `whatsapp_auto_${newStatus}_template`,
+      ]);
+
+    if (!configs || configs.length === 0) return;
+
+    const ativoConfig = configs.find(c => c.chave === `whatsapp_auto_${newStatus}_ativo`);
+    const templateConfig = configs.find(c => c.chave === `whatsapp_auto_${newStatus}_template`);
+
+    if (ativoConfig?.valor !== 'true' || !templateConfig?.valor) return;
+
+    // Get declaration + client info
+    const { data: decl } = await supabase
+      .from('declaracoes')
+      .select('*, clientes(nome, telefone, cpf)')
+      .eq('id', declaracaoId)
+      .single();
+
+    if (!decl?.clientes?.telefone) return;
+
+    // Get template
+    const { data: tmpl } = await supabase
+      .from('templates_mensagem')
+      .select('id, corpo')
+      .eq('id', templateConfig.valor)
+      .eq('ativo', true)
+      .single();
+
+    if (!tmpl) return;
+
+    // Get escritorio name
+    const { data: esc } = await supabase
+      .from('escritorios')
+      .select('nome')
+      .eq('id', escritorioId)
+      .single();
+
+    // Replace tags
+    const statusLabels: Record<string, string> = {
+      aguardando_documentos: 'Aguardando Documentos',
+      documentacao_recebida: 'Documentação Recebida',
+      declaracao_pronta: 'Declaração Pronta',
+      transmitida: 'Transmitida',
+    };
+
+    const mensagem = tmpl.corpo
+      .replace(/{nome_cliente}/g, (decl.clientes as any).nome || '')
+      .replace(/{nome_escritorio}/g, esc?.nome || '')
+      .replace(/{ano_base}/g, String(decl.ano_base))
+      .replace(/{status_declaracao}/g, statusLabels[newStatus] || newStatus)
+      .replace(/{tipo_resultado}/g, decl.tipo_resultado || '')
+      .replace(/{valor_resultado}/g, decl.valor_resultado ? String(decl.valor_resultado) : '')
+      .replace(/{numero_recibo}/g, decl.numero_recibo || '')
+      .replace(/{link_portal}/g, 'https://declarair.lovable.app/cliente/login');
+
+    const phone = (decl.clientes as any).telefone.replace(/\D/g, '');
+    const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
+
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    await fetch(`https://${projectId}.supabase.co/functions/v1/whatsapp-service?action=send-message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        phone: fullPhone,
+        message: mensagem,
+        clienteId: decl.cliente_id,
+        templateId: tmpl.id,
+      }),
+    });
+  } catch {
+    // Silent fail - don't block Kanban move
+  }
+}
+
+async function createInAppNotification(escritorioId: string, declaracaoId: string, newStatus: string) {
+  try {
+    const { data: decl } = await supabase
+      .from('declaracoes')
+      .select('ano_base, clientes(nome)')
+      .eq('id', declaracaoId)
+      .single();
+
+    if (!decl) return;
+
+    const statusLabels: Record<string, string> = {
+      aguardando_documentos: 'Aguardando Documentos',
+      documentacao_recebida: 'Documentação Recebida',
+      declaracao_pronta: 'Declaração Pronta',
+      transmitida: 'Transmitida',
+    };
+
+    await supabase.from('notificacoes').insert({
+      escritorio_id: escritorioId,
+      titulo: `Declaração movida: ${(decl.clientes as any)?.nome || 'Cliente'}`,
+      mensagem: `A declaração ${decl.ano_base} foi movida para "${statusLabels[newStatus] || newStatus}".`,
+      link_destino: `/declaracoes/${declaracaoId}`,
+    });
+  } catch {
+    // Silent
+  }
+}
+
 export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKanban[]; isLoading: boolean; anoBase: number }) {
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -53,11 +171,9 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
     const item = displayItems.find(i => i.id === id);
     if (!item || item.status === newStatus) return;
 
-    // Trigger drop animation
     setDroppedId(id);
     setTimeout(() => setDroppedId(null), 400);
 
-    // Optimistic update
     const prev = [...displayItems];
     setOptimisticItems(prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
 
@@ -73,6 +189,15 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
       setOptimisticItems(null);
       queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes', profile.escritorioId, anoBase] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-kpis', profile.escritorioId, anoBase] });
+
+      // Trigger automations in background
+      if (profile.escritorioId) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          triggerStatusAutomation(profile.escritorioId, id, newStatus, session.access_token);
+        }
+        createInAppNotification(profile.escritorioId, id, newStatus);
+      }
     }
   }, [displayItems, profile.escritorioId, anoBase, queryClient, toast]);
 
