@@ -162,5 +162,5 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
     onError: () => toast.error('Erro ao atualizar cobrança'),
   });
 
-  return { cobrancas, isLoading, kpis, marcarPago, cancelar, excluir, criar, editar };
+  return { cobrancas, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar };
 }

@@ -65,5 +65,8 @@ export function useClientePortal() {
   return {
     declaracao, checklist, formulario, statusStep, pendentes,
     isLoading: loadingDeclaracao || loadingChecklist || loadingFormulario,
+    isError: errorDeclaracao,
+    error: declError,
+    refetch: refetchDeclaracao,
   };
 }

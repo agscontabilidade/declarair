@@ -113,6 +113,9 @@ export function useMalhaFina() {
   return {
     consultas,
     isLoading,
+    isError,
+    error,
+    refetch,
     anoBase,
     setAnoBase,
     filtroStatus,

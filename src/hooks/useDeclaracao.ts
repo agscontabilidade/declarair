@@ -144,6 +144,9 @@ export function useDeclaracao(declaracaoId: string | undefined) {
   return {
     declaracao: declaracao.data,
     isLoading: declaracao.isLoading,
+    isError: declaracao.isError,
+    error: declaracao.error,
+    refetch: declaracao.refetch,
     checklist: checklist.data ?? [],
     checklistLoading: checklist.isLoading,
     formularioIR: formularioIR.data,
