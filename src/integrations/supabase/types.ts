@@ -883,6 +883,7 @@ export type Database = {
           declaracao_id: string
           escritorio_id: string
           id: string
+          lida: boolean | null
           remetente_id: string | null
           remetente_tipo: string
         }
@@ -893,6 +894,7 @@ export type Database = {
           declaracao_id: string
           escritorio_id: string
           id?: string
+          lida?: boolean | null
           remetente_id?: string | null
           remetente_tipo?: string
         }
@@ -903,6 +905,7 @@ export type Database = {
           declaracao_id?: string
           escritorio_id?: string
           id?: string
+          lida?: boolean | null
           remetente_id?: string | null
           remetente_tipo?: string
         }
@@ -1400,6 +1403,10 @@ export type Database = {
             Args: { _auth_user_id: string; _cliente_id: string }
             Returns: undefined
           }
+      marcar_mensagens_lidas: {
+        Args: { p_declaracao_id: string; p_remetente_tipo: string }
+        Returns: undefined
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
