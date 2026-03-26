@@ -108,7 +108,7 @@ serve(async (req) => {
 
         const evoResult = await evoFetch("/instance/create", "POST", {
           instanceName,
-          integration: "EVOLUTION",
+          integration: "WHATSAPP-BAILEYS",
           qrcode: true,
           rejectCall: false,
           webhookByEvents: false,

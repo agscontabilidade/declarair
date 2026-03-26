@@ -28,7 +28,7 @@ const navItems = [
   { title: 'Mensagens', url: '/mensagens', icon: MessageSquare },
   { title: 'Capa', url: '/capa', icon: Newspaper },
   { title: 'WhatsApp', url: '/whatsapp', icon: Phone },
-  { title: 'Add-ons', url: '/addons', icon: Puzzle },
+  { title: 'Recursos Extras', url: '/addons', icon: Puzzle },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
 
