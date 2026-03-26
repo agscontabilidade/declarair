@@ -28,7 +28,7 @@ export default function Cobrancas() {
     queryKey: ['inter-ativo', profile.escritorioId],
     queryFn: async () => {
       if (!profile.escritorioId) return false;
-      const { data } = await (supabase as any).from('configuracoes_escritorio').select('valor').eq('escritorio_id', profile.escritorioId).eq('chave', 'inter_ativo').single();
+      const { data } = await supabase.from('configuracoes_escritorio').select('valor').eq('escritorio_id', profile.escritorioId).eq('chave', 'inter_ativo').single();
       return data?.valor === 'true';
     },
     enabled: !!profile.escritorioId,
