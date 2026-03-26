@@ -15,6 +15,7 @@ import { useClientes } from '@/hooks/useClientes';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { QueryError } from '@/components/ui/QueryError';
 
 const years = [2023, 2024, 2025, 2026];
 
