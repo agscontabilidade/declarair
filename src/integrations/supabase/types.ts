@@ -47,6 +47,56 @@ export type Database = {
         }
         Relationships: []
       }
+      api_keys: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          created_by: string | null
+          escritorio_id: string
+          expira_em: string | null
+          id: string
+          key_hash: string
+          key_prefix: string
+          nome: string
+          permissoes: Json | null
+          ultimo_uso: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          escritorio_id: string
+          expira_em?: string | null
+          id?: string
+          key_hash: string
+          key_prefix: string
+          nome: string
+          permissoes?: Json | null
+          ultimo_uso?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          escritorio_id?: string
+          expira_em?: string | null
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          nome?: string
+          permissoes?: Json | null
+          ultimo_uso?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assinaturas: {
         Row: {
           asaas_subscription_id: string | null

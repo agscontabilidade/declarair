@@ -37,6 +37,7 @@ import ClienteDocumentos from "./pages/cliente/ClienteDocumentos";
 import ClientePerfil from "./pages/ClientePerfil";
 import DeclaracaoDetalhe from "./pages/DeclaracaoDetalhe";
 import ConviteColaborador from "./pages/ConviteColaborador";
+import ConfiguracoesAPI from "./pages/ConfiguracoesAPI";
 import NotFound from "./pages/NotFound";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
@@ -104,6 +105,7 @@ const App = () => (
               <Route path="/checkout" element={<ProtectedRoute allowedType="contador"><Checkout /></ProtectedRoute>} />
               <Route path="/upgrade" element={<ProtectedRoute allowedType="contador"><Upgrade /></ProtectedRoute>} />
               <Route path="/perfil" element={<ProtectedRoute allowedType="contador"><Perfil /></ProtectedRoute>} />
+              <Route path="/api-keys" element={<ProtectedRoute allowedType="contador"><ConfiguracoesAPI /></ProtectedRoute>} />
 
               {/* Cliente routes */}
               <Route path="/cliente/dashboard" element={<ProtectedRoute allowedType="cliente"><ClienteDashboard /></ProtectedRoute>} />
