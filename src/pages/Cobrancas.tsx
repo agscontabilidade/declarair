@@ -36,7 +36,7 @@ export default function Cobrancas() {
 
   const handleSave = (data: { id?: string; cliente_id: string; declaracao_id?: string; descricao: string; valor: number; data_vencimento: string }) => {
     if (data.id) {
-      editar.mutate(data, { onSuccess: () => { setModalOpen(false); setEditData(null); } });
+      editar.mutate({ ...data, id: data.id }, { onSuccess: () => { setModalOpen(false); setEditData(null); } });
     } else {
       criar.mutate(data, { onSuccess: () => { setModalOpen(false); setEditData(null); } });
     }
