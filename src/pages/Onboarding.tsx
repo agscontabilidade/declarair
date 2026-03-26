@@ -149,7 +149,7 @@ export default function Onboarding() {
 
       // Update avatar on usuarios
       if (avatarUrl && user) {
-        await supabase.from('usuarios').update({ avatar_url: avatarUrl } as any).eq('id', user.id);
+        await supabase.from('usuarios').update({ avatar_url: avatarUrl }).eq('id', user.id);
       }
 
       // Update escritorio
