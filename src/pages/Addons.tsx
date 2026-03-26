@@ -61,8 +61,9 @@ export default function Addons() {
 
   function handleConfirm() {
     if (!confirmAddon) return;
+    const realStatus = getAddonStatus(confirmAddon.id);
     toggle.mutate(
-      { addonId: confirmAddon.id, currentStatus: confirmAddon.isActive ? 'ativo' : null },
+      { addonId: confirmAddon.id, currentStatus: realStatus },
       { onSettled: () => setConfirmAddon(null) }
     );
   }
