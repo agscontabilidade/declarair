@@ -61,7 +61,7 @@ export function useDashboardData(anoBase: number) {
 
       const { data, error } = await supabase
         .from('declaracoes')
-        .select('id, status, ano_base, ultima_atualizacao_status, contador_id, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome)')
+        .select('id, status, ano_base, ultima_atualizacao_status, contador_id, version, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome)')
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', anoBase);
 
