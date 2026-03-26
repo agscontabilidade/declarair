@@ -55,7 +55,7 @@ export default function Checkout() {
     if (result.paymentInfo) {
       setPaymentResult(result.paymentInfo);
     } else {
-      navigate('/planos');
+      navigate('/meus-planos');
     }
   };
 
@@ -63,7 +63,7 @@ export default function Checkout() {
     return (
       <DashboardLayout>
         <div className="max-w-lg mx-auto space-y-6">
-          <Button variant="ghost" onClick={() => navigate('/planos')} className="gap-2">
+          <Button variant="ghost" onClick={() => navigate('/meus-planos')} className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Voltar aos planos
           </Button>
           <Card>
@@ -133,7 +133,7 @@ export default function Checkout() {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-6">
-        <Button variant="ghost" onClick={() => navigate('/planos')} className="gap-2">
+        <Button variant="ghost" onClick={() => navigate('/meus-planos')} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Voltar aos planos
         </Button>
 

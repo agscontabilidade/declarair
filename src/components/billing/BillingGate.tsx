@@ -9,7 +9,7 @@ interface BillingGateProps {
 
 /**
  * Wraps routes that should be blocked when billing is overdue.
- * Always allows access to /planos, /configuracoes, /perfil.
+ * Always allows access to /meus-planos, /configuracoes, /perfil.
  */
 export function BillingGate({ children, allowWhenBlocked = false }: BillingGateProps) {
   const { isBlocked, loading } = useBillingStatus();
@@ -17,7 +17,7 @@ export function BillingGate({ children, allowWhenBlocked = false }: BillingGateP
   if (loading) return null;
 
   if (isBlocked && !allowWhenBlocked) {
-    return <Navigate to="/planos" replace />;
+    return <Navigate to="/meus-planos" replace />;
   }
 
   return <>{children}</>;
