@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function Cobrancas() {
   const [statusFilter, setStatusFilter] = useState('todos');
   const [modalOpen, setModalOpen] = useState(false);
-  const [editData, setEditData] = useState<any>(null);
+  const [editData, setEditData] = useState<Record<string, unknown> | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
   const { profile } = useAuth();
 
