@@ -1151,6 +1151,47 @@ export type Database = {
           },
         ]
       }
+      whatsapp_instances: {
+        Row: {
+          created_at: string
+          escritorio_id: string
+          id: string
+          instance_name: string
+          phone: string | null
+          qrcode_base64: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          escritorio_id: string
+          id?: string
+          instance_name: string
+          phone?: string | null
+          qrcode_base64?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          escritorio_id?: string
+          id?: string
+          instance_name?: string
+          phone?: string | null
+          qrcode_base64?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_instances_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: true
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
