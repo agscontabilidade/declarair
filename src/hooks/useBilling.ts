@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { getPlanoConfig } from '@/lib/constants/planos';
 
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 
@@ -92,4 +93,73 @@ export function useListWebhooks() {
     queryFn: () => billingAction('list-webhooks'),
     enabled: !!profile.escritorioId,
   });
+}
+
+/** Hook unificado para informações de billing com novo modelo Free/Pro */
+export function useBilling() {
+  const { profile } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: escritorio, isLoading: loadingEscritorio } = useQuery({
+    queryKey: ['escritorio-billing', profile.escritorioId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('escritorios')
+        .select('plano, declaracoes_utilizadas, limite_declaracoes')
+        .eq('id', profile.escritorioId!)
+        .single();
+      return data;
+    },
+    enabled: !!profile.escritorioId,
+  });
+
+  const { data: addons = [] } = useQuery({
+    queryKey: ['active-addons', profile.escritorioId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('escritorio_addons')
+        .select('*, addons(*)')
+        .eq('escritorio_id', profile.escritorioId!)
+        .eq('status', 'ativo');
+      return data || [];
+    },
+    enabled: !!profile.escritorioId,
+  });
+
+  const planoNome = escritorio?.plano || 'gratuito';
+  const planoConfig = getPlanoConfig(planoNome);
+
+  const usadas = escritorio?.declaracoes_utilizadas ?? 0;
+  const limite = planoConfig.limites.declaracoes;
+  const declaracoesRestantes = limite ? Math.max(0, limite - usadas) : Infinity;
+  const atingiuLimiteDeclaracoes = limite !== null && usadas >= limite;
+
+  const hasAddon = (addonNome: string) => {
+    return addons.some((a: any) => a.addons?.nome?.toLowerCase().includes(addonNome.toLowerCase()));
+  };
+
+  const cancelSub = useMutation({
+    mutationFn: () => billingAction('cancel-subscription'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['escritorio-billing'] });
+      toast.success('Assinatura cancelada com sucesso');
+    },
+    onError: (err: Error) => {
+      toast.error('Erro ao cancelar assinatura', { description: err.message });
+    },
+  });
+
+  return {
+    planoAtual: planoNome,
+    planoConfig,
+    addons,
+    hasAddon,
+    declaracoesCount: usadas,
+    declaracoesRestantes,
+    atingiuLimiteDeclaracoes,
+    limiteDeclaracoes: limite,
+    isLoading: loadingEscritorio,
+    cancelSub,
+  };
 }
