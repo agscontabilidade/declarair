@@ -27,6 +27,7 @@ const navItems = [
   { title: 'Drive', url: '/drive', icon: FolderOpen },
   { title: 'Mensagens', url: '/mensagens', icon: MessageSquare },
   { title: 'Capa', url: '/capa', icon: Newspaper },
+  { title: 'Add-ons', url: '/addons', icon: Puzzle },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
 
