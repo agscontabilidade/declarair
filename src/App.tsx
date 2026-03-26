@@ -38,6 +38,7 @@ import ClientePerfil from "./pages/ClientePerfil";
 import DeclaracaoDetalhe from "./pages/DeclaracaoDetalhe";
 import ConviteColaborador from "./pages/ConviteColaborador";
 import ConfiguracoesAPI from "./pages/ConfiguracoesAPI";
+import CadastroCliente from "./pages/cliente/CadastroCliente";
 import NotFound from "./pages/NotFound";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
