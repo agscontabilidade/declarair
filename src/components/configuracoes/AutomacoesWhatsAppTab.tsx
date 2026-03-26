@@ -110,7 +110,7 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
     for (const entry of entries) {
       await supabase
         .from('configuracoes_escritorio')
-        .upsert(entry, { onConflict: 'escritorio_id,chave' as any });
+        .upsert(entry, { onConflict: 'escritorio_id,chave' } as Record<string, unknown>);
     }
 
     toast({ title: 'Automações salvas com sucesso!' });
