@@ -13,6 +13,7 @@ import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
 import { ConfirmModal } from '@/components/cobrancas/ConfirmModal';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
+import { QueryError } from '@/components/ui/QueryError';
 
 export default function Cobrancas() {
   const [statusFilter, setStatusFilter] = useState('todos');
