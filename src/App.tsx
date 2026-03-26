@@ -38,6 +38,7 @@ import ClientePerfil from "./pages/ClientePerfil";
 import DeclaracaoDetalhe from "./pages/DeclaracaoDetalhe";
 import ConviteColaborador from "./pages/ConviteColaborador";
 import ConfiguracoesAPI from "./pages/ConfiguracoesAPI";
+import CadastroCliente from "./pages/cliente/CadastroCliente";
 import NotFound from "./pages/NotFound";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
@@ -84,6 +85,7 @@ const App = () => (
               <Route path="/politica-lgpd" element={<PoliticaLGPD />} />
               <Route path="/planos" element={<Planos />} />
               <Route path="/convite-colaborador/:token" element={<ConviteColaborador />} />
+              <Route path="/cadastro-cliente/:token" element={<CadastroCliente />} />
 
               {/* Contador routes - billing gated */}
               <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><BillingGate><Dashboard /></BillingGate></ProtectedRoute>} />
