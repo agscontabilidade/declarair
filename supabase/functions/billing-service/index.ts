@@ -1,33 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { asaasRequest, getAsaasConfig, isProduction } from "../_shared/asaas-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-const ASAAS_BASE_URL = "https://sandbox.asaas.com/api/v3";
-
-async function asaasRequest(path: string, options: RequestInit = {}) {
-  const apiKey = Deno.env.get("ASAAS_API_KEY");
-  if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
-
-  const res = await fetch(`${ASAAS_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      access_token: apiKey,
-      ...(options.headers || {}),
-    },
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    console.error("Asaas error:", JSON.stringify(data));
-    throw new Error(data.errors?.[0]?.description || `API error: ${res.status}`);
-  }
-  return data;
-}
 
 function getSupabaseAdmin() {
   return createClient(
