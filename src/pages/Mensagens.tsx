@@ -17,8 +17,8 @@ import { Link } from 'react-router-dom';
 
 export default function Mensagens() {
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editData, setEditData] = useState<any>(null);
-  const [testTemplate, setTestTemplate] = useState<any>(null);
+  const [editData, setEditData] = useState<Record<string, unknown> | null>(null);
+  const [testTemplate, setTestTemplate] = useState<Record<string, unknown> | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: whatsappStatus } = useWhatsAppStatus();
