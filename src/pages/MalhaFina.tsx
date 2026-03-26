@@ -182,7 +182,7 @@ export default function MalhaFina() {
                 </div>
                 <Button
                   className="w-full"
-                  onClick={() => consultarIndividual(selectedConsulta.id)}
+                  onClick={() => consultarIndividual(selectedConsulta.id, selectedConsulta.cpf)}
                   disabled={consultando}
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${consultando ? 'animate-spin' : ''}`} />
