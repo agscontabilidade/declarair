@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useWhatsAppStatus } from '@/hooks/useWhatsApp';
 
 const ETAPAS = [
   { key: 'aguardando_documentos', label: 'Aguardando Documentos' },
@@ -14,7 +15,7 @@ const ETAPAS = [
   { key: 'transmitida', label: 'Transmitida' },
 ];
 
-const CANAIS = [
+const BASE_CANAIS = [
   { key: 'email_cliente', label: 'Email p/ Cliente' },
   { key: 'email_contador', label: 'Email p/ Contador' },
   { key: 'notificacao_app', label: 'Notificação In-App' },
