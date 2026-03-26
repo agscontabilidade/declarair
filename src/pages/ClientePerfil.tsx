@@ -37,7 +37,13 @@ export default function ClientePerfil() {
 
   const handleEnviarConvite = () => {
     enviarConvite.mutate(undefined, {
-      onSuccess: () => toast.success('Link de convite copiado para a área de transferência!'),
+      onSuccess: () => {
+        toast.success('Convite enviado via WhatsApp e link copiado!', {
+          description: cliente?.telefone
+            ? 'A mensagem de boas-vindas foi disparada automaticamente.'
+            : 'O cliente não possui telefone cadastrado. Link copiado para envio manual.',
+        });
+      },
       onError: () => toast.error('Erro ao gerar convite'),
     });
   };
