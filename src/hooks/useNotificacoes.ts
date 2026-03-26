@@ -44,11 +44,11 @@ export function useNotificacoes() {
 
   const marcarComoLida = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.rpc('marcar_notificacao_lida' as any, { _id: id });
-      // Fallback: direct update
-      if (error) {
-        await (supabase as any).from('notificacoes').update({ lida: true }).eq('id', id);
-      }
+      const { error } = await supabase
+        .from('notificacoes')
+        .update({ lida: true })
+        .eq('id', id);
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notificacoes'] }),
   });
@@ -56,11 +56,12 @@ export function useNotificacoes() {
   const marcarTodasComoLidas = useMutation({
     mutationFn: async () => {
       if (!escritorioId) return;
-      // Use raw SQL-like approach to avoid deep type instantiation
-      const notifs = (query.data || []).filter((n: any) => !n.lida);
-      for (const n of notifs) {
-        await (supabase as any).from('notificacoes').update({ lida: true }).eq('id', n.id);
-      }
+      const { error } = await supabase
+        .from('notificacoes')
+        .update({ lida: true })
+        .eq('escritorio_id', escritorioId)
+        .eq('lida', false);
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notificacoes'] }),
   });
