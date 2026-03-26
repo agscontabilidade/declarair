@@ -176,7 +176,7 @@ export function useFormularioIR() {
     if (!formulario?.id || !clienteId) return false;
 
     // Full validation before finalizing
-    const validation = validateComplete(formData as Record<string, unknown>);
+    const validation = validateComplete(formData as unknown as Record<string, unknown>);
     if (!validation.success) {
       const fieldErrors: Record<string, string[]> = {};
       validation.error.errors.forEach((err) => {

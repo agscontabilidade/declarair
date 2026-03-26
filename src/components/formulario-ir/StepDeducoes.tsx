@@ -88,7 +88,7 @@ export function StepDeducoes({ data, onChange }: Props) {
         </div>
         <div className="p-3 rounded-lg border bg-card">
           <Label>Valor Total PGBL (R$)</Label>
-          <Input value={prev.valor || ''} onChange={(e) => onChange('previdencia_privada', { ...prev, valor: e.target.value })} placeholder="0,00" className="max-w-xs" />
+          <Input value={String(prev.valor || '')} onChange={(e) => onChange('previdencia_privada', { ...prev, valor: e.target.value })} placeholder="0,00" className="max-w-xs" />
         </div>
         <p className="text-xs text-muted-foreground">ℹ️ A dedução do PGBL é limitada a 12% da renda bruta tributável.</p>
       </div>
