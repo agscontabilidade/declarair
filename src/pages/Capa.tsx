@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Printer, Upload, Phone, Mail, MapPin } from 'lucide-react';
+import { Printer, Upload, Phone, Mail, FileDown } from 'lucide-react';
+import { gerarCapaIR } from '@/lib/pdf/gerarCapaIR';
+import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClientes } from '@/hooks/useClientes';
 import { useQuery } from '@tanstack/react-query';
@@ -180,9 +182,34 @@ export default function Capa() {
               </div>
             </div>
 
-            <Button className="w-full gap-2" onClick={() => window.print()}>
-              <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
-            </Button>
+            <div className="flex gap-3">
+              <Button className="flex-1 gap-2" variant="outline" onClick={() => window.print()}>
+                <Printer className="h-4 w-4" /> Imprimir
+              </Button>
+              <Button
+                className="flex-1 gap-2"
+                onClick={async () => {
+                  try {
+                    await gerarCapaIR({
+                      nomeCliente,
+                      cpfCliente,
+                      anoBase,
+                      nomeEscritorio,
+                      nomeContador,
+                      telefoneEscritorio,
+                      emailEscritorio,
+                      logoUrl,
+                    });
+                    toast.success('PDF gerado com sucesso!');
+                  } catch (err) {
+                    console.error(err);
+                    toast.error('Erro ao gerar PDF');
+                  }
+                }}
+              >
+                <FileDown className="h-4 w-4" /> Baixar PDF
+              </Button>
+            </div>
           </div>
         </div>
       </div>
