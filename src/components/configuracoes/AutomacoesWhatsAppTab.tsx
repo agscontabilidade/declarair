@@ -4,13 +4,14 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, AlertCircle } from 'lucide-react';
+import { MessageSquare, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { useWhatsAppStatus } from '@/hooks/useWhatsApp';
-import { useAddons } from '@/hooks/useAddons';
+import { useHasAddon } from '@/hooks/useAddons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 
 const ETAPAS_KANBAN = [
@@ -23,6 +24,7 @@ const ETAPAS_KANBAN = [
   { key: 'cobranca_vencida', label: 'Cobrança Vencida / Atrasada', group: 'Cobranças' },
   { key: 'cobranca_paga', label: 'Pagamento Confirmado', group: 'Cobranças' },
   { key: 'documentos_recebidos', label: 'Novos Documentos Recebidos', group: 'Documentos' },
+  { key: 'cliente_cadastrado', label: 'Novo Cliente Cadastrado', group: 'Clientes' },
 ];
 
 interface Props {
@@ -32,12 +34,11 @@ interface Props {
 
 export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
   const { toast } = useToast();
-  const { data: whatsappStatus } = useWhatsAppStatus();
-  const { myAddons } = useAddons();
-  const isConnected = whatsappStatus?.status === 'connected';
-  const hasAddon = myAddons.some(
-    (a) => a.status === 'ativo' && (a as any).addons?.nome?.toLowerCase().includes('whatsapp')
-  );
+  const { data: whatsappStatus, isLoading: loadingStatus } = useWhatsAppStatus();
+  const hasAddon = useHasAddon('whatsapp');
+
+  // Robust connection check: status must be 'connected' AND phone must exist
+  const isConnected = whatsappStatus?.status === 'connected' && !!whatsappStatus?.phone;
 
   const [config, setConfig] = useState<Record<string, { ativo: boolean; templateId: string }>>({});
   const [lembreteAtivo, setLembreteAtivo] = useState(false);
@@ -116,6 +117,7 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
     setSaving(false);
   }
 
+  // Gate 1: No addon
   if (!hasAddon) {
     return (
       <Card className="shadow-sm">
@@ -127,7 +129,8 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
     );
   }
 
-  if (!isConnected) {
+  // Gate 2: No WhatsApp connected
+  if (!isConnected && !loadingStatus) {
     return (
       <Card className="shadow-sm">
         <CardContent className="py-12 text-center">
@@ -144,11 +147,16 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-primary" />
-          Automações via WhatsApp
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">Envie mensagens automáticas quando eventos importantes acontecerem.</p>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            Automações via WhatsApp
+          </CardTitle>
+          <Badge className="bg-emerald-100 text-emerald-800 gap-1">
+            <CheckCircle2 className="h-3 w-3" /> WhatsApp conectado
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">Envie mensagens automáticas quando eventos importantes acontecerem. Selecione o template para cada evento.</p>
       </CardHeader>
       <CardContent className="space-y-6">
         {groups.map((group) => (
@@ -219,7 +227,7 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Nenhum template WhatsApp ativo. <Link to="/mensagens" className="text-primary underline">Crie templates</Link> para usar nas automações.
+              Nenhum template WhatsApp ativo. Crie templates na aba <strong>Mensagens</strong> do menu para usar nas automações.
             </AlertDescription>
           </Alert>
         )}

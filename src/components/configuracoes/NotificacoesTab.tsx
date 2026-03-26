@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Bell } from 'lucide-react';
+import { Bell, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useWhatsAppStatus } from '@/hooks/useWhatsApp';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 
 const ETAPAS = [
   { key: 'aguardando_documentos', label: 'Aguardando Documentos', group: 'Declaração' },
@@ -18,12 +20,13 @@ const ETAPAS = [
   { key: 'cobranca_vencida', label: 'Cobrança Vencida / Atrasada', group: 'Cobranças' },
   { key: 'cobranca_paga', label: 'Pagamento Confirmado', group: 'Cobranças' },
   { key: 'documentos_recebidos', label: 'Novos Documentos Recebidos', group: 'Documentos' },
+  { key: 'cliente_cadastrado', label: 'Novo Cliente Cadastrado', group: 'Clientes' },
 ];
 
 const BASE_CANAIS = [
+  { key: 'notificacao_app', label: 'In-App' },
   { key: 'email_cliente', label: 'Email p/ Cliente' },
   { key: 'email_contador', label: 'Email p/ Contador' },
-  { key: 'notificacao_app', label: 'In-App' },
 ];
 
 interface Props {
@@ -34,7 +37,7 @@ interface Props {
 export function NotificacoesTab({ escritorioId, isDono }: Props) {
   const { toast } = useToast();
   const { data: whatsappStatus } = useWhatsAppStatus();
-  const isWhatsAppConnected = whatsappStatus?.status === 'connected';
+  const isWhatsAppConnected = whatsappStatus?.status === 'connected' && !!whatsappStatus?.phone;
   const CANAIS = isWhatsAppConnected
     ? [...BASE_CANAIS, { key: 'whatsapp', label: 'WhatsApp' }]
     : BASE_CANAIS;
@@ -109,13 +112,27 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
         <p className="text-sm text-muted-foreground">Configure quais notificações são enviadas em cada evento do sistema.</p>
       </CardHeader>
       <CardContent>
+        {!isWhatsAppConnected && (
+          <Alert className="mb-4 border-warning/30 bg-warning/5">
+            <Info className="h-4 w-4 text-warning" />
+            <AlertDescription className="text-sm">
+              O canal WhatsApp será exibido após conectar seu número em <strong>WhatsApp</strong>.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
                 <th className="text-left py-3 pr-4 font-medium text-foreground">Evento</th>
                 {CANAIS.map(c => (
-                  <th key={c.key} className="text-center py-3 px-3 font-medium text-foreground whitespace-nowrap">{c.label}</th>
+                  <th key={c.key} className="text-center py-3 px-3 font-medium text-foreground whitespace-nowrap">
+                    {c.label}
+                    {c.key === 'whatsapp' && (
+                      <Badge className="ml-1 bg-emerald-100 text-emerald-800 text-[10px] px-1">ON</Badge>
+                    )}
+                  </th>
                 ))}
               </tr>
             </thead>
