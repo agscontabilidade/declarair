@@ -13,16 +13,28 @@ function getAdmin() {
   );
 }
 
-// Validate webhook token (Asaas sends access_token in header or as query param)
-function validateWebhook(req: Request): boolean {
+// Validate webhook token
+function validateWebhook(req: Request): { valid: boolean; error?: string } {
   const asaasToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
-  if (!asaasToken) return true; // If no token configured, accept all (dev mode)
+  if (!asaasToken) {
+    console.error("[WEBHOOK] ASAAS_WEBHOOK_TOKEN não configurado");
+    return { valid: false, error: "Token não configurado no servidor" };
+  }
 
   const url = new URL(req.url);
-  const headerToken = req.headers.get("asaas-access-token");
+  const authHeader = req.headers.get("authorization");
+  const asaasHeader = req.headers.get("asaas-access-token");
   const queryToken = url.searchParams.get("access_token");
 
-  return headerToken === asaasToken || queryToken === asaasToken;
+  // Support: Authorization Bearer, asaas-access-token header, or query param
+  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const isValid = bearerToken === asaasToken || asaasHeader === asaasToken || queryToken === asaasToken;
+
+  if (!isValid) {
+    console.error("[WEBHOOK] Token inválido ou ausente");
+  }
+
+  return { valid: isValid, error: isValid ? undefined : "Token inválido" };
 }
 
 async function handlePaymentCreated(payment: any, admin: any) {
