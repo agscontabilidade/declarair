@@ -36,7 +36,7 @@ export default function GerarLinkConvite() {
       const token = crypto.randomUUID() + '-' + Date.now().toString(36);
 
       const { error } = await supabase
-        .from('convites_cliente' as any)
+        .from('convites_cliente')
         .insert({
           escritorio_id: profile.escritorioId,
           token,
