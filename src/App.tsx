@@ -84,7 +84,7 @@ const App = () => (
               <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
               <Route path="/politica-lgpd" element={<PoliticaLGPD />} />
               <Route path="/planos" element={<Planos />} />
-              <Route path="/convite-colaborador/:token" element={<ConviteColaborador />} />
+              <Route path="/cadastro-cliente/:token" element={<CadastroCliente />} />
 
               {/* Contador routes - billing gated */}
               <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><BillingGate><Dashboard /></BillingGate></ProtectedRoute>} />
