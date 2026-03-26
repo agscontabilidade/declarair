@@ -51,11 +51,10 @@ async function authenticateUser(req: Request) {
   }
 
   const supabase = getSupabaseUser(authHeader);
-  const token = authHeader.replace("Bearer ", "");
-  const { data, error } = await supabase.auth.getClaims(token);
-  if (error || !data?.claims) throw new Error("Unauthorized");
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) throw new Error("Unauthorized");
 
-  const userId = data.claims.sub as string;
+  const userId = user.id;
 
   // Get escritorio info
   const admin = getSupabaseAdmin();
