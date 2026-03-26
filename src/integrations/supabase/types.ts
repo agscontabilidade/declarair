@@ -197,6 +197,7 @@ export type Database = {
       clientes: {
         Row: {
           auth_user_id: string | null
+          conta_azul_id: string | null
           contador_responsavel_id: string | null
           cpf: string
           created_at: string
@@ -212,6 +213,7 @@ export type Database = {
         }
         Insert: {
           auth_user_id?: string | null
+          conta_azul_id?: string | null
           contador_responsavel_id?: string | null
           cpf: string
           created_at?: string
@@ -227,6 +229,7 @@ export type Database = {
         }
         Update: {
           auth_user_id?: string | null
+          conta_azul_id?: string | null
           contador_responsavel_id?: string | null
           cpf?: string
           created_at?: string
@@ -851,6 +854,53 @@ export type Database = {
             columns: ["declaracao_id"]
             isOneToOne: true
             referencedRelation: "declaracoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integracoes_contaazul: {
+        Row: {
+          access_token_encrypted: string | null
+          ativo: boolean | null
+          client_id: string
+          client_secret_encrypted: string
+          created_at: string | null
+          escritorio_id: string
+          id: string
+          refresh_token_encrypted: string | null
+          token_expira_em: string | null
+          ultima_sincronizacao: string | null
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          ativo?: boolean | null
+          client_id: string
+          client_secret_encrypted: string
+          created_at?: string | null
+          escritorio_id: string
+          id?: string
+          refresh_token_encrypted?: string | null
+          token_expira_em?: string | null
+          ultima_sincronizacao?: string | null
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          ativo?: boolean | null
+          client_id?: string
+          client_secret_encrypted?: string
+          created_at?: string | null
+          escritorio_id?: string
+          id?: string
+          refresh_token_encrypted?: string | null
+          token_expira_em?: string | null
+          ultima_sincronizacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integracoes_contaazul_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: true
+            referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
         ]
