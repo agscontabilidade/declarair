@@ -94,6 +94,7 @@ const App = () => (
               <Route path="/malha-fina" element={<ProtectedRoute allowedType="contador"><BillingGate><MalhaFina /></BillingGate></ProtectedRoute>} />
               <Route path="/drive" element={<ProtectedRoute allowedType="contador"><BillingGate><Drive /></BillingGate></ProtectedRoute>} />
               <Route path="/addons" element={<ProtectedRoute allowedType="contador"><BillingGate><Addons /></BillingGate></ProtectedRoute>} />
+              <Route path="/whatsapp" element={<ProtectedRoute allowedType="contador"><BillingGate><WhatsApp /></BillingGate></ProtectedRoute>} />
 
               {/* Contador routes - always accessible */}
               <Route path="/configuracoes" element={<ProtectedRoute allowedType="contador"><Configuracoes /></ProtectedRoute>} />
