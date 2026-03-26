@@ -13,6 +13,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatCPF } from '@/lib/formatters';
 import { toast } from 'sonner';
 
+interface DocWithDeclaracao {
+  id: string;
+  arquivo_nome: string | null;
+  arquivo_url: string | null;
+  nome_documento: string;
+  categoria: string;
+  status: string;
+  declaracoes: {
+    ano_base: number;
+    cliente_id: string;
+    clientes: { id: string; nome: string; cpf: string } | null;
+  } | null;
+}
+
 interface TreeNode {
   ano: number;
   clientes: {
@@ -21,7 +35,7 @@ interface TreeNode {
     cpf: string;
     categorias: {
       categoria: string;
-      docs: any[];
+      docs: DocWithDeclaracao[];
     }[];
   }[];
 }
