@@ -3,11 +3,13 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
 import { useClientes } from '@/hooks/useClientes';
 import { ClientesTable } from '@/components/clientes/ClientesTable';
 import { ClienteModal } from '@/components/clientes/ClienteModal';
 import { QueryError } from '@/components/ui/QueryError';
+import { usePermissoes } from '@/hooks/usePermissoes';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function Clientes() {
   const { clientes, isLoading, isError, error, refetch, search, setSearch, page, setPage, totalPages, contadores, createCliente } = useClientes();
