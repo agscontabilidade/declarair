@@ -163,11 +163,9 @@ export default function Drive() {
                                     <span className="truncate text-foreground">{doc.arquivo_nome || doc.nome_documento}</span>
                                   </div>
                                   {doc.arquivo_url && (
-                                    <a href={doc.arquivo_url} target="_blank" rel="noopener noreferrer">
-                                      <Button variant="ghost" size="sm" className="h-7">
-                                        <Download className="h-3 w-3" />
-                                      </Button>
-                                    </a>
+                                    <Button variant="ghost" size="sm" className="h-7" onClick={() => handleDownload(doc.arquivo_url)}>
+                                      <Download className="h-3 w-3" />
+                                    </Button>
                                   )}
                                 </div>
                               );
