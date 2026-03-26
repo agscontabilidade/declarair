@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone, User, Calendar, Hash, Send } from 'lucide-react';
 import {
   useWhatsAppStatus,
   useCreateInstance,
@@ -14,6 +16,17 @@ import {
 import { useAddons } from '@/hooks/useAddons';
 import { ConfirmModal } from '@/components/cobrancas/ConfirmModal';
 import { useState } from 'react';
+import { formatPhone, formatDate } from '@/lib/formatters';
+
+function formatWhatsAppPhone(phone: string | null | undefined): string {
+  if (!phone) return '—';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('55') && digits.length >= 12) {
+    const national = digits.slice(2);
+    return `+55 ${formatPhone(national)}`;
+  }
+  return `+${digits}`;
+}
 
 export default function WhatsApp() {
   const { data: statusData, isLoading, refetch } = useWhatsAppStatus();
@@ -31,10 +44,16 @@ export default function WhatsApp() {
 
   const status = statusData?.status || 'not_created';
   const instance = statusData?.instance;
-  const qrcode = statusData?.instance?.qrcode_base64 || statusData?.qrcode;
+  const qrcode = instance?.qrcode_base64 || statusData?.qrcode;
+  const profile = statusData?.profile;
+  const msgCount = statusData?.mensagensEnviadas || 0;
 
   const isConnected = status === 'connected';
-  const hasPendingInstance = status === 'pending' || status === 'disconnected';
+
+  const displayPhone = instance?.phone || profile?.phone;
+  const displayName = instance?.profile_name || profile?.profileName;
+  const displayPicture = instance?.profile_picture_url || profile?.profilePictureUrl;
+  const connectedSince = isConnected && instance?.updated_at ? instance.updated_at : null;
 
   return (
     <DashboardLayout>
@@ -57,10 +76,10 @@ export default function WhatsApp() {
               <div className="flex items-start gap-4">
                 <MessageSquare className="h-8 w-8 text-warning shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-semibold text-foreground">Add-on WhatsApp não ativo</h3>
+                  <h3 className="font-semibold text-foreground">Recurso WhatsApp não ativo</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Para utilizar o WhatsApp integrado, ative o add-on na página de{' '}
-                    <a href="/addons" className="text-primary underline">Add-ons</a>.
+                    Para utilizar o WhatsApp integrado, ative o recurso na página de{' '}
+                    <a href="/addons" className="text-primary underline">Recursos Extras</a>.
                   </p>
                 </div>
               </div>
@@ -113,17 +132,62 @@ export default function WhatsApp() {
                 </Button>
               </div>
             ) : isConnected ? (
-              <div className="text-center py-8">
-                <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-emerald-500/10 mb-4">
-                  <Phone className="h-10 w-10 text-emerald-500" />
+              /* ── Connected: Rich Profile Card ── */
+              <div className="py-4">
+                <div className="flex items-center gap-5 mb-6">
+                  <Avatar className="h-20 w-20 border-2 border-emerald-500/30">
+                    {displayPicture ? (
+                      <AvatarImage src={displayPicture} alt={displayName || 'Perfil'} />
+                    ) : null}
+                    <AvatarFallback className="bg-emerald-500/10 text-emerald-700 text-xl font-bold">
+                      {displayName ? displayName.charAt(0).toUpperCase() : <User className="h-8 w-8" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-lg text-foreground truncate">
+                      {displayName || 'WhatsApp Conectado'}
+                    </h3>
+                    <p className="text-base text-muted-foreground font-mono mt-0.5">
+                      {formatWhatsAppPhone(displayPhone)}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-xs text-emerald-600 font-medium">Online</span>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="font-semibold text-foreground mb-1">WhatsApp conectado!</h3>
-                {instance?.phone && (
-                  <p className="text-sm text-muted-foreground mb-4">Número: {instance.phone}</p>
-                )}
-                <p className="text-sm text-muted-foreground mb-6">
-                  Suas mensagens agora serão enviadas via WhatsApp real.
-                </p>
+
+                <Separator className="mb-4" />
+
+                {/* Stats row */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <Send className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xl font-bold text-foreground">{msgCount}</p>
+                    <p className="text-xs text-muted-foreground">Mensagens enviadas</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <Phone className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-sm font-semibold text-foreground mt-1 truncate">
+                      {displayPhone ? displayPhone.slice(-4) : '—'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Final do número</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <Calendar className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-sm font-semibold text-foreground mt-1">
+                      {connectedSince ? formatDate(connectedSince) : '—'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Conectado desde</p>
+                  </div>
+                </div>
+
+                {/* Instance details */}
+                <div className="text-xs text-muted-foreground bg-muted/30 rounded-md p-3 mb-6 flex items-center gap-2">
+                  <Hash className="h-3 w-3" />
+                  <span>Instância: <code className="font-mono">{instance?.instance_name}</code></span>
+                </div>
+
                 <div className="flex gap-3 justify-center">
                   <Button
                     variant="outline"
@@ -192,7 +256,7 @@ export default function WhatsApp() {
             <ol className="space-y-3 text-sm text-muted-foreground">
               <li className="flex gap-3">
                 <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0">1</span>
-                <span>Ative o add-on <strong>WhatsApp Automático</strong> na página de Add-ons</span>
+                <span>Ative o recurso <strong>WhatsApp Automático</strong> em Recursos Extras</span>
               </li>
               <li className="flex gap-3">
                 <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0">2</span>
