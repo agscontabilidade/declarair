@@ -427,6 +427,69 @@ export type Database = {
           },
         ]
       }
+      convites_cliente: {
+        Row: {
+          cpf_sugerido: string | null
+          created_at: string | null
+          created_by: string | null
+          email_sugerido: string | null
+          escritorio_id: string
+          expira_em: string | null
+          id: string
+          mensagem_personalizada: string | null
+          nome_sugerido: string | null
+          token: string
+          usado: boolean | null
+          usado_em: string | null
+          usado_por_cliente_id: string | null
+        }
+        Insert: {
+          cpf_sugerido?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email_sugerido?: string | null
+          escritorio_id: string
+          expira_em?: string | null
+          id?: string
+          mensagem_personalizada?: string | null
+          nome_sugerido?: string | null
+          token: string
+          usado?: boolean | null
+          usado_em?: string | null
+          usado_por_cliente_id?: string | null
+        }
+        Update: {
+          cpf_sugerido?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email_sugerido?: string | null
+          escritorio_id?: string
+          expira_em?: string | null
+          id?: string
+          mensagem_personalizada?: string | null
+          nome_sugerido?: string | null
+          token?: string
+          usado?: boolean | null
+          usado_em?: string | null
+          usado_por_cliente_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convites_cliente_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_cliente_usado_por_cliente_id_fkey"
+            columns: ["usado_por_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       declaracao_atividades: {
         Row: {
           created_at: string
