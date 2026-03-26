@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Settings, Users, CreditCard, Puzzle, Palette, Bell } from 'lucide-react';
+import { Settings, Users, CreditCard, Puzzle, Palette, Bell, MessageSquare } from 'lucide-react';
 import { buscarCNPJ } from '@/lib/apiBrasil';
 import { IntegracoesTab } from '@/components/configuracoes/IntegracoesTab';
 import { WhitelabelTab } from '@/components/configuracoes/WhitelabelTab';
