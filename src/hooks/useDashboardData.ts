@@ -13,6 +13,7 @@ export interface DeclaracaoKanban {
   contador: { nome: string } | null;
   pendingDocs: number;
   totalDocs: number;
+  version: number;
 }
 
 interface DeclaracaoRow {
@@ -21,6 +22,7 @@ interface DeclaracaoRow {
   ano_base: number;
   ultima_atualizacao_status: string;
   contador_id: string | null;
+  version: number;
   clientes: { nome: string; cpf: string } | null;
   usuarios: { nome: string } | null;
 }
@@ -59,7 +61,7 @@ export function useDashboardData(anoBase: number) {
 
       const { data, error } = await supabase
         .from('declaracoes')
-        .select('id, status, ano_base, ultima_atualizacao_status, contador_id, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome)')
+        .select('id, status, ano_base, ultima_atualizacao_status, contador_id, version, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome)')
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', anoBase);
 
@@ -96,6 +98,7 @@ export function useDashboardData(anoBase: number) {
           contador: row.usuarios ? { nome: row.usuarios.nome } : null,
           pendingDocs: pendingMap[row.id] || 0,
           totalDocs: totalMap[row.id] || 0,
+          version: row.version,
         };
       });
     },

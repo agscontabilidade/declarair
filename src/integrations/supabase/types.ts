@@ -375,6 +375,7 @@ export type Database = {
           tipo_resultado: string | null
           ultima_atualizacao_status: string
           valor_resultado: number | null
+          version: number
         }
         Insert: {
           ano_base: number
@@ -391,6 +392,7 @@ export type Database = {
           tipo_resultado?: string | null
           ultima_atualizacao_status?: string
           valor_resultado?: number | null
+          version?: number
         }
         Update: {
           ano_base?: number
@@ -407,6 +409,7 @@ export type Database = {
           tipo_resultado?: string | null
           ultima_atualizacao_status?: string
           valor_resultado?: number | null
+          version?: number
         }
         Relationships: [
           {
