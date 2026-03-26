@@ -3,11 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Copy, ExternalLink } from 'lucide-react';
+import { Copy, ExternalLink, Send } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { replaceTags } from '@/hooks/useMensagens';
+import { useSendWhatsApp, useWhatsAppStatus } from '@/hooks/useWhatsApp';
 import { formatCPF, formatCurrency, formatDate, STATUS_LABELS } from '@/lib/formatters';
 import { toast } from 'sonner';
 
@@ -21,6 +22,9 @@ interface TestarMensagemModalProps {
 export function TestarMensagemModal({ open, onOpenChange, template, onEnviar }: TestarMensagemModalProps) {
   const { profile } = useAuth();
   const [clienteId, setClienteId] = useState('');
+  const sendWhatsApp = useSendWhatsApp();
+  const { data: whatsappStatus } = useWhatsAppStatus();
+  const isWhatsAppConnected = whatsappStatus?.status === 'connected';
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes-test', profile.escritorioId],
@@ -80,11 +84,22 @@ export function TestarMensagemModal({ open, onOpenChange, template, onEnviar }: 
   };
 
   const handleWhatsApp = () => {
-    const phone = cliente?.telefone?.replace(/\D/g, '') || '';
-    const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
-    window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(previewText)}`, '_blank');
-    if (clienteId && template) {
-      onEnviar(clienteId, previewText);
+    if (isWhatsAppConnected && cliente?.telefone) {
+      // Send via Evolution API
+      sendWhatsApp.mutate({
+        phone: cliente.telefone,
+        message: previewText,
+        clienteId,
+        templateId: template?.id,
+      });
+    } else {
+      // Fallback: open wa.me link
+      const phone = cliente?.telefone?.replace(/\D/g, '') || '';
+      const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
+      window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(previewText)}`, '_blank');
+      if (clienteId && template) {
+        onEnviar(clienteId, previewText);
+      }
     }
   };
 
@@ -120,9 +135,16 @@ export function TestarMensagemModal({ open, onOpenChange, template, onEnviar }: 
                 <Copy className="h-4 w-4 mr-2" /> Copiar
               </Button>
               {template?.canal === 'whatsapp' && cliente.telefone && (
-                <Button onClick={handleWhatsApp}>
-                  <ExternalLink className="h-4 w-4 mr-2" /> Abrir WhatsApp
-                </Button>
+                isWhatsAppConnected ? (
+                  <Button onClick={handleWhatsApp} disabled={sendWhatsApp.isPending}>
+                    <Send className="h-4 w-4 mr-2" />
+                    {sendWhatsApp.isPending ? 'Enviando...' : 'Enviar WhatsApp'}
+                  </Button>
+                ) : (
+                  <Button onClick={handleWhatsApp}>
+                    <ExternalLink className="h-4 w-4 mr-2" /> Abrir WhatsApp
+                  </Button>
+                )
               )}
             </>
           )}

@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.billing-webhook]
 verify_jwt = false
+
+[functions.whatsapp-service]
+verify_jwt = false
