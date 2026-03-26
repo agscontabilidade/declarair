@@ -76,7 +76,7 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
       cfg[e.key] = { ativo: false, templateId: '' };
     });
 
-    (data || []).forEach((d: any) => {
+    (data || []).forEach((d) => {
       if (d.chave === 'whatsapp_auto_lembrete_ativo') {
         setLembreteAtivo(d.valor === 'true');
       } else if (d.chave === 'whatsapp_auto_lembrete_dias') {
