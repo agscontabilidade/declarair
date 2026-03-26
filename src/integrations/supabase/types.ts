@@ -1030,6 +1030,30 @@ export type Database = {
           },
         ]
       }
+      permissoes: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -1136,6 +1160,45 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      usuario_permissoes: {
+        Row: {
+          created_at: string | null
+          escritorio_id: string
+          id: string
+          permissao_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          escritorio_id: string
+          id?: string
+          permissao_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          escritorio_id?: string
+          id?: string
+          permissao_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_permissoes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_permissoes_permissao_id_fkey"
+            columns: ["permissao_id"]
+            isOneToOne: false
+            referencedRelation: "permissoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       usuarios: {
         Row: {
@@ -1296,6 +1359,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      user_tem_permissao: { Args: { permissao_nome: string }; Returns: boolean }
     }
     Enums: {
       app_role: "dono" | "colaborador"
