@@ -1,8 +1,9 @@
-import { LayoutDashboard, Users, FileText, DollarSign, MessageSquare, Settings, LogOut, Newspaper, Shield, FolderOpen, User } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, DollarSign, MessageSquare, Settings, LogOut, Newspaper, Shield, FolderOpen, User, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
+import { useUsageStatus } from '@/hooks/useUsageStatus';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import {
@@ -35,6 +36,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const collapsed = state === 'collapsed';
   const atrasadas = useCobrancasAtrasadas();
+  const { percentual, level, usadas, limite } = useUsageStatus();
 
   const initials = profile.nome?.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?';
   const papel = profile.papel === 'dono' ? 'Dono' : 'Colaborador';
@@ -80,6 +82,23 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
+        {level !== 'normal' && (
+          <button
+            onClick={() => navigate('/meus-planos')}
+            className={`flex items-center gap-2 w-full px-3 py-2 mb-2 rounded-lg text-xs font-medium transition-colors ${
+              level === 'blocked'
+                ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
+                : level === 'critical'
+                ? 'bg-warning/10 text-warning hover:bg-warning/20'
+                : 'bg-accent/10 text-accent hover:bg-accent/20'
+            }`}
+          >
+            <TrendingUp className="h-4 w-4 shrink-0" />
+            {!collapsed && (
+              <span className="truncate">{usadas}/{limite} declarações</span>
+            )}
+          </button>
+        )}
         <button
           onClick={() => navigate('/perfil')}
           className="flex items-center gap-3 px-1 mb-2 w-full rounded-lg hover:bg-sidebar-accent/50 transition-colors py-1"

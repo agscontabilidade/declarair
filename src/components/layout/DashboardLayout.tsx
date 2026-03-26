@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BillingBanner } from '@/components/billing/BillingBanner';
+import { UsageBanner } from '@/components/billing/UsageBanner';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userType } = useAuth();
@@ -25,6 +26,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             {isContador && <NotificacoesBell />}
           </header>
           {isContador && <BillingBanner />}
+          {isContador && <UsageBanner />}
           <main className="flex-1 p-6 overflow-auto">
             {children}
           </main>
