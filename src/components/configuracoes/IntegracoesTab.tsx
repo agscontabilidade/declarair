@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Eye, EyeOff, Upload, Check, X, Shield, HelpCircle } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Eye, EyeOff, Upload, Check, X, Shield, HelpCircle, RefreshCw, CheckCircle2, XCircle, ExternalLink, Unlink } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -16,7 +16,7 @@ const BANCOS = [
   { key: 'nenhum', nome: 'Nenhum (controle manual)', desc: 'Registre cobranças e marque como pagas manualmente', available: true },
   { key: 'inter', nome: 'Banco Inter', desc: 'Boleto híbrido (código de barras + PIX QR Code)', available: true },
   { key: 'cora', nome: 'Banco Cora', desc: 'Boleto + PIX para conta PJ', available: false },
-  { key: 'conta_azul', nome: 'Conta Azul', desc: 'Gestão financeira + Cobranças', available: false },
+  { key: 'conta_azul', nome: 'Conta Azul', desc: 'Gestão financeira + Cobranças', available: true },
 ];
 
 interface Props {
