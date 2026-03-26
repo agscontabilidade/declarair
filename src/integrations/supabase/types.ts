@@ -601,6 +601,54 @@ export type Database = {
           },
         ]
       }
+      declaracoes_extras: {
+        Row: {
+          cobranca_id: string | null
+          created_at: string | null
+          escritorio_id: string
+          id: string
+          mes_referencia: string
+          quantidade: number
+          valor_total: number | null
+          valor_unitario: number
+        }
+        Insert: {
+          cobranca_id?: string | null
+          created_at?: string | null
+          escritorio_id: string
+          id?: string
+          mes_referencia?: string
+          quantidade: number
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Update: {
+          cobranca_id?: string | null
+          created_at?: string | null
+          escritorio_id?: string
+          id?: string
+          mes_referencia?: string
+          quantidade?: number
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "declaracoes_extras_cobranca_id_fkey"
+            columns: ["cobranca_id"]
+            isOneToOne: false
+            referencedRelation: "cobrancas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracoes_extras_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -1530,6 +1578,14 @@ export type Database = {
           id: string
           nome: string
         }[]
+      }
+      check_can_create_declaracao: {
+        Args: { escritorio_uuid: string }
+        Returns: boolean
+      }
+      count_declaracoes_ativas: {
+        Args: { escritorio_uuid: string }
+        Returns: number
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
