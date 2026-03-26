@@ -36,6 +36,7 @@ import ClienteFormulario from "./pages/cliente/ClienteFormulario";
 import ClienteDocumentos from "./pages/cliente/ClienteDocumentos";
 import ClientePerfil from "./pages/ClientePerfil";
 import DeclaracaoDetalhe from "./pages/DeclaracaoDetalhe";
+import ConviteColaborador from "./pages/ConviteColaborador";
 import NotFound from "./pages/NotFound";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
