@@ -146,7 +146,7 @@ export function useFormularioIR() {
 
       const { error } = await supabase
         .from('formulario_ir')
-        .update({ ...data, ultima_atualizacao: new Date().toISOString() })
+        .update({ ...(data as Record<string, unknown>), ultima_atualizacao: new Date().toISOString() } as never)
         .eq('id', formulario.id);
       if (error) throw error;
       setLastSaved(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
