@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { replaceTags } from '@/hooks/useMensagens';
 import { useSendWhatsApp, useWhatsAppStatus } from '@/hooks/useWhatsApp';
 import { formatCPF, formatCurrency, formatDate, STATUS_LABELS } from '@/lib/formatters';
+import { PORTAL_BASE_URL } from '@/lib/constants';
 import { toast } from 'sonner';
 
 interface TestarMensagemModalProps {
