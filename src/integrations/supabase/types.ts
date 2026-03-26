@@ -811,9 +811,12 @@ export type Database = {
           cliente_id: string
           cpf: string
           created_at: string
+          data_consulta: string | null
           declaracao_id: string
           escritorio_id: string
           id: string
+          resultado_json: Json | null
+          situacao_cadastral: string | null
           status_rfb: string
           ultima_consulta: string | null
           ultimo_resultado: string | null
@@ -823,9 +826,12 @@ export type Database = {
           cliente_id: string
           cpf: string
           created_at?: string
+          data_consulta?: string | null
           declaracao_id: string
           escritorio_id: string
           id?: string
+          resultado_json?: Json | null
+          situacao_cadastral?: string | null
           status_rfb?: string
           ultima_consulta?: string | null
           ultimo_resultado?: string | null
@@ -835,9 +841,12 @@ export type Database = {
           cliente_id?: string
           cpf?: string
           created_at?: string
+          data_consulta?: string | null
           declaracao_id?: string
           escritorio_id?: string
           id?: string
+          resultado_json?: Json | null
+          situacao_cadastral?: string | null
           status_rfb?: string
           ultima_consulta?: string | null
           ultimo_resultado?: string | null
