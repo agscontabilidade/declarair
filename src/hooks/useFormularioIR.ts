@@ -3,21 +3,32 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import {
+  validatePartial,
+  validateComplete,
+  type Dependente,
+  type RendimentoEmprego,
+  type RendimentoAluguel,
+  type DespesaMedica,
+  type DespesaEducacao,
+  type BemDireito,
+  type DividaOnus,
+} from '@/lib/schemas/formulario-ir';
 
 export interface FormularioData {
   estado_civil: string;
   conjuge_nome: string;
   conjuge_cpf: string;
-  dependentes: any[];
-  rendimentos_emprego: any[];
-  rendimentos_autonomo: any;
-  rendimentos_aluguel: any[];
-  outros_rendimentos: any;
-  bens_direitos: any[];
-  dividas_onus: any[];
-  despesas_medicas: any[];
-  despesas_educacao: any[];
-  previdencia_privada: any;
+  dependentes: Dependente[];
+  rendimentos_emprego: RendimentoEmprego[];
+  rendimentos_autonomo: Record<string, unknown>;
+  rendimentos_aluguel: RendimentoAluguel[];
+  outros_rendimentos: Record<string, unknown>;
+  bens_direitos: BemDireito[];
+  dividas_onus: DividaOnus[];
+  despesas_medicas: DespesaMedica[];
+  despesas_educacao: DespesaEducacao[];
+  previdencia_privada: Record<string, unknown>;
   informacoes_adicionais: string;
 }
 
@@ -45,6 +56,7 @@ export function useFormularioIR() {
   const [formData, setFormData] = useState<FormularioData>(INITIAL_DATA);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Get active declaration
@@ -77,7 +89,6 @@ export function useFormularioIR() {
 
       if (existing) return existing;
 
-      // Create new
       const { data: created, error } = await supabase
         .from('formulario_ir')
         .insert({
@@ -101,16 +112,16 @@ export function useFormularioIR() {
         estado_civil: formulario.estado_civil || '',
         conjuge_nome: formulario.conjuge_nome || '',
         conjuge_cpf: formulario.conjuge_cpf || '',
-        dependentes: (formulario.dependentes as any[]) || [],
-        rendimentos_emprego: (formulario.rendimentos_emprego as any[]) || [],
-        rendimentos_autonomo: formulario.rendimentos_autonomo || {},
-        rendimentos_aluguel: (formulario.rendimentos_aluguel as any[]) || [],
-        outros_rendimentos: formulario.outros_rendimentos || {},
-        bens_direitos: (formulario.bens_direitos as any[]) || [],
-        dividas_onus: (formulario.dividas_onus as any[]) || [],
-        despesas_medicas: (formulario.despesas_medicas as any[]) || [],
-        despesas_educacao: (formulario.despesas_educacao as any[]) || [],
-        previdencia_privada: formulario.previdencia_privada || {},
+        dependentes: (formulario.dependentes as Dependente[]) || [],
+        rendimentos_emprego: (formulario.rendimentos_emprego as RendimentoEmprego[]) || [],
+        rendimentos_autonomo: (formulario.rendimentos_autonomo as Record<string, unknown>) || {},
+        rendimentos_aluguel: (formulario.rendimentos_aluguel as RendimentoAluguel[]) || [],
+        outros_rendimentos: (formulario.outros_rendimentos as Record<string, unknown>) || {},
+        bens_direitos: (formulario.bens_direitos as BemDireito[]) || [],
+        dividas_onus: (formulario.dividas_onus as DividaOnus[]) || [],
+        despesas_medicas: (formulario.despesas_medicas as DespesaMedica[]) || [],
+        despesas_educacao: (formulario.despesas_educacao as DespesaEducacao[]) || [],
+        previdencia_privada: (formulario.previdencia_privada as Record<string, unknown>) || {},
         informacoes_adicionais: formulario.informacoes_adicionais || '',
       });
     }
@@ -120,6 +131,19 @@ export function useFormularioIR() {
     if (!formulario?.id) return;
     setSaving(true);
     try {
+      // Validate partial data before saving
+      const validation = validatePartial(data as Record<string, unknown>);
+      if (!validation.success) {
+        const fieldErrors: Record<string, string[]> = {};
+        validation.error.errors.forEach((err) => {
+          const path = err.path.join('.');
+          if (!fieldErrors[path]) fieldErrors[path] = [];
+          fieldErrors[path].push(err.message);
+        });
+        setValidationErrors((prev) => ({ ...prev, ...fieldErrors }));
+        // Still save draft even with validation warnings
+      }
+
       const { error } = await supabase
         .from('formulario_ir')
         .update({ ...data, ultima_atualizacao: new Date().toISOString() })
@@ -133,9 +157,15 @@ export function useFormularioIR() {
     }
   }, [formulario?.id]);
 
-  const updateField = useCallback((field: keyof FormularioData, value: any) => {
+  const updateField = useCallback(<K extends keyof FormularioData>(field: K, value: FormularioData[K]) => {
     setFormData((prev) => {
       const updated = { ...prev, [field]: value };
+      // Clear validation errors for this field
+      setValidationErrors((prevErrors) => {
+        const next = { ...prevErrors };
+        delete next[field];
+        return next;
+      });
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => saveToDb({ [field]: value }), 1500);
       return updated;
@@ -143,7 +173,22 @@ export function useFormularioIR() {
   }, [saveToDb]);
 
   const finalizar = useCallback(async () => {
-    if (!formulario?.id || !clienteId) return;
+    if (!formulario?.id || !clienteId) return false;
+
+    // Full validation before finalizing
+    const validation = validateComplete(formData as Record<string, unknown>);
+    if (!validation.success) {
+      const fieldErrors: Record<string, string[]> = {};
+      validation.error.errors.forEach((err) => {
+        const path = err.path.join('.');
+        if (!fieldErrors[path]) fieldErrors[path] = [];
+        fieldErrors[path].push(err.message);
+      });
+      setValidationErrors(fieldErrors);
+      toast.error('Corrija os erros antes de finalizar');
+      return false;
+    }
+
     try {
       await supabase
         .from('formulario_ir')
@@ -157,7 +202,7 @@ export function useFormularioIR() {
       // Create notification for the accountant
       if (declaracao) {
         try {
-          await (supabase as any).from('notificacoes').insert({
+          await supabase.from('notificacoes').insert({
             escritorio_id: declaracao.escritorio_id,
             titulo: 'Formulário IR concluído',
             mensagem: 'O cliente finalizou o preenchimento do formulário IRPF.',
@@ -166,6 +211,7 @@ export function useFormularioIR() {
         } catch { /* notification is best-effort */ }
       }
 
+      setValidationErrors({});
       queryClient.invalidateQueries({ queryKey: ['formulario-ir'] });
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
       return true;
@@ -173,9 +219,17 @@ export function useFormularioIR() {
       toast.error('Erro ao finalizar formulário');
       return false;
     }
-  }, [formulario?.id, clienteId, declaracao, queryClient]);
+  }, [formulario?.id, clienteId, declaracao, queryClient, formData]);
 
   return {
-    formData, updateField, formulario, declaracao, isLoading, saving, lastSaved, finalizar,
+    formData,
+    updateField,
+    formulario,
+    declaracao,
+    isLoading,
+    saving,
+    lastSaved,
+    finalizar,
+    validationErrors,
   };
 }
