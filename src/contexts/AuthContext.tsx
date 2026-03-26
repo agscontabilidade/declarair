@@ -44,57 +44,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function loadProfile(currentUser: User) {
-    // Check if is contador
-    const { data: usuario } = await supabase
-      .from('usuarios')
-      .select('escritorio_id, papel, nome')
-      .eq('id', currentUser.id)
-      .maybeSingle();
+    try {
+      // Check if is contador
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('escritorio_id, papel, nome')
+        .eq('id', currentUser.id)
+        .maybeSingle();
 
-    if (usuario) {
-      // Fetch onboarding status from escritorio
-      let onboardingCompleto: boolean | null = null;
-      if (usuario.escritorio_id) {
-        const { data: esc } = await supabase
-          .from('escritorios')
-          .select('onboarding_completo')
-          .eq('id', usuario.escritorio_id)
-          .maybeSingle();
-        onboardingCompleto = esc?.onboarding_completo ?? false;
+      if (usuario) {
+        let onboardingCompleto: boolean | null = null;
+        if (usuario.escritorio_id) {
+          const { data: esc } = await supabase
+            .from('escritorios')
+            .select('onboarding_completo')
+            .eq('id', usuario.escritorio_id)
+            .maybeSingle();
+          onboardingCompleto = esc?.onboarding_completo ?? false;
+        }
+
+        setUserType('contador');
+        setProfile({
+          escritorioId: usuario.escritorio_id,
+          papel: usuario.papel,
+          nome: usuario.nome,
+          clienteId: null,
+          onboardingCompleto,
+        });
+        return;
       }
 
-      setUserType('contador');
-      setProfile({
-        escritorioId: usuario.escritorio_id,
-        papel: usuario.papel,
-        nome: usuario.nome,
-        clienteId: null,
-        onboardingCompleto,
-      });
-      return;
+      // Check if is cliente
+      const { data: cliente } = await supabase
+        .from('clientes')
+        .select('id, nome')
+        .eq('auth_user_id', currentUser.id)
+        .maybeSingle();
+
+      if (cliente) {
+        setUserType('cliente');
+        setProfile({
+          escritorioId: null,
+          papel: null,
+          nome: cliente.nome,
+          clienteId: cliente.id,
+          onboardingCompleto: null,
+        });
+        return;
+      }
+
+      setUserType(null);
+      setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null });
+    } catch (error) {
+      console.error('[AuthContext] Load profile error:', error);
+      setUserType(null);
+      setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null });
     }
-
-    // Check if is cliente
-    const { data: cliente } = await supabase
-      .from('clientes')
-      .select('id, nome')
-      .eq('auth_user_id', currentUser.id)
-      .maybeSingle();
-
-    if (cliente) {
-      setUserType('cliente');
-      setProfile({
-        escritorioId: null,
-        papel: null,
-        nome: cliente.nome,
-        clienteId: cliente.id,
-        onboardingCompleto: null,
-      });
-      return;
-    }
-
-    setUserType(null);
-    setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null });
   }
 
   useEffect(() => {
