@@ -135,9 +135,16 @@ export function TestarMensagemModal({ open, onOpenChange, template, onEnviar }: 
                 <Copy className="h-4 w-4 mr-2" /> Copiar
               </Button>
               {template?.canal === 'whatsapp' && cliente.telefone && (
-                <Button onClick={handleWhatsApp}>
-                  <ExternalLink className="h-4 w-4 mr-2" /> Abrir WhatsApp
-                </Button>
+                isWhatsAppConnected ? (
+                  <Button onClick={handleWhatsApp} disabled={sendWhatsApp.isPending}>
+                    <Send className="h-4 w-4 mr-2" />
+                    {sendWhatsApp.isPending ? 'Enviando...' : 'Enviar WhatsApp'}
+                  </Button>
+                ) : (
+                  <Button onClick={handleWhatsApp}>
+                    <ExternalLink className="h-4 w-4 mr-2" /> Abrir WhatsApp
+                  </Button>
+                )
               )}
             </>
           )}
