@@ -69,7 +69,7 @@ export function StepRendimentos({ data, onChange }: Props) {
       <div className="space-y-3">
         <h3 className="font-medium text-sm">Rendimentos Autônomo (Carnê-Leão)</h3>
         <div className="p-3 rounded-lg border bg-card">
-          <div><Label>Rendimento Anual (R$)</Label><Input value={autonomo.valor_anual || ''} onChange={(e) => onChange('rendimentos_autonomo', { ...autonomo, valor_anual: e.target.value })} placeholder="0,00" /></div>
+          <div><Label>Rendimento Anual (R$)</Label><Input value={String(autonomo.valor_anual || '')} onChange={(e) => onChange('rendimentos_autonomo', { ...autonomo, valor_anual: e.target.value })} placeholder="0,00" /></div>
         </div>
       </div>
 
