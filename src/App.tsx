@@ -94,7 +94,7 @@ const App = () => (
 
               {/* Contador routes - always accessible */}
               <Route path="/configuracoes" element={<ProtectedRoute allowedType="contador"><Configuracoes /></ProtectedRoute>} />
-              <Route path="/meus-planos" element={<ProtectedRoute allowedType="contador"><Planos /></ProtectedRoute>} />
+              <Route path="/meus-planos" element={<ProtectedRoute allowedType="contador"><Upgrade /></ProtectedRoute>} />
               <Route path="/checkout" element={<ProtectedRoute allowedType="contador"><Checkout /></ProtectedRoute>} />
               <Route path="/upgrade" element={<ProtectedRoute allowedType="contador"><Upgrade /></ProtectedRoute>} />
               <Route path="/perfil" element={<ProtectedRoute allowedType="contador"><Perfil /></ProtectedRoute>} />

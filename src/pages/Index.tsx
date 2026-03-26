@@ -21,6 +21,8 @@ import HeroMockup from '@/components/landing/HeroMockup';
 import GlassCard from '@/components/landing/GlassCard';
 import FeatureShowcase from '@/components/landing/FeatureShowcase';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { PlanosCardsPublic } from '@/components/planos/PlanosCardsPublic';
+import { TabelaAvulso } from '@/components/planos/TabelaAvulso';
 
 /* ── Data ── */
 const features = [
@@ -33,12 +35,6 @@ const features = [
 ];
 
 
-const plans = [
-  { name: 'Gratuito', price: 'R$ 0', period: '/mês', declaracoes: '10', usuarios: '1', features: ['Dashboard Kanban', 'Portal do Cliente', 'Checklist Dinâmico'], cta: 'Começar Grátis', popular: false },
-  { name: 'Starter', price: 'R$ 97', period: '/mês', declaracoes: '50', usuarios: '2', features: ['Tudo do Gratuito', 'Chat Integrado', 'Cobranças via Pix/Boleto', 'Templates de Email'], cta: 'Assinar Starter', popular: false },
-  { name: 'Profissional', price: 'R$ 197', period: '/mês', declaracoes: '200', usuarios: '5', features: ['Tudo do Starter', 'Whitelabel Completo', 'Malha Fina', 'Relatório PDF', 'Drive do Contador'], cta: 'Assinar Profissional', popular: true },
-  { name: 'Enterprise', price: 'R$ 397', period: '/mês', declaracoes: 'Ilimitadas', usuarios: 'Ilimitados', features: ['Tudo do Profissional', 'API Personalizada', 'Suporte Prioritário', 'Multi-escritório'], cta: 'Falar com Vendas', popular: false },
-];
 
 const faqs = [
   { q: 'O DeclaraIR substitui meu sistema contábil?', a: 'Não. O DeclaraIR é focado exclusivamente na gestão de declarações de IRPF. Ele complementa seu sistema contábil, cuidando do fluxo de documentos, comunicação com clientes e acompanhamento de cada declaração.' },
@@ -556,49 +552,18 @@ export default function Index() {
 
       {/* ── PRICING ── */}
       <Section id="pricing" className="py-20 lg:py-28 bg-gradient-to-b from-secondary/30 to-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+          <div className="text-center">
             <Badge variant="secondary" className="mb-4 text-xs">Planos</Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">Planos para cada tamanho de escritório</h2>
-            <p className="mt-4 text-muted-foreground">Comece grátis. Escale quando precisar.</p>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
+              Escale seu IR sem aumentar equipe
+            </h2>
+            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
+              Comece grátis e pague apenas pelo que usar. Sem risco, sem contrato, sem surpresas.
+            </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {plans.map((p) => (
-              <GlassCard
-                key={p.name}
-                strong={p.popular}
-                className={`relative p-6 pt-8 hover:shadow-xl transition-shadow ${
-                  p.popular ? 'ring-2 ring-accent/30 shadow-lg' : ''
-                }`}
-              >
-                {p.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-accent text-accent-foreground shadow-lg">Mais popular</Badge>
-                  </div>
-                )}
-                <h3 className="font-display font-bold text-foreground text-lg">{p.name}</h3>
-                <div className="mt-3 flex items-baseline gap-1">
-                  <span className="font-display text-3xl font-extrabold text-foreground">{p.price}</span>
-                  <span className="text-sm text-muted-foreground">{p.period}</span>
-                </div>
-                <div className="mt-4 space-y-1 text-sm text-muted-foreground">
-                  <p>{p.declaracoes} declarações</p>
-                  <p>{p.usuarios} usuário(s)</p>
-                </div>
-                <ul className="mt-5 space-y-2">
-                  {p.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                      <span className="text-foreground">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link to="/cadastro" className="block mt-6">
-                  <Button className="w-full" variant={p.popular ? 'default' : 'outline'}>{p.cta}</Button>
-                </Link>
-              </GlassCard>
-            ))}
-          </div>
+          <PlanosCardsPublic />
+          <TabelaAvulso />
         </div>
       </Section>
 
