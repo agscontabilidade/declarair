@@ -3,6 +3,28 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+interface CobrancaComCliente {
+  id: string;
+  cliente_id: string;
+  declaracao_id: string | null;
+  escritorio_id: string;
+  descricao: string;
+  valor: number;
+  status: string;
+  data_vencimento: string;
+  data_pagamento: string | null;
+  created_at: string;
+  boleto_codigo_barras: string | null;
+  boleto_linha_digitavel: string | null;
+  boleto_pdf_url: string | null;
+  pix_qrcode: string | null;
+  pix_qrcode_url: string | null;
+  cobranca_externa_id: string | null;
+  cobranca_externa_status: string | null;
+  notificacao_vencimento_enviada: boolean;
+  clientes: { nome: string; cpf: string } | null;
+}
+
 export function useCobrancas(statusFilter?: string, periodoInicio?: string, periodoFim?: string) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
@@ -44,21 +66,21 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      return (data || []) as CobrancaComCliente[];
     },
     enabled: !!escritorioId,
   });
 
   const kpis = {
     totalReceber: cobrancas
-      .filter((c: any) => c.status === 'pendente' || c.status === 'atrasado')
-      .reduce((sum: number, c: any) => sum + Number(c.valor), 0),
+      .filter((c) => c.status === 'pendente' || c.status === 'atrasado')
+      .reduce((sum, c) => sum + Number(c.valor), 0),
     recebidoAno: cobrancas
-      .filter((c: any) => c.status === 'pago' && c.data_pagamento && new Date(c.data_pagamento).getFullYear() === new Date().getFullYear())
-      .reduce((sum: number, c: any) => sum + Number(c.valor), 0),
+      .filter((c) => c.status === 'pago' && c.data_pagamento && new Date(c.data_pagamento).getFullYear() === new Date().getFullYear())
+      .reduce((sum, c) => sum + Number(c.valor), 0),
     atrasado: cobrancas
-      .filter((c: any) => c.status === 'atrasado')
-      .reduce((sum: number, c: any) => sum + Number(c.valor), 0),
+      .filter((c) => c.status === 'atrasado')
+      .reduce((sum, c) => sum + Number(c.valor), 0),
   };
 
   const marcarPago = useMutation({
@@ -72,7 +94,7 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
       // Create notification
       if (escritorioId) {
         try {
-          await (supabase as any).from('notificacoes').insert({
+          await supabase.from('notificacoes').insert({
             escritorio_id: escritorioId,
             titulo: 'Cobrança paga',
             mensagem: 'Uma cobrança foi marcada como paga.',

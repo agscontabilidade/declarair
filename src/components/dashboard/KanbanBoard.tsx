@@ -45,7 +45,9 @@ async function triggerStatusAutomation(
       .eq('id', declaracaoId)
       .single();
 
-    if (!decl?.clientes?.telefone) return;
+    if (!decl?.clientes) return;
+    const clienteData = decl.clientes as unknown as { nome: string; telefone: string; cpf: string };
+    if (!clienteData.telefone) return;
 
     // Get template
     const { data: tmpl } = await supabase
@@ -73,7 +75,7 @@ async function triggerStatusAutomation(
     };
 
     const mensagem = tmpl.corpo
-      .replace(/{nome_cliente}/g, (decl.clientes as any).nome || '')
+      .replace(/{nome_cliente}/g, clienteData.nome || '')
       .replace(/{nome_escritorio}/g, esc?.nome || '')
       .replace(/{ano_base}/g, String(decl.ano_base))
       .replace(/{status_declaracao}/g, statusLabels[newStatus] || newStatus)
@@ -82,7 +84,7 @@ async function triggerStatusAutomation(
       .replace(/{numero_recibo}/g, decl.numero_recibo || '')
       .replace(/{link_portal}/g, 'https://declarair.lovable.app/cliente/login');
 
-    const phone = (decl.clientes as any).telefone.replace(/\D/g, '');
+    const phone = clienteData.telefone.replace(/\D/g, '');
     const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
 
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
@@ -121,9 +123,11 @@ async function createInAppNotification(escritorioId: string, declaracaoId: strin
       transmitida: 'Transmitida',
     };
 
+    const clienteNome = decl?.clientes ? (decl.clientes as unknown as { nome: string }).nome : 'Cliente';
+
     await supabase.from('notificacoes').insert({
       escritorio_id: escritorioId,
-      titulo: `Declaração movida: ${(decl.clientes as any)?.nome || 'Cliente'}`,
+      titulo: `Declaração movida: ${clienteNome}`,
       mensagem: `A declaração ${decl.ano_base} foi movida para "${statusLabels[newStatus] || newStatus}".`,
       link_destino: `/declaracoes/${declaracaoId}`,
     });

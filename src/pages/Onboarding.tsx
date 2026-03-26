@@ -149,7 +149,7 @@ export default function Onboarding() {
 
       // Update avatar on usuarios
       if (avatarUrl && user) {
-        await supabase.from('usuarios').update({ avatar_url: avatarUrl } as any).eq('id', user.id);
+        await supabase.from('usuarios').update({ avatar_url: avatarUrl }).eq('id', user.id);
       }
 
       // Update escritorio
@@ -171,13 +171,14 @@ export default function Onboarding() {
         cor_primaria: corPrimaria,
         logo_url: logoUrl || undefined,
         onboarding_completo: true,
-      } as any).eq('id', profile.escritorioId);
+      }).eq('id', profile.escritorioId);
 
       toast({ title: 'Configuração concluída!', description: 'Bem-vindo ao DeclaraIR!' });
       // Force full reload so AuthContext picks up onboarding_completo = true
       window.location.href = '/dashboard';
-    } catch (err: any) {
-      toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      toast({ title: 'Erro ao salvar', description: message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }

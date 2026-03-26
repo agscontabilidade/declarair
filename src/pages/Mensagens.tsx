@@ -17,8 +17,8 @@ import { Link } from 'react-router-dom';
 
 export default function Mensagens() {
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editData, setEditData] = useState<any>(null);
-  const [testTemplate, setTestTemplate] = useState<any>(null);
+  const [editData, setEditData] = useState<{ id: string; nome?: string; canal?: string; assunto?: string; corpo?: string } | null>(null);
+  const [testTemplate, setTestTemplate] = useState<{ id: string; canal: string; corpo: string; nome?: string } | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: whatsappStatus } = useWhatsAppStatus();
@@ -29,11 +29,11 @@ export default function Mensagens() {
     criarTemplate, editarTemplate, toggleTemplate, deletarTemplate, enviarMensagem,
   } = useMensagens();
 
-  const handleSave = (data: any) => {
+  const handleSave = (data: { id?: string; nome: string; canal: string; assunto?: string; corpo: string }) => {
     if (data.id) {
-      editarTemplate.mutate(data, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
+      editarTemplate.mutate(data as { id: string; nome?: string; canal?: string; assunto?: string; corpo?: string }, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
     } else {
-      criarTemplate.mutate(data, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
+      criarTemplate.mutate(data as { nome: string; canal: string; assunto?: string; corpo: string }, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
     }
   };
 
@@ -94,11 +94,11 @@ export default function Mensagens() {
               </div>
             ) : (
               <div className="space-y-2">
-                {mensagens.map((m: any) => (
+                {mensagens.map((m) => (
                   <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <Badge variant="outline" className="shrink-0">{m.canal === 'whatsapp' ? 'WhatsApp' : 'Email'}</Badge>
-                      <span className="text-sm font-medium shrink-0">{(m as any).clientes?.nome || '—'}</span>
+                      <span className="text-sm font-medium shrink-0">{'—'}</span>
                       <span className="text-sm text-muted-foreground truncate">{m.conteudo_final.slice(0, 100)}...</span>
                     </div>
                     <span className="text-xs text-muted-foreground shrink-0 ml-2">
@@ -125,11 +125,11 @@ export default function Mensagens() {
           open={!!testTemplate}
           onOpenChange={(v) => { if (!v) setTestTemplate(null); }}
           template={testTemplate}
-          onEnviar={(clienteId, conteudo) => {
+          onEnviar={(clienteId: string, conteudo: string) => {
             enviarMensagem.mutate({
               cliente_id: clienteId,
-              template_id: testTemplate.id,
-              canal: testTemplate.canal,
+              template_id: testTemplate!.id,
+              canal: testTemplate!.canal,
               conteudo_final: conteudo,
             });
           }}

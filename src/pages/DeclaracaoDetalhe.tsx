@@ -86,7 +86,7 @@ export default function DeclaracaoDetalhe() {
     try {
       const { error } = await supabase
         .from('declaracoes')
-        .update({ forma_tributacao: forma } as any)
+        .update({ forma_tributacao: forma })
         .eq('id', id);
       if (error) throw error;
       toast.success(`Forma de tributação definida: ${forma === 'completa' ? 'Completa' : 'Simplificada'}`);

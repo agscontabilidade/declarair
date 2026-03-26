@@ -76,7 +76,7 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
       cfg[e.key] = { ativo: false, templateId: '' };
     });
 
-    (data || []).forEach((d: any) => {
+    (data || []).forEach((d) => {
       if (d.chave === 'whatsapp_auto_lembrete_ativo') {
         setLembreteAtivo(d.valor === 'true');
       } else if (d.chave === 'whatsapp_auto_lembrete_dias') {
@@ -110,7 +110,7 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
     for (const entry of entries) {
       await supabase
         .from('configuracoes_escritorio')
-        .upsert(entry, { onConflict: 'escritorio_id,chave' as any });
+        .upsert(entry, { onConflict: 'escritorio_id,chave' } as Record<string, unknown>);
     }
 
     toast({ title: 'Automações salvas com sucesso!' });
@@ -191,7 +191,7 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
                     <SelectValue placeholder="Template" />
                   </SelectTrigger>
                   <SelectContent>
-                    {templates.map((t: any) => (
+                    {templates.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                     ))}
                   </SelectContent>

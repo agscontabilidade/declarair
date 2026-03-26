@@ -3,7 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, ArrowRight, Upload, MessageCircle, Calculator, Edit3 } from 'lucide-react';
-import { formatDate } from '@/lib/formatters';
+import type { Tables } from '@/integrations/supabase/types';
+
+type Atividade = Tables<'declaracao_atividades'>;
 
 const TIPO_ICONS: Record<string, React.ElementType> = {
   status_change: ArrowRight,
@@ -26,13 +28,13 @@ export function SecaoTimeline({ declaracaoId }: { declaracaoId: string }) {
     queryKey: ['declaracao-atividades', declaracaoId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('declaracao_atividades' as any)
+        .from('declaracao_atividades')
         .select('*')
         .eq('declaracao_id', declaracaoId)
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;
-      return data || [];
+      return (data || []) as Atividade[];
     },
     enabled: !!declaracaoId,
   });
@@ -54,7 +56,7 @@ export function SecaoTimeline({ declaracaoId }: { declaracaoId: string }) {
           <div className="relative">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
             <div className="space-y-4">
-              {atividades.map((a: any) => {
+              {atividades.map((a) => {
                 const Icon = TIPO_ICONS[a.tipo] || Clock;
                 const color = TIPO_COLORS[a.tipo] || 'bg-muted text-muted-foreground';
                 return (

@@ -9,6 +9,9 @@ import { Palette, Upload, Eye, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import type { Tables } from '@/integrations/supabase/types';
+
+type Escritorio = Tables<'escritorios'>;
 
 interface Props {
   escritorioId: string;
@@ -20,14 +23,14 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
 
   const { data: escritorio, isLoading } = useQuery({
     queryKey: ['escritorio-brand', escritorioId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Escritorio | null> => {
       const { data, error } = await supabase
         .from('escritorios')
         .select('*')
         .eq('id', escritorioId)
         .single();
       if (error) throw error;
-      return data as any;
+      return data;
     },
     enabled: !!escritorioId,
   });
@@ -67,7 +70,7 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
 
       await supabase
         .from('escritorios')
-        .update({ logo_url: urlData.publicUrl } as any)
+        .update({ logo_url: urlData.publicUrl })
         .eq('id', escritorioId);
 
       toast.success('Logo atualizado!');
@@ -91,7 +94,7 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
           nome_portal: nomePortal || null,
           texto_boas_vindas: textoBoasVindas || null,
           whitelabel_ativo: whitelabelAtivo,
-        } as any)
+        })
         .eq('id', escritorioId);
       if (error) throw error;
       toast.success('Configurações de marca salvas!');
