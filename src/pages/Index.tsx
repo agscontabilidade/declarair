@@ -21,6 +21,8 @@ import HeroMockup from '@/components/landing/HeroMockup';
 import GlassCard from '@/components/landing/GlassCard';
 import FeatureShowcase from '@/components/landing/FeatureShowcase';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { PlanosCardsPublic } from '@/components/planos/PlanosCardsPublic';
+import { TabelaAvulso } from '@/components/planos/TabelaAvulso';
 
 /* ── Data ── */
 const features = [
