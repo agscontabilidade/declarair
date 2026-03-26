@@ -36,6 +36,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const collapsed = state === 'collapsed';
   const atrasadas = useCobrancasAtrasadas();
+  const { percentual, level, usadas, limite } = useUsageStatus();
 
   const initials = profile.nome?.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?';
   const papel = profile.papel === 'dono' ? 'Dono' : 'Colaborador';
