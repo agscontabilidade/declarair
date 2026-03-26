@@ -252,7 +252,7 @@ async function getPayments(escritorio: any, admin: any) {
   return { pagamentos: pagamentos || [] };
 }
 
-const WEBHOOK_URL = "https://bykqurgeptipguqvxwiq.supabase.co/functions/v1/billing-webhook";
+const WEBHOOK_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/billing-webhook`;
 
 const WEBHOOK_EVENTS = [
   "PAYMENT_CREATED",
