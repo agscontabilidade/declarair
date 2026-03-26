@@ -45,7 +45,9 @@ async function triggerStatusAutomation(
       .eq('id', declaracaoId)
       .single();
 
-    if (!decl?.clientes?.telefone) return;
+    if (!decl?.clientes) return;
+    const clienteData = decl.clientes as unknown as { nome: string; telefone: string; cpf: string };
+    if (!clienteData.telefone) return;
 
     // Get template
     const { data: tmpl } = await supabase
