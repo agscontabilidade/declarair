@@ -15,7 +15,7 @@ import { useChat } from '@/hooks/useChat';
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
-  const { declaracao, checklist, formulario, statusStep, pendentes, isLoading } = useClientePortal();
+  const { declaracao, checklist, formulario, statusStep, pendentes, isLoading, isError, error, refetch } = useClientePortal();
   const navigate = useNavigate();
 
   const { unreadCount } = useChat(
