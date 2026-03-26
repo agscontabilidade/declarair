@@ -98,6 +98,7 @@ export function useDashboardData(anoBase: number) {
           contador: row.usuarios ? { nome: row.usuarios.nome } : null,
           pendingDocs: pendingMap[row.id] || 0,
           totalDocs: totalMap[row.id] || 0,
+          version: row.version,
         };
       });
     },
