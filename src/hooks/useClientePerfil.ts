@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { PORTAL_BASE_URL } from '@/lib/constants';
 
 export function useClientePerfil(clienteId: string | undefined) {
   const { profile } = useAuth();
