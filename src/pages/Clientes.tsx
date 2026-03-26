@@ -14,6 +14,22 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 export default function Clientes() {
   const { clientes, isLoading, isError, error, refetch, search, setSearch, page, setPage, totalPages, contadores, createCliente } = useClientes();
   const [modalOpen, setModalOpen] = useState(false);
+  const { podeVerClientes, podeCriarClientes } = usePermissoes();
+
+  if (!podeVerClientes) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <h1 className="font-display text-2xl font-bold text-foreground">Clientes</h1>
+          <Alert variant="destructive" className="max-w-md">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Acesso negado</AlertTitle>
+            <AlertDescription>Você não tem permissão para visualizar clientes.</AlertDescription>
+          </Alert>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (isError) {
     return (
