@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
+import GerarLinkConvite from '@/components/clientes/GerarLinkConvite';
 import { useClientes } from '@/hooks/useClientes';
 import { ClientesTable } from '@/components/clientes/ClientesTable';
 import { ClienteModal } from '@/components/clientes/ClienteModal';
