@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Check, X, Crown, Zap, Building2, Rocket, MessageCircle } from 'lucide-react';
 
-const WHATSAPP_URL = 'https://wa.me/5500000000000?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20DeclaraIR';
+const WHATSAPP_URL = 'https://wa.me/5511998755782?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20DeclaraIR';
 
 const PLANOS = [
   {
