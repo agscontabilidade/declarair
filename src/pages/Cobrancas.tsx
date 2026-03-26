@@ -138,9 +138,8 @@ export default function Cobrancas() {
           </CardContent>
         </Card>
           </>
-        )}
+      </div>
 
-      <CobrancaModal
         open={modalOpen}
         onOpenChange={(v) => { setModalOpen(v); if (!v) setEditData(null); }}
         onSave={handleSave}
