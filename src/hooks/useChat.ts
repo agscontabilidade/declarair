@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
@@ -33,8 +33,17 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
         schema: 'public',
         table: 'mensagens_chat',
         filter: `declaracao_id=eq.${declaracaoId}`,
-      }, () => {
-        queryClient.invalidateQueries({ queryKey: ['chat-messages', declaracaoId] });
+      }, (payload) => {
+        // Optimistically add the new message to the cache
+        queryClient.setQueryData(
+          ['chat-messages', declaracaoId],
+          (old: MensagemChat[] = []) => {
+            const newMsg = payload.new as MensagemChat;
+            // Avoid duplicates
+            if (old.some(m => m.id === newMsg.id)) return old;
+            return [...old, newMsg];
+          }
+        );
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -55,18 +64,27 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
         });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chat-messages', declaracaoId] });
-    },
   });
 
-  // Mark messages as read — these fields don't exist in the schema yet,
-  // so markRead is a no-op placeholder for now
+  // Mark messages from the OTHER side as read
   const markRead = useCallback(async () => {
-    // No-op: lida_por_cliente / lida_pelo_contador columns not in current schema
-  }, []);
+    if (!declaracaoId) return;
+    const otherType = senderType === 'cliente' ? 'contador' : 'cliente';
+    try {
+      await supabase.rpc('marcar_mensagens_lidas', {
+        p_declaracao_id: declaracaoId,
+        p_remetente_tipo: otherType,
+      });
+    } catch {
+      // Silently fail — non-critical
+    }
+  }, [declaracaoId, senderType]);
 
-  const unreadCount = 0;
+  // Count unread messages from the other side
+  const unreadCount = useMemo(() => {
+    const otherType = senderType === 'cliente' ? 'contador' : 'cliente';
+    return messages.filter(m => m.remetente_tipo === otherType && !(m as MensagemChat & { lida?: boolean }).lida).length;
+  }, [messages, senderType]);
 
   return { messages, isLoading, sendMessage, markRead, unreadCount };
 }
