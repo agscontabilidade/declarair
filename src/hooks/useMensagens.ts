@@ -44,6 +44,7 @@ const MOCK_DATA: Record<string, string> = {
   '{valor_cobranca}': 'R$ 350,00',
   '{data_vencimento}': '30/04/2025',
   '{status_cobranca}': 'Pendente',
+};
 
 export function replaceTags(text: string, data: Record<string, string> = MOCK_DATA): string {
   let result = text;
