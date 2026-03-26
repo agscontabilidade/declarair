@@ -181,14 +181,26 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
     const prev = [...displayItems];
     setOptimisticItems(prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
 
-    const { error } = await supabase
+    // Optimistic locking: only update if version matches
+    const { data, error } = await supabase
       .from('declaracoes')
       .update({ status: newStatus, ultima_atualizacao_status: new Date().toISOString() })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('version', item.version)
+      .select()
+      .single();
 
-    if (error) {
+    if (error || !data) {
       setOptimisticItems(prev);
-      toast({ title: 'Erro ao mover', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Conflito detectado',
+        description: 'A declaração foi modificada por outro usuário. Recarregando...',
+        variant: 'destructive',
+      });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes', profile.escritorioId, anoBase] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-kpis', profile.escritorioId, anoBase] });
+      }, 1500);
     } else {
       setOptimisticItems(null);
       queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes', profile.escritorioId, anoBase] });
