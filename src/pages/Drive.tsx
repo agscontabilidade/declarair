@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCPF } from '@/lib/formatters';
+import { toast } from 'sonner';
 
 interface TreeNode {
   ano: number;
@@ -77,6 +78,16 @@ export default function Drive() {
     if (ext === 'pdf') return FileText;
     return File;
   };
+
+  const handleDownload = useCallback(async (arquivoUrl: string) => {
+    try {
+      const { data, error } = await supabase.storage.from('documentos-clientes').createSignedUrl(arquivoUrl, 3600);
+      if (error) throw error;
+      window.open(data.signedUrl, '_blank');
+    } catch {
+      toast.error('Erro ao baixar arquivo');
+    }
+  }, []);
 
   return (
     <DashboardLayout>
@@ -152,11 +163,9 @@ export default function Drive() {
                                     <span className="truncate text-foreground">{doc.arquivo_nome || doc.nome_documento}</span>
                                   </div>
                                   {doc.arquivo_url && (
-                                    <a href={doc.arquivo_url} target="_blank" rel="noopener noreferrer">
-                                      <Button variant="ghost" size="sm" className="h-7">
-                                        <Download className="h-3 w-3" />
-                                      </Button>
-                                    </a>
+                                    <Button variant="ghost" size="sm" className="h-7" onClick={() => handleDownload(doc.arquivo_url)}>
+                                      <Download className="h-3 w-3" />
+                                    </Button>
                                   )}
                                 </div>
                               );
