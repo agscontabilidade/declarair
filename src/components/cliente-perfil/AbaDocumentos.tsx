@@ -8,9 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Upload, Download, Check, Clock, Minus, Plus, FileText } from 'lucide-react';
+import {
+  Upload, Download, Check, Clock, Minus, Plus, FileText,
+  User, Briefcase, Landmark, Heart, GraduationCap, PiggyBank,
+  Home, FileWarning
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CATEGORIAS_RF, CATEGORIA_LABELS } from '@/lib/checklistPorPerfil';
+import type { CategoriaRF } from '@/lib/checklistPorPerfil';
 
 interface ChecklistItem {
   id: string;
@@ -33,15 +39,41 @@ interface Props {
   onCreateDeclaracao?: () => void;
 }
 
+const CATEGORIA_ICONS: Record<CategoriaRF, React.ElementType> = {
+  documentos_pessoais: User,
+  rendimentos_tributaveis: Briefcase,
+  rendimentos_isentos: Landmark,
+  deducoes_saude: Heart,
+  deducoes_educacao: GraduationCap,
+  deducoes_previdencia: PiggyBank,
+  bens_direitos: Home,
+  dividas_onus: FileWarning,
+};
+
+const LEGACY_MAP: Record<string, CategoriaRF> = {
+  rendimentos: 'rendimentos_tributaveis',
+  deducoes: 'deducoes_saude',
+  bens_direitos: 'bens_direitos',
+  outros: 'documentos_pessoais',
+  Rendimentos: 'rendimentos_tributaveis',
+  'Deduções': 'deducoes_saude',
+  Bens: 'bens_direitos',
+  Outros: 'documentos_pessoais',
+};
+
 const statusIcons: Record<string, React.ReactNode> = {
   recebido: <Check className="h-4 w-4 text-emerald-600" />,
   pendente: <Clock className="h-4 w-4 text-amber-500" />,
   dispensado: <Minus className="h-4 w-4 text-muted-foreground" />,
 };
 
-const categorias = ['Rendimentos', 'Deduções', 'Bens', 'Outros'];
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE = 20 * 1024 * 1024;
+
+function normalizeCategory(cat: string): CategoriaRF {
+  if (CATEGORIAS_RF.includes(cat as CategoriaRF)) return cat as CategoriaRF;
+  return LEGACY_MAP[cat] || 'documentos_pessoais';
+}
 
 export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAddItem, hasDeclaracao, onCreateDeclaracao }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,9 +81,8 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [newDocNome, setNewDocNome] = useState('');
-  const [newDocCategoria, setNewDocCategoria] = useState('Outros');
+  const [newDocCategoria, setNewDocCategoria] = useState<CategoriaRF>('documentos_pessoais');
 
-  // Bulk upload state
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [bulkFiles, setBulkFiles] = useState<{ file: File; docId: string; error?: string }[]>([]);
   const [bulkUploading, setBulkUploading] = useState(false);
@@ -80,10 +111,10 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
   const recebidos = obrigatorios.filter(i => i.status === 'recebido').length;
   const progressPercent = obrigatorios.length > 0 ? (recebidos / obrigatorios.length) * 100 : 0;
 
-  const grouped = categorias.reduce((acc, cat) => {
-    acc[cat] = checklist.filter(i => i.categoria === cat);
+  const grouped = CATEGORIAS_RF.reduce((acc, cat) => {
+    acc[cat] = checklist.filter(i => normalizeCategory(i.categoria) === cat);
     return acc;
-  }, {} as Record<string, ChecklistItem[]>);
+  }, {} as Record<CategoriaRF, ChecklistItem[]>);
 
   const handleFileSelect = (docId: string) => {
     setUploadingDocId(docId);
@@ -117,7 +148,6 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
     setAddModalOpen(false);
   };
 
-  // Bulk upload handlers
   const handleBulkSelect = () => {
     bulkInputRef.current?.click();
   };
@@ -131,7 +161,6 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
       if (file.size > MAX_SIZE) error = 'Arquivo muito grande (max 20MB)';
       if (!ALLOWED_TYPES.includes(file.type)) error = 'Tipo não permitido';
 
-      // Auto-match: find pending checklist item whose name matches file name
       const fileName = file.name.toLowerCase().replace(/\.[^.]+$/, '');
       let matchedDocId = '';
       for (const item of pendingItems) {
@@ -169,7 +198,6 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
       try {
         onUpload(valid[i].docId, valid[i].file);
         successCount++;
-        // Small delay between uploads
         await new Promise(r => setTimeout(r, 500));
       } catch {
         // Continue with next
@@ -187,14 +215,12 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
       <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleFileChange} />
       <input ref={bulkInputRef} type="file" multiple className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleBulkFilesChange} />
 
-      {/* Bulk upload button */}
       {pendingItems.length > 0 && (
         <Button variant="outline" onClick={handleBulkSelect} className="w-full gap-2">
           <Upload className="h-4 w-4" /> Enviar Vários Documentos
         </Button>
       )}
 
-      {/* Progress */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-2">
@@ -205,14 +231,18 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
         </CardContent>
       </Card>
 
-      {/* Grouped checklist */}
-      {categorias.map(cat => {
+      {/* 8 official RF categories */}
+      {CATEGORIAS_RF.map(cat => {
         const items = grouped[cat];
         if (!items || items.length === 0) return null;
+        const Icon = CATEGORIA_ICONS[cat];
         return (
           <Card key={cat}>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">{cat}</CardTitle>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Icon className="h-4 w-4" />
+                {CATEGORIA_LABELS[cat]}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {items.map(item => (
@@ -239,7 +269,6 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
         );
       })}
 
-      {/* Add doc */}
       <Button variant="outline" onClick={() => setAddModalOpen(true)} className="w-full">
         <Plus className="h-4 w-4 mr-2" /> Adicionar Documento
       </Button>
@@ -255,10 +284,10 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
             </div>
             <div className="space-y-2">
               <Label>Categoria</Label>
-              <Select value={newDocCategoria} onValueChange={setNewDocCategoria}>
+              <Select value={newDocCategoria} onValueChange={(v) => setNewDocCategoria(v as CategoriaRF)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {categorias.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {CATEGORIAS_RF.map(c => <SelectItem key={c} value={c}>{CATEGORIA_LABELS[c]}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
