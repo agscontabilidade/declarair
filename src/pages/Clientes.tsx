@@ -47,10 +47,12 @@ export default function Clientes() {
       <div className="space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="font-display text-2xl font-bold text-foreground">Clientes</h1>
-          <Button className="gap-2" onClick={() => setModalOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Novo Cliente
-          </Button>
+          {podeCriarClientes && (
+            <Button className="gap-2" onClick={() => setModalOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Novo Cliente
+            </Button>
+          )}
         </div>
 
         <div className="relative max-w-sm">
