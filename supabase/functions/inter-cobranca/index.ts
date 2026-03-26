@@ -11,16 +11,57 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
+    // Validate auth
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Token de autenticação ausente" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
     );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = claimsData.claims.sub;
 
     const { cobranca_id, escritorio_id } = await req.json();
 
     if (!cobranca_id || !escritorio_id) {
       return new Response(JSON.stringify({ error: "cobranca_id e escritorio_id são obrigatórios" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Admin client for service operations
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Validate user belongs to this escritorio
+    const { data: usuario } = await supabase
+      .from("usuarios")
+      .select("escritorio_id")
+      .eq("id", userId)
+      .single();
+
+    if (!usuario || usuario.escritorio_id !== escritorio_id) {
+      console.error(`[SECURITY] User ${userId} attempted cobranca for escritorio ${escritorio_id}`);
+      return new Response(JSON.stringify({ error: "Não autorizado para este escritório" }), {
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
