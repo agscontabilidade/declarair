@@ -5,6 +5,9 @@ import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
+
+type Escritorio = Tables<'escritorios'>;
 
 const navItems = [
   { title: 'Início', url: '/cliente/dashboard', icon: Home },
@@ -18,7 +21,7 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
   // Fetch escritorio branding for whitelabel
   const { data: clienteData } = useQuery({
     queryKey: ['cliente-escritorio', profile.clienteId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Escritorio | null> => {
       if (!profile.clienteId) return null;
       const { data: cliente } = await supabase
         .from('clientes')
@@ -37,7 +40,7 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
     staleTime: 1000 * 60 * 10,
   });
 
-  const esc = clienteData as any;
+  const esc = clienteData;
   const whitelabelAtivo = esc?.whitelabel_ativo === true;
   const corPrimaria = esc?.cor_primaria || '#1E3A5F';
   const logoUrl = esc?.logo_url;

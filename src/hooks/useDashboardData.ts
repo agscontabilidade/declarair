@@ -15,6 +15,16 @@ export interface DeclaracaoKanban {
   totalDocs: number;
 }
 
+interface DeclaracaoRow {
+  id: string;
+  status: string;
+  ano_base: number;
+  ultima_atualizacao_status: string;
+  contador_id: string | null;
+  clientes: { nome: string; cpf: string } | null;
+  usuarios: { nome: string } | null;
+}
+
 export function useDashboardData(anoBase: number) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
@@ -74,17 +84,20 @@ export function useDashboardData(anoBase: number) {
         }
       }
 
-      return (data || []).map((d: any) => ({
-        id: d.id,
-        status: d.status,
-        ano_base: d.ano_base,
-        ultima_atualizacao_status: d.ultima_atualizacao_status,
-        contador_id: d.contador_id,
-        clientes: d.clientes,
-        contador: d.usuarios ? { nome: d.usuarios.nome } : null,
-        pendingDocs: pendingMap[d.id] || 0,
-        totalDocs: totalMap[d.id] || 0,
-      }));
+      return (data || []).map((d) => {
+        const row = d as unknown as DeclaracaoRow;
+        return {
+          id: row.id,
+          status: row.status,
+          ano_base: row.ano_base,
+          ultima_atualizacao_status: row.ultima_atualizacao_status,
+          contador_id: row.contador_id,
+          clientes: row.clientes,
+          contador: row.usuarios ? { nome: row.usuarios.nome } : null,
+          pendingDocs: pendingMap[row.id] || 0,
+          totalDocs: totalMap[row.id] || 0,
+        };
+      });
     },
     enabled: !!escritorioId,
   });

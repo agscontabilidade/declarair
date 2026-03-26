@@ -1,19 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
 
-interface ChatMessage {
-  id: string;
-  conteudo: string;
-  remetente_tipo: 'contador' | 'cliente';
-  remetente_id: string;
-  tipo: string;
-  arquivo_url: string | null;
-  arquivo_nome: string | null;
-  created_at: string;
-  lida_por_cliente: boolean;
-  lida_pelo_contador: boolean;
-}
+type MensagemChat = Tables<'mensagens_chat'>;
 
 export function useChat(declaracaoId: string | undefined, escritorioId: string | undefined, clienteId: string | undefined, senderType: 'contador' | 'cliente', senderId: string | undefined) {
   const queryClient = useQueryClient();
@@ -22,13 +12,13 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
     queryKey: ['chat-messages', declaracaoId],
     queryFn: async () => {
       if (!declaracaoId) return [];
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('mensagens_chat')
         .select('*')
         .eq('declaracao_id', declaracaoId)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return (data || []) as ChatMessage[];
+      return (data || []) as MensagemChat[];
     },
     enabled: !!declaracaoId,
   });
@@ -53,7 +43,7 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
   const sendMessage = useMutation({
     mutationFn: async (conteudo: string) => {
       if (!declaracaoId || !escritorioId || !clienteId || !senderId) throw new Error('Dados incompletos');
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('mensagens_chat')
         .insert({
           declaracao_id: declaracaoId,
@@ -70,22 +60,13 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
     },
   });
 
-  // Mark messages as read
+  // Mark messages as read — these fields don't exist in the schema yet,
+  // so markRead is a no-op placeholder for now
   const markRead = useCallback(async () => {
-    if (!declaracaoId || !messages.length) return;
-    const field = senderType === 'contador' ? 'lida_pelo_contador' : 'lida_por_cliente';
-    const unread = messages.filter(m => !(m as any)[field] && m.remetente_tipo !== senderType);
-    if (unread.length === 0) return;
-    await (supabase as any)
-      .from('mensagens_chat')
-      .update({ [field]: true })
-      .in('id', unread.map(m => m.id));
-  }, [declaracaoId, messages, senderType]);
+    // No-op: lida_por_cliente / lida_pelo_contador columns not in current schema
+  }, []);
 
-  const unreadCount = messages.filter(m => {
-    const field = senderType === 'contador' ? 'lida_pelo_contador' : 'lida_por_cliente';
-    return !(m as any)[field] && m.remetente_tipo !== senderType;
-  }).length;
+  const unreadCount = 0;
 
   return { messages, isLoading, sendMessage, markRead, unreadCount };
 }

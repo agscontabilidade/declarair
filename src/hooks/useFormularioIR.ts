@@ -112,16 +112,16 @@ export function useFormularioIR() {
         estado_civil: formulario.estado_civil || '',
         conjuge_nome: formulario.conjuge_nome || '',
         conjuge_cpf: formulario.conjuge_cpf || '',
-        dependentes: (formulario.dependentes as Dependente[]) || [],
-        rendimentos_emprego: (formulario.rendimentos_emprego as RendimentoEmprego[]) || [],
-        rendimentos_autonomo: (formulario.rendimentos_autonomo as Record<string, unknown>) || {},
-        rendimentos_aluguel: (formulario.rendimentos_aluguel as RendimentoAluguel[]) || [],
-        outros_rendimentos: (formulario.outros_rendimentos as Record<string, unknown>) || {},
-        bens_direitos: (formulario.bens_direitos as BemDireito[]) || [],
-        dividas_onus: (formulario.dividas_onus as DividaOnus[]) || [],
-        despesas_medicas: (formulario.despesas_medicas as DespesaMedica[]) || [],
-        despesas_educacao: (formulario.despesas_educacao as DespesaEducacao[]) || [],
-        previdencia_privada: (formulario.previdencia_privada as Record<string, unknown>) || {},
+        dependentes: (formulario.dependentes as unknown as Dependente[]) || [],
+        rendimentos_emprego: (formulario.rendimentos_emprego as unknown as RendimentoEmprego[]) || [],
+        rendimentos_autonomo: (formulario.rendimentos_autonomo as unknown as Record<string, unknown>) || {},
+        rendimentos_aluguel: (formulario.rendimentos_aluguel as unknown as RendimentoAluguel[]) || [],
+        outros_rendimentos: (formulario.outros_rendimentos as unknown as Record<string, unknown>) || {},
+        bens_direitos: (formulario.bens_direitos as unknown as BemDireito[]) || [],
+        dividas_onus: (formulario.dividas_onus as unknown as DividaOnus[]) || [],
+        despesas_medicas: (formulario.despesas_medicas as unknown as DespesaMedica[]) || [],
+        despesas_educacao: (formulario.despesas_educacao as unknown as DespesaEducacao[]) || [],
+        previdencia_privada: (formulario.previdencia_privada as unknown as Record<string, unknown>) || {},
         informacoes_adicionais: formulario.informacoes_adicionais || '',
       });
     }
@@ -144,9 +144,14 @@ export function useFormularioIR() {
         // Still save draft even with validation warnings
       }
 
+      const updatePayload: Record<string, unknown> = {
+        ...data,
+        ultima_atualizacao: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from('formulario_ir')
-        .update({ ...(data as Record<string, unknown>), ultima_atualizacao: new Date().toISOString() } as never)
+        .update(updatePayload)
         .eq('id', formulario.id);
       if (error) throw error;
       setLastSaved(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));

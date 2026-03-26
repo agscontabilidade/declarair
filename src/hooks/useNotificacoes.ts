@@ -2,6 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
+import type { Tables } from '@/integrations/supabase/types';
+
+type Notificacao = Tables<'notificacoes'>;
 
 export function useNotificacoes() {
   const { profile } = useAuth();
@@ -19,7 +22,7 @@ export function useNotificacoes() {
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) throw error;
-      return data || [];
+      return (data || []) as Notificacao[];
     },
     enabled: !!escritorioId,
   });
@@ -40,7 +43,7 @@ export function useNotificacoes() {
     return () => { supabase.removeChannel(channel); };
   }, [escritorioId, queryClient]);
 
-  const naoLidas = (query.data || []).filter((n: any) => !n.lida).length;
+  const naoLidas = (query.data || []).filter((n) => !n.lida).length;
 
   const marcarComoLida = useMutation({
     mutationFn: async (id: string) => {
