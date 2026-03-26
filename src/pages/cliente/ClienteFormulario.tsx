@@ -34,8 +34,9 @@ export default function ClienteFormulario() {
 
   // Sync perfil when formulario loads
   useEffect(() => {
-    if ((formulario as any)?.perfil_fiscal && Object.keys((formulario as any).perfil_fiscal).length > 0) {
-      setPerfilFiscal((formulario as any).perfil_fiscal);
+    const pf = formulario?.perfil_fiscal;
+    if (pf && typeof pf === 'object' && !Array.isArray(pf) && Object.keys(pf).length > 0) {
+      setPerfilFiscal(pf as unknown as PerfilFiscal);
     }
   }, [formulario]);
 
