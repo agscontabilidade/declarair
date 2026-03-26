@@ -65,9 +65,9 @@ export default function Drive() {
   });
 
   const tree = useMemo(() => {
-    const clienteMap = new Map<string, { id: string; nome: string; cpf: string; catMap: Map<string, any[]> }>();
-    for (const doc of docs) {
-      const cl = (doc as any).declaracoes?.clientes;
+    const clienteMap = new Map<string, { id: string; nome: string; cpf: string; catMap: Map<string, DocWithDeclaracao[]> }>();
+    for (const doc of docs as DocWithDeclaracao[]) {
+      const cl = doc.declaracoes?.clientes;
       if (!cl) continue;
       if (busca && !cl.nome?.toLowerCase().includes(busca.toLowerCase()) && !cl.cpf?.includes(busca.replace(/\D/g, ''))) continue;
       if (!clienteMap.has(cl.id)) {

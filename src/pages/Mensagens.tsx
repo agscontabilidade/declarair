@@ -94,11 +94,11 @@ export default function Mensagens() {
               </div>
             ) : (
               <div className="space-y-2">
-                {mensagens.map((m: any) => (
+                {mensagens.map((m) => (
                   <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <Badge variant="outline" className="shrink-0">{m.canal === 'whatsapp' ? 'WhatsApp' : 'Email'}</Badge>
-                      <span className="text-sm font-medium shrink-0">{(m as any).clientes?.nome || '—'}</span>
+                      <span className="text-sm font-medium shrink-0">{'—'}</span>
                       <span className="text-sm text-muted-foreground truncate">{m.conteudo_final.slice(0, 100)}...</span>
                     </div>
                     <span className="text-xs text-muted-foreground shrink-0 ml-2">
