@@ -6,20 +6,34 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Upload, FileText, CheckCircle2, Clock, XCircle, Briefcase,
-  Heart, GraduationCap, Home, FolderOpen, AlertCircle
+  Upload, CheckCircle2, Clock, XCircle, Briefcase, Heart,
+  GraduationCap, Home, FolderOpen, AlertCircle, User, PiggyBank,
+  Landmark, FileWarning
 } from 'lucide-react';
 import { useClientePortal } from '@/hooks/useClientePortal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import type { CategoriaRF } from '@/lib/checklistPorPerfil';
+import { CATEGORIAS_RF, CATEGORIA_LABELS } from '@/lib/checklistPorPerfil';
 
-const CATEGORIA_META: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  rendimentos: { label: 'Rendimentos', icon: Briefcase, color: 'text-accent' },
-  deducoes: { label: 'Deduções', icon: Heart, color: 'text-success' },
+const CATEGORIA_META: Record<CategoriaRF, { label: string; icon: React.ElementType; color: string }> = {
+  documentos_pessoais: { label: 'Documentos Pessoais', icon: User, color: 'text-primary' },
+  rendimentos_tributaveis: { label: 'Rendimentos Tributáveis', icon: Briefcase, color: 'text-accent' },
+  rendimentos_isentos: { label: 'Rendimentos Isentos', icon: Landmark, color: 'text-blue-500' },
+  deducoes_saude: { label: 'Deduções – Saúde', icon: Heart, color: 'text-rose-500' },
+  deducoes_educacao: { label: 'Deduções – Educação', icon: GraduationCap, color: 'text-violet-500' },
+  deducoes_previdencia: { label: 'Deduções – Previdência', icon: PiggyBank, color: 'text-emerald-500' },
   bens_direitos: { label: 'Bens e Direitos', icon: Home, color: 'text-warning' },
-  outros: { label: 'Outros Documentos', icon: FolderOpen, color: 'text-muted-foreground' },
+  dividas_onus: { label: 'Dívidas e Ônus', icon: FileWarning, color: 'text-orange-500' },
+};
+
+// Fallback for legacy categories
+const LEGACY_MAP: Record<string, CategoriaRF> = {
+  rendimentos: 'rendimentos_tributaveis',
+  deducoes: 'deducoes_saude',
+  outros: 'documentos_pessoais',
 };
 
 const STATUS_META: Record<string, { label: string; icon: React.ElementType; color: string }> = {
@@ -108,9 +122,14 @@ export default function ClienteDocumentos() {
     );
   }
 
-  // Group by category
+  // Normalize legacy categories and group
+  const normalizeCategory = (cat: string): CategoriaRF => {
+    if (CATEGORIAS_RF.includes(cat as CategoriaRF)) return cat as CategoriaRF;
+    return LEGACY_MAP[cat] || 'documentos_pessoais';
+  };
+
   const grouped = checklist.reduce<Record<string, typeof checklist>>((acc, doc: any) => {
-    const cat = doc.categoria || 'outros';
+    const cat = normalizeCategory(doc.categoria || 'documentos_pessoais');
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(doc);
     return acc;
@@ -150,14 +169,15 @@ export default function ClienteDocumentos() {
           ref={fileInputRef}
           type="file"
           className="hidden"
-          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.webp"
           onChange={handleFileChange}
         />
 
-        {/* Categories */}
-        {Object.entries(CATEGORIA_META).map(([catKey, meta]) => {
+        {/* Categories - 8 official RF categories */}
+        {CATEGORIAS_RF.map((catKey) => {
           const docs = grouped[catKey];
           if (!docs || docs.length === 0) return null;
+          const meta = CATEGORIA_META[catKey];
           const catRecebidos = docs.filter((d: any) => d.status === 'recebido').length;
           const Icon = meta.icon;
 
