@@ -11,7 +11,6 @@ import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '@/hooks/useChat';
 import { QueryError } from '@/components/ui/QueryError';
-import { useChat } from '@/hooks/useChat';
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
