@@ -3,7 +3,8 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MessageSquare } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Plus, MessageSquare, AlertCircle } from 'lucide-react';
 import { useMensagens } from '@/hooks/useMensagens';
 import { TemplateList } from '@/components/mensagens/TemplateList';
 import { TemplateEditor } from '@/components/mensagens/TemplateEditor';
@@ -11,12 +12,17 @@ import { TestarMensagemModal } from '@/components/mensagens/TestarMensagemModal'
 import { ConfirmModal } from '@/components/cobrancas/ConfirmModal';
 import { formatDate } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useWhatsAppStatus } from '@/hooks/useWhatsApp';
+import { Link } from 'react-router-dom';
 
 export default function Mensagens() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [testTemplate, setTestTemplate] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const { data: whatsappStatus } = useWhatsAppStatus();
+  const isWhatsAppConnected = whatsappStatus?.status === 'connected';
 
   const {
     templates, loadingTemplates, mensagens, loadingMensagens,
@@ -41,6 +47,16 @@ export default function Mensagens() {
           </Button>
         </div>
 
+        {!isWhatsAppConnected && (
+          <Alert className="border-warning/30 bg-warning/10">
+            <AlertCircle className="h-4 w-4 text-warning" />
+            <AlertDescription className="text-warning-foreground">
+              Para enviar mensagens via WhatsApp, conecte seu número primeiro.{' '}
+              <Link to="/whatsapp" className="font-semibold underline">Conectar WhatsApp →</Link>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Templates */}
         <Card className="shadow-sm">
           <CardHeader>
@@ -53,7 +69,12 @@ export default function Mensagens() {
               onEdit={(t) => { setEditData(t); setEditorOpen(true); }}
               onDelete={(id) => setDeleteId(id)}
               onToggle={(id, ativo) => toggleTemplate.mutate({ id, ativo })}
-              onTest={(t) => setTestTemplate(t)}
+              onTest={(t) => {
+                if (t.canal === 'whatsapp' && !isWhatsAppConnected) {
+                  return; // blocked
+                }
+                setTestTemplate(t);
+              }}
             />
           </CardContent>
         </Card>

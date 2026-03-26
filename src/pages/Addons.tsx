@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAddons, useToggleAddon } from '@/hooks/useAddons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { MessageCircle, Brain, ShieldCheck, Palette, Zap, Check, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 
@@ -41,6 +43,8 @@ export default function Addons() {
   const { catalog, myAddons, isLoading } = useAddons();
   const toggle = useToggleAddon();
 
+  const [confirmAddon, setConfirmAddon] = useState<{ id: string; nome: string; preco: number; isActive: boolean } | null>(null);
+
   function getAddonStatus(addonId: string) {
     const found = myAddons.find((a) => a.addon_id === addonId);
     return found?.status ?? null;
@@ -51,23 +55,33 @@ export default function Addons() {
     .filter((a) => myAddons.some((m) => m.addon_id === a.id && m.status === 'ativo'))
     .reduce((sum, a) => sum + a.preco, 0);
 
+  function handleToggleClick(addon: { id: string; nome: string; preco: number }, isActive: boolean) {
+    setConfirmAddon({ id: addon.id, nome: addon.nome, preco: addon.preco, isActive });
+  }
+
+  function handleConfirm() {
+    if (!confirmAddon) return;
+    toggle.mutate(
+      { addonId: confirmAddon.id, currentStatus: confirmAddon.isActive ? 'ativo' : null },
+      { onSettled: () => setConfirmAddon(null) }
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-8 max-w-5xl mx-auto">
-        {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Add-ons</h1>
+          <h1 className="text-2xl font-bold text-foreground">Recursos Extras</h1>
           <p className="text-muted-foreground mt-1">
             Potencialize sua operação com módulos extras. Ative e desative quando quiser.
           </p>
         </div>
 
-        {/* Summary */}
         {totalAtivos > 0 && (
           <div className="rounded-lg border bg-card p-4 flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
-                Você tem <span className="font-semibold text-foreground">{totalAtivos} add-on{totalAtivos > 1 ? 's' : ''}</span> ativo{totalAtivos > 1 ? 's' : ''}
+                Você tem <span className="font-semibold text-foreground">{totalAtivos} recurso{totalAtivos > 1 ? 's' : ''}</span> ativo{totalAtivos > 1 ? 's' : ''}
               </p>
               <p className="text-xs text-muted-foreground">
                 Custo adicional: <span className="font-semibold text-foreground">{formatCurrency(custoMensal)}/mês</span>
@@ -76,7 +90,6 @@ export default function Addons() {
           </div>
         )}
 
-        {/* Grid */}
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -135,14 +148,14 @@ export default function Addons() {
                       className="w-full"
                       variant={isActive ? 'outline' : 'default'}
                       disabled={toggle.isPending}
-                      onClick={() => toggle.mutate({ addonId: addon.id, currentStatus: status })}
+                      onClick={() => handleToggleClick(addon, isActive)}
                     >
                       {toggle.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : isActive ? (
                         'Desativar'
                       ) : (
-                        'Ativar add-on'
+                        'Ativar recurso'
                       )}
                     </Button>
                   </CardFooter>
@@ -152,6 +165,33 @@ export default function Addons() {
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      <Dialog open={!!confirmAddon} onOpenChange={(v) => { if (!v) setConfirmAddon(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAddon?.isActive ? 'Desativar recurso' : 'Ativar recurso'}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmAddon?.isActive
+                ? `Deseja desativar "${confirmAddon?.nome}"? O valor de ${formatCurrency(confirmAddon?.preco ?? 0)}/mês será removido da sua próxima fatura.`
+                : `Ao ativar "${confirmAddon?.nome}", será cobrado ${formatCurrency(confirmAddon?.preco ?? 0)}/mês na sua próxima fatura. O recurso ficará disponível imediatamente.`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setConfirmAddon(null)}>Cancelar</Button>
+            <Button
+              variant={confirmAddon?.isActive ? 'destructive' : 'default'}
+              onClick={handleConfirm}
+              disabled={toggle.isPending}
+            >
+              {toggle.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : confirmAddon?.isActive ? 'Desativar' : 'Confirmar ativação'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
