@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      addons: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string
+          icone: string | null
+          id: string
+          nome: string
+          preco: number
+          tipo: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          icone?: string | null
+          id?: string
+          nome: string
+          preco?: number
+          tipo?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          icone?: string | null
+          id?: string
+          nome?: string
+          preco?: number
+          tipo?: string
+        }
+        Relationships: []
+      }
       assinaturas: {
         Row: {
           asaas_subscription_id: string | null
@@ -482,6 +515,44 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
+      }
+      escritorio_addons: {
+        Row: {
+          addon_id: string
+          ativado_em: string
+          created_at: string
+          desativado_em: string | null
+          escritorio_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          addon_id: string
+          ativado_em?: string
+          created_at?: string
+          desativado_em?: string | null
+          escritorio_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          addon_id?: string
+          ativado_em?: string
+          created_at?: string
+          desativado_em?: string | null
+          escritorio_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escritorio_addons_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "addons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       escritorios: {
         Row: {
