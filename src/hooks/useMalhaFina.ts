@@ -3,13 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import type { Tables } from '@/integrations/supabase/types';
-
-type MalhaFinaConsulta = Tables<'malha_fina_consultas'> & {
-  clientes: { nome: string } | null;
-};
-
-const SIMULATED_STATUSES = ['em_processamento', 'processada', 'em_malha', 'com_pendencias'] as const;
 
 export function useMalhaFina() {
   const { profile } = useAuth();
@@ -39,14 +32,14 @@ export function useMalhaFina() {
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', anoBase);
 
-      const existingMap = new Map((existing || []).map((e) => [e.declaracao_id, e]));
+      const existingMap = new Map((existing || []).map((e: { declaracao_id: string }) => [e.declaracao_id, e]));
 
       // Create records for new transmissions
       const toInsert = decls.filter(d => !existingMap.has(d.id)).map(d => ({
         declaracao_id: d.id,
         escritorio_id: escritorioId,
         cliente_id: d.cliente_id,
-        cpf: d.clientes?.cpf || '',
+        cpf: (d.clientes as unknown as { cpf: string })?.cpf || '',
         ano_base: anoBase,
         status_rfb: 'nao_consultado',
       }));
@@ -63,49 +56,50 @@ export function useMalhaFina() {
         .eq('ano_base', anoBase)
         .order('created_at', { ascending: false });
 
-      return (all || []) as MalhaFinaConsulta[];
+      return all || [];
     },
     enabled: !!escritorioId,
   });
 
+  // Real consultation via BrasilAPI edge function
   const consultMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // Simulated consultation - random status
-      const newStatus = SIMULATED_STATUSES[Math.floor(Math.random() * SIMULATED_STATUSES.length)];
-      const resultado = newStatus === 'em_malha'
-        ? 'Declaração retida para análise. Verifique possíveis divergências de rendimentos.'
-        : newStatus === 'processada'
-        ? 'Declaração processada sem pendências.'
-        : newStatus === 'com_pendencias'
-        ? 'Pendência identificada. Verificar informações de rendimentos.'
-        : 'Declaração em processamento pela RFB.';
-
-      const { error } = await supabase
-        .from('malha_fina_consultas')
-        .update({
-          status_rfb: newStatus,
-          ultimo_resultado: resultado,
-          ultima_consulta: new Date().toISOString(),
-        })
-        .eq('id', id);
+    mutationFn: async (consulta: { id: string; cpf: string }) => {
+      const { data, error } = await supabase.functions.invoke('consulta-rfb', {
+        body: { cpf: consulta.cpf, consulta_id: consulta.id },
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      if (newStatus === 'em_malha') {
-        toast.error('⚠️ Declaração em MALHA FINA!', { description: resultado });
-      } else {
-        toast.success(`Status atualizado: ${newStatus.replace(/_/g, ' ')}`);
-      }
+      return data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['malha-fina'] }),
-    onError: () => toast.error('Erro ao consultar status'),
+    onSuccess: (data) => {
+      const statusRfb = data.status_rfb;
+      if (statusRfb === 'em_malha') {
+        toast.error('⚠️ Declaração com risco de MALHA FINA!', {
+          description: data.interpretacao?.alertas?.[0] || 'Verifique a situação do CPF.',
+        });
+      } else if (statusRfb === 'com_pendencias') {
+        toast.warning('CPF com pendências', {
+          description: data.interpretacao?.alertas?.[0] || 'Verifique a situação cadastral.',
+        });
+      } else {
+        toast.success('CPF regular na Receita Federal');
+      }
+      queryClient.invalidateQueries({ queryKey: ['malha-fina'] });
+    },
+    onError: (err: Error) => {
+      toast.error('Erro ao consultar CPF', { description: err.message });
+    },
   });
 
   const consultarTodosMutation = useMutation({
     mutationFn: async () => {
       for (const c of consultas) {
-        await consultMutation.mutateAsync(c.id);
-        await new Promise(r => setTimeout(r, 300));
+        const item = c as { id: string; cpf: string };
+        await consultMutation.mutateAsync({ id: item.id, cpf: item.cpf });
+        // Small delay between requests to avoid rate limiting
+        await new Promise(r => setTimeout(r, 500));
       }
     },
   });
@@ -120,7 +114,7 @@ export function useMalhaFina() {
     setAnoBase,
     filtroStatus,
     setFiltroStatus,
-    consultarIndividual: (id: string) => consultMutation.mutate(id),
+    consultarIndividual: (id: string, cpf: string) => consultMutation.mutate({ id, cpf }),
     consultarTodos: () => consultarTodosMutation.mutate(),
     consultando: consultMutation.isPending || consultarTodosMutation.isPending,
   };
