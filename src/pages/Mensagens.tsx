@@ -125,11 +125,11 @@ export default function Mensagens() {
           open={!!testTemplate}
           onOpenChange={(v) => { if (!v) setTestTemplate(null); }}
           template={testTemplate}
-          onEnviar={(clienteId, conteudo) => {
+          onEnviar={(clienteId: string, conteudo: string) => {
             enviarMensagem.mutate({
               cliente_id: clienteId,
-              template_id: testTemplate.id,
-              canal: testTemplate.canal,
+              template_id: testTemplate!.id,
+              canal: testTemplate!.canal,
               conteudo_final: conteudo,
             });
           }}
