@@ -35,12 +35,6 @@ const features = [
 ];
 
 
-const plans = [
-  { name: 'Gratuito', price: 'R$ 0', period: '/mês', declaracoes: '10', usuarios: '1', features: ['Dashboard Kanban', 'Portal do Cliente', 'Checklist Dinâmico'], cta: 'Começar Grátis', popular: false },
-  { name: 'Starter', price: 'R$ 97', period: '/mês', declaracoes: '50', usuarios: '2', features: ['Tudo do Gratuito', 'Chat Integrado', 'Cobranças via Pix/Boleto', 'Templates de Email'], cta: 'Assinar Starter', popular: false },
-  { name: 'Profissional', price: 'R$ 197', period: '/mês', declaracoes: '200', usuarios: '5', features: ['Tudo do Starter', 'Whitelabel Completo', 'Malha Fina', 'Relatório PDF', 'Drive do Contador'], cta: 'Assinar Profissional', popular: true },
-  { name: 'Enterprise', price: 'R$ 397', period: '/mês', declaracoes: 'Ilimitadas', usuarios: 'Ilimitados', features: ['Tudo do Profissional', 'API Personalizada', 'Suporte Prioritário', 'Multi-escritório'], cta: 'Falar com Vendas', popular: false },
-];
 
 const faqs = [
   { q: 'O DeclaraIR substitui meu sistema contábil?', a: 'Não. O DeclaraIR é focado exclusivamente na gestão de declarações de IRPF. Ele complementa seu sistema contábil, cuidando do fluxo de documentos, comunicação com clientes e acompanhamento de cada declaração.' },
