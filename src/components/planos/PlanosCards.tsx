@@ -1,114 +1,100 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Check, X, Crown, Zap, Building2, Rocket, MessageCircle } from 'lucide-react';
+import { Check, X, Crown, Zap, MessageCircle, Sparkles } from 'lucide-react';
+import { useBilling } from '@/hooks/useBilling';
 
 interface PlanosCardsProps {
-  planoAtual: string;
-  subData: any;
-  cancelSub: any;
   onNavigate: (planoId: string) => void;
 }
 
-const PLANOS = [
+const PLANOS_CONFIG = [
   {
-    id: 'gratuito',
-    nome: 'Gratuito',
-    subtitulo: 'Para conhecer a plataforma sem compromisso',
+    id: 'free',
+    nome: 'Free',
+    subtitulo: 'Teste completo da plataforma sem compromisso',
     preco: 'R$ 0',
     periodo: '/mês',
     icon: Zap,
-    badge: null,
+    badge: 'Comece grátis',
     destaque: false,
+    cta: 'Seu plano atual',
     beneficios: [
-      { texto: '5 declarações inclusas', disponivel: true },
-      { texto: '1 usuário', disponivel: true },
-      { texto: '500 MB de armazenamento', disponivel: true },
-      { texto: 'Suporte por email', disponivel: true },
-      { texto: 'Evite malha fina automaticamente', disponivel: false },
-      { texto: 'Calculadora IR integrada', disponivel: false },
-      { texto: 'Chat com clientes', disponivel: false },
-      { texto: 'Sua marca no portal', disponivel: false },
+      { texto: '3 declarações ativas (CPFs únicos)', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: '1 usuário', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: '5 GB de armazenamento', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Evite malha fina automaticamente', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Calculadora IR integrada', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Chat com clientes em tempo real', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Kanban visual de declarações', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Dashboard com KPIs', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Notificações por email', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Suporte por email', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'WhatsApp integrado', disponivel: false, destaque: false, addon: true, preco: 19.90 },
+      { texto: 'Portal do Cliente', disponivel: false, destaque: false, addon: true, preco: 14.90 },
+      { texto: 'API Pública', disponivel: false, destaque: false, addon: true, preco: 29.90 },
+      { texto: 'Sua marca (Whitelabel)', disponivel: false, destaque: false, addon: true, preco: 9.90 },
+    ],
+    detalhes: [
+      'Declarações extras: R$ 9,90/cada',
+      'Sem cartão de crédito',
+      'Cancele quando quiser',
     ],
   },
   {
-    id: 'starter',
-    nome: 'Starter',
-    subtitulo: 'Para contadores autônomos que querem profissionalizar o IR',
-    preco: 'R$ 29,90',
-    periodo: '/mês',
-    icon: Rocket,
-    badge: 'Mais econômico',
-    destaque: false,
-    beneficios: [
-      { texto: '10 declarações inclusas', disponivel: true },
-      { texto: '1 usuário', disponivel: true },
-      { texto: '10 GB de armazenamento', disponivel: true },
-      { texto: 'Evite malha fina automaticamente', disponivel: true },
-      { texto: 'Reduza erros com Calculadora IR', disponivel: true },
-      { texto: 'Chat integrado com clientes', disponivel: true },
-      { texto: 'Suporte por email', disponivel: true },
-      { texto: 'Sua marca no portal', disponivel: false },
-    ],
-  },
-  {
-    id: 'profissional',
-    nome: 'Profissional',
-    subtitulo: 'Para escritórios que querem escalar sem aumentar equipe',
+    id: 'pro',
+    nome: 'Pro',
+    subtitulo: 'Para escritórios que querem escalar sem limites',
     preco: 'R$ 49,90',
     periodo: '/mês',
     icon: Crown,
     badge: 'Mais escolhido',
     destaque: true,
+    cta: 'Fazer upgrade',
     beneficios: [
-      { texto: '20 declarações inclusas', disponivel: true },
-      { texto: '5 usuários simultâneos', disponivel: true },
-      { texto: '30 GB de armazenamento', disponivel: true },
-      { texto: 'Evite malha fina automaticamente', disponivel: true },
-      { texto: 'Reduza erros com Calculadora IR', disponivel: true },
-      { texto: 'Chat integrado com clientes', disponivel: true },
-      { texto: 'Atenda mais clientes sem contratar', disponivel: true },
-      { texto: 'Sua marca no portal (Whitelabel)', disponivel: true },
+      { texto: 'Declarações ILIMITADAS', disponivel: true, destaque: true, addon: false, preco: 0 },
+      { texto: 'Até 5 usuários simultâneos', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Armazenamento ilimitado', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Evite malha fina automaticamente', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Calculadora IR integrada', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Chat com clientes em tempo real', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Kanban visual de declarações', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Dashboard com KPIs', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Notificações por email', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'Suporte prioritário', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: 'WhatsApp integrado', disponivel: false, destaque: false, addon: true, preco: 19.90 },
+      { texto: 'Portal do Cliente', disponivel: false, destaque: false, addon: true, preco: 14.90 },
+      { texto: 'API Pública', disponivel: false, destaque: false, addon: true, preco: 29.90 },
+      { texto: 'Sua marca (Whitelabel)', disponivel: false, destaque: false, addon: true, preco: 9.90 },
     ],
-  },
-  {
-    id: 'enterprise',
-    nome: 'Enterprise',
-    subtitulo: 'Para grandes escritórios que precisam de escala profissional',
-    preco: 'Sob consulta',
-    periodo: '',
-    icon: Building2,
-    badge: 'Escala profissional',
-    destaque: false,
-    beneficios: [
-      { texto: 'Declarações ilimitadas', disponivel: true },
-      { texto: 'Usuários ilimitados', disponivel: true },
-      { texto: 'Armazenamento personalizado', disponivel: true },
-      { texto: 'Todas as funcionalidades inclusas', disponivel: true },
-      { texto: 'Suporte dedicado e prioritário', disponivel: true },
-      { texto: 'Onboarding personalizado', disponivel: true },
-      { texto: 'SLA garantido', disponivel: true },
-      { texto: 'API dedicada', disponivel: true },
+    detalhes: [
+      'Usuários extras: R$ 9,90/usuário (6º+)',
+      'Sem taxas ocultas',
+      'Cancele quando quiser',
     ],
   },
 ];
 
 const WHATSAPP_URL = 'https://wa.me/5511998755782?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20DeclaraIR';
 
-export function PlanosCards({ planoAtual, subData, cancelSub, onNavigate }: PlanosCardsProps) {
+export function PlanosCards({ onNavigate }: PlanosCardsProps) {
+  const { planoAtual, cancelSub } = useBilling();
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-      {PLANOS.map((plano) => {
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      {PLANOS_CONFIG.map((plano) => {
         const Icon = plano.icon;
-        const isCurrent = planoAtual === plano.id;
+        const isCurrent =
+          planoAtual?.toLowerCase() === plano.id ||
+          (plano.id === 'free' && ['gratuito', 'free'].includes(planoAtual?.toLowerCase() ?? ''));
 
         return (
           <Card
             key={plano.id}
-            className={`relative flex flex-col transition-all duration-200 hover:shadow-lg ${
+            className={`relative flex flex-col transition-all duration-200 ${
               plano.destaque
-                ? 'ring-2 ring-accent shadow-xl scale-[1.02]'
-                : 'shadow-sm hover:-translate-y-1'
+                ? 'ring-2 ring-accent shadow-2xl scale-[1.02]'
+                : 'shadow-lg hover:shadow-xl hover:-translate-y-1'
             }`}
           >
             {plano.badge && (
@@ -125,33 +111,55 @@ export function PlanosCards({ planoAtual, subData, cancelSub, onNavigate }: Plan
               </div>
             )}
 
-            <CardHeader className="text-center pb-2 pt-8">
-              <div className={`h-12 w-12 mx-auto mb-3 rounded-xl flex items-center justify-center ${
-                plano.destaque ? 'bg-accent/15' : 'bg-muted'
-              }`}>
-                <Icon className={`h-6 w-6 ${plano.destaque ? 'text-accent' : 'text-muted-foreground'}`} />
+            <CardHeader className="text-center pb-4 pt-8">
+              <div
+                className={`h-14 w-14 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+                  plano.destaque ? 'bg-accent/15' : 'bg-muted'
+                }`}
+              >
+                <Icon className={`h-7 w-7 ${plano.destaque ? 'text-accent' : 'text-muted-foreground'}`} />
               </div>
-              <CardTitle className="text-lg">{plano.nome}</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{plano.subtitulo}</p>
-              <div className="mt-4">
-                <span className="text-3xl font-bold text-foreground">{plano.preco}</span>
+              <CardTitle className="text-2xl">{plano.nome}</CardTitle>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed min-h-[40px]">
+                {plano.subtitulo}
+              </p>
+              <div className="mt-6">
+                <span className="text-4xl font-bold text-foreground">{plano.preco}</span>
                 <span className="text-muted-foreground text-sm">{plano.periodo}</span>
               </div>
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col">
-              <div className="space-y-2.5 flex-1">
+              <div className="space-y-3 flex-1">
                 {plano.beneficios.map((b) => (
-                  <div key={b.texto} className="flex items-start gap-2.5 text-sm">
+                  <div key={b.texto} className="flex items-start gap-3 text-sm">
                     {b.disponivel ? (
-                      <Check className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                      <Check className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                     ) : (
-                      <X className="h-4 w-4 text-muted-foreground/30 shrink-0 mt-0.5" />
+                      <X className="h-5 w-5 text-muted-foreground/30 shrink-0 mt-0.5" />
                     )}
-                    <span className={b.disponivel ? 'text-foreground' : 'text-muted-foreground/50'}>
-                      {b.texto}
-                    </span>
+                    <div className="flex-1">
+                      <span className={b.disponivel ? 'text-foreground' : 'text-muted-foreground/50'}>
+                        {b.texto}
+                        {b.destaque && (
+                          <Sparkles className="inline-block h-4 w-4 text-accent ml-1" />
+                        )}
+                      </span>
+                      {b.addon && (
+                        <span className="text-xs text-muted-foreground ml-2">
+                          (+R$ {b.preco.toFixed(2)}/mês)
+                        </span>
+                      )}
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              <div className="mt-6 pt-4 border-t space-y-1">
+                {plano.detalhes.map((detalhe) => (
+                  <p key={detalhe} className="text-xs text-muted-foreground">
+                    • {detalhe}
+                  </p>
                 ))}
               </div>
 
@@ -161,7 +169,7 @@ export function PlanosCards({ planoAtual, subData, cancelSub, onNavigate }: Plan
                     <Button className="w-full" variant="outline" disabled>
                       Plano Atual
                     </Button>
-                    {planoAtual !== 'gratuito' && subData?.assinatura && (
+                    {plano.id === 'pro' && (
                       <Button
                         className="w-full"
                         variant="ghost"
@@ -173,35 +181,29 @@ export function PlanosCards({ planoAtual, subData, cancelSub, onNavigate }: Plan
                       </Button>
                     )}
                   </>
-                ) : plano.id === 'enterprise' ? (
-                  <div className="space-y-2">
-                    <Button className="w-full" variant="outline" asChild>
-                      <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Falar com Consultor
-                      </a>
-                    </Button>
-                  </div>
-                ) : plano.id === 'gratuito' ? (
+                ) : plano.id === 'free' ? (
                   <Button className="w-full" variant="ghost" disabled>
                     Incluído
                   </Button>
                 ) : (
                   <div className="space-y-2">
                     <Button
-                      className={`w-full ${plano.destaque ? 'bg-accent hover:bg-accent/90 text-accent-foreground' : ''}`}
+                      className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
                       onClick={() => onNavigate(plano.id)}
                     >
-                      {planoAtual === 'gratuito' ? 'Começar agora' : 'Fazer upgrade'}
+                      {plano.cta}
                     </Button>
-                    {(plano.id === 'profissional') && (
-                      <Button variant="ghost" size="sm" className="w-full text-muted-foreground" asChild>
-                        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                          <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
-                          Falar com consultor
-                        </a>
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-muted-foreground"
+                      asChild
+                    >
+                      <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                        <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
+                        Falar com consultor
+                      </a>
+                    </Button>
                   </div>
                 )}
               </div>
