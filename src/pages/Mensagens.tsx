@@ -17,8 +17,8 @@ import { Link } from 'react-router-dom';
 
 export default function Mensagens() {
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editData, setEditData] = useState<Record<string, unknown> | null>(null);
-  const [testTemplate, setTestTemplate] = useState<Record<string, unknown> | null>(null);
+  const [editData, setEditData] = useState<{ id: string; nome?: string; canal?: string; assunto?: string; corpo?: string } | null>(null);
+  const [testTemplate, setTestTemplate] = useState<{ id: string; canal: string; corpo: string; nome?: string } | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: whatsappStatus } = useWhatsAppStatus();
@@ -29,11 +29,11 @@ export default function Mensagens() {
     criarTemplate, editarTemplate, toggleTemplate, deletarTemplate, enviarMensagem,
   } = useMensagens();
 
-  const handleSave = (data: Record<string, unknown>) => {
+  const handleSave = (data: { id?: string; nome: string; canal: string; assunto?: string; corpo: string }) => {
     if (data.id) {
-      editarTemplate.mutate(data, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
+      editarTemplate.mutate(data as { id: string; nome?: string; canal?: string; assunto?: string; corpo?: string }, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
     } else {
-      criarTemplate.mutate(data, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
+      criarTemplate.mutate(data as { nome: string; canal: string; assunto?: string; corpo: string }, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
     }
   };
 
