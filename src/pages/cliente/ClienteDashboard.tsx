@@ -26,6 +26,14 @@ export default function ClienteDashboard() {
     user?.id
   );
 
+  if (isError) {
+    return (
+      <ClienteLayout>
+        <QueryError message={error?.message} onRetry={() => refetch()} />
+      </ClienteLayout>
+    );
+  }
+
   if (isLoading) {
     return (
       <ClienteLayout>

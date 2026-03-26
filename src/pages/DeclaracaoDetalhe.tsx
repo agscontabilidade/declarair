@@ -99,6 +99,14 @@ export default function DeclaracaoDetalhe() {
     }
   };
 
+  if (hook.isError) {
+    return (
+      <DashboardLayout>
+        <QueryError message={hook.error?.message} onRetry={() => hook.refetch()} />
+      </DashboardLayout>
+    );
+  }
+
   if (hook.isLoading) {
     return (
       <DashboardLayout>

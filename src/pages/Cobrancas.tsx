@@ -137,7 +137,8 @@ export default function Cobrancas() {
             />
           </CardContent>
         </Card>
-      </div>
+          </>
+        )}
 
       <CobrancaModal
         open={modalOpen}

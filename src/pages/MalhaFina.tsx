@@ -156,6 +156,8 @@ export default function MalhaFina() {
             )}
           </CardContent>
         </Card>
+          </>
+        )}
 
         {/* Modal Consulta Individual */}
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
