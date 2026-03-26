@@ -189,6 +189,10 @@ export default function Configuracoes() {
             <NotificacoesTab escritorioId={escritorioId} isDono={isDono} />
           </TabsContent>
 
+          <TabsContent value="automacoes">
+            <AutomacoesWhatsAppTab escritorioId={escritorioId} isDono={isDono} />
+          </TabsContent>
+
           <TabsContent value="plano">
             <Card className="shadow-sm">
               <CardHeader>

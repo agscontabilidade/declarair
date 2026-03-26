@@ -28,6 +28,11 @@ interface Props {
 
 export function NotificacoesTab({ escritorioId, isDono }: Props) {
   const { toast } = useToast();
+  const { data: whatsappStatus } = useWhatsAppStatus();
+  const isWhatsAppConnected = whatsappStatus?.status === 'connected';
+  const CANAIS = isWhatsAppConnected
+    ? [...BASE_CANAIS, { key: 'whatsapp', label: 'WhatsApp' }]
+    : BASE_CANAIS;
   const [config, setConfig] = useState<Record<string, Record<string, boolean>>>({});
   const [saving, setSaving] = useState(false);
 
