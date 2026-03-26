@@ -39,8 +39,11 @@ const MOCK_DATA: Record<string, string> = {
   '{numero_recibo}': 'ABC1234567890',
   '{nome_contador}': 'Maria Contadora',
   '{nome_escritorio}': 'Escritório Modelo',
-  '{link_portal}': 'https://portal.declara.ir',
-};
+  '{link_portal}': `${PORTAL_BASE_URL}/cliente/login`,
+  '{link_convite}': `${PORTAL_BASE_URL}/cliente/convite/TOKEN`,
+  '{valor_cobranca}': 'R$ 350,00',
+  '{data_vencimento}': '30/04/2025',
+  '{status_cobranca}': 'Pendente',
 
 export function replaceTags(text: string, data: Record<string, string> = MOCK_DATA): string {
   let result = text;
