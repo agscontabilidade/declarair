@@ -62,7 +62,7 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
       CANAIS.forEach(c => { cfg[e.key][c.key] = true; });
     });
 
-    (data || []).forEach((d: any) => {
+    (data || []).forEach((d) => {
       const parts = d.chave.replace('notif_', '').split('__');
       if (parts.length === 2 && cfg[parts[0]]) {
         cfg[parts[0]][parts[1]] = d.valor === 'true';
