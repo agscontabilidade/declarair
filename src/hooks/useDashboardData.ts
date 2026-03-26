@@ -13,6 +13,7 @@ export interface DeclaracaoKanban {
   contador: { nome: string } | null;
   pendingDocs: number;
   totalDocs: number;
+  version: number;
 }
 
 interface DeclaracaoRow {
