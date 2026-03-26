@@ -84,11 +84,22 @@ export function TestarMensagemModal({ open, onOpenChange, template, onEnviar }: 
   };
 
   const handleWhatsApp = () => {
-    const phone = cliente?.telefone?.replace(/\D/g, '') || '';
-    const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
-    window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(previewText)}`, '_blank');
-    if (clienteId && template) {
-      onEnviar(clienteId, previewText);
+    if (isWhatsAppConnected && cliente?.telefone) {
+      // Send via Evolution API
+      sendWhatsApp.mutate({
+        phone: cliente.telefone,
+        message: previewText,
+        clienteId,
+        templateId: template?.id,
+      });
+    } else {
+      // Fallback: open wa.me link
+      const phone = cliente?.telefone?.replace(/\D/g, '') || '';
+      const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
+      window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(previewText)}`, '_blank');
+      if (clienteId && template) {
+        onEnviar(clienteId, previewText);
+      }
     }
   };
 
