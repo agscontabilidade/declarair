@@ -308,13 +308,18 @@ function ContaAzulSection({ escritorioId, isDono }: { escritorioId: string | nul
   const { data: caConfig, isLoading: loadingCa } = useQuery({
     queryKey: ['integracao-contaazul', escritorioId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('integracoes_contaazul' as string)
-        .select('*')
-        .eq('escritorio_id', escritorioId!)
-        .maybeSingle();
-      if (error && error.code !== 'PGRST116') throw error;
-      return data as Record<string, unknown> | null;
+      // Table not yet in generated types, use REST call
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/integracoes_contaazul?escritorio_id=eq.${escritorioId}&select=*`,
+        {
+          headers: {
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      return (Array.isArray(data) && data.length > 0 ? data[0] : null) as Record<string, unknown> | null;
     },
     enabled: !!escritorioId,
   });
