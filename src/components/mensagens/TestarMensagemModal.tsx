@@ -3,11 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Copy, ExternalLink } from 'lucide-react';
+import { Copy, ExternalLink, Send } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { replaceTags } from '@/hooks/useMensagens';
+import { useSendWhatsApp, useWhatsAppStatus } from '@/hooks/useWhatsApp';
 import { formatCPF, formatCurrency, formatDate, STATUS_LABELS } from '@/lib/formatters';
 import { toast } from 'sonner';
 
