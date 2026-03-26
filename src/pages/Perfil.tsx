@@ -69,11 +69,14 @@ export default function Perfil() {
   });
 
   const permissoesList: PermItem[] = [
-    { label: 'Gerenciar clientes', icon: Users, allowed: true },
-    { label: 'Ver declarações', icon: FileText, allowed: true },
-    { label: 'Gerenciar cobranças', icon: DollarSign, allowed: true },
-    { label: 'Excluir cobranças', icon: DollarSign, allowed: perms.podeExcluirCobranca },
+    { label: 'Ver clientes', icon: Users, allowed: perms.podeVerClientes },
+    { label: 'Criar clientes', icon: Users, allowed: perms.podeCriarClientes },
+    { label: 'Editar clientes', icon: Users, allowed: perms.podeEditarClientes },
     { label: 'Excluir clientes', icon: Users, allowed: perms.podeExcluirCliente },
+    { label: 'Ver declarações', icon: FileText, allowed: perms.podeVerDeclaracoes },
+    { label: 'Criar declarações', icon: FileText, allowed: perms.podeCriarDeclaracoes },
+    { label: 'Ver cobranças', icon: DollarSign, allowed: perms.podeVerCobrancas },
+    { label: 'Excluir cobranças', icon: DollarSign, allowed: perms.podeExcluirCobranca },
     { label: 'Gerenciar usuários', icon: Users, allowed: perms.podeGerenciarUsuarios },
     { label: 'Alterar escritório', icon: Settings, allowed: perms.podeAlterarEscritorio },
     { label: 'Gerenciar templates', icon: FileText, allowed: perms.podeGerenciarTemplates },
