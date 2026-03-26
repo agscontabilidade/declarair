@@ -31,9 +31,12 @@ export function IntegracoesTab({ escritorioId, isDono }: Props) {
     queryKey: ['configuracoes', escritorioId],
     queryFn: async () => {
       if (!escritorioId) return {};
-      const { data } = await (supabase as any).from('configuracoes_escritorio').select('chave, valor').eq('escritorio_id', escritorioId);
+      const { data } = await supabase
+        .from('configuracoes_escritorio')
+        .select('chave, valor')
+        .eq('escritorio_id', escritorioId);
       const map: Record<string, string> = {};
-      (data || []).forEach((c: any) => { map[c.chave] = c.valor || ''; });
+      (data || []).forEach((c) => { map[c.chave] = c.valor || ''; });
       return map;
     },
     enabled: !!escritorioId,
@@ -67,10 +70,12 @@ export function IntegracoesTab({ escritorioId, isDono }: Props) {
 
   const saveConfig = async (key: string, value: string) => {
     if (!escritorioId) return;
-    const { error } = await (supabase as any).from('configuracoes_escritorio').upsert(
-      { escritorio_id: escritorioId, chave: key, valor: value },
-      { onConflict: 'escritorio_id,chave' }
-    );
+    const { error } = await supabase
+      .from('configuracoes_escritorio')
+      .upsert(
+        { escritorio_id: escritorioId, chave: key, valor: value },
+        { onConflict: 'escritorio_id,chave' } as Record<string, unknown>
+      );
     if (error) throw error;
   };
 
@@ -107,8 +112,9 @@ export function IntegracoesTab({ escritorioId, isDono }: Props) {
 
       queryClient.invalidateQueries({ queryKey: ['configuracoes', escritorioId] });
       toast.success('Configuração salva com sucesso!');
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao salvar configuração');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao salvar configuração';
+      toast.error(message);
     }
     setSaving(false);
   };

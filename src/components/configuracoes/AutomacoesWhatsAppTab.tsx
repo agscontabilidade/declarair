@@ -191,7 +191,7 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
                     <SelectValue placeholder="Template" />
                   </SelectTrigger>
                   <SelectContent>
-                    {templates.map((t: any) => (
+                    {templates.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                     ))}
                   </SelectContent>
