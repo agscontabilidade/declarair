@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { replaceTags } from '@/hooks/useMensagens';
 import { useSendWhatsApp, useWhatsAppStatus } from '@/hooks/useWhatsApp';
 import { formatCPF, formatCurrency, formatDate, STATUS_LABELS } from '@/lib/formatters';
+import { PORTAL_BASE_URL } from '@/lib/constants';
 import { toast } from 'sonner';
 
 interface TestarMensagemModalProps {
@@ -69,7 +70,11 @@ export function TestarMensagemModal({ open, onOpenChange, template, onEnviar }: 
       '{numero_recibo}': declaracao?.numero_recibo || '—',
       '{nome_contador}': profile.nome || '—',
       '{nome_escritorio}': escritorio?.nome || '—',
-      '{link_portal}': `${window.location.origin}/cliente/login`,
+      '{link_portal}': `${PORTAL_BASE_URL}/cliente/login`,
+      '{link_convite}': `${PORTAL_BASE_URL}/cliente/convite/...`,
+      '{valor_cobranca}': '—',
+      '{data_vencimento}': '—',
+      '{status_cobranca}': '—',
     };
   };
 

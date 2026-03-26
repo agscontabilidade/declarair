@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { PORTAL_BASE_URL } from '@/lib/constants';
 
 export function useClientePerfil(clienteId: string | undefined) {
   const { profile } = useAuth();
@@ -94,8 +95,64 @@ export function useClientePerfil(clienteId: string | undefined) {
         .eq('id', clienteId);
       if (error) throw error;
 
-      const url = `${window.location.origin}/cliente/convite/${token}`;
+      const url = `${PORTAL_BASE_URL}/cliente/convite/${token}`;
       await navigator.clipboard.writeText(url);
+
+      // Auto-send WhatsApp welcome if connected
+      const clienteData = cliente.data;
+      if (clienteData?.telefone) {
+        try {
+          // Get escritorio name
+          const { data: esc } = await supabase
+            .from('escritorios')
+            .select('nome')
+            .eq('id', escritorioId!)
+            .single();
+
+          // Get welcome template
+          const { data: tmpl } = await supabase
+            .from('templates_mensagem')
+            .select('id, corpo')
+            .eq('escritorio_id', escritorioId!)
+            .eq('canal', 'whatsapp')
+            .ilike('nome', '%boas-vindas%')
+            .eq('ativo', true)
+            .limit(1)
+            .maybeSingle();
+
+          if (tmpl) {
+            const mensagem = tmpl.corpo
+              .replace(/{nome_cliente}/g, clienteData.nome)
+              .replace(/{nome_escritorio}/g, esc?.nome || '')
+              .replace(/{link_portal}/g, `${PORTAL_BASE_URL}/cliente/login`)
+              .replace(/{link_convite}/g, url);
+
+            const phone = clienteData.telefone.replace(/\D/g, '');
+            const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
+
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+              await fetch(`https://${projectId}.supabase.co/functions/v1/whatsapp-service?action=send-message`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  phone: fullPhone,
+                  message: mensagem,
+                  clienteId,
+                  templateId: tmpl.id,
+                }),
+              });
+            }
+          }
+        } catch {
+          // Silently fail — invite link was still copied
+        }
+      }
+
       return url;
     },
     onSuccess: () => {
