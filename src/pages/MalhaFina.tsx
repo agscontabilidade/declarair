@@ -76,6 +76,10 @@ export default function MalhaFina() {
           </div>
         </div>
 
+        {isError ? (
+          <QueryError message={error?.message} onRetry={() => refetch()} />
+        ) : (
+          <>
         {/* KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-foreground">{consultas.length}</p><p className="text-xs text-muted-foreground">Total Transmitidas</p></CardContent></Card>
