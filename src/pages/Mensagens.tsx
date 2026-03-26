@@ -29,7 +29,7 @@ export default function Mensagens() {
     criarTemplate, editarTemplate, toggleTemplate, deletarTemplate, enviarMensagem,
   } = useMensagens();
 
-  const handleSave = (data: any) => {
+  const handleSave = (data: Record<string, unknown>) => {
     if (data.id) {
       editarTemplate.mutate(data, { onSuccess: () => { setEditorOpen(false); setEditData(null); } });
     } else {
