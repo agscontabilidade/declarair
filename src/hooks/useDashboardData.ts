@@ -22,6 +22,7 @@ interface DeclaracaoRow {
   ano_base: number;
   ultima_atualizacao_status: string;
   contador_id: string | null;
+  version: number;
   clientes: { nome: string; cpf: string } | null;
   usuarios: { nome: string } | null;
 }
