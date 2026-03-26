@@ -222,6 +222,7 @@ export type Database = {
           descricao: string
           escritorio_id: string
           id: string
+          notificacao_vencimento_enviada: boolean
           pix_qrcode: string | null
           pix_qrcode_url: string | null
           status: string
@@ -241,6 +242,7 @@ export type Database = {
           descricao: string
           escritorio_id: string
           id?: string
+          notificacao_vencimento_enviada?: boolean
           pix_qrcode?: string | null
           pix_qrcode_url?: string | null
           status?: string
@@ -260,6 +262,7 @@ export type Database = {
           descricao?: string
           escritorio_id?: string
           id?: string
+          notificacao_vencimento_enviada?: boolean
           pix_qrcode?: string | null
           pix_qrcode_url?: string | null
           status?: string
@@ -1281,6 +1284,7 @@ export type Database = {
         }
         Returns: number
       }
+      notificar_cobrancas_vencendo: { Args: never; Returns: undefined }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
