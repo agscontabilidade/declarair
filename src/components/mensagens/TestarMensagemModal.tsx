@@ -22,6 +22,9 @@ interface TestarMensagemModalProps {
 export function TestarMensagemModal({ open, onOpenChange, template, onEnviar }: TestarMensagemModalProps) {
   const { profile } = useAuth();
   const [clienteId, setClienteId] = useState('');
+  const sendWhatsApp = useSendWhatsApp();
+  const { data: whatsappStatus } = useWhatsAppStatus();
+  const isWhatsAppConnected = whatsappStatus?.status === 'connected';
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes-test', profile.escritorioId],
