@@ -22,7 +22,7 @@ export default function Cobrancas() {
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
   const { profile } = useAuth();
 
-  const { cobrancas, isLoading, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
+  const { cobrancas, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
 
   // Check if Inter is configured
   const { data: interAtivo } = useQuery({
