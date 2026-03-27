@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,25 +12,36 @@ import logoIcon from '@/assets/logo-icon.png';
 
 export default function ClienteLogin() {
   const navigate = useNavigate();
+  const { session, userType, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirect when already authenticated
+  useEffect(() => {
+    if (!loading && session && userType) {
+      if (userType === 'cliente') {
+        navigate('/cliente/dashboard', { replace: true });
+      } else if (userType === 'contador') {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [loading, session, userType, navigate]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password: senha,
       });
       if (error) throw error;
-      navigate('/cliente/dashboard');
+      // Navigation will happen via the useEffect above once AuthContext updates
     } catch (err: any) {
       toast({ title: 'Erro ao entrar', description: err.message, variant: 'destructive' });
-    } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   }
 
@@ -95,8 +107,8 @@ export default function ClienteLogin() {
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-11" disabled={loading}>
-                {loading ? 'Entrando...' : 'Entrar'}
+              <Button type="submit" className="w-full h-11" disabled={isSubmitting || loading}>
+                {isSubmitting ? 'Entrando...' : 'Entrar'}
               </Button>
               <Link to="/recuperar-senha" className="block text-center">
                 <span className="text-sm text-muted-foreground hover:text-primary transition-colors">Esqueceu sua senha?</span>
