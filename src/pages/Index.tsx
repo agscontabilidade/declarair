@@ -8,6 +8,7 @@ import {
   Clock, Briefcase, TrendingUp, BarChart3, FolderCheck, Receipt, Palette,
   AlertTriangle, XCircle, ChevronRight, Flame, Target, DollarSign, Timer,
 } from 'lucide-react';
+import LottieIcon from '@/components/landing/LottieIcon';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import logoHero from '@/assets/logo-hero.png';
