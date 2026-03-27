@@ -74,7 +74,7 @@ export default function Planos() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              ✓ Sem cartão de crédito  ✓ Plataforma completa  ✓ 3 declarações grátis
+              ✓ Sem cartão de crédito  ✓ 1 declaração grátis  ✓ Pro por R$ 29,90/mês
             </p>
           </div>
         </Section>
