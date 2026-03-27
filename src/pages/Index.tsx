@@ -8,6 +8,7 @@ import {
   Clock, Briefcase, TrendingUp, BarChart3, FolderCheck, Receipt, Palette,
   AlertTriangle, XCircle, ChevronRight, Flame, Target, DollarSign, Timer,
 } from 'lucide-react';
+import LottieIcon from '@/components/landing/LottieIcon';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import logoHero from '@/assets/logo-hero.png';
@@ -30,11 +31,11 @@ import { TabelaAvulso } from '@/components/planos/TabelaAvulso';
 
 /* ── Data ── */
 const painPoints = [
-  { icon: MessageSquare, text: 'Cliente mandando documento solto no WhatsApp' },
-  { icon: XCircle, text: 'Informações incompletas toda vez' },
-  { icon: Timer, text: 'Você perdendo horas organizando o que o cliente deveria ter mandado certo' },
-  { icon: AlertTriangle, text: 'Retrabalho constante — e na reta final, o caos dobra' },
-  { icon: DollarSign, text: 'Baixa lucratividade pelo esforço absurdo' },
+  { lottie: 'https://lottie.host/a3a14b8e-862c-4e42-808a-2f4e0e9c3b5e/JmGJWMrykF.json', text: 'Cliente mandando documento solto no WhatsApp' },
+  { lottie: 'https://lottie.host/35b1a78e-3b6f-4a0e-bf5a-5cedf70e4c1c/k0gOlVPqoH.json', text: 'Informações incompletas toda vez' },
+  { lottie: 'https://lottie.host/d5921d47-067f-4e3f-8056-a3f0e4a05f71/7YlVQmBQs2.json', text: 'Você perdendo horas organizando o que o cliente deveria ter mandado certo' },
+  { lottie: 'https://lottie.host/8e98a4a4-3eb6-4e4c-8e9c-7e2b4a4b6c5a/ZpBr1Yw8Ey.json', text: 'Retrabalho constante — e na reta final, o caos dobra' },
+  { lottie: 'https://lottie.host/d946cc4e-4880-4767-b2a9-3f7a57d0f5c9/y6Y1LPxGmY.json', text: 'Baixa lucratividade pelo esforço absurdo' },
 ];
 
 const beforeAfter = [
@@ -222,8 +223,8 @@ export default function Index() {
             <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto text-left">
               {painPoints.map((p) => (
                 <div key={p.text} className="flex items-start gap-4 glass-card-strong rounded-xl p-5 hover:scale-[1.03] transition-transform backdrop-blur-xl">
-                  <div className="h-10 w-10 rounded-full bg-destructive/15 flex items-center justify-center shrink-0 mt-0.5">
-                    <p.icon className="h-5 w-5 text-destructive" />
+                  <div className="h-12 w-12 shrink-0 mt-0.5">
+                    <LottieIcon url={p.lottie} className="h-12 w-12" />
                   </div>
                   <p className="text-base text-foreground font-medium leading-relaxed">{p.text}</p>
                 </div>
@@ -233,6 +234,14 @@ export default function Index() {
             <p className="mt-14 text-primary-foreground/70 text-xl italic max-w-2xl mx-auto font-medium">
               "Enquanto você organiza documento, outro contador está faturando."
             </p>
+
+            <div className="mt-10">
+              <Link to="/cadastro">
+                <Button size="lg" className="text-lg px-10 h-14 shadow-xl shadow-accent/30 font-bold uppercase tracking-wide rounded-lg bg-accent hover:bg-accent/90 text-accent-foreground">
+                  Resolver isso agora <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </Section>
