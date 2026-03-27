@@ -111,10 +111,19 @@ export default function Upgrade() {
               </div>
             )}
 
-            {isPro && (
-              <div className="flex items-center gap-2 text-sm">
-                <Sparkles className="h-4 w-4 text-accent" />
-                <span className="text-accent font-medium">Declarações ilimitadas ativadas!</span>
+             {isPro && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <Sparkles className="h-4 w-4 text-accent" />
+                  <span className="text-accent font-medium">3 declarações inclusas + extras por R$ 9,90/cada</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">Declarações Ativas</span>
+                  <span className="text-muted-foreground">
+                    {declaracoesCount} de {limiteDeclaracoes} inclusas
+                  </span>
+                </div>
+                <Progress value={limiteDeclaracoes ? Math.min((declaracoesCount / limiteDeclaracoes) * 100, 100) : 0} className="h-2" />
               </div>
             )}
 
