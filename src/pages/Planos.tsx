@@ -54,8 +54,8 @@ export default function Planos() {
               <span className="text-accent block mt-2">Planos que crescem com você</span>
             </h1>
 
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Comece grátis testando a plataforma completa. Faça upgrade apenas quando precisar.
+             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Comece grátis com 1 declaração. Desbloqueie o sistema completo por apenas R$ 29,90/mês.
               Sem cartão de crédito. Sem pegadinhas.
             </p>
 
