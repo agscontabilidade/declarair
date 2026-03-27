@@ -556,13 +556,14 @@ export default function Index() {
       {/* ── PRICING ── */}
       <Section id="pricing" className="py-20 lg:py-28 bg-gradient-to-b from-secondary/30 to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          <div className="text-center">
+         <div className="text-center">
             <Badge variant="secondary" className="mb-4 text-xs">Planos</Badge>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-              Escale seu IR sem aumentar equipe
+              Comece grátis, escale com o Pro
             </h2>
             <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Comece grátis e pague apenas pelo que usar. Sem risco, sem contrato, sem surpresas.
+              Apenas 2 planos: Free com 3 declarações ou Pro ilimitado por R$ 49,90/mês.
+              Adicione Recursos Extras conforme sua necessidade.
             </p>
           </div>
           <PlanosCardsPublic />
