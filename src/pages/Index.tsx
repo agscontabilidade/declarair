@@ -413,6 +413,13 @@ export default function Index() {
               </GlassCard>
             ))}
           </div>
+          <div className="text-center mt-14">
+            <Link to="/cadastro">
+              <Button size="lg" className="text-lg px-10 h-14 shadow-xl shadow-primary/25 font-bold uppercase tracking-wide rounded-lg">
+                Começar grátis agora <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </Section>
 
