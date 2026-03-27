@@ -44,8 +44,8 @@ export default function Planos() {
         <Section className="py-20 px-4 bg-gradient-to-b from-primary/5 to-background">
           <div className="max-w-6xl mx-auto text-center space-y-6">
             <div className="inline-block">
-              <span className="bg-accent/10 text-accent text-sm font-medium px-4 py-1.5 rounded-full">
-                🎉 Teste grátis com 3 declarações
+             <span className="bg-accent/10 text-accent text-sm font-medium px-4 py-1.5 rounded-full">
+                🎉 Teste grátis com 1 declaração
               </span>
             </div>
 
@@ -54,8 +54,8 @@ export default function Planos() {
               <span className="text-accent block mt-2">Planos que crescem com você</span>
             </h1>
 
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Comece grátis testando a plataforma completa. Faça upgrade apenas quando precisar.
+             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Comece grátis com 1 declaração. Desbloqueie o sistema completo por apenas R$ 29,90/mês.
               Sem cartão de crédito. Sem pegadinhas.
             </p>
 
@@ -74,7 +74,7 @@ export default function Planos() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              ✓ Sem cartão de crédito  ✓ Plataforma completa  ✓ 3 declarações grátis
+              ✓ Sem cartão de crédito  ✓ 1 declaração grátis  ✓ Pro por R$ 29,90/mês
             </p>
           </div>
         </Section>
@@ -99,9 +99,9 @@ export default function Planos() {
                     <div className="h-12 w-12 bg-muted rounded-xl flex items-center justify-center mb-4">
                       <Zap className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <h3 className="text-2xl font-bold font-display">Free</h3>
+                     <h3 className="text-2xl font-bold font-display">Free</h3>
                     <p className="text-muted-foreground mt-2">
-                      Teste completo da plataforma
+                      Para conhecer a plataforma
                     </p>
                   </div>
 
@@ -119,12 +119,12 @@ export default function Planos() {
                   </Link>
 
                   <div className="space-y-3 pt-4 border-t">
-                    {[
-                      { bold: true, text: '3 declarações ativas', extra: ' (CPFs únicos)' },
-                      { bold: false, text: 'Plataforma completa' },
-                      { bold: false, text: 'Malha fina + Calculadora' },
+                     {[
+                      { bold: true, text: '1 declaração ativa', extra: '' },
+                      { bold: false, text: '500 MB de armazenamento' },
                       { bold: false, text: 'Chat com clientes' },
-                      { bold: false, text: 'Dashboard e relatórios' },
+                      { bold: false, text: 'Kanban de declarações' },
+                      { bold: false, text: 'Suporte por chat' },
                     ].map((item) => (
                       <div key={item.text} className="flex items-start gap-3">
                         <Check className="h-5 w-5 text-accent shrink-0 mt-0.5" />
@@ -136,9 +136,9 @@ export default function Planos() {
                     ))}
                   </div>
 
-                  <div className="pt-4 border-t">
+                   <div className="pt-4 border-t">
                     <p className="text-sm text-muted-foreground">
-                      💡 Declarações extras: <strong>R$ 9,90/cada</strong>
+                      💡 Faça upgrade para desbloquear malha fina, calculadora IR e mais
                     </p>
                   </div>
                 </div>
@@ -157,15 +157,15 @@ export default function Planos() {
                     <div className="h-12 w-12 bg-accent/15 rounded-xl flex items-center justify-center mb-4">
                       <Crown className="h-6 w-6 text-accent" />
                     </div>
-                    <h3 className="text-2xl font-bold font-display">Pro</h3>
+                     <h3 className="text-2xl font-bold font-display">Pro</h3>
                     <p className="text-muted-foreground mt-2">
-                      Para escritórios sem limites
+                      Sistema completo para seu escritório
                     </p>
                   </div>
 
                   <div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-5xl font-bold">R$ 49,90</span>
+                       <span className="text-5xl font-bold">R$ 29,90</span>
                       <span className="text-muted-foreground">/mês</span>
                     </div>
                   </div>
@@ -177,10 +177,12 @@ export default function Planos() {
                   </Link>
 
                   <div className="space-y-3 pt-4 border-t">
-                    {[
-                      { bold: true, text: 'Declarações ILIMITADAS', extra: ' ✨' },
+                     {[
+                      { bold: true, text: '3 declarações inclusas', extra: '' },
+                      { bold: true, text: 'Extras por R$ 9,90/cada', extra: '' },
                       { bold: false, text: 'Até 5 usuários simultâneos' },
                       { bold: false, text: 'Storage ilimitado' },
+                      { bold: false, text: 'Malha fina + Calculadora IR' },
                       { bold: false, text: 'Tudo do Free incluído' },
                       { bold: false, text: 'Suporte prioritário' },
                     ].map((item) => (
@@ -195,7 +197,7 @@ export default function Planos() {
                   </div>
 
                   <div className="pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">
+                     <p className="text-sm text-muted-foreground">
                       💡 Usuários extras: <strong>R$ 9,90/usuário</strong> (6º+)
                     </p>
                   </div>
@@ -259,15 +261,15 @@ export default function Planos() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {[
-                    { recurso: 'Declarações ativas', free: '3 CPFs', pro: 'Ilimitadas ✨' },
+                   {[
+                    { recurso: 'Declarações', free: '1', pro: '3 inclusas + extras' },
                     { recurso: 'Usuários simultâneos', free: '1', pro: '5' },
-                    { recurso: 'Storage', free: '5 GB', pro: 'Ilimitado' },
-                    { recurso: 'Malha fina', free: '✓', pro: '✓' },
-                    { recurso: 'Calculadora IR', free: '✓', pro: '✓' },
+                    { recurso: 'Storage', free: '500 MB', pro: 'Ilimitado' },
+                    { recurso: 'Malha fina', free: '✗', pro: '✓' },
+                    { recurso: 'Calculadora IR', free: '✗', pro: '✓' },
                     { recurso: 'Chat clientes', free: '✓', pro: '✓' },
-                    { recurso: 'Suporte', free: 'Email', pro: 'Prioritário' },
-                    { recurso: 'Declarações extras', free: 'R$ 9,90/cada', pro: 'Inclusas' },
+                    { recurso: 'Suporte', free: 'Chat', pro: 'Prioritário' },
+                    { recurso: 'Declarações extras', free: '—', pro: 'R$ 9,90/cada' },
                   ].map((row) => (
                     <tr key={row.recurso}>
                       <td className="py-3 px-4 font-medium text-sm">{row.recurso}</td>

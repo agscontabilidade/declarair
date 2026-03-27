@@ -25,7 +25,7 @@ export function useUsageStatus(): UsageState {
         .single();
       return {
         usadas: escritorio?.declaracoes_utilizadas ?? 0,
-        limite: escritorio?.limite_declaracoes ?? 10,
+        limite: escritorio?.limite_declaracoes ?? 1,
       };
     },
     enabled: !!profile.escritorioId,
@@ -33,7 +33,7 @@ export function useUsageStatus(): UsageState {
   });
 
   const usadas = data?.usadas ?? 0;
-  const limite = data?.limite ?? 10;
+  const limite = data?.limite ?? 1;
   const percentual = limite > 0 ? Math.min((usadas / limite) * 100, 100) : 0;
 
   let level: UsageLevel = 'normal';

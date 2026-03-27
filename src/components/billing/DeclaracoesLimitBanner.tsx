@@ -15,9 +15,9 @@ export function DeclaracoesLimitBanner() {
     limiteDeclaracoes,
   } = useBilling();
 
-  const isPro = ['pro', 'profissional'].includes(planoAtual?.toLowerCase() ?? '');
-  if (isPro || !limiteDeclaracoes) return null;
+  if (!limiteDeclaracoes) return null;
 
+  const isFree = ['free', 'gratuito'].includes(planoAtual?.toLowerCase() ?? '');
   const progresso = Math.min((declaracoesCount / limiteDeclaracoes) * 100, 100);
 
   if (atingiuLimiteDeclaracoes) {
@@ -27,20 +27,26 @@ export function DeclaracoesLimitBanner() {
         <AlertDescription className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
             <p className="font-semibold mb-1">
-              Você atingiu o limite de {limiteDeclaracoes} declarações
+              Você atingiu o limite de {limiteDeclaracoes} declaração(ões)
             </p>
             <p className="text-sm">
-              Faça upgrade para Pro e tenha declarações ilimitadas ou compre extras
+              {isFree
+                ? 'Faça upgrade para o Pro e desbloqueie o sistema completo'
+                : 'Compre declarações extras por R$ 9,90/cada'}
             </p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="secondary" onClick={() => navigate('/meus-planos')}>
-              Comprar Extras
-            </Button>
-            <Button size="sm" onClick={() => navigate('/meus-planos')}>
-              Upgrade para Pro
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            {!isFree && (
+              <Button size="sm" variant="secondary" onClick={() => navigate('/meus-planos')}>
+                Comprar Extras
+              </Button>
+            )}
+            {isFree && (
+              <Button size="sm" onClick={() => navigate('/meus-planos')}>
+                Upgrade para Pro — R$ 29,90/mês
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            )}
           </div>
         </AlertDescription>
       </Alert>

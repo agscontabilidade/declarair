@@ -69,7 +69,7 @@ export default function Upgrade() {
                     Plano {isPro ? 'Pro' : 'Free'}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    {isFree ? 'Gratuito' : 'R$ 49,90/mês'}
+                    {isFree ? 'Gratuito' : 'R$ 29,90/mês'}
                   </p>
                 </div>
               </div>
@@ -111,17 +111,26 @@ export default function Upgrade() {
               </div>
             )}
 
-            {isPro && (
-              <div className="flex items-center gap-2 text-sm">
-                <Sparkles className="h-4 w-4 text-accent" />
-                <span className="text-accent font-medium">Declarações ilimitadas ativadas!</span>
+             {isPro && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <Sparkles className="h-4 w-4 text-accent" />
+                  <span className="text-accent font-medium">3 declarações inclusas + extras por R$ 9,90/cada</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">Declarações Ativas</span>
+                  <span className="text-muted-foreground">
+                    {declaracoesCount} de {limiteDeclaracoes} inclusas
+                  </span>
+                </div>
+                <Progress value={limiteDeclaracoes ? Math.min((declaracoesCount / limiteDeclaracoes) * 100, 100) : 0} className="h-2" />
               </div>
             )}
 
             {/* Grid de Recursos */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
-              <div className="text-center">
-                <p className="text-2xl font-bold">{isPro ? '∞' : limiteDeclaracoes}</p>
+               <div className="text-center">
+                <p className="text-2xl font-bold">{isPro ? '3+' : '1'}</p>
                 <p className="text-xs text-muted-foreground">Declarações</p>
               </div>
               <div className="text-center">
@@ -129,8 +138,8 @@ export default function Upgrade() {
                 <p className="text-xs text-muted-foreground">Usuários</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold">{isPro ? '∞' : '5'}</p>
-                <p className="text-xs text-muted-foreground">{isPro ? 'Storage' : 'GB'}</p>
+                <p className="text-2xl font-bold">{isPro ? '∞' : '500'}</p>
+                <p className="text-xs text-muted-foreground">{isPro ? 'Storage' : 'MB'}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold">{isPro ? '✓' : '—'}</p>
@@ -143,8 +152,8 @@ export default function Upgrade() {
         {/* Tabs */}
         <Tabs defaultValue={isFree ? 'upgrade' : 'addons'}>
           <TabsList className="grid w-full max-w-md grid-cols-3">
-            {isFree && <TabsTrigger value="upgrade">Upgrade</TabsTrigger>}
-            {isFree && <TabsTrigger value="extras">Declarações Extras</TabsTrigger>}
+          {isFree && <TabsTrigger value="upgrade">Upgrade</TabsTrigger>}
+            <TabsTrigger value="extras">Declarações Extras</TabsTrigger>
             <TabsTrigger value="addons">Recursos Adicionais</TabsTrigger>
           </TabsList>
 
@@ -159,9 +168,9 @@ export default function Upgrade() {
                     </div>
                     <div>
                       <CardTitle>Faça Upgrade para Pro</CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        Declarações ilimitadas e muito mais
-                      </p>
+                       <p className="text-sm text-muted-foreground">
+                        Sistema completo com 3 declarações inclusas
+                       </p>
                     </div>
                   </div>
                 </CardHeader>
@@ -190,7 +199,7 @@ export default function Upgrade() {
                     <div className="space-y-4 flex flex-col justify-center">
                       <div className="text-center p-6 bg-accent/5 rounded-xl">
                         <p className="text-sm text-muted-foreground mb-2">Por apenas</p>
-                        <p className="text-4xl font-bold text-accent">R$ 49,90</p>
+                        <p className="text-4xl font-bold text-accent">R$ 29,90</p>
                         <p className="text-sm text-muted-foreground">/mês</p>
                       </div>
 
@@ -210,9 +219,9 @@ export default function Upgrade() {
                   </div>
 
                   <div className="pt-4 border-t">
-                    <p className="text-sm text-muted-foreground text-center">
-                      💡 <strong>Economia:</strong> Com 5+ declarações/mês, o Pro já vale a pena!
-                    </p>
+                     <p className="text-sm text-muted-foreground text-center">
+                       💡 <strong>Economia:</strong> Com 4+ declarações, as extras já se pagam!
+                     </p>
                   </div>
                 </CardContent>
               </Card>
@@ -220,14 +229,14 @@ export default function Upgrade() {
           )}
 
           {/* Comprar Declarações Extras */}
-          {isFree && (
+           {(
             <TabsContent value="extras" className="mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Comprar Declarações Extras</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Adicione declarações sem fazer upgrade
-                  </p>
+                       <p className="text-sm text-muted-foreground">
+                        {isFree ? 'Faça upgrade para Pro para comprar extras' : 'Adicione declarações além das 3 inclusas'}
+                       </p>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
@@ -294,17 +303,16 @@ export default function Upgrade() {
                       </Alert>
 
                       <div className="pt-4 border-t">
-                        <p className="text-sm text-muted-foreground text-center">
-                          💡 <strong>Dica:</strong> Se você faz mais de 5 declarações/mês, o plano
-                          Pro sai mais barato!
-                        </p>
+                         <p className="text-sm text-muted-foreground text-center">
+                           💡 <strong>Dica:</strong> Cada declaração extra custa R$ 9,90 e é válida por 30 dias
+                         </p>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
-          )}
+           )}
 
           {/* Addons */}
           <TabsContent value="addons" className="mt-6">
