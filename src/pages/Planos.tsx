@@ -99,9 +99,9 @@ export default function Planos() {
                     <div className="h-12 w-12 bg-muted rounded-xl flex items-center justify-center mb-4">
                       <Zap className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <h3 className="text-2xl font-bold font-display">Free</h3>
+                     <h3 className="text-2xl font-bold font-display">Free</h3>
                     <p className="text-muted-foreground mt-2">
-                      Teste completo da plataforma
+                      Para conhecer a plataforma
                     </p>
                   </div>
 
