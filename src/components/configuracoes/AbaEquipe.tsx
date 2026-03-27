@@ -63,7 +63,7 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Convidar Novo Colaborador</DialogTitle>
+                    <DialogTitle>Convidar Novo Profissional Contábil</DialogTitle>
                     <DialogDescription>
                       Envie um convite para adicionar um novo membro à equipe
                     </DialogDescription>
