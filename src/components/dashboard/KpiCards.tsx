@@ -21,12 +21,12 @@ export function KpiCards({ data, isLoading }: { data?: KpiData; isLoading: boole
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {kpiConfig.map((kpi) => (
         <Card key={kpi.key} className="shadow-sm border-border/50">
-          <CardContent className="flex items-center gap-4 p-5">
-            <div className={`p-3 rounded-xl bg-muted ${kpi.color}`}>
-              <kpi.icon className="h-5 w-5" />
+          <CardContent className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5">
+            <div className={`p-2 sm:p-3 rounded-xl bg-muted ${kpi.color}`}>
+              <kpi.icon className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">{kpi.label}</p>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">{kpi.label}</p>
               {isLoading ? (
                 <Skeleton className="h-8 w-16 mt-1" />
               ) : (
