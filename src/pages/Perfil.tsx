@@ -16,24 +16,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { formatarPapel, PAPEL_COLORS } from '@/lib/formatters';
 import {
   Shield, FileText, Users, Settings, DollarSign, Check, X,
   Key, Eye, Upload, Loader2, User, Lock, Bell, AlertTriangle,
 } from 'lucide-react';
-
-const papelLabels: Record<string, string> = {
-  dono: 'Dono',
-  administrador: 'Administrador',
-  colaborador: 'Colaborador',
-  operador: 'Operador',
-};
-
-const papelColors: Record<string, string> = {
-  dono: 'bg-accent text-accent-foreground',
-  administrador: 'bg-primary text-primary-foreground',
-  colaborador: 'bg-secondary text-secondary-foreground',
-  operador: 'bg-muted text-muted-foreground',
-};
 
 interface PermItem { label: string; icon: React.ElementType; allowed: boolean }
 
