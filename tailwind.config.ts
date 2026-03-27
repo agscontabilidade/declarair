@@ -113,6 +113,11 @@ export default {
           "60%": { transform: "scale(1.02) translateY(0)" },
           "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
         },
+        "kanban-land": {
+          "0%": { opacity: "0.6", transform: "scale(0.92) translateY(-6px)" },
+          "50%": { transform: "scale(1.03) translateY(1px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
         "pulse-badge": {
           "0%, 100%": { transform: "scale(1)" },
           "50%": { transform: "scale(1.2)" },
@@ -124,6 +129,7 @@ export default {
         "slide-in-left": "slide-in-left 0.3s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "card-drop": "card-drop 0.35s ease-out",
+        "kanban-land": "kanban-land 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
         "pulse-badge": "pulse-badge 2s ease-in-out infinite",
       },
     },

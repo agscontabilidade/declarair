@@ -36,43 +36,70 @@ export function KanbanCard({ item, onDragStart, onDragEnd, isDragging, isDropped
   const receivedDocs = totalDocs - (item.pendingDocs || 0);
   const docPct = totalDocs > 0 ? Math.round((receivedDocs / totalDocs) * 100) : 0;
 
-  const animationClass = isDropped ? 'animate-card-drop' : '';
-  const dragClass = isDragging ? 'opacity-50 scale-95' : '';
-
   return (
     <div
       draggable
-      onDragStart={(e) => onDragStart(e, item.id)}
+      onDragStart={(e) => {
+        // Set a minimal drag image to avoid the default ghost
+        const el = e.currentTarget;
+        const clone = el.cloneNode(true) as HTMLElement;
+        clone.style.width = `${el.offsetWidth}px`;
+        clone.style.position = 'absolute';
+        clone.style.top = '-9999px';
+        clone.style.opacity = '0.85';
+        clone.style.transform = 'rotate(2deg) scale(1.02)';
+        clone.style.boxShadow = '0 20px 40px -8px rgba(0,0,0,0.2)';
+        clone.style.borderRadius = '12px';
+        document.body.appendChild(clone);
+        e.dataTransfer.setDragImage(clone, el.offsetWidth / 2, 24);
+        requestAnimationFrame(() => document.body.removeChild(clone));
+        onDragStart(e, item.id);
+      }}
       onDragEnd={onDragEnd}
       onClick={() => navigate(`/declaracoes/${item.id}`)}
-      className={`bg-card rounded-lg p-3 md:p-3.5 shadow-sm border border-border/50 cursor-grab active:cursor-grabbing hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 ${animationClass} ${dragClass}`}
+      style={{
+        opacity: isDragging ? 0.35 : 1,
+        transform: isDragging
+          ? 'scale(0.96)'
+          : isDropped
+            ? 'scale(1)'
+            : 'scale(1)',
+        transition: 'opacity 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease',
+      }}
+      className={`
+        group bg-card rounded-xl p-3.5 shadow-sm border border-border/40
+        cursor-grab active:cursor-grabbing
+        hover:shadow-lg hover:border-accent/30 hover:-translate-y-0.5
+        ${isDropped ? 'animate-kanban-land' : ''}
+      `}
     >
       <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
+        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">
           {getInitials(nome)}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-medium text-sm truncate">{nome}</p>
-          <p className="text-xs text-muted-foreground tabular-nums">{maskCpf(cpf)}</p>
+          <p className="font-semibold text-sm truncate group-hover:text-accent transition-colors duration-200">{nome}</p>
+          <p className="text-xs text-muted-foreground tabular-nums mt-0.5">{maskCpf(cpf)}</p>
         </div>
         {stale && (
-          <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+          <div className="relative">
+            <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5 animate-pulse" />
+          </div>
         )}
       </div>
 
-      {/* Doc progress bar */}
       {totalDocs > 0 && (
-        <div className="mt-2.5 flex items-center gap-2">
+        <div className="mt-3 flex items-center gap-2">
           <Progress value={docPct} className="h-1.5 flex-1" />
-          <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">
+          <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap font-medium">
             {receivedDocs}/{totalDocs}
           </span>
         </div>
       )}
 
-      <div className="flex items-center gap-2 mt-2">
+      <div className="flex items-center gap-2 mt-2.5">
         {item.contador && (
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">
             {item.contador.nome.split(' ')[0]}
           </Badge>
         )}
