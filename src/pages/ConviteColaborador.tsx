@@ -57,7 +57,7 @@ export default function ConviteColaborador() {
       }
 
       if (new Date(data.expira_em) < new Date()) {
-        setErro('Este convite expirou. Solicite um novo convite ao administrador.');
+        setErro('Este convite expirou. Solicite um novo convite ao Responsável Técnico.');
         return;
       }
 
