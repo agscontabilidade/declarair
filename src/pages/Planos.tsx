@@ -195,7 +195,7 @@ export default function Planos() {
                   </div>
 
                   <div className="pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">
+                     <p className="text-sm text-muted-foreground">
                       💡 Usuários extras: <strong>R$ 9,90/usuário</strong> (6º+)
                     </p>
                   </div>
