@@ -129,8 +129,8 @@ export default function Upgrade() {
 
             {/* Grid de Recursos */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
-              <div className="text-center">
-                <p className="text-2xl font-bold">{isPro ? '∞' : limiteDeclaracoes}</p>
+               <div className="text-center">
+                <p className="text-2xl font-bold">{isPro ? '3+' : '1'}</p>
                 <p className="text-xs text-muted-foreground">Declarações</p>
               </div>
               <div className="text-center">
@@ -138,8 +138,8 @@ export default function Upgrade() {
                 <p className="text-xs text-muted-foreground">Usuários</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold">{isPro ? '∞' : '5'}</p>
-                <p className="text-xs text-muted-foreground">{isPro ? 'Storage' : 'GB'}</p>
+                <p className="text-2xl font-bold">{isPro ? '∞' : '500'}</p>
+                <p className="text-xs text-muted-foreground">{isPro ? 'Storage' : 'MB'}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold">{isPro ? '✓' : '—'}</p>
