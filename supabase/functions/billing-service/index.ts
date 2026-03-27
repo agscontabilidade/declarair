@@ -205,6 +205,14 @@ async function createSubscription(
     }
   }
 
+  // Auto-register webhook if not already done
+  try {
+    await registerWebhook(escritorio);
+    console.log("Webhook auto-registered for escritorio:", escritorio.id);
+  } catch (webhookErr) {
+    console.error("Failed to auto-register webhook (non-blocking):", webhookErr);
+  }
+
   return {
     subscriptionId: subscription.id,
     plano: body.plano,
