@@ -223,8 +223,8 @@ export default function Index() {
             <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto text-left">
               {painPoints.map((p) => (
                 <div key={p.text} className="flex items-start gap-4 glass-card-strong rounded-xl p-5 hover:scale-[1.03] transition-transform backdrop-blur-xl">
-                  <div className="h-10 w-10 rounded-full bg-destructive/15 flex items-center justify-center shrink-0 mt-0.5">
-                    <p.icon className="h-5 w-5 text-destructive" />
+                  <div className="h-12 w-12 shrink-0 mt-0.5">
+                    <LottieIcon url={p.lottie} className="h-12 w-12" />
                   </div>
                   <p className="text-base text-foreground font-medium leading-relaxed">{p.text}</p>
                 </div>
@@ -234,6 +234,14 @@ export default function Index() {
             <p className="mt-14 text-primary-foreground/70 text-xl italic max-w-2xl mx-auto font-medium">
               "Enquanto você organiza documento, outro contador está faturando."
             </p>
+
+            <div className="mt-10">
+              <Link to="/cadastro">
+                <Button size="lg" className="text-lg px-10 h-14 shadow-xl shadow-accent/30 font-bold uppercase tracking-wide rounded-lg bg-accent hover:bg-accent/90 text-accent-foreground">
+                  Resolver isso agora <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </Section>
