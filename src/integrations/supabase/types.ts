@@ -1486,6 +1486,7 @@ export type Database = {
           id: string
           nome: string
           papel: string
+          preferencias_notificacao: Json | null
           telefone: string | null
         }
         Insert: {
@@ -1497,6 +1498,7 @@ export type Database = {
           id: string
           nome: string
           papel?: string
+          preferencias_notificacao?: Json | null
           telefone?: string | null
         }
         Update: {
@@ -1508,6 +1510,7 @@ export type Database = {
           id?: string
           nome?: string
           papel?: string
+          preferencias_notificacao?: Json | null
           telefone?: string | null
         }
         Relationships: [
