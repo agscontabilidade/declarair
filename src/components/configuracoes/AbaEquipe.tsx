@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UserPlus, Copy, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
+import { formatarPapel } from '@/lib/formatters';
 
 type Usuario = Tables<'usuarios'>;
 
@@ -50,19 +51,19 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg">Equipe</CardTitle>
-              <CardDescription>Gerencie os colaboradores do escritório</CardDescription>
+              <CardDescription>Gerencie os profissionais contábeis do escritório</CardDescription>
             </div>
             {isDono && (
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm">
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Convidar Colaborador
+                    Convidar Profissional
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Convidar Novo Colaborador</DialogTitle>
+                    <DialogTitle>Convidar Novo Profissional Contábil</DialogTitle>
                     <DialogDescription>
                       Envie um convite para adicionar um novo membro à equipe
                     </DialogDescription>
@@ -107,7 +108,7 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                     <TableCell className="font-medium">{u.nome}</TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{u.papel === 'dono' ? 'Dono' : 'Colaborador'}</Badge>
+                      <Badge variant="outline">{formatarPapel(u.papel)}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge className={u.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-muted text-muted-foreground'}>
@@ -121,7 +122,7 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              if (confirm('Tem certeza que deseja desativar este colaborador?')) {
+                              if (confirm('Tem certeza que deseja desativar este profissional?')) {
                                 removerColaborador.mutate(u.id);
                               }
                             }}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
+import { formatarPapel } from '@/lib/formatters';
 import { useUsageStatus } from '@/hooks/useUsageStatus';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
@@ -41,7 +42,7 @@ export function AppSidebar() {
   const { percentual, level, usadas, limite } = useUsageStatus();
 
   const initials = profile.nome?.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?';
-  const papel = profile.papel === 'dono' ? 'Dono' : 'Colaborador';
+  const papel = formatarPapel(profile.papel || 'colaborador');
 
   return (
     <ShadcnSidebar collapsible="icon" className="border-r-0 bg-sidebar">
