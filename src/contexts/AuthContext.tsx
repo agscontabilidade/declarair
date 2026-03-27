@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,11 +21,19 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
+const emptyProfile: UserProfile = {
+  escritorioId: null,
+  papel: null,
+  nome: null,
+  clienteId: null,
+  onboardingCompleto: null,
+};
+
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   userType: null,
-  profile: { escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null },
+  profile: emptyProfile,
   loading: true,
   signOut: async () => {},
 });
@@ -34,16 +42,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [userType, setUserType] = useState<UserType>(null);
-  const [profile, setProfile] = useState<UserProfile>({
-    escritorioId: null,
-    papel: null,
-    nome: null,
-    clienteId: null,
-    onboardingCompleto: null,
-  });
+  const [profile, setProfile] = useState<UserProfile>(emptyProfile);
   const [loading, setLoading] = useState(true);
 
-  async function loadProfile(currentUser: User) {
+  const loadProfile = useCallback(async (currentUser: User) => {
     try {
       // Check if is contador
       const { data: usuario } = await supabase
@@ -94,41 +96,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setUserType(null);
-      setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null });
+      setProfile(emptyProfile);
     } catch (error) {
       console.error('[AuthContext] Load profile error:', error);
       setUserType(null);
-      setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null });
+      setProfile(emptyProfile);
     }
-  }
+  }, []);
 
   useEffect(() => {
+    // 1. Set up listener FIRST (non-blocking — no await inside callback)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         console.log('[AuthContext] Auth event:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (event === 'SIGNED_IN' && newSession?.user) {
           setLoading(true);
-          try {
-            await loadProfile(newSession.user);
-          } catch (error) {
-            console.error('[AuthContext] Error loading profile:', error);
-          } finally {
-            setLoading(false);
-          }
+          // Fire-and-forget: do NOT await here to avoid blocking the auth lock
+          loadProfile(newSession.user).finally(() => setLoading(false));
         } else if (event === 'SIGNED_OUT') {
           setUserType(null);
-          setProfile({ escritorioId: null, papel: null, nome: null, clienteId: null, onboardingCompleto: null });
+          setProfile(emptyProfile);
           setLoading(false);
         } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
           // Silently refresh profile without loading state
-          await loadProfile(newSession.user);
+          loadProfile(newSession.user);
         }
       }
     );
 
+    // 2. Then check for existing session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
@@ -140,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [loadProfile]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
