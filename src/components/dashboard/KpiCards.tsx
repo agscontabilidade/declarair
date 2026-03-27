@@ -30,7 +30,7 @@ export function KpiCards({ data, isLoading }: { data?: KpiData; isLoading: boole
               {isLoading ? (
                 <Skeleton className="h-8 w-16 mt-1" />
               ) : (
-                <p className="text-2xl font-bold font-display tabular-nums">{data?.[kpi.key] ?? 0}</p>
+                <p className="text-xl sm:text-2xl font-bold font-display tabular-nums">{data?.[kpi.key] ?? 0}</p>
               )}
             </div>
           </CardContent>

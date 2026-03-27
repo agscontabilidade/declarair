@@ -100,5 +100,8 @@ export function ClientesTable({ clientes, isLoading }: { clientes: Cliente[]; is
         })}
       </TableBody>
     </Table>
+        </div>
+      </div>
+    </div>
   );
 }
