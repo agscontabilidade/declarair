@@ -183,3 +183,30 @@
     min-height: 36px;
   }
 }
+
+/* Interactive element transitions */
+button, a, [role="button"] {
+  transition: all 0.2s ease;
+}
+
+/* Focus ring personalizado */
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+}
+
+/* Disabled state */
+[disabled],
+[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading pulse utility */
+.loading-pulse {
+  animation: loading-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes loading-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
