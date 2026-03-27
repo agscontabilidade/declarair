@@ -18,7 +18,7 @@ const kpiConfig = [
 
 export function KpiCards({ data, isLoading }: { data?: KpiData; isLoading: boolean }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {kpiConfig.map((kpi) => (
         <Card key={kpi.key} className="shadow-sm border-border/50">
           <CardContent className="flex items-center gap-4 p-5">
