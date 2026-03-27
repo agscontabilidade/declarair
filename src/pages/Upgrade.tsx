@@ -168,9 +168,9 @@ export default function Upgrade() {
                     </div>
                     <div>
                       <CardTitle>Faça Upgrade para Pro</CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        Declarações ilimitadas e muito mais
-                      </p>
+                       <p className="text-sm text-muted-foreground">
+                        Sistema completo com 3 declarações inclusas
+                       </p>
                     </div>
                   </div>
                 </CardHeader>
