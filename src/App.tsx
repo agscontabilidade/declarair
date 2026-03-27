@@ -43,6 +43,7 @@ import NotFound from "./pages/NotFound";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 import PoliticaLGPD from "./pages/PoliticaLGPD";
+import Unsubscribe from "./pages/Unsubscribe";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="/planos" element={<Planos />} />
               <Route path="/convite-colaborador/:token" element={<ConviteColaborador />} />
               <Route path="/cadastro-cliente/:token" element={<CadastroCliente />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
 
               {/* Contador routes - billing gated */}
               <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><BillingGate><Dashboard /></BillingGate></ProtectedRoute>} />
