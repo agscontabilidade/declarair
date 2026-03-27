@@ -9,7 +9,7 @@ import { AbaDocumentos } from '@/components/cliente-perfil/AbaDocumentos';
 import { SecaoFormularioIR } from '@/components/declaracao/SecaoFormularioIR';
 import { SecaoResultado } from '@/components/declaracao/SecaoResultado';
 import { SecaoNotas } from '@/components/declaracao/SecaoNotas';
-import { SecaoCalculoIR } from '@/components/declaracao/SecaoCalculoIR';
+
 import { SecaoChat } from '@/components/declaracao/SecaoChat';
 import { SecaoTimeline } from '@/components/declaracao/SecaoTimeline';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
