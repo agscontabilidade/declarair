@@ -1,59 +1,69 @@
-import { BarChart3, Users, FileText, CheckCircle2, TrendingUp, Clock } from 'lucide-react';
-import heroPerson from '@/assets/hero-person.jpg';
+import mockupDashboard from '@/assets/mockup-dashboard.jpg';
+import mockupClients from '@/assets/mockup-clients.jpg';
+import mockupPortal from '@/assets/mockup-portal.jpg';
 
 export default function HeroMockup() {
   return (
-    <div className="relative w-full h-[500px] lg:h-[560px]">
-      {/* Person as the MAIN element — large, prominent */}
-      <div className="absolute inset-0 rounded-3xl overflow-hidden">
-        <img
-          src={heroPerson}
-          alt="Contador usando notebook"
-          className="w-full h-full object-cover object-top"
-          width={960}
-          height={640}
-        />
-        {/* Subtle gradient only at bottom for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/30 to-transparent" />
-      </div>
-
-      {/* Small floating KPI card — top right */}
-      <div className="absolute top-6 right-4 lg:right-6 glass-card-strong rounded-xl mockup-shadow animate-float px-3 py-2.5 z-10">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-success/15 flex items-center justify-center">
-            <TrendingUp className="h-3.5 w-3.5 text-success" />
+    <div className="relative w-full flex items-center justify-center py-8 lg:py-12">
+      {/* Left card — tilted, behind */}
+      <div className="absolute left-0 sm:left-4 lg:left-0 top-8 w-[55%] sm:w-[48%] z-10 -rotate-6 hover:-rotate-3 transition-transform duration-500">
+        <div className="rounded-xl overflow-hidden shadow-2xl border border-white/20">
+          <div className="bg-foreground/90 h-6 flex items-center gap-1.5 px-3">
+            <div className="h-2.5 w-2.5 rounded-full bg-destructive/80" />
+            <div className="h-2.5 w-2.5 rounded-full bg-warning/80" />
+            <div className="h-2.5 w-2.5 rounded-full bg-success/80" />
           </div>
-          <div>
-            <p className="font-display font-bold text-foreground text-xs">+34%</p>
-            <p className="text-[8px] text-muted-foreground">produtividade</p>
-          </div>
+          <img
+            src={mockupClients}
+            alt="Perfil do cliente"
+            className="w-full h-auto object-cover"
+            loading="lazy"
+            width={1280}
+            height={800}
+          />
         </div>
       </div>
 
-      {/* Small floating status card — bottom left */}
-      <div className="absolute bottom-10 left-4 lg:left-6 glass-card-strong rounded-xl mockup-shadow animate-float-delayed px-3 py-2.5 z-10">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-accent/15 flex items-center justify-center">
-            <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
+      {/* Center card — main, on top */}
+      <div className="relative z-30 w-[70%] sm:w-[60%] hover:scale-[1.02] transition-transform duration-500">
+        <div className="rounded-xl overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] border border-white/20">
+          <div className="bg-foreground/90 h-7 flex items-center gap-1.5 px-3">
+            <div className="h-2.5 w-2.5 rounded-full bg-destructive/80" />
+            <div className="h-2.5 w-2.5 rounded-full bg-warning/80" />
+            <div className="h-2.5 w-2.5 rounded-full bg-success/80" />
           </div>
-          <div>
-            <p className="font-display font-bold text-foreground text-xs">189</p>
-            <p className="text-[8px] text-muted-foreground">transmitidas</p>
-          </div>
+          <img
+            src={mockupDashboard}
+            alt="Dashboard DeclaraIR"
+            className="w-full h-auto object-cover"
+            width={1280}
+            height={800}
+          />
+        </div>
+        {/* Floating badge */}
+        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 glass-card-strong rounded-lg px-4 py-2 mockup-shadow animate-float z-40">
+          <p className="font-display font-bold text-foreground text-sm whitespace-nowrap">
+            ✨ +34% produtividade
+          </p>
         </div>
       </div>
 
-      {/* Small floating time card — bottom right */}
-      <div className="absolute bottom-28 right-4 lg:right-8 glass-card-strong rounded-xl mockup-shadow animate-float-slow px-3 py-2.5 z-10">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-warning/15 flex items-center justify-center">
-            <Clock className="h-3.5 w-3.5 text-warning" />
+      {/* Right card — tilted, behind */}
+      <div className="absolute right-0 sm:right-4 lg:right-0 top-8 w-[55%] sm:w-[48%] z-20 rotate-6 hover:rotate-3 transition-transform duration-500">
+        <div className="rounded-xl overflow-hidden shadow-2xl border border-white/20">
+          <div className="bg-foreground/90 h-6 flex items-center gap-1.5 px-3">
+            <div className="h-2.5 w-2.5 rounded-full bg-destructive/80" />
+            <div className="h-2.5 w-2.5 rounded-full bg-warning/80" />
+            <div className="h-2.5 w-2.5 rounded-full bg-success/80" />
           </div>
-          <div>
-            <p className="font-display font-bold text-foreground text-xs">-85%</p>
-            <p className="text-[8px] text-muted-foreground">tempo de coleta</p>
-          </div>
+          <img
+            src={mockupPortal}
+            alt="Portal do cliente"
+            className="w-full h-auto object-cover"
+            loading="lazy"
+            width={1280}
+            height={800}
+          />
         </div>
       </div>
     </div>
