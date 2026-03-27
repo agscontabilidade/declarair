@@ -44,6 +44,7 @@ import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 import PoliticaLGPD from "./pages/PoliticaLGPD";
 import Unsubscribe from "./pages/Unsubscribe";
+import SobreNos from "./pages/SobreNos";
 
 const queryClient = new QueryClient();
 
