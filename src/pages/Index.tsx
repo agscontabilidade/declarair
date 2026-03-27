@@ -204,15 +204,15 @@ export default function Index() {
                 </a>
               </div>
               {/* Trust badges */}
-              <div className="mt-8 flex items-center gap-6 justify-center lg:justify-start text-muted-foreground">
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 justify-center lg:justify-start text-muted-foreground">
                 <div className="flex items-center gap-1.5 text-xs">
-                  <Lock className="h-3.5 w-3.5" /> Dados criptografados
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Sem cartão de crédito
                 </div>
                 <div className="flex items-center gap-1.5 text-xs">
-                  <Monitor className="h-3.5 w-3.5" /> 100% Web
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> 3 declarações grátis
                 </div>
                 <div className="flex items-center gap-1.5 text-xs">
-                  <Smartphone className="h-3.5 w-3.5" /> Responsivo
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Cancele quando quiser
                 </div>
               </div>
             </div>
