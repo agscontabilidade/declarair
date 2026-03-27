@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
@@ -8,6 +8,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, allowedType }: ProtectedRouteProps) {
   const { session, userType, profile, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -27,8 +28,8 @@ export function ProtectedRoute({ children, allowedType }: ProtectedRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
-  // Block contador from dashboard if onboarding not complete
-  if (allowedType === 'contador' && profile.onboardingCompleto === false) {
+  // Block contador from dashboard if onboarding not complete (but allow /onboarding itself)
+  if (allowedType === 'contador' && profile.onboardingCompleto === false && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
 
