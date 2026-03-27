@@ -229,7 +229,7 @@ export default function Upgrade() {
           )}
 
           {/* Comprar Declarações Extras */}
-          {isFree && (
+           {(
             <TabsContent value="extras" className="mt-6">
               <Card>
                 <CardHeader>
