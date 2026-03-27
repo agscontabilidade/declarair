@@ -81,9 +81,9 @@ const objections = [
 ];
 
 const faqs = [
-  { q: 'Preciso de cartão de crédito para começar?', a: 'Não. O plano Free é gratuito, sem cartão, sem pegadinha. Teste com 3 declarações completas.' },
-  { q: 'Como funciona a malha fina gratuita?', a: 'Cruzamos dados automaticamente via BrasilAPI antes da transmissão. Se tiver inconsistência, você é alertado antes de dar problema.' },
-  { q: 'Qual a diferença entre Free e Pro?', a: 'Free: 3 declarações, 1 usuário, 5GB. Pro (R$ 49,90/mês): declarações ilimitadas, até 5 usuários, storage ilimitado e acesso a Recursos Extras.' },
+   { q: 'Preciso de cartão de crédito para começar?', a: 'Não. O plano Free é gratuito, sem cartão, sem pegadinha. Teste com 1 declaração completa.' },
+  { q: 'Como funciona a malha fina?', a: 'Disponível no plano Pro. Cruzamos dados automaticamente via BrasilAPI antes da transmissão. Se tiver inconsistência, você é alertado antes de dar problema.' },
+  { q: 'Qual a diferença entre Free e Pro?', a: 'Free: 1 declaração, 1 usuário, 500 MB, chat e kanban. Pro (R$ 29,90/mês): 3 declarações inclusas + extras por R$ 9,90, até 5 usuários, storage ilimitado, malha fina, calculadora IR e suporte prioritário.' },
   { q: 'O que são Recursos Extras?', a: 'Módulos opcionais: WhatsApp (R$ 19,90), Portal do Cliente (R$ 14,90), API Pública (R$ 29,90), Whitelabel (R$ 9,90), Usuário Extra (R$ 9,90).' },
   { q: 'Meus clientes precisam instalar algo?', a: 'Não. Portal 100% web. Funciona no celular e computador. Basta enviar o link.' },
   { q: 'Os dados estão seguros?', a: 'Criptografia de ponta a ponta, isolamento por escritório e políticas de acesso em nível de linha em todas as tabelas.' },
