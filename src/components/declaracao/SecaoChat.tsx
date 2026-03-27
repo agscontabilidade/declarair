@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Send, Wand2 } from 'lucide-react';
+import { MessageCircle, Send, Wand2, Check, CheckCheck } from 'lucide-react';
 import { useChat } from '@/hooks/useChat';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -84,9 +84,20 @@ export function SecaoChat({ declaracaoId, escritorioId, clienteId }: Props) {
                       : 'bg-muted text-foreground rounded-bl-sm'
                   }`}>
                     <p className="whitespace-pre-wrap break-words">{msg.conteudo}</p>
-                    <p className={`text-[10px] mt-1 ${isMe ? 'text-accent-foreground/60' : 'text-muted-foreground'}`}>
-                      {new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className={`text-[10px] ${isMe ? 'text-accent-foreground/60' : 'text-muted-foreground'}`}>
+                        {new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {isMe && msg.remetente_tipo === 'contador' && (
+                        <span className={`text-[10px] ${isMe ? 'text-accent-foreground/60' : 'text-muted-foreground'}`}>
+                          {(msg as any).enviado_whatsapp ? (
+                            <CheckCheck className="h-3 w-3 inline text-green-400" title="Enviado no WhatsApp" />
+                          ) : (
+                            <Check className="h-3 w-3 inline" title="Apenas plataforma" />
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -138,6 +149,11 @@ export function SecaoChat({ declaracaoId, escritorioId, clienteId }: Props) {
             <Send className="h-4 w-4" />
           </Button>
         </div>
+        {senderType === 'contador' && (
+          <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
+            💡 Mensagens são enviadas para o WhatsApp do cliente automaticamente (se ativo)
+          </p>
+        )}
       </CardContent>
     </Card>
   );
