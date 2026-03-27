@@ -24,7 +24,7 @@ export default function DeclaracaoDetalhe() {
   const queryClient = useQueryClient();
   const [transmitidaModalOpen, setTransmitidaModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
-  const [savingForma, setSavingForma] = useState(false);
+  
 
   const handleChangeStatus = (newStatus: string) => {
     if (newStatus === 'transmitida') {
