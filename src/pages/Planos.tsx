@@ -136,9 +136,9 @@ export default function Planos() {
                     ))}
                   </div>
 
-                  <div className="pt-4 border-t">
+                   <div className="pt-4 border-t">
                     <p className="text-sm text-muted-foreground">
-                      💡 Declarações extras: <strong>R$ 9,90/cada</strong>
+                      💡 Faça upgrade para desbloquear malha fina, calculadora IR e mais
                     </p>
                   </div>
                 </div>
