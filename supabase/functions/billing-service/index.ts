@@ -281,17 +281,25 @@ async function registerWebhook(escritorio: any) {
     return { success: true, message: "Webhook já registrado", webhook: alreadyRegistered };
   }
 
+  const webhookPayload: any = {
+    name: "DeclaraIR Billing Webhook",
+    url: WEBHOOK_URL,
+    email: escritorio.email || "",
+    enabled: true,
+    interrupted: false,
+    sendType: "SEQUENTIALLY",
+    events: WEBHOOK_EVENTS,
+  };
+
+  // Include auth token for webhook validation
+  const webhookToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
+  if (webhookToken) {
+    webhookPayload.authToken = webhookToken;
+  }
+
   const webhook = await asaasRequest("/webhooks", {
     method: "POST",
-    body: JSON.stringify({
-      name: "DeclaraIR Billing Webhook",
-      url: WEBHOOK_URL,
-      email: escritorio.email || "",
-      enabled: true,
-      interrupted: false,
-      sendType: "SEQUENTIALLY",
-      events: WEBHOOK_EVENTS,
-    }),
+    body: JSON.stringify(webhookPayload),
   });
 
   return { success: true, message: "Webhook registrado com sucesso", webhook };
