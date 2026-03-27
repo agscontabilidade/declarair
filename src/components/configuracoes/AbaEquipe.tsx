@@ -51,7 +51,7 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg">Equipe</CardTitle>
-              <CardDescription>Gerencie os colaboradores do escritório</CardDescription>
+              <CardDescription>Gerencie os profissionais contábeis do escritório</CardDescription>
             </div>
             {isDono && (
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
