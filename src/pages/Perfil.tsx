@@ -347,7 +347,7 @@ export default function Perfil() {
                     <Shield className="h-5 w-5 text-accent" /> Permissões
                   </CardTitle>
                   <CardDescription>
-                    Nível de acesso: <Badge className={papelColors[papel]}>{papelLabels[papel] || papel}</Badge>
+                    Nível de acesso: <Badge className={PAPEL_COLORS[papel] || ''}>{formatarPapel(papel)}</Badge>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

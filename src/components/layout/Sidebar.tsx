@@ -42,7 +42,7 @@ export function AppSidebar() {
   const { percentual, level, usadas, limite } = useUsageStatus();
 
   const initials = profile.nome?.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?';
-  const papel = profile.papel === 'dono' ? 'Dono' : 'Colaborador';
+  const papel = formatarPapel(profile.papel || 'colaborador');
 
   return (
     <ShadcnSidebar collapsible="icon" className="border-r-0 bg-sidebar">

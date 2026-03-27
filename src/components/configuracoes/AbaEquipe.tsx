@@ -122,7 +122,7 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              if (confirm('Tem certeza que deseja desativar este colaborador?')) {
+                              if (confirm('Tem certeza que deseja desativar este profissional?')) {
                                 removerColaborador.mutate(u.id);
                               }
                             }}

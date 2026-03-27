@@ -57,3 +57,23 @@ export const STATUS_LABELS: Record<string, string> = {
   pagamento: 'Pagamento',
   nenhum: 'Nenhum',
 };
+
+export function formatarPapel(papel: string): string {
+  const papeis: Record<string, string> = {
+    dono: 'Responsável Técnico',
+    contador: 'Profissional Contábil',
+    admin: 'Gestor',
+    colaborador: 'Profissional Contábil',
+    cliente: 'Contribuinte',
+    operador: 'Operador',
+    administrador: 'Gestor',
+  };
+  return papeis[papel] || papel;
+}
+
+export const PAPEL_COLORS: Record<string, string> = {
+  dono: 'bg-accent text-accent-foreground',
+  administrador: 'bg-primary text-primary-foreground',
+  colaborador: 'bg-secondary text-secondary-foreground',
+  operador: 'bg-muted text-muted-foreground',
+};

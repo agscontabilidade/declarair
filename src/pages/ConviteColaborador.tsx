@@ -173,7 +173,7 @@ export default function ConviteColaborador() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-2" />
-          <CardTitle>Convite para Colaborador</CardTitle>
+          <CardTitle>Convite para Profissional Contábil</CardTitle>
           <CardDescription>
             Você foi convidado para a equipe de{' '}
             <strong>{convite.escritorio_nome || 'um escritório'}</strong>
