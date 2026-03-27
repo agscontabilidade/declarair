@@ -177,10 +177,12 @@ export default function Planos() {
                   </Link>
 
                   <div className="space-y-3 pt-4 border-t">
-                    {[
-                      { bold: true, text: 'Declarações ILIMITADAS', extra: ' ✨' },
+                     {[
+                      { bold: true, text: '3 declarações inclusas', extra: '' },
+                      { bold: true, text: 'Extras por R$ 9,90/cada', extra: '' },
                       { bold: false, text: 'Até 5 usuários simultâneos' },
                       { bold: false, text: 'Storage ilimitado' },
+                      { bold: false, text: 'Malha fina + Calculadora IR' },
                       { bold: false, text: 'Tudo do Free incluído' },
                       { bold: false, text: 'Suporte prioritário' },
                     ].map((item) => (
