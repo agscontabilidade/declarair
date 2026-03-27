@@ -175,7 +175,7 @@ export default function Index() {
             {/* Left */}
             <div className="flex-1 text-center lg:text-left max-w-xl lg:max-w-none">
               <Badge variant="secondary" className="mb-6 text-sm px-4 py-1.5 glass-card border-accent/20">
-                <Zap className="h-3.5 w-3.5 mr-1.5 text-accent" /> Temporada IRPF 2026
+                <Zap className="h-3.5 w-3.5 mr-1.5 text-accent" /> 🎉 Teste grátis com 3 declarações completas
               </Badge>
               <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-foreground leading-[1.1] tracking-tight">
                 Gerencie declarações{' '}
