@@ -89,11 +89,11 @@ export function SecaoChat({ declaracaoId, escritorioId, clienteId }: Props) {
                         {new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                       {isMe && msg.remetente_tipo === 'contador' && (
-                        <span className={`text-[10px] ${isMe ? 'text-accent-foreground/60' : 'text-muted-foreground'}`}>
+                        <span className={`text-[10px] ${isMe ? 'text-accent-foreground/60' : 'text-muted-foreground'}`} title={(msg as any).enviado_whatsapp ? 'Enviado no WhatsApp' : 'Apenas plataforma'}>
                           {(msg as any).enviado_whatsapp ? (
-                            <CheckCheck className="h-3 w-3 inline text-green-400" title="Enviado no WhatsApp" />
+                            <CheckCheck className="h-3 w-3 inline text-emerald-400" />
                           ) : (
-                            <Check className="h-3 w-3 inline" title="Apenas plataforma" />
+                            <Check className="h-3 w-3 inline" />
                           )}
                         </span>
                       )}
