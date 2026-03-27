@@ -261,15 +261,15 @@ export default function Planos() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {[
-                    { recurso: 'Declarações ativas', free: '3 CPFs', pro: 'Ilimitadas ✨' },
+                   {[
+                    { recurso: 'Declarações', free: '1', pro: '3 inclusas + extras' },
                     { recurso: 'Usuários simultâneos', free: '1', pro: '5' },
-                    { recurso: 'Storage', free: '5 GB', pro: 'Ilimitado' },
-                    { recurso: 'Malha fina', free: '✓', pro: '✓' },
-                    { recurso: 'Calculadora IR', free: '✓', pro: '✓' },
+                    { recurso: 'Storage', free: '500 MB', pro: 'Ilimitado' },
+                    { recurso: 'Malha fina', free: '✗', pro: '✓' },
+                    { recurso: 'Calculadora IR', free: '✗', pro: '✓' },
                     { recurso: 'Chat clientes', free: '✓', pro: '✓' },
-                    { recurso: 'Suporte', free: 'Email', pro: 'Prioritário' },
-                    { recurso: 'Declarações extras', free: 'R$ 9,90/cada', pro: 'Inclusas' },
+                    { recurso: 'Suporte', free: 'Chat', pro: 'Prioritário' },
+                    { recurso: 'Declarações extras', free: '—', pro: 'R$ 9,90/cada' },
                   ].map((row) => (
                     <tr key={row.recurso}>
                       <td className="py-3 px-4 font-medium text-sm">{row.recurso}</td>
