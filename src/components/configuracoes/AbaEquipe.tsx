@@ -58,7 +58,7 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                 <DialogTrigger asChild>
                   <Button size="sm">
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Convidar Colaborador
+                    Convidar Profissional
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
