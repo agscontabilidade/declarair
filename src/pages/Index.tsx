@@ -717,7 +717,7 @@ export default function Index() {
             <div>
               <h4 className="font-display font-semibold text-foreground text-base mb-4">Empresa</h4>
               <ul className="space-y-2.5 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Sobre nós</a></li>
+                <li><Link to="/sobre" className="hover:text-foreground transition-colors">Sobre nós</Link></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Blog</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Contato</a></li>
               </ul>
