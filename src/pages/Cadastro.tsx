@@ -137,10 +137,20 @@ export default function Cadastro() {
         title: 'Conta criada com sucesso!',
         description: 'Vamos configurar seu escritório agora.',
       });
-      // Se auto-confirm está ativo, sessão já existe → ir direto ao onboarding
+      // Se auto-confirm está ativo, sessão já existe → aplicar updates e ir ao onboarding
       // Senão, ir para login para confirmar email primeiro
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       if (currentSession) {
+        // Apply pending updates now that we have a session
+        if (pendingUpdates.telefone) {
+          await supabase.from('usuarios').update({ telefone: pendingUpdates.telefone }).eq('id', authData.user.id);
+        }
+        if (pendingUpdates.plano !== 'gratuito') {
+          const { data: usuario } = await supabase.from('usuarios').select('escritorio_id').eq('id', authData.user.id).single();
+          if (usuario?.escritorio_id) {
+            await supabase.from('escritorios').update({ plano: pendingUpdates.plano }).eq('id', usuario.escritorio_id);
+          }
+        }
         navigate('/onboarding', { replace: true });
       } else {
         toast({
