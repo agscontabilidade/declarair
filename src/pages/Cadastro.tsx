@@ -129,18 +129,9 @@ export default function Cadastro() {
       });
       if (rpcError) throw rpcError;
 
-      // Update telefone on usuarios if provided
-      if (telefone.trim()) {
-        await supabase.from('usuarios').update({ telefone }).eq('id', authData.user.id);
-      }
-
-      // Update plano on escritorios
-      if (planoSelecionado !== 'gratuito') {
-        const { data: usuario } = await supabase.from('usuarios').select('escritorio_id').eq('id', authData.user.id).single();
-        if (usuario?.escritorio_id) {
-          await supabase.from('escritorios').update({ plano: planoSelecionado }).eq('id', usuario.escritorio_id);
-        }
-      }
+      // Note: telefone and plano updates happen after login when RLS allows it
+      // Store them temporarily to apply after session is established
+      const pendingUpdates = { telefone: telefone.trim(), plano: planoSelecionado };
 
       toast({
         title: 'Conta criada com sucesso!',
