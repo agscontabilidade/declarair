@@ -178,17 +178,18 @@ export default function Index() {
                 <Zap className="h-3.5 w-3.5 mr-1.5 text-accent" /> 🎉 Teste grátis com 3 declarações completas
               </Badge>
               <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-foreground leading-[1.1] tracking-tight">
-                Gerencie declarações{' '}
+                Simplifique o IR do seu{' '}
                 <span className="relative">
-                  <span className="text-accent">IRPF</span>
+                  <span className="text-accent">Escritório Contábil</span>
                   <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" fill="none">
                     <path d="M1 5.5Q50 1 100 4T199 3" stroke="hsl(var(--accent))" strokeWidth="2" strokeLinecap="round" />
                   </svg>
-                </span>{' '}
-                como nunca antes
+                </span>
               </h1>
               <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-lg">
-                Plataforma completa para escritórios de contabilidade: do checklist inteligente à transmissão, com portal do cliente whitelabel e monitoramento de malha fina.
+                Plataforma completa para gestão de Imposto de Renda.
+                Malha fina gratuita, calculadora integrada, chat com clientes
+                e muito mais. Comece grátis hoje.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 lg:justify-start justify-center">
                 <Link to="/cadastro">
