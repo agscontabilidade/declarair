@@ -17,28 +17,16 @@ import {
 
 const PLANOS = [
   {
-    id: 'gratuito', nome: 'Gratuito', preco: 'R$ 0', periodo: '/mês', icon: Zap,
-    declaracoes: '5', usuarios: '1',
-    features: ['Dashboard Kanban', 'Portal do Cliente', 'Checklist Dinâmico'],
+    id: 'gratuito', nome: 'Free', preco: 'R$ 0', periodo: '/mês', icon: Zap,
+    declaracoes: '3', usuarios: '1',
+    features: ['Dashboard Kanban', 'Calculadora IR', 'Chat com Clientes', 'Notificações por Email'],
     popular: false,
   },
   {
-    id: 'starter', nome: 'Starter', preco: 'R$ 29,90', periodo: '/mês', icon: Rocket,
-    declaracoes: '10', usuarios: '1',
-    features: ['Tudo do Gratuito', 'Chat Integrado', 'Cobranças Pix/Boleto', 'Templates Email'],
-    popular: false,
-  },
-  {
-    id: 'profissional', nome: 'Profissional', preco: 'R$ 49,90', periodo: '/mês', icon: Crown,
-    declaracoes: '20', usuarios: '5',
-    features: ['Tudo do Starter', 'Whitelabel Completo', 'Malha Fina', 'Relatórios', 'Drive'],
+    id: 'pro', nome: 'Pro', preco: 'R$ 49,90', periodo: '/mês', icon: Crown,
+    declaracoes: 'Ilimitadas', usuarios: '5',
+    features: ['Tudo do Free', 'Declarações Ilimitadas', 'Storage Ilimitado', 'Suporte Prioritário', 'Múltiplos Usuários'],
     popular: true,
-  },
-  {
-    id: 'enterprise', nome: 'Enterprise', preco: 'Sob consulta', periodo: '', icon: Building2,
-    declaracoes: 'Ilimitadas', usuarios: 'Ilimitados',
-    features: ['Tudo do Profissional', 'API Personalizada', 'Suporte Dedicado', 'Multi-escritório'],
-    popular: false,
   },
 ];
 
