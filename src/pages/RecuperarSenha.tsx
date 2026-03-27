@@ -19,7 +19,7 @@ export default function RecuperarSenha() {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/redefinir-senha`,
+        redirectTo: `${PORTAL_BASE_URL}/redefinir-senha`,
       });
       if (error) throw error;
       setEnviado(true);
