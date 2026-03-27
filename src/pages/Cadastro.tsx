@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { UpsellModal } from '@/components/cadastro/UpsellModal';
 import {
-  FileText, Check, ArrowRight, ArrowLeft, Zap, Crown, Building2, Rocket,
+  FileText, Check, ArrowRight, ArrowLeft, Zap, Crown,
   CheckCircle2, Eye, EyeOff, Pencil
 } from 'lucide-react';
 
