@@ -9,7 +9,7 @@ import { AbaDocumentos } from '@/components/cliente-perfil/AbaDocumentos';
 import { SecaoFormularioIR } from '@/components/declaracao/SecaoFormularioIR';
 import { SecaoResultado } from '@/components/declaracao/SecaoResultado';
 import { SecaoNotas } from '@/components/declaracao/SecaoNotas';
-import { SecaoCalculoIR } from '@/components/declaracao/SecaoCalculoIR';
+
 import { SecaoChat } from '@/components/declaracao/SecaoChat';
 import { SecaoTimeline } from '@/components/declaracao/SecaoTimeline';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
@@ -24,7 +24,7 @@ export default function DeclaracaoDetalhe() {
   const queryClient = useQueryClient();
   const [transmitidaModalOpen, setTransmitidaModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
-  const [savingForma, setSavingForma] = useState(false);
+  
 
   const handleChangeStatus = (newStatus: string) => {
     if (newStatus === 'transmitida') {
@@ -81,23 +81,8 @@ export default function DeclaracaoDetalhe() {
     });
   };
 
-  const handleSaveForma = async (forma: string) => {
-    if (!id) return;
-    setSavingForma(true);
-    try {
-      const { error } = await supabase
-        .from('declaracoes')
-        .update({ forma_tributacao: forma })
-        .eq('id', id);
-      if (error) throw error;
-      toast.success(`Forma de tributação definida: ${forma === 'completa' ? 'Completa' : 'Simplificada'}`);
-      queryClient.invalidateQueries({ queryKey: ['declaracao', id] });
-    } catch {
-      toast.error('Erro ao salvar forma de tributação');
-    } finally {
-      setSavingForma(false);
-    }
-  };
+
+
 
   if (hook.isError) {
     return (
@@ -132,10 +117,9 @@ export default function DeclaracaoDetalhe() {
         />
 
         <Tabs defaultValue="documentos" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
             <TabsTrigger value="formulario">Formulário</TabsTrigger>
-            <TabsTrigger value="calculo">Cálculo IR</TabsTrigger>
             <TabsTrigger value="resultado">Resultado</TabsTrigger>
             <TabsTrigger value="chat">Mensagens</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
@@ -160,14 +144,8 @@ export default function DeclaracaoDetalhe() {
             />
           </TabsContent>
 
-          <TabsContent value="calculo" className="mt-4">
-            <SecaoCalculoIR
-              formulario={hook.formularioIR}
-              declaracao={hook.declaracao}
-              onSaveForma={handleSaveForma}
-              savingForma={savingForma}
-            />
-          </TabsContent>
+
+
 
           <TabsContent value="resultado" className="mt-4 space-y-6">
             <SecaoResultado
