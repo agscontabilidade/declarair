@@ -106,7 +106,7 @@ export default function Cadastro() {
 
   function handleUpsellUpgrade() {
     setShowUpsell(false);
-    setPlanoSelecionado('profissional');
+    setPlanoSelecionado('pro');
     setStep(2);
   }
 
