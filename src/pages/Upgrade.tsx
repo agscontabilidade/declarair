@@ -1,163 +1,316 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, ShieldAlert, TrendingUp, FileText, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { useBilling } from '@/hooks/useBilling';
-import { PlanosCards } from '@/components/planos/PlanosCards';
-import { AddonsMarketplace } from '@/components/planos/AddonsMarketplace';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  ArrowRight,
+  Check,
+  Crown,
+  Zap,
+  TrendingUp,
+  AlertCircle,
+  Sparkles,
+} from 'lucide-react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useBilling } from '@/hooks/useBilling';
+import { useDeclaracoesExtras } from '@/hooks/useDeclaracoesExtras';
+import { AddonsMarketplace } from '@/components/planos/AddonsMarketplace';
 
 export default function Upgrade() {
   const navigate = useNavigate();
-  const { planoAtual, declaracoesCount, limiteDeclaracoes, atingiuLimiteDeclaracoes } = useBilling();
+  const {
+    planoAtual,
+    declaracoesCount,
+    declaracoesRestantes,
+    atingiuLimiteDeclaracoes,
+    limiteDeclaracoes,
+  } = useBilling();
+  const { comprarDeclaracao } = useDeclaracoesExtras();
+  const [quantidade, setQuantidade] = useState(1);
 
-  const limite = limiteDeclaracoes ?? 3;
-  const percentual = limite > 0 ? Math.min((declaracoesCount / limite) * 100, 100) : 0;
-  const proximoDoLimite = percentual > 80 && !atingiuLimiteDeclaracoes;
+  const isFree = ['free', 'gratuito'].includes(planoAtual?.toLowerCase() ?? '');
   const isPro = ['pro', 'profissional'].includes(planoAtual?.toLowerCase() ?? '');
+
+  const progressoDeclaracoes = limiteDeclaracoes
+    ? Math.min((declaracoesCount / limiteDeclaracoes) * 100, 100)
+    : 0;
 
   return (
     <DashboardLayout>
       <div className="max-w-5xl mx-auto space-y-8 pb-12">
         {/* Header */}
-        <div className="text-center space-y-3">
-          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-            Escale seu escritório sem limites
-          </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Continue atendendo clientes sem interrupção. Escolha o plano ideal para o seu crescimento.
+        <div>
+          <h1 className="text-3xl font-bold font-display mb-2">Planos e Recursos</h1>
+          <p className="text-muted-foreground">
+            Gerencie seu plano, recursos adicionais e uso da plataforma
           </p>
         </div>
 
-        {/* Bloqueio */}
-        {atingiuLimiteDeclaracoes && !isPro && (
-          <Card className="border-destructive bg-destructive/5 shadow-lg animate-in fade-in slide-in-from-top-2">
-            <CardContent className="p-6 md:p-8 text-center space-y-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mx-auto">
-                <ShieldAlert className="h-8 w-8 text-destructive" />
-              </div>
-              <h2 className="text-2xl font-bold text-destructive">
-                Você atingiu seu limite de declarações
-              </h2>
-              <p className="text-muted-foreground max-w-lg mx-auto">
-                Seu escritório já utilizou todas as <strong>{limite}</strong> declarações disponíveis no plano Free. 
-                Atualize agora para não perder clientes.
-              </p>
-              <Button
-                size="lg"
-                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground gap-2 text-lg px-8 py-6"
-                onClick={() => navigate('/checkout?plano=pro')}
-              >
-                Atualizar para Pro agora <ArrowRight className="h-5 w-5" />
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Barra de uso (apenas Free) */}
-        {!isPro && (
-          <Card className={`border ${atingiuLimiteDeclaracoes ? 'border-destructive/30' : proximoDoLimite ? 'border-amber-500/30 bg-amber-500/5' : 'border-accent/20 bg-accent/5'}`}>
-            <CardContent className="p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${atingiuLimiteDeclaracoes ? 'bg-destructive/10' : proximoDoLimite ? 'bg-amber-500/10' : 'bg-accent/10'}`}>
-                    <FileText className={`h-5 w-5 ${atingiuLimiteDeclaracoes ? 'text-destructive' : proximoDoLimite ? 'text-amber-600' : 'text-accent'}`} />
+        {/* Plano Atual */}
+        <Card className="border-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isFree ? (
+                  <div className="h-12 w-12 bg-muted rounded-xl flex items-center justify-center">
+                    <Zap className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Uso de declarações</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {declaracoesCount} <span className="text-base font-normal text-muted-foreground">de {limite}</span>
-                    </p>
+                ) : (
+                  <div className="h-12 w-12 bg-accent/15 rounded-xl flex items-center justify-center">
+                    <Crown className="h-6 w-6 text-accent" />
                   </div>
+                )}
+                <div>
+                  <CardTitle className="text-2xl">
+                    Plano {isPro ? 'Pro' : 'Free'}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {isFree ? 'Gratuito' : 'R$ 49,90/mês'}
+                  </p>
                 </div>
-                <Badge
-                  variant={atingiuLimiteDeclaracoes ? 'destructive' : 'secondary'}
-                  className={`text-sm px-3 py-1 ${proximoDoLimite && !atingiuLimiteDeclaracoes ? 'bg-amber-500/10 text-amber-700 border-amber-500/30' : ''}`}
-                >
-                  {Math.round(percentual)}% utilizado
-                </Badge>
               </div>
-              <Progress value={percentual} className={`h-3 ${atingiuLimiteDeclaracoes ? '[&>div]:bg-destructive' : proximoDoLimite ? '[&>div]:bg-amber-500' : ''}`} />
+              <Badge variant={isFree ? 'secondary' : 'default'} className="text-sm">
+                Ativo
+              </Badge>
+            </div>
+          </CardHeader>
 
-              {proximoDoLimite && (
-                <div className="flex items-start gap-3 mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-amber-800">Você está próximo do limite</p>
-                    <p className="text-sm text-amber-700">
-                      Evite parar sua operação. Faça upgrade agora e continue atendendo sem interrupção.
-                    </p>
-                  </div>
+          <CardContent className="space-y-6">
+            {/* Uso de Declarações */}
+            {isFree && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">Declarações Ativas</span>
+                  <span className="text-muted-foreground">
+                    {declaracoesCount} de {limiteDeclaracoes} usadas
+                  </span>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                <Progress value={progressoDeclaracoes} className="h-2" />
 
-        {/* Tabs: Planos + Addons */}
-        <Tabs defaultValue="planos">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-            <TabsTrigger value="planos">Planos Base</TabsTrigger>
-            <TabsTrigger value="addons">Recursos Extras</TabsTrigger>
+                {atingiuLimiteDeclaracoes && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Você atingiu o limite de {limiteDeclaracoes} declarações do plano Free
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {!atingiuLimiteDeclaracoes && declaracoesRestantes <= 1 && (
+                  <Alert>
+                    <TrendingUp className="h-4 w-4" />
+                    <AlertDescription>
+                      Restam apenas {declaracoesRestantes} declaração(ões) disponível(eis)
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            )}
+
+            {isPro && (
+              <div className="flex items-center gap-2 text-sm">
+                <Sparkles className="h-4 w-4 text-accent" />
+                <span className="text-accent font-medium">Declarações ilimitadas ativadas!</span>
+              </div>
+            )}
+
+            {/* Grid de Recursos */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+              <div className="text-center">
+                <p className="text-2xl font-bold">{isPro ? '∞' : limiteDeclaracoes}</p>
+                <p className="text-xs text-muted-foreground">Declarações</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">{isPro ? '5' : '1'}</p>
+                <p className="text-xs text-muted-foreground">Usuários</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">{isPro ? '∞' : '5'}</p>
+                <p className="text-xs text-muted-foreground">{isPro ? 'Storage' : 'GB'}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">{isPro ? '✓' : '—'}</p>
+                <p className="text-xs text-muted-foreground">Prioritário</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tabs */}
+        <Tabs defaultValue={isFree ? 'upgrade' : 'addons'}>
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            {isFree && <TabsTrigger value="upgrade">Upgrade</TabsTrigger>}
+            {isFree && <TabsTrigger value="extras">Declarações Extras</TabsTrigger>}
+            <TabsTrigger value="addons">Recursos Adicionais</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="planos" className="mt-8">
-            <PlanosCards onNavigate={(planoId) => navigate(`/checkout?plano=${planoId}`)} />
-          </TabsContent>
+          {/* Upgrade para Pro */}
+          {isFree && (
+            <TabsContent value="upgrade" className="mt-6">
+              <Card className="border-accent border-2">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 bg-accent/15 rounded-xl flex items-center justify-center">
+                      <Crown className="h-6 w-6 text-accent" />
+                    </div>
+                    <div>
+                      <CardTitle>Faça Upgrade para Pro</CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Declarações ilimitadas e muito mais
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
 
-          <TabsContent value="addons" className="mt-8">
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <p className="font-semibold text-sm">O que você ganha:</p>
+                      <div className="space-y-2">
+                        {[
+                          { bold: 'Declarações ilimitadas', text: ' - Sem limites de CPFs' },
+                          { bold: '5 usuários simultâneos', text: '' },
+                          { bold: 'Storage ilimitado', text: '' },
+                          { bold: 'Suporte prioritário', text: '' },
+                        ].map((item) => (
+                          <div key={item.bold} className="flex items-start gap-2">
+                            <Check className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+                            <span className="text-sm">
+                              <strong>{item.bold}</strong>{item.text}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 flex flex-col justify-center">
+                      <div className="text-center p-6 bg-accent/5 rounded-xl">
+                        <p className="text-sm text-muted-foreground mb-2">Por apenas</p>
+                        <p className="text-4xl font-bold text-accent">R$ 49,90</p>
+                        <p className="text-sm text-muted-foreground">/mês</p>
+                      </div>
+
+                      <Button
+                        size="lg"
+                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                        onClick={() => navigate('/checkout?plano=pro')}
+                      >
+                        Fazer Upgrade Agora
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+
+                      <p className="text-xs text-center text-muted-foreground">
+                        Cancele quando quiser. Sem taxas escondidas.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-muted-foreground text-center">
+                      💡 <strong>Economia:</strong> Com 5+ declarações/mês, o Pro já vale a pena!
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Comprar Declarações Extras */}
+          {isFree && (
+            <TabsContent value="extras" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Comprar Declarações Extras</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Adicione declarações sem fazer upgrade
+                  </p>
+                </CardHeader>
+
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">
+                          Quantidade de declarações
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setQuantidade(Math.max(1, quantidade - 1))}
+                          >
+                            -
+                          </Button>
+                          <div className="flex-1 text-center">
+                            <p className="text-3xl font-bold">{quantidade}</p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setQuantidade(quantidade + 1)}
+                          >
+                            +
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-muted rounded-lg space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Valor unitário:</span>
+                          <span className="font-medium">R$ 9,90</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Quantidade:</span>
+                          <span className="font-medium">{quantidade}</span>
+                        </div>
+                        <div className="pt-2 border-t flex justify-between">
+                          <span className="font-semibold">Total:</span>
+                          <span className="text-xl font-bold text-accent">
+                            R$ {(quantidade * 9.9).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 flex flex-col justify-center">
+                      <Button
+                        size="lg"
+                        onClick={() => comprarDeclaracao.mutate(quantidade)}
+                        disabled={comprarDeclaracao.isPending}
+                      >
+                        {comprarDeclaracao.isPending ? 'Processando...' : 'Comprar Agora'}
+                      </Button>
+
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription className="text-xs">
+                          Declarações extras são válidas por 30 dias e não acumulam. Será gerado um
+                          boleto/pix para pagamento.
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="pt-4 border-t">
+                        <p className="text-sm text-muted-foreground text-center">
+                          💡 <strong>Dica:</strong> Se você faz mais de 5 declarações/mês, o plano
+                          Pro sai mais barato!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Addons */}
+          <TabsContent value="addons" className="mt-6">
             <AddonsMarketplace />
           </TabsContent>
         </Tabs>
-
-        {/* Benefícios */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="bg-emerald-500/5 border-emerald-500/20">
-            <CardContent className="p-5 flex items-start gap-4">
-              <div className="p-2 rounded-lg bg-emerald-500/10 shrink-0">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Continue atendendo sem interrupção</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Com o Pro, seu escritório não precisa recusar clientes ou pausar operações durante a temporada de IR.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-destructive/5 border-destructive/20">
-            <CardContent className="p-5 flex items-start gap-4">
-              <div className="p-2 rounded-lg bg-destructive/10 shrink-0">
-                <AlertTriangle className="h-6 w-6 text-destructive" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Evite perder clientes por limite de uso</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Cada declaração recusada é um cliente que pode migrar para a concorrência.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* CTA Final */}
-        {!isPro && (
-          <div className="text-center space-y-3 pt-4">
-            <Button
-              size="lg"
-              className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-6 shadow-lg"
-              onClick={() => navigate('/checkout?plano=pro')}
-            >
-              <TrendingUp className="h-5 w-5" /> Fazer upgrade agora
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              Sem contrato. Cancele quando quiser.
-            </p>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );
