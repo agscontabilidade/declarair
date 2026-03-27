@@ -5,8 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const BRASIL_API_URL = 'https://brasilapi.com.br/api';
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -33,65 +31,68 @@ Deno.serve(async (req) => {
       throw new Error('CPF deve ter 11 dígitos');
     }
 
+    // Validate CPF algorithmically
+    if (!validarCPF(cpfLimpo)) {
+      throw new Error('CPF inválido (dígitos verificadores incorretos)');
+    }
+
     console.log('[consulta-rfb] Consultando CPF:', cpfLimpo.substring(0, 3) + '***');
 
-    // Consultar BrasilAPI - CPF endpoint
-    const rfbResponse = await fetch(`${BRASIL_API_URL}/cpf/v1/${cpfLimpo}`);
-
-    let rfbData: Record<string, unknown>;
     let situacao: string;
     let interpretacao: Record<string, unknown>;
+    let rfbData: Record<string, unknown>;
 
-    if (rfbResponse.ok) {
-      rfbData = await rfbResponse.json();
-      situacao = (rfbData.situacao as string) || 'Desconhecida';
+    // Try multiple endpoints to get CPF status
+    const result = await tentarConsultaCPF(cpfLimpo);
+
+    if (result.success) {
+      rfbData = result.data;
+      situacao = (rfbData.situacao as string) || 'Regular';
       interpretacao = interpretarResultado(rfbData, cpfLimpo);
-    } else if (rfbResponse.status === 404) {
-      // CPF não encontrado - tratar como situação desconhecida
-      rfbData = { erro: 'CPF não encontrado', status: 404 };
-      situacao = 'Não encontrado';
-      interpretacao = {
-        situacao_cadastral: 'Não encontrado',
-        risco_malha_fina: 'medio',
-        alertas: ['⚠️ CPF não localizado na base da Receita Federal. Verifique se o número está correto.'],
-        nome: 'Não informado',
-        cpf_consultado: cpfLimpo,
-      };
     } else {
-      // Erro da API - serviço indisponível
-      rfbData = { erro: `API retornou status ${rfbResponse.status}` };
-      situacao = 'Erro na consulta';
+      // All APIs unavailable — perform algorithmic validation only
+      // CPF passed validation, so it's structurally valid
+      rfbData = {
+        cpf: cpfLimpo,
+        validacao_algoritmica: true,
+        nota: 'Consulta à Receita Federal indisponível no momento',
+      };
+      situacao = 'Não consultado (API indisponível)';
       interpretacao = {
-        situacao_cadastral: 'Indisponível',
+        situacao_cadastral: 'CPF válido (verificação algorítmica)',
         risco_malha_fina: 'desconhecido',
-        alertas: ['⚠️ Serviço da Receita Federal temporariamente indisponível. Tente novamente mais tarde.'],
-        nome: 'Indisponível',
+        alertas: [
+          'ℹ️ O serviço de consulta à Receita Federal está temporariamente indisponível.',
+          '✅ CPF é válido algoritmicamente (dígitos verificadores corretos).',
+          '💡 Para verificar a situação cadastral completa, acesse: https://servicos.receita.fazenda.gov.br/servicos/cpf/consultasituacao',
+        ],
+        nome: 'Não disponível (consulta externa indisponível)',
         cpf_consultado: cpfLimpo,
       };
     }
 
-    // Criar cliente Supabase com token do usuário
+    // Create Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Determinar status_rfb baseado na interpretação
+    // Determine status_rfb
     const risco = interpretacao.risco_malha_fina as string;
-    const statusRfb = risco === 'alto' ? 'em_malha' 
+    const statusRfb = risco === 'alto' ? 'em_malha'
       : risco === 'medio' ? 'com_pendencias'
       : risco === 'baixo' ? 'processada'
       : 'em_processamento';
 
-    // Atualizar registro existente se consulta_id fornecido
+    // Update existing record if consulta_id provided
     if (consulta_id) {
       const { error: updateError } = await supabase
         .from('malha_fina_consultas')
         .update({
           status_rfb: statusRfb,
-          ultimo_resultado: (interpretacao.alertas as string[])?.length > 0 
-            ? (interpretacao.alertas as string[])[0] 
+          ultimo_resultado: (interpretacao.alertas as string[])?.length > 0
+            ? (interpretacao.alertas as string[])[0]
             : `Situação cadastral: ${situacao}`,
           ultima_consulta: new Date().toISOString(),
           resultado_json: { ...rfbData, interpretacao },
@@ -121,24 +122,88 @@ Deno.serve(async (req) => {
   }
 });
 
+// Try multiple API sources for CPF consultation
+async function tentarConsultaCPF(cpf: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  // Attempt 1: BrasilAPI CPF v1
+  try {
+    const res = await fetch(`https://brasilapi.com.br/api/cpf/v1/${cpf}`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, data };
+    }
+    // Consume body to avoid leak
+    await res.text();
+  } catch (e) {
+    console.log('[consulta-rfb] BrasilAPI CPF falhou:', e);
+  }
+
+  // Attempt 2: ReceitaWS (public endpoint, may also be unavailable)
+  try {
+    const res = await fetch(`https://www.receitaws.com.br/v1/cpf/${cpf}`, {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (!data.status || data.status !== 'ERROR') {
+        return { success: true, data: { ...data, situacao: data.situacao || data.status || 'Regular' } };
+      }
+    }
+    await res.text();
+  } catch (e) {
+    console.log('[consulta-rfb] ReceitaWS falhou:', e);
+  }
+
+  return { success: false, data: {} };
+}
+
+// Algorithmic CPF validation (mod 11)
+function validarCPF(cpf: string): boolean {
+  if (/^(\d)\1{10}$/.test(cpf)) return false; // All same digits
+
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpf.charAt(i)) * (10 - i);
+  }
+  let remainder = (sum * 10) % 11;
+  if (remainder === 10) remainder = 0;
+  if (remainder !== parseInt(cpf.charAt(9))) return false;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpf.charAt(i)) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10) remainder = 0;
+  if (remainder !== parseInt(cpf.charAt(10))) return false;
+
+  return true;
+}
+
 function interpretarResultado(dados: Record<string, unknown>, cpf: string) {
   const situacao = ((dados.situacao as string) || '').toLowerCase();
   const alertas: string[] = [];
 
-  if (situacao.includes('suspens') || situacao.includes('cancel')) {
-    alertas.push('⚠️ CPF com situação irregular na Receita Federal');
+  if (situacao.includes('regular')) {
+    alertas.push('✅ CPF regular na Receita Federal');
+  } else if (situacao.includes('suspens') || situacao.includes('cancel')) {
+    alertas.push('🚨 CPF com situação irregular na Receita Federal');
   } else if (situacao.includes('pendente') || situacao.includes('nulo')) {
     alertas.push('⚠️ CPF com pendências cadastrais');
   } else if (situacao.includes('titular falecido')) {
     alertas.push('🚨 CPF de titular falecido - Não pode declarar IR');
+  } else {
+    alertas.push(`ℹ️ Situação cadastral: ${dados.situacao || 'Não informada'}`);
   }
 
-  const riscoMalhaFina = alertas.length > 0 
-    ? (alertas.some(a => a.includes('🚨')) ? 'alto' : 'medio')
+  const riscoMalhaFina = alertas.some(a => a.includes('🚨')) ? 'alto'
+    : alertas.some(a => a.includes('⚠️')) ? 'medio'
     : 'baixo';
 
   return {
-    situacao_cadastral: dados.situacao || 'Desconhecida',
+    situacao_cadastral: dados.situacao || 'Regular',
     risco_malha_fina: riscoMalhaFina,
     alertas,
     nome: dados.nome || 'Não informado',
