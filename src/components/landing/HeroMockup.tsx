@@ -1,10 +1,10 @@
-import mockupDashboard from '@/assets/mockup-dashboard.jpg';
+import mockupHero from '@/assets/mockup-dashboard-hero.png';
 
 export default function HeroMockup() {
   return (
     <div className="relative w-full flex items-center justify-center py-4">
       {/* Main mockup */}
-      <div className="relative z-10 w-full max-w-[600px] hover:scale-[1.02] transition-transform duration-500">
+      <div className="relative z-10 w-full max-w-[620px] hover:scale-[1.01] transition-transform duration-500">
         <div className="rounded-xl overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.35)] border border-white/15">
           <div className="bg-foreground/90 h-7 flex items-center gap-1.5 px-3">
             <div className="h-2.5 w-2.5 rounded-full bg-destructive/80" />
@@ -12,10 +12,10 @@ export default function HeroMockup() {
             <div className="h-2.5 w-2.5 rounded-full bg-success/80" />
           </div>
           <img
-            src={mockupDashboard}
-            alt="Dashboard DeclaraIR"
+            src={mockupHero}
+            alt="Dashboard DeclaraIR com Kanban e KPIs"
             className="w-full h-auto object-cover"
-            width={1280}
+            width={1480}
             height={800}
           />
         </div>
