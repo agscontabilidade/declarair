@@ -614,10 +614,10 @@ export default function Index() {
               <div className="relative">
                 <img src={logoHero} alt="DeclaraIR" className="h-16 sm:h-20 mx-auto mb-6 drop-shadow-2xl" />
                 <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground">
-                  Pronto para transformar sua temporada de IRPF?
+                  Pronto para modernizar seu escritório?
                 </h2>
                 <p className="mt-4 text-primary-foreground/80 max-w-xl mx-auto text-lg">
-                  Crie sua conta gratuita em 30 segundos. Sem cartão de crédito.
+                  Junte-se a mais de 500 escritórios que já simplificaram a gestão de IR com DeclaraIR. Comece grátis em 30 segundos.
                 </p>
                 <Link to="/cadastro">
                   <Button size="lg" variant="secondary" className="mt-8 text-base px-10 h-13 shadow-xl">
