@@ -1092,6 +1092,7 @@ export type Database = {
           conteudo: string
           created_at: string
           declaracao_id: string
+          enviado_whatsapp: boolean | null
           escritorio_id: string
           id: string
           lida: boolean | null
@@ -1103,6 +1104,7 @@ export type Database = {
           conteudo: string
           created_at?: string
           declaracao_id: string
+          enviado_whatsapp?: boolean | null
           escritorio_id: string
           id?: string
           lida?: boolean | null
@@ -1114,6 +1116,7 @@ export type Database = {
           conteudo?: string
           created_at?: string
           declaracao_id?: string
+          enviado_whatsapp?: boolean | null
           escritorio_id?: string
           id?: string
           lida?: boolean | null
