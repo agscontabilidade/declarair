@@ -254,6 +254,11 @@ export default function Index() {
           <p className="text-foreground font-bold text-xl">
             IR não é difícil. Difícil é trabalhar no caos.
           </p>
+          <Link to="/cadastro">
+            <Button size="lg" className="mt-4 text-lg px-10 h-14 shadow-xl shadow-primary/25 font-bold uppercase tracking-wide rounded-lg">
+              Testar grátis agora <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
+          </Link>
         </div>
       </Section>
 
