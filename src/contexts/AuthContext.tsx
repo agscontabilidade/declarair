@@ -117,10 +117,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // 1. Set up listener FIRST (non-blocking — no await inside callback)
+    let initialized = false;
+
+    // 1. Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('[AuthContext] Auth event:', event);
+
+        // Skip INITIAL_SESSION — we handle it in initializeAuth with server validation
+        if (!initialized) return;
+
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
@@ -137,26 +143,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     const initializeAuth = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
 
-      if (!currentSession) {
+        if (!currentSession) {
+          resetAuthState();
+          return;
+        }
+
+        // Validate the session is actually valid server-side
+        const { data: { user: verifiedUser }, error } = await supabase.auth.getUser();
+        if (error || !verifiedUser) {
+          console.warn('[AuthContext] Invalid local session cleared');
+          await clearInvalidSession();
+          return;
+        }
+
+        setSession(currentSession);
+        setUser(verifiedUser);
+        await loadProfile(verifiedUser);
+      } catch (e) {
+        console.error('[AuthContext] Init error:', e);
         resetAuthState();
+      } finally {
+        initialized = true;
         setLoading(false);
-        return;
       }
-
-      const { data: { user: verifiedUser }, error } = await supabase.auth.getUser();
-      if (error || !verifiedUser) {
-        console.warn('[AuthContext] Invalid local session cleared');
-        await clearInvalidSession();
-        setLoading(false);
-        return;
-      }
-
-      setSession(currentSession);
-      setUser(verifiedUser);
-      await loadProfile(verifiedUser);
-      setLoading(false);
     };
 
     initializeAuth();
