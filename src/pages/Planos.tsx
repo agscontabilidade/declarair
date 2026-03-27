@@ -157,9 +157,9 @@ export default function Planos() {
                     <div className="h-12 w-12 bg-accent/15 rounded-xl flex items-center justify-center mb-4">
                       <Crown className="h-6 w-6 text-accent" />
                     </div>
-                    <h3 className="text-2xl font-bold font-display">Pro</h3>
+                     <h3 className="text-2xl font-bold font-display">Pro</h3>
                     <p className="text-muted-foreground mt-2">
-                      Para escritórios sem limites
+                      Sistema completo para seu escritório
                     </p>
                   </div>
 
