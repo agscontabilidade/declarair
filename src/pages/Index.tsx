@@ -27,24 +27,26 @@ import { TabelaAvulso } from '@/components/planos/TabelaAvulso';
 /* ── Data ── */
 const features = [
   { icon: Layout, title: 'Dashboard Kanban', desc: 'Visualize todas as declarações em um quadro intuitivo com drag & drop e KPIs em tempo real.' },
+  { icon: Shield, title: 'Malha Fina Gratuita', desc: 'Análise automatizada via BrasilAPI. Evite problemas antes de enviar para a Receita. Incluso em todos os planos.' },
+  { icon: Zap, title: 'Calculadora IR Integrada', desc: 'Simule cenários em segundos. Tabela 2026 atualizada. Compare Simplificada vs Completa automaticamente.' },
+  { icon: MessageSquare, title: 'Chat em Tempo Real', desc: 'Converse com seus clientes sem sair da plataforma. Integração com WhatsApp disponível como Recurso Extra.' },
   { icon: FileText, title: 'Checklist Inteligente', desc: 'Documentos exigidos gerados automaticamente com base no perfil fiscal do cliente.' },
-  { icon: Zap, title: 'Cálculo Automático IR', desc: 'Compare Simplificada vs Completa com tabela 2026 atualizada e recomendação automática.' },
-  { icon: Shield, title: 'Monitoramento Malha Fina', desc: 'Acompanhe o status de cada declaração na Receita Federal com alertas automáticos.' },
-  { icon: MessageSquare, title: 'Chat Integrado', desc: 'Comunicação em tempo real com o cliente, direto na declaração. Sem WhatsApp paralelo.' },
-  { icon: Bell, title: 'Notificações Automáticas', desc: 'Emails e alertas disparados automaticamente a cada mudança de status.' },
+  { icon: Bell, title: 'Notificações Automáticas', desc: 'Emails e alertas disparados automaticamente a cada mudança de status da declaração.' },
 ];
 
 
 
 const faqs = [
-  { q: 'O DeclaraIR substitui meu sistema contábil?', a: 'Não. O DeclaraIR é focado exclusivamente na gestão de declarações de IRPF. Ele complementa seu sistema contábil, cuidando do fluxo de documentos, comunicação com clientes e acompanhamento de cada declaração.' },
+  { q: 'Preciso de cartão de crédito para começar?', a: 'Não! O plano Free é totalmente gratuito e não exige cartão de crédito. Você pode testar a plataforma completa com até 3 declarações ativas.' },
+  { q: 'Como funciona a malha fina gratuita?', a: 'Nossa malha fina usa a BrasilAPI para validar CPFs, cruzar dados e identificar inconsistências antes de enviar para a Receita. Funciona em todos os planos, inclusive Free.' },
+  { q: 'Qual a diferença entre Free e Pro?', a: 'O Free permite 3 declarações, 1 usuário e 5GB. O Pro (R$ 49,90/mês) oferece declarações ilimitadas, até 5 usuários, storage ilimitado e acesso a Recursos Extras como WhatsApp, Portal do Cliente, API e Whitelabel.' },
+  { q: 'O que são Recursos Extras?', a: 'São módulos opcionais que você ativa conforme sua necessidade: WhatsApp (R$ 19,90/mês), Portal do Cliente (R$ 14,90/mês), API Pública (R$ 29,90/mês), Whitelabel (R$ 9,90/mês) e Usuário Extra (R$ 9,90/mês).' },
   { q: 'Meus clientes precisam instalar algum aplicativo?', a: 'Não. O Portal do Cliente é 100% web, acessível pelo navegador do celular ou computador. Basta enviar o link de convite.' },
-  { q: 'Como funciona o Whitelabel?', a: 'Você personaliza cores, logo e nome do portal. Seus clientes acessam um portal com a identidade visual do seu escritório, sem ver a marca DeclaraIR.' },
   { q: 'Os dados dos meus clientes estão seguros?', a: 'Sim. Utilizamos criptografia de ponta a ponta, isolamento por escritório (multi-tenant) e políticas de acesso em nível de linha (RLS) em todas as tabelas.' },
-  { q: 'Posso migrar do plano gratuito para o pago?', a: 'Sim, a qualquer momento. Seus dados são preservados e o upgrade é imediato.' },
-  { q: 'O que acontece se eu ultrapassar o limite de declarações?', a: 'Você pode comprar declarações avulsas a partir de R$ 4,90 cada, ou fazer upgrade de plano.' },
+  { q: 'Posso comprar declarações avulsas no plano Free?', a: 'Sim! Você pode adquirir declarações extras por R$ 9,90 cada, sem precisar fazer upgrade de plano.' },
   { q: 'O monitoramento de malha fina é automático?', a: 'Sim. Após a transmissão, o sistema consulta periodicamente o status na Receita Federal e alerta caso alguma declaração entre em malha.' },
   { q: 'Existe contrato de fidelidade?', a: 'Não. Todos os planos são mensais e você pode cancelar a qualquer momento sem multa.' },
+  { q: 'Como funciona o Whitelabel?', a: 'Disponível como Recurso Extra (R$ 9,90/mês), permite personalizar cores, logo e nome do portal. Seus clientes acessam um portal com a identidade visual do seu escritório.' },
 ];
 
 const testimonials = [
@@ -173,20 +175,21 @@ export default function Index() {
             {/* Left */}
             <div className="flex-1 text-center lg:text-left max-w-xl lg:max-w-none">
               <Badge variant="secondary" className="mb-6 text-sm px-4 py-1.5 glass-card border-accent/20">
-                <Zap className="h-3.5 w-3.5 mr-1.5 text-accent" /> Temporada IRPF 2026
+                <Zap className="h-3.5 w-3.5 mr-1.5 text-accent" /> 🎉 Teste grátis com 3 declarações completas
               </Badge>
               <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-foreground leading-[1.1] tracking-tight">
-                Gerencie declarações{' '}
+                Simplifique o IR do seu{' '}
                 <span className="relative">
-                  <span className="text-accent">IRPF</span>
+                  <span className="text-accent">Escritório Contábil</span>
                   <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" fill="none">
                     <path d="M1 5.5Q50 1 100 4T199 3" stroke="hsl(var(--accent))" strokeWidth="2" strokeLinecap="round" />
                   </svg>
-                </span>{' '}
-                como nunca antes
+                </span>
               </h1>
               <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-lg">
-                Plataforma completa para escritórios de contabilidade: do checklist inteligente à transmissão, com portal do cliente whitelabel e monitoramento de malha fina.
+                Plataforma completa para gestão de Imposto de Renda.
+                Malha fina gratuita, calculadora integrada, chat com clientes
+                e muito mais. Comece grátis hoje.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 lg:justify-start justify-center">
                 <Link to="/cadastro">
@@ -201,15 +204,15 @@ export default function Index() {
                 </a>
               </div>
               {/* Trust badges */}
-              <div className="mt-8 flex items-center gap-6 justify-center lg:justify-start text-muted-foreground">
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 justify-center lg:justify-start text-muted-foreground">
                 <div className="flex items-center gap-1.5 text-xs">
-                  <Lock className="h-3.5 w-3.5" /> Dados criptografados
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Sem cartão de crédito
                 </div>
                 <div className="flex items-center gap-1.5 text-xs">
-                  <Monitor className="h-3.5 w-3.5" /> 100% Web
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> 3 declarações grátis
                 </div>
                 <div className="flex items-center gap-1.5 text-xs">
-                  <Smartphone className="h-3.5 w-3.5" /> Responsivo
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Cancele quando quiser
                 </div>
               </div>
             </div>
@@ -553,13 +556,14 @@ export default function Index() {
       {/* ── PRICING ── */}
       <Section id="pricing" className="py-20 lg:py-28 bg-gradient-to-b from-secondary/30 to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          <div className="text-center">
+         <div className="text-center">
             <Badge variant="secondary" className="mb-4 text-xs">Planos</Badge>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-              Escale seu IR sem aumentar equipe
+              Comece grátis, escale com o Pro
             </h2>
             <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Comece grátis e pague apenas pelo que usar. Sem risco, sem contrato, sem surpresas.
+              Apenas 2 planos: Free com 3 declarações ou Pro ilimitado por R$ 49,90/mês.
+              Adicione Recursos Extras conforme sua necessidade.
             </p>
           </div>
           <PlanosCardsPublic />
@@ -610,10 +614,10 @@ export default function Index() {
               <div className="relative">
                 <img src={logoHero} alt="DeclaraIR" className="h-16 sm:h-20 mx-auto mb-6 drop-shadow-2xl" />
                 <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground">
-                  Pronto para transformar sua temporada de IRPF?
+                  Pronto para modernizar seu escritório?
                 </h2>
                 <p className="mt-4 text-primary-foreground/80 max-w-xl mx-auto text-lg">
-                  Crie sua conta gratuita em 30 segundos. Sem cartão de crédito.
+                  Junte-se a mais de 500 escritórios que já simplificaram a gestão de IR com DeclaraIR. Comece grátis em 30 segundos.
                 </p>
                 <Link to="/cadastro">
                   <Button size="lg" variant="secondary" className="mt-8 text-base px-10 h-13 shadow-xl">
