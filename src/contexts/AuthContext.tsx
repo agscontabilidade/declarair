@@ -45,6 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile>(emptyProfile);
   const [loading, setLoading] = useState(true);
 
+  const resetAuthState = useCallback(() => {
+    setSession(null);
+    setUser(null);
+    setUserType(null);
+    setProfile(emptyProfile);
+  }, []);
+
+  const clearInvalidSession = useCallback(async () => {
+    await supabase.auth.signOut({ scope: 'local' });
+    resetAuthState();
+  }, [resetAuthState]);
+
   const loadProfile = useCallback(async (currentUser: User) => {
     try {
       // Check if is contador
