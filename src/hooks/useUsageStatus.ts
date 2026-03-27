@@ -25,7 +25,7 @@ export function useUsageStatus(): UsageState {
         .single();
       return {
         usadas: escritorio?.declaracoes_utilizadas ?? 0,
-        limite: escritorio?.limite_declaracoes ?? 10,
+        limite: escritorio?.limite_declaracoes ?? 1,
       };
     },
     enabled: !!profile.escritorioId,
