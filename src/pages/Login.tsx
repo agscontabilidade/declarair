@@ -21,6 +21,7 @@ export default function Login() {
   // Redirect when already authenticated
   useEffect(() => {
     if (!loading && session && userType) {
+      setIsSubmitting(false);
       if (userType === 'contador') {
         navigate('/dashboard', { replace: true });
       } else if (userType === 'cliente') {

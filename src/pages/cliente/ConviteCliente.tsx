@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import logoFull from '@/assets/logo-full.png';
 import logoIcon from '@/assets/logo-icon.png';
@@ -47,26 +47,36 @@ export default function ConviteCliente() {
       toast({ title: 'Senhas não conferem', variant: 'destructive' });
       return;
     }
+    if (senha.length < 6) {
+      toast({ title: 'A senha deve ter no mínimo 6 caracteres', variant: 'destructive' });
+      return;
+    }
     if (!cliente) return;
 
     setSubmitting(true);
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: cliente.email!,
+      // Use edge function to create account with admin API (avoids email confirmation deadlock)
+      const { data, error } = await supabase.functions.invoke('register-from-direct-invite', {
+        body: { token, senha },
+      });
+
+      if (error) throw new Error(error.message || 'Erro ao criar conta');
+      if (data?.error) throw new Error(data.error);
+
+      // Auto-login after account creation
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: cliente.email,
         password: senha,
-        options: { emailRedirectTo: window.location.origin },
       });
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Erro ao criar conta');
 
-      const { error: clearError } = await supabase.rpc('limpar_token_convite', {
-        _cliente_id: cliente.id,
-        _auth_user_id: authData.user.id,
-      });
-      if (clearError) throw clearError;
+      if (signInError) {
+        toast({ title: 'Conta criada!', description: 'Faça login para acessar o portal.' });
+        navigate('/cliente/login');
+        return;
+      }
 
-      toast({ title: 'Conta criada!', description: 'Verifique seu email para confirmar.' });
-      navigate('/cliente/login');
+      toast({ title: 'Conta criada com sucesso!', description: 'Redirecionando para o portal...' });
+      setTimeout(() => navigate('/cliente/dashboard'), 1500);
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message, variant: 'destructive' });
     } finally {
@@ -77,7 +87,10 @@ export default function ConviteCliente() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-muted-foreground">Validando convite...</p>
+        </div>
       </div>
     );
   }
@@ -183,7 +196,14 @@ export default function ConviteCliente() {
                 <Input id="confirmar" type="password" required value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} placeholder="Repita a senha" />
               </div>
               <Button type="submit" className="w-full h-11" disabled={submitting}>
-                {submitting ? 'Criando conta...' : 'Criar Conta'}
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Criando conta...
+                  </>
+                ) : (
+                  'Criar Conta'
+                )}
               </Button>
             </form>
           </div>

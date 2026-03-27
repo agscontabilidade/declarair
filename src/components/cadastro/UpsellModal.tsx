@@ -12,12 +12,11 @@ interface UpsellModalProps {
 }
 
 const BENEFITS = [
-  'Até 20 declarações inclusas',
+  'Declarações ilimitadas',
   '5 usuários simultâneos',
-  'Whitelabel completo — sua marca',
-  'Monitoramento de Malha Fina',
-  'Drive do Contador com 30 GB',
-  'Relatórios em PDF',
+  'Storage ilimitado',
+  'Suporte prioritário',
+  'Addons disponíveis (WhatsApp, Portal, API)',
 ];
 
 export function UpsellModal({ open, onContinueFree, onUpgrade }: UpsellModalProps) {

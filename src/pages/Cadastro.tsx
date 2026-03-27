@@ -258,7 +258,7 @@ export default function Cadastro() {
                 <Input id="nomeEscritorio" value={nomeEscritorio} onChange={e => setNomeEscritorio(e.target.value)} placeholder="Contabilidade Silva" />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {PLANOS.map(p => {
                   const Icon = p.icon;
                   const isSelected = planoSelecionado === p.id;
