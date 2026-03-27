@@ -375,6 +375,13 @@ export default function Index() {
           <p className="text-center mt-12 text-xl font-bold text-foreground">
             "Você não trabalha mais. Você trabalha melhor — e <span className="text-accent">fatura mais</span>."
           </p>
+          <div className="text-center mt-8">
+            <Link to="/cadastro">
+              <Button size="lg" className="text-lg px-10 h-14 shadow-xl shadow-primary/25 font-bold uppercase tracking-wide rounded-lg">
+                Quero essa transformação <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </Section>
 
