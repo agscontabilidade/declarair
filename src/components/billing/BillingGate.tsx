@@ -20,7 +20,13 @@ interface BillingGateProps {
 export function BillingGate({ children, allowWhenBlocked = false }: BillingGateProps) {
   const { isBlocked, loading } = useBillingStatus();
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="flex min-h-[200px] items-center justify-center">
+        <div className="animate-spin h-6 w-6 border-3 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   if (isBlocked && !allowWhenBlocked) {
     return <Navigate to="/meus-planos" replace />;

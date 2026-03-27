@@ -11,34 +11,22 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { UpsellModal } from '@/components/cadastro/UpsellModal';
 import {
-  FileText, Check, ArrowRight, ArrowLeft, Zap, Crown, Building2, Rocket,
+  FileText, Check, ArrowRight, ArrowLeft, Zap, Crown,
   CheckCircle2, Eye, EyeOff, Pencil
 } from 'lucide-react';
 
 const PLANOS = [
   {
-    id: 'gratuito', nome: 'Gratuito', preco: 'R$ 0', periodo: '/mês', icon: Zap,
-    declaracoes: '5', usuarios: '1',
-    features: ['Dashboard Kanban', 'Portal do Cliente', 'Checklist Dinâmico'],
+    id: 'gratuito', nome: 'Free', preco: 'R$ 0', periodo: '/mês', icon: Zap,
+    declaracoes: '3', usuarios: '1',
+    features: ['Dashboard Kanban', 'Calculadora IR', 'Chat com Clientes', 'Notificações por Email'],
     popular: false,
   },
   {
-    id: 'starter', nome: 'Starter', preco: 'R$ 29,90', periodo: '/mês', icon: Rocket,
-    declaracoes: '10', usuarios: '1',
-    features: ['Tudo do Gratuito', 'Chat Integrado', 'Cobranças Pix/Boleto', 'Templates Email'],
-    popular: false,
-  },
-  {
-    id: 'profissional', nome: 'Profissional', preco: 'R$ 49,90', periodo: '/mês', icon: Crown,
-    declaracoes: '20', usuarios: '5',
-    features: ['Tudo do Starter', 'Whitelabel Completo', 'Malha Fina', 'Relatórios', 'Drive'],
+    id: 'pro', nome: 'Pro', preco: 'R$ 49,90', periodo: '/mês', icon: Crown,
+    declaracoes: 'Ilimitadas', usuarios: '5',
+    features: ['Tudo do Free', 'Declarações Ilimitadas', 'Storage Ilimitado', 'Suporte Prioritário', 'Múltiplos Usuários'],
     popular: true,
-  },
-  {
-    id: 'enterprise', nome: 'Enterprise', preco: 'Sob consulta', periodo: '', icon: Building2,
-    declaracoes: 'Ilimitadas', usuarios: 'Ilimitados',
-    features: ['Tudo do Profissional', 'API Personalizada', 'Suporte Dedicado', 'Multi-escritório'],
-    popular: false,
   },
 ];
 
@@ -118,7 +106,7 @@ export default function Cadastro() {
 
   function handleUpsellUpgrade() {
     setShowUpsell(false);
-    setPlanoSelecionado('profissional');
+    setPlanoSelecionado('pro');
     setStep(2);
   }
 
@@ -141,27 +129,28 @@ export default function Cadastro() {
       });
       if (rpcError) throw rpcError;
 
-      // Update telefone on usuarios if provided
-      if (telefone.trim()) {
-        await supabase.from('usuarios').update({ telefone }).eq('id', authData.user.id);
-      }
-
-      // Update plano on escritorios
-      if (planoSelecionado !== 'gratuito') {
-        const { data: usuario } = await supabase.from('usuarios').select('escritorio_id').eq('id', authData.user.id).single();
-        if (usuario?.escritorio_id) {
-          await supabase.from('escritorios').update({ plano: planoSelecionado }).eq('id', usuario.escritorio_id);
-        }
-      }
+      // Note: telefone and plano updates happen after login when RLS allows it
+      // Store them temporarily to apply after session is established
+      const pendingUpdates = { telefone: telefone.trim(), plano: planoSelecionado };
 
       toast({
         title: 'Conta criada com sucesso!',
         description: 'Vamos configurar seu escritório agora.',
       });
-      // Se auto-confirm está ativo, sessão já existe → ir direto ao onboarding
+      // Se auto-confirm está ativo, sessão já existe → aplicar updates e ir ao onboarding
       // Senão, ir para login para confirmar email primeiro
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       if (currentSession) {
+        // Apply pending updates now that we have a session
+        if (pendingUpdates.telefone) {
+          await supabase.from('usuarios').update({ telefone: pendingUpdates.telefone }).eq('id', authData.user.id);
+        }
+        if (pendingUpdates.plano !== 'gratuito') {
+          const { data: usuario } = await supabase.from('usuarios').select('escritorio_id').eq('id', authData.user.id).single();
+          if (usuario?.escritorio_id) {
+            await supabase.from('escritorios').update({ plano: pendingUpdates.plano }).eq('id', usuario.escritorio_id);
+          }
+        }
         navigate('/onboarding', { replace: true });
       } else {
         toast({
@@ -269,7 +258,7 @@ export default function Cadastro() {
                 <Input id="nomeEscritorio" value={nomeEscritorio} onChange={e => setNomeEscritorio(e.target.value)} placeholder="Contabilidade Silva" />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {PLANOS.map(p => {
                   const Icon = p.icon;
                   const isSelected = planoSelecionado === p.id;

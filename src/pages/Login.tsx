@@ -21,6 +21,7 @@ export default function Login() {
   // Redirect when already authenticated
   useEffect(() => {
     if (!loading && session && userType) {
+      setIsSubmitting(false);
       if (userType === 'contador') {
         navigate('/dashboard', { replace: true });
       } else if (userType === 'cliente') {
@@ -39,6 +40,7 @@ export default function Login() {
       });
       if (error) throw error;
       // Navigation will happen via the useEffect above once AuthContext updates
+      // Navigation will happen via useEffect; reset submitting when session arrives
     } catch (err: any) {
       toast({ title: 'Erro ao entrar', description: err.message, variant: 'destructive' });
       setIsSubmitting(false);
