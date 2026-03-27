@@ -37,14 +37,16 @@ const features = [
 
 
 const faqs = [
-  { q: 'O DeclaraIR substitui meu sistema contábil?', a: 'Não. O DeclaraIR é focado exclusivamente na gestão de declarações de IRPF. Ele complementa seu sistema contábil, cuidando do fluxo de documentos, comunicação com clientes e acompanhamento de cada declaração.' },
+  { q: 'Preciso de cartão de crédito para começar?', a: 'Não! O plano Free é totalmente gratuito e não exige cartão de crédito. Você pode testar a plataforma completa com até 3 declarações ativas.' },
+  { q: 'Como funciona a malha fina gratuita?', a: 'Nossa malha fina usa a BrasilAPI para validar CPFs, cruzar dados e identificar inconsistências antes de enviar para a Receita. Funciona em todos os planos, inclusive Free.' },
+  { q: 'Qual a diferença entre Free e Pro?', a: 'O Free permite 3 declarações, 1 usuário e 5GB. O Pro (R$ 49,90/mês) oferece declarações ilimitadas, até 5 usuários, storage ilimitado e acesso a Recursos Extras como WhatsApp, Portal do Cliente, API e Whitelabel.' },
+  { q: 'O que são Recursos Extras?', a: 'São módulos opcionais que você ativa conforme sua necessidade: WhatsApp (R$ 19,90/mês), Portal do Cliente (R$ 14,90/mês), API Pública (R$ 29,90/mês), Whitelabel (R$ 9,90/mês) e Usuário Extra (R$ 9,90/mês).' },
   { q: 'Meus clientes precisam instalar algum aplicativo?', a: 'Não. O Portal do Cliente é 100% web, acessível pelo navegador do celular ou computador. Basta enviar o link de convite.' },
-  { q: 'Como funciona o Whitelabel?', a: 'Você personaliza cores, logo e nome do portal. Seus clientes acessam um portal com a identidade visual do seu escritório, sem ver a marca DeclaraIR.' },
   { q: 'Os dados dos meus clientes estão seguros?', a: 'Sim. Utilizamos criptografia de ponta a ponta, isolamento por escritório (multi-tenant) e políticas de acesso em nível de linha (RLS) em todas as tabelas.' },
-  { q: 'Posso migrar do plano gratuito para o pago?', a: 'Sim, a qualquer momento. Seus dados são preservados e o upgrade é imediato.' },
-  { q: 'O que acontece se eu ultrapassar o limite de declarações?', a: 'Você pode comprar declarações avulsas a partir de R$ 4,90 cada, ou fazer upgrade de plano.' },
+  { q: 'Posso comprar declarações avulsas no plano Free?', a: 'Sim! Você pode adquirir declarações extras por R$ 9,90 cada, sem precisar fazer upgrade de plano.' },
   { q: 'O monitoramento de malha fina é automático?', a: 'Sim. Após a transmissão, o sistema consulta periodicamente o status na Receita Federal e alerta caso alguma declaração entre em malha.' },
   { q: 'Existe contrato de fidelidade?', a: 'Não. Todos os planos são mensais e você pode cancelar a qualquer momento sem multa.' },
+  { q: 'Como funciona o Whitelabel?', a: 'Disponível como Recurso Extra (R$ 9,90/mês), permite personalizar cores, logo e nome do portal. Seus clientes acessam um portal com a identidade visual do seu escritório.' },
 ];
 
 const testimonials = [
