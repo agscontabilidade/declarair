@@ -108,7 +108,7 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                     <TableCell className="font-medium">{u.nome}</TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{u.papel === 'dono' ? 'Dono' : 'Colaborador'}</Badge>
+                      <Badge variant="outline">{formatarPapel(u.papel)}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge className={u.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-muted text-muted-foreground'}>
