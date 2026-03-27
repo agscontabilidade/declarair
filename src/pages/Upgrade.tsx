@@ -312,7 +312,7 @@ export default function Upgrade() {
                 </CardContent>
               </Card>
             </TabsContent>
-          )}
+           )}
 
           {/* Addons */}
           <TabsContent value="addons" className="mt-6">
