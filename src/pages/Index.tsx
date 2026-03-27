@@ -132,69 +132,69 @@ export default function Index() {
         <div className="absolute top-[40%] left-[50%] w-[300px] h-[300px] rounded-full bg-destructive/4 blur-3xl animate-blob" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8 relative">
-          {/* Centered text */}
-          <div className="text-center max-w-3xl mx-auto">
-            {/* Storytelling intro */}
-            <div className="mb-8 space-y-1.5">
-              <p className="text-muted-foreground text-base sm:text-lg italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                Todo ano começa igual.
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            {/* Left — Text */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="mb-8 space-y-1.5">
+                <p className="text-muted-foreground text-base sm:text-lg italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                  Todo ano começa igual.
+                </p>
+                <p className="text-muted-foreground text-base sm:text-lg italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  Cliente mandando documento no WhatsApp. Informação incompleta.
+                </p>
+                <p className="text-muted-foreground text-base sm:text-lg italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                  Prazo chegando. E você… tentando dar conta do caos.
+                </p>
+              </div>
+
+              <Badge variant="secondary" className="mb-6 text-sm px-5 py-2 glass-card border-destructive/20 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+                <Flame className="h-4 w-4 mr-2 text-destructive" /> A temporada de IR não espera
+              </Badge>
+
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-[1.08] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
+                O problema não é o IR.{' '}
+                <span className="relative inline-block">
+                  <span className="text-accent">É a desorganização do seu processo.</span>
+                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 8" fill="none">
+                    <path d="M1 5.5Q75 1 150 4T299 3" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </span>
+              </h1>
+
+              <p className="mt-8 text-xl sm:text-2xl font-medium text-foreground/80 leading-relaxed animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
+                Organize tudo, elimine retrabalho e entregue declarações em <span className="text-accent font-bold">metade do tempo</span>.
               </p>
-              <p className="text-muted-foreground text-base sm:text-lg italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                Cliente mandando documento no WhatsApp. Informação incompleta.
-              </p>
-              <p className="text-muted-foreground text-base sm:text-lg italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                Prazo chegando. E você… tentando dar conta do caos.
-              </p>
+
+              <div className="mt-10 flex flex-col sm:flex-row items-center lg:items-start lg:justify-start justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
+                <Link to="/cadastro">
+                  <Button size="lg" className="text-lg px-10 h-14 shadow-xl shadow-primary/25 font-bold uppercase tracking-wide rounded-lg">
+                    Quero organizar meu IR agora <ArrowRight className="h-5 w-5 ml-2" />
+                  </Button>
+                </Link>
+                <a href="#solucao">
+                  <Button size="lg" variant="outline" className="text-lg px-8 h-14 rounded-lg font-semibold">
+                    Ver como funciona
+                  </Button>
+                </a>
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center lg:justify-start justify-center gap-x-8 gap-y-2 text-muted-foreground animate-fade-in-up" style={{ animationDelay: '1.5s' }}>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-success" /> Sem cartão de crédito
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-success" /> Começa em 2 minutos
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-success" /> Cancele quando quiser
+                </div>
+              </div>
             </div>
 
-            <Badge variant="secondary" className="mb-6 text-sm px-5 py-2 glass-card border-destructive/20 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
-              <Flame className="h-4 w-4 mr-2 text-destructive" /> A temporada de IR não espera
-            </Badge>
-
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-[1.08] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
-              O problema não é o IR.{' '}
-              <span className="relative inline-block">
-                <span className="text-accent">É a desorganização do seu processo.</span>
-                <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 8" fill="none">
-                  <path d="M1 5.5Q75 1 150 4T299 3" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" />
-                </svg>
-              </span>
-            </h1>
-
-            <p className="mt-8 text-xl sm:text-2xl font-medium text-foreground/80 leading-relaxed animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
-              Organize tudo, elimine retrabalho e entregue declarações em <span className="text-accent font-bold">metade do tempo</span>.
-            </p>
-
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
-              <Link to="/cadastro">
-                <Button size="lg" className="text-lg px-10 h-14 shadow-xl shadow-primary/25 font-bold uppercase tracking-wide rounded-lg">
-                  Quero organizar meu IR agora <ArrowRight className="h-5 w-5 ml-2" />
-                </Button>
-              </Link>
-              <a href="#solucao">
-                <Button size="lg" variant="outline" className="text-lg px-8 h-14 rounded-lg font-semibold">
-                  Ver como funciona
-                </Button>
-              </a>
+            {/* Right — Mockups */}
+            <div className="flex-1 w-full animate-fade-in-up" style={{ animationDelay: '1.7s' }}>
+              <HeroMockup />
             </div>
-
-            {/* Microcopy */}
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-muted-foreground animate-fade-in-up" style={{ animationDelay: '1.5s' }}>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="h-4 w-4 text-success" /> Sem cartão de crédito
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="h-4 w-4 text-success" /> Começa em 2 minutos
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="h-4 w-4 text-success" /> Cancele quando quiser
-              </div>
-            </div>
-          </div>
-
-          {/* Mockups — overlapping cards */}
-          <div className="mt-16 animate-fade-in-up" style={{ animationDelay: '1.7s' }}>
-            <HeroMockup />
           </div>
         </div>
       </section>
