@@ -165,7 +165,7 @@ export default function Planos() {
 
                   <div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-5xl font-bold">R$ 49,90</span>
+                       <span className="text-5xl font-bold">R$ 29,90</span>
                       <span className="text-muted-foreground">/mês</span>
                     </div>
                   </div>
