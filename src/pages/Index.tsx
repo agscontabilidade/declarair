@@ -6,6 +6,7 @@ import {
   FileText, Shield, Zap, Users, Bell, CheckCircle2,
   ArrowRight, Star, Layout, MessageSquare, Send, Monitor, Smartphone, Lock,
   Clock, Briefcase, TrendingUp, BarChart3, FolderCheck, Receipt, Palette,
+  AlertTriangle, XCircle, ChevronRight, Flame, Target, DollarSign, Timer,
 } from 'lucide-react';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
@@ -19,115 +20,71 @@ import avatarAna from '@/assets/avatar-ana.jpg';
 import avatarRoberto from '@/assets/avatar-roberto.jpg';
 import HeroMockup from '@/components/landing/HeroMockup';
 import GlassCard from '@/components/landing/GlassCard';
-import FeatureShowcase from '@/components/landing/FeatureShowcase';
+import MetricCounter from '@/components/landing/MetricCounter';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { PlanosCardsPublic } from '@/components/planos/PlanosCardsPublic';
 import { TabelaAvulso } from '@/components/planos/TabelaAvulso';
 
 /* ── Data ── */
-const features = [
-  { icon: Layout, title: 'Dashboard Kanban', desc: 'Visualize todas as declarações em um quadro intuitivo com drag & drop e KPIs em tempo real.' },
-  { icon: Shield, title: 'Malha Fina Gratuita', desc: 'Análise automatizada via BrasilAPI. Evite problemas antes de enviar para a Receita. Incluso em todos os planos.' },
-  { icon: Zap, title: 'Calculadora IR Integrada', desc: 'Simule cenários em segundos. Tabela 2026 atualizada. Compare Simplificada vs Completa automaticamente.' },
-  { icon: MessageSquare, title: 'Chat em Tempo Real', desc: 'Converse com seus clientes sem sair da plataforma. Integração com WhatsApp disponível como Recurso Extra.' },
-  { icon: FileText, title: 'Checklist Inteligente', desc: 'Documentos exigidos gerados automaticamente com base no perfil fiscal do cliente.' },
-  { icon: Bell, title: 'Notificações Automáticas', desc: 'Emails e alertas disparados automaticamente a cada mudança de status da declaração.' },
+const painPoints = [
+  { icon: MessageSquare, text: 'Cliente mandando documento solto no WhatsApp' },
+  { icon: XCircle, text: 'Informações incompletas toda vez' },
+  { icon: Timer, text: 'Você perdendo horas organizando o que o cliente deveria ter mandado certo' },
+  { icon: AlertTriangle, text: 'Retrabalho constante — e na reta final, o caos dobra' },
+  { icon: DollarSign, text: 'Baixa lucratividade pelo esforço absurdo' },
 ];
 
+const beforeAfter = [
+  { before: 'Caos no WhatsApp', after: 'Fluxo organizado e automático' },
+  { before: 'Cliente perdido sem saber o que enviar', after: 'Cliente guiado com checklist inteligente' },
+  { before: 'Retrabalho a cada declaração', after: 'Processo previsível e escalável' },
+  { before: 'Correria desesperada no prazo', after: 'Controle total — sem surpresas' },
+  { before: 'Trabalhar mais, faturar igual', after: 'Trabalhar menos, faturar mais' },
+];
 
-
-const faqs = [
-  { q: 'Preciso de cartão de crédito para começar?', a: 'Não! O plano Free é totalmente gratuito e não exige cartão de crédito. Você pode testar a plataforma completa com até 3 declarações ativas.' },
-  { q: 'Como funciona a malha fina gratuita?', a: 'Nossa malha fina usa a BrasilAPI para validar CPFs, cruzar dados e identificar inconsistências antes de enviar para a Receita. Funciona em todos os planos, inclusive Free.' },
-  { q: 'Qual a diferença entre Free e Pro?', a: 'O Free permite 3 declarações, 1 usuário e 5GB. O Pro (R$ 49,90/mês) oferece declarações ilimitadas, até 5 usuários, storage ilimitado e acesso a Recursos Extras como WhatsApp, Portal do Cliente, API e Whitelabel.' },
-  { q: 'O que são Recursos Extras?', a: 'São módulos opcionais que você ativa conforme sua necessidade: WhatsApp (R$ 19,90/mês), Portal do Cliente (R$ 14,90/mês), API Pública (R$ 29,90/mês), Whitelabel (R$ 9,90/mês) e Usuário Extra (R$ 9,90/mês).' },
-  { q: 'Meus clientes precisam instalar algum aplicativo?', a: 'Não. O Portal do Cliente é 100% web, acessível pelo navegador do celular ou computador. Basta enviar o link de convite.' },
-  { q: 'Os dados dos meus clientes estão seguros?', a: 'Sim. Utilizamos criptografia de ponta a ponta, isolamento por escritório (multi-tenant) e políticas de acesso em nível de linha (RLS) em todas as tabelas.' },
-  { q: 'Posso comprar declarações avulsas no plano Free?', a: 'Sim! Você pode adquirir declarações extras por R$ 9,90 cada, sem precisar fazer upgrade de plano.' },
-  { q: 'O monitoramento de malha fina é automático?', a: 'Sim. Após a transmissão, o sistema consulta periodicamente o status na Receita Federal e alerta caso alguma declaração entre em malha.' },
-  { q: 'Existe contrato de fidelidade?', a: 'Não. Todos os planos são mensais e você pode cancelar a qualquer momento sem multa.' },
-  { q: 'Como funciona o Whitelabel?', a: 'Disponível como Recurso Extra (R$ 9,90/mês), permite personalizar cores, logo e nome do portal. Seus clientes acessam um portal com a identidade visual do seu escritório.' },
+const featuresTranslated = [
+  { icon: Layout, title: 'Veja quem está pendente agora', desc: 'Pare de correr atrás no último dia. O dashboard mostra exatamente quem falta, quem travou e onde está o gargalo — em tempo real.' },
+  { icon: Smartphone, title: 'Cliente envia tudo certo, no lugar certo', desc: 'Sem te travar no WhatsApp. O portal guia o cliente a enviar cada documento no formato correto, automaticamente.' },
+  { icon: Shield, title: 'Evite malha fina antes de transmitir', desc: 'O verificador cruza dados automaticamente e avisa antes de dar problema. Incluso em todos os planos — sem custo extra.' },
+  { icon: Zap, title: 'Simule o resultado do IR em segundos', desc: 'Compare Simplificada vs Completa instantaneamente. Mostre pro cliente o cenário ideal e feche o serviço mais rápido.' },
+  { icon: Palette, title: 'Cobre mais com uma experiência profissional', desc: 'Whitelabel com sua marca no portal. Seu cliente vê o seu nome, não o nosso. Isso é percepção de valor — e valor se cobra.' },
+  { icon: Receipt, title: 'Cobre via Pix e boleto sem sair da plataforma', desc: 'Gere cobranças, acompanhe pagamentos e pare de perseguir cliente inadimplente. Tudo integrado.' },
 ];
 
 const testimonials = [
-  { name: 'Carlos Silva', role: 'Contador — SP', text: 'Reduzi de 3 dias para 4 horas o tempo de coleta de documentos por cliente. O checklist inteligente é genial.', stars: 5, avatar: avatarCarlos },
-  { name: 'Ana Beatriz', role: 'Escritório ContaFácil — MG', text: 'O portal whitelabel deu outra cara pro meu escritório. Meus clientes acham que é um sistema próprio.', stars: 5, avatar: avatarAna },
-  { name: 'Roberto Mendes', role: 'Contador autônomo — RJ', text: 'O monitoramento de malha fina me salvou de uma dor de cabeça enorme. Fui alertado antes do cliente.', stars: 5, avatar: avatarRoberto },
+  { name: 'Carlos Silva', role: 'Contador — SP', text: 'Reduzi pela metade o tempo por cliente. Antes eu perdia 3 dias organizando documento. Agora chega tudo pronto.', stars: 5, avatar: avatarCarlos },
+  { name: 'Ana Beatriz', role: 'Escritório ContaFácil — MG', text: 'Consegui atender 40% mais clientes sem contratar ninguém. O sistema faz o trabalho pesado.', stars: 5, avatar: avatarAna },
+  { name: 'Roberto Mendes', role: 'Contador autônomo — RJ', text: 'Minha vida mudou. Menos estresse, mais controle, mais faturamento. Não volto pra planilha nunca mais.', stars: 5, avatar: avatarRoberto },
 ];
 
-/* ── Showcase Mockups ── */
-function KanbanMockup() {
-  const cols = [
-    { title: 'Aguardando Docs', color: 'bg-warning', items: ['Ana Paula C.', 'José M.'] },
-    { title: 'Doc. Recebida', color: 'bg-accent', items: ['Maria S.'] },
-    { title: 'Pronta', color: 'bg-success', items: ['Carlos R.', 'Fernanda L.'] },
-  ];
-  return (
-    <div className="glass-card rounded-2xl mockup-shadow overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/30">
-        <div className="flex gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
-          <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
-          <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
-        </div>
-        <span className="text-[10px] text-muted-foreground font-medium ml-2">Kanban — Declarações</span>
-      </div>
-      <div className="grid grid-cols-3 gap-2 p-3">
-        {cols.map((col) => (
-          <div key={col.title} className="space-y-2">
-            <div className="flex items-center gap-1.5">
-              <span className={`h-2 w-2 rounded-full ${col.color}`} />
-              <span className="text-[9px] font-semibold text-foreground">{col.title}</span>
-            </div>
-            {col.items.map((item) => (
-              <div key={item} className="bg-background/70 rounded-md p-2">
-                <p className="text-[9px] font-medium text-foreground">{item}</p>
-                <p className="text-[8px] text-muted-foreground mt-0.5">IRPF 2025</p>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+const objections = [
+  {
+    objection: '"Já uso planilha"',
+    answer: 'Planilha organiza dados. Não organiza processo. E muito menos cliente. Quando o WhatsApp toca pela 30ª vez pedindo a mesma coisa, a planilha não te salva.',
+  },
+  {
+    objection: '"Não tenho tempo de aprender sistema novo"',
+    answer: 'Se você tem tempo de reorganizar documento que o cliente mandou errado, tem tempo de apertar 3 botões. Sério: são 2 minutos pra configurar.',
+  },
+  {
+    objection: '"É caro demais"',
+    answer: 'Um único erro no IR pode custar mais que um ano inteiro do sistema. R$ 49,90 por mês é menos que o valor de UMA declaração. A matemática é simples.',
+  },
+  {
+    objection: '"Meu escritório é pequeno demais"',
+    answer: 'Comece grátis com 3 declarações. Sem cartão. Sem contrato. Se não servir, você não gastou nada. Se servir, acabou de ganhar horas de vida.',
+  },
+];
 
-function PortalMockup() {
-  return (
-    <div className="glass-card rounded-2xl mockup-shadow overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/30">
-        <div className="flex gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
-          <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
-          <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
-        </div>
-        <span className="text-[10px] text-muted-foreground font-medium ml-2">Portal do Cliente</span>
-      </div>
-      <div className="p-4 space-y-3">
-        <div className="bg-background/70 rounded-lg p-3">
-          <p className="text-[10px] font-semibold text-foreground mb-2">Sua Declaração IRPF 2025</p>
-          <div className="flex items-center gap-1">
-            {['Docs', 'Recebido', 'Pronta', 'Enviada'].map((s, i) => (
-              <div key={s} className="flex-1 flex flex-col items-center">
-                <div className={`h-3 w-3 rounded-full ${i <= 1 ? 'bg-accent' : 'bg-muted'} mb-0.5`} />
-                <span className="text-[7px] text-muted-foreground">{s}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="bg-background/70 rounded-lg p-3 space-y-2">
-          <p className="text-[10px] font-semibold text-foreground">Documentos pendentes</p>
-          {['Informe de Rendimentos', 'Comprovante de Residência'].map((doc) => (
-            <div key={doc} className="flex items-center justify-between">
-              <span className="text-[9px] text-foreground">{doc}</span>
-              <span className="text-[8px] text-warning font-medium">Pendente</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+const faqs = [
+  { q: 'Preciso de cartão de crédito para começar?', a: 'Não. O plano Free é gratuito, sem cartão, sem pegadinha. Teste com 3 declarações completas.' },
+  { q: 'Como funciona a malha fina gratuita?', a: 'Cruzamos dados automaticamente via BrasilAPI antes da transmissão. Se tiver inconsistência, você é alertado antes de dar problema.' },
+  { q: 'Qual a diferença entre Free e Pro?', a: 'Free: 3 declarações, 1 usuário, 5GB. Pro (R$ 49,90/mês): declarações ilimitadas, até 5 usuários, storage ilimitado e acesso a Recursos Extras.' },
+  { q: 'O que são Recursos Extras?', a: 'Módulos opcionais: WhatsApp (R$ 19,90), Portal do Cliente (R$ 14,90), API Pública (R$ 29,90), Whitelabel (R$ 9,90), Usuário Extra (R$ 9,90).' },
+  { q: 'Meus clientes precisam instalar algo?', a: 'Não. Portal 100% web. Funciona no celular e computador. Basta enviar o link.' },
+  { q: 'Os dados estão seguros?', a: 'Criptografia de ponta a ponta, isolamento por escritório e políticas de acesso em nível de linha em todas as tabelas.' },
+  { q: 'Existe contrato de fidelidade?', a: 'Zero. Mensal. Cancele quando quiser. Sem multa, sem burocracia.' },
+];
 
 /* ── Scroll Section Wrapper ── */
 function Section({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) {
@@ -143,7 +100,7 @@ function Section({ children, className = '', id }: { children: React.ReactNode; 
 export default function Index() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* ── HEADER (glassmorphism) ── */}
+      {/* ── HEADER ── */}
       <header className="sticky top-0 z-50 glass-navbar">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -151,8 +108,8 @@ export default function Index() {
             <img src={logoFull} alt="DeclaraIR" className="h-7 hidden sm:block" />
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground font-medium">
-            <a href="#como-funciona" className="hover:text-foreground transition-colors">Como funciona</a>
-            <a href="#features" className="hover:text-foreground transition-colors">Funcionalidades</a>
+            <a href="#dor" className="hover:text-foreground transition-colors">A Dor</a>
+            <a href="#solucao" className="hover:text-foreground transition-colors">Solução</a>
             <a href="#pricing" className="hover:text-foreground transition-colors">Preços</a>
             <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
           </nav>
@@ -163,53 +120,63 @@ export default function Index() {
         </div>
       </header>
 
-      {/* ── HERO ── */}
+      {/* ══════════════════════════════════════════════════════
+          1. HERO — STORYTELLING + HEADLINE
+         ══════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden">
-        {/* Blobs */}
         <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-accent/8 blur-3xl animate-blob" />
         <div className="absolute bottom-[-30%] right-[-15%] w-[600px] h-[600px] rounded-full bg-primary/6 blur-3xl animate-blob-delayed" />
-        <div className="absolute top-[40%] left-[50%] w-[300px] h-[300px] rounded-full bg-success/5 blur-3xl animate-blob" />
+        <div className="absolute top-[40%] left-[50%] w-[300px] h-[300px] rounded-full bg-destructive/4 blur-3xl animate-blob" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20 relative">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-8">
             {/* Left */}
             <div className="flex-1 text-center lg:text-left max-w-xl lg:max-w-none">
-              <Badge variant="secondary" className="mb-6 text-sm px-4 py-1.5 glass-card border-accent/20">
-                <Zap className="h-3.5 w-3.5 mr-1.5 text-accent" /> 🎉 Teste grátis com 3 declarações completas
+              {/* Storytelling intro */}
+              <div className="mb-6 space-y-1">
+                <p className="text-muted-foreground text-sm sm:text-base italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                  Todo ano começa igual.
+                </p>
+                <p className="text-muted-foreground text-sm sm:text-base italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  Cliente mandando documento no WhatsApp. Informação incompleta.
+                </p>
+                <p className="text-muted-foreground text-sm sm:text-base italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                  Prazo chegando. E você… tentando dar conta do caos.
+                </p>
+              </div>
+
+              <Badge variant="secondary" className="mb-5 text-sm px-4 py-1.5 glass-card border-destructive/20 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+                <Flame className="h-3.5 w-3.5 mr-1.5 text-destructive" /> A temporada de IR não espera
               </Badge>
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-foreground leading-[1.1] tracking-tight">
-                Simplifique o IR do seu{' '}
+
+              <h1 className="font-display text-3xl sm:text-4xl lg:text-[3.2rem] font-extrabold text-foreground leading-[1.1] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
+                O problema não é o IR.{' '}
                 <span className="relative">
-                  <span className="text-accent">Escritório Contábil</span>
-                  <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" fill="none">
-                    <path d="M1 5.5Q50 1 100 4T199 3" stroke="hsl(var(--accent))" strokeWidth="2" strokeLinecap="round" />
+                  <span className="text-accent">É a desorganização do seu processo.</span>
+                  <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 300 8" fill="none">
+                    <path d="M1 5.5Q75 1 150 4T299 3" stroke="hsl(var(--accent))" strokeWidth="2" strokeLinecap="round" />
                   </svg>
                 </span>
               </h1>
-              <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-lg">
-                Plataforma completa para gestão de Imposto de Renda.
-                Malha fina gratuita, calculadora integrada, chat com clientes
-                e muito mais. Comece grátis hoje.
+
+              <p className="mt-6 text-lg font-medium text-foreground/80 leading-relaxed max-w-lg animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
+                Organize tudo, elimine retrabalho e entregue declarações em <span className="text-accent font-bold">metade do tempo</span>.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 lg:justify-start justify-center">
+
+              <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 lg:justify-start justify-center animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
                 <Link to="/cadastro">
-                  <Button size="lg" className="text-base px-8 h-12 shadow-xl shadow-primary/20">
-                    Começar Grátis <ArrowRight className="h-4 w-4 ml-2" />
+                  <Button size="lg" className="text-base px-8 h-13 shadow-xl shadow-primary/20 font-bold uppercase tracking-wide">
+                    Quero organizar meu IR agora <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </Link>
-                <a href="#como-funciona">
-                  <Button variant="outline" size="lg" className="text-base px-8 h-12 glass-card">
-                    Ver como funciona
-                  </Button>
-                </a>
               </div>
-              {/* Trust badges */}
-              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 justify-center lg:justify-start text-muted-foreground">
+              {/* Microcopy */}
+              <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 justify-center lg:justify-start text-muted-foreground animate-fade-in-up" style={{ animationDelay: '1.5s' }}>
                 <div className="flex items-center gap-1.5 text-xs">
                   <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Sem cartão de crédito
                 </div>
                 <div className="flex items-center gap-1.5 text-xs">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> 3 declarações grátis
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Começa em 2 minutos
                 </div>
                 <div className="flex items-center gap-1.5 text-xs">
                   <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Cancele quando quiser
@@ -224,30 +191,218 @@ export default function Index() {
         </div>
       </section>
 
-      {/* ── BENEFIT SHOWCASES — Rich visual feature sections ── */}
+      {/* ══════════════════════════════════════════════════════
+          2. AMPLIFICAÇÃO DA DOR
+         ══════════════════════════════════════════════════════ */}
+      <Section id="dor" className="py-20 lg:py-28 bg-primary relative overflow-hidden">
+        <div className="absolute top-[-50%] left-[20%] w-96 h-96 bg-destructive/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-50%] right-[10%] w-72 h-72 bg-accent/8 rounded-full blur-3xl" />
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+          <Badge className="mb-6 bg-destructive/20 text-destructive border-destructive/30 hover:bg-destructive/30 text-xs">
+            <AlertTriangle className="h-3 w-3 mr-1.5" /> Isso é familiar?
+          </Badge>
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight mb-10">
+            Se você não resolver isso,<br />
+            <span className="text-warning">todo ano será a mesma guerra.</span>
+          </h2>
+
+          <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto text-left">
+            {painPoints.map((p) => (
+              <div key={p.text} className="flex items-start gap-3 glass-card-strong rounded-xl p-4 hover:scale-[1.02] transition-transform">
+                <div className="h-9 w-9 rounded-full bg-destructive/15 flex items-center justify-center shrink-0 mt-0.5">
+                  <p.icon className="h-4 w-4 text-destructive" />
+                </div>
+                <p className="text-sm text-foreground font-medium leading-relaxed">{p.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-12 text-primary-foreground/60 text-lg italic max-w-2xl mx-auto">
+            "Enquanto você organiza documento, outro contador está faturando."
+          </p>
+        </div>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════
+          3. VIRADA / INSIGHT
+         ══════════════════════════════════════════════════════ */}
+      <Section className="py-20 lg:py-24">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+          <div className="h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto">
+            <Target className="h-8 w-8 text-accent" />
+          </div>
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-tight">
+            O problema nunca foi o volume de declarações.
+          </h2>
+          <p className="text-xl text-muted-foreground leading-relaxed">
+            É a falta de um sistema que <span className="text-accent font-bold">organize o jogo pra você</span>.
+          </p>
+          <p className="text-foreground font-bold text-lg">
+            IR não é difícil. Difícil é trabalhar no caos.
+          </p>
+        </div>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════
+          4. APRESENTAÇÃO DO PRODUTO
+         ══════════════════════════════════════════════════════ */}
+      <Section id="solucao" className="py-20 lg:py-28 bg-primary relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent/5 rounded-full blur-3xl" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            {/* Left — Text */}
+            <div className="flex-1 text-center lg:text-left">
+              <Badge className="mb-6 bg-accent/20 text-accent border-accent/30 hover:bg-accent/30">
+                <Zap className="h-3 w-3 mr-1.5" /> Conheça o DeclaraIR
+              </Badge>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
+                O sistema que transforma o caos do IR em um{' '}
+                <span className="text-accent">processo previsível e lucrativo</span>.
+              </h2>
+              <p className="mt-5 text-primary-foreground/70 text-lg leading-relaxed max-w-md">
+                Você não precisa trabalhar mais. Precisa trabalhar organizado.
+              </p>
+              <Link to="/cadastro">
+                <Button size="lg" variant="secondary" className="mt-8 text-base px-8 h-12 shadow-xl font-bold uppercase tracking-wide">
+                  Começar agora <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Right — Person with floating cards */}
+            <div className="flex-1 relative w-full max-w-md lg:max-w-none">
+              <div className="relative rounded-3xl overflow-hidden">
+                <img src={ctaPerson} alt="Profissional usando DeclaraIR" className="w-full h-[400px] lg:h-[460px] object-cover object-top" loading="lazy" width={1280} height={640} />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />
+              </div>
+              <div className="absolute top-6 right-4 glass-card-strong rounded-xl mockup-shadow animate-float p-3 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-success/15 flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-success" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-foreground text-sm">-85%</p>
+                    <p className="text-[9px] text-muted-foreground">tempo de coleta</p>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute bottom-12 left-4 glass-card-strong rounded-xl mockup-shadow animate-float-delayed p-3 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-accent" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-foreground text-sm">3x mais</p>
+                    <p className="text-[9px] text-muted-foreground">produtividade</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════
+          5. TRANSFORMAÇÃO — ANTES vs DEPOIS
+         ══════════════════════════════════════════════════════ */}
+      <Section className="py-20 lg:py-28">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <Badge variant="secondary" className="mb-4 text-xs">Transformação</Badge>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
+              Veja a diferença com os próprios olhos
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+            {/* ANTES */}
+            <div className="rounded-2xl border-2 border-destructive/20 bg-destructive/5 p-6 space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-8 w-8 rounded-full bg-destructive/15 flex items-center justify-center">
+                  <XCircle className="h-4 w-4 text-destructive" />
+                </div>
+                <h3 className="font-display font-bold text-destructive text-lg">ANTES</h3>
+              </div>
+              {beforeAfter.map((item) => (
+                <div key={item.before} className="flex items-center gap-3 text-sm">
+                  <XCircle className="h-4 w-4 text-destructive/60 shrink-0" />
+                  <span className="text-foreground/70">{item.before}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* DEPOIS */}
+            <div className="rounded-2xl border-2 border-success/30 bg-success/5 p-6 space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-8 w-8 rounded-full bg-success/15 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                </div>
+                <h3 className="font-display font-bold text-success text-lg">DEPOIS</h3>
+              </div>
+              {beforeAfter.map((item) => (
+                <div key={item.after} className="flex items-center gap-3 text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-success/70 shrink-0" />
+                  <span className="text-foreground font-medium">{item.after}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-center mt-10 text-lg font-bold text-foreground">
+            "Você não trabalha mais. Você trabalha melhor — e <span className="text-accent">fatura mais</span>."
+          </p>
+        </div>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════
+          6. FUNCIONALIDADES TRADUZIDAS EM BENEFÍCIO
+         ══════════════════════════════════════════════════════ */}
+      <Section id="features" className="py-20 lg:py-28 bg-gradient-to-b from-background to-secondary/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4 text-xs">Na prática</Badge>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
+              Cada funcionalidade é um problema a menos
+            </h2>
+            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
+              Nada de feature bonita que não resolve. Aqui cada botão economiza tempo ou gera dinheiro.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuresTranslated.map((f) => (
+              <GlassCard
+                key={f.title}
+                className="p-6 group hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+              >
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 group-hover:from-accent/30 group-hover:to-accent/10 transition-colors">
+                  <f.icon className="h-5 w-5 text-accent" />
+                </div>
+                <h3 className="font-display font-bold text-foreground text-lg">{f.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+              </GlassCard>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════
+          FEATURE SHOWCASES — Visual deep dives
+         ══════════════════════════════════════════════════════ */}
       <Section className="py-20 lg:py-28 bg-primary relative overflow-hidden">
         <div className="absolute top-[-50%] left-[20%] w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
         <div className="absolute bottom-[-50%] right-[10%] w-72 h-72 bg-accent/8 rounded-full blur-3xl" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center mb-16">
-            <Badge className="mb-4 bg-accent/20 text-accent border-accent/30 hover:bg-accent/30 text-xs">
-              Por que o DeclaraIR?
-            </Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground">
-              Cada detalhe pensado para{' '}
-              <span className="text-accent">você produzir mais</span>
-            </h2>
-          </div>
-
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative space-y-24">
           {/* Feature 1 — Dashboard */}
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 mb-20">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             <div className="flex-1 relative w-full max-w-md lg:max-w-none">
               <div className="relative rounded-3xl overflow-hidden">
-                <img src={featureDashboard} alt="Contadora usando dashboard" className="w-full h-[360px] lg:h-[400px] object-cover" loading="lazy" width={960} height={640} />
+                <img src={featureDashboard} alt="Dashboard de gestão de IR" className="w-full h-[360px] lg:h-[400px] object-cover" loading="lazy" width={960} height={640} />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/50 via-transparent to-transparent" />
               </div>
-              {/* Floating card */}
               <div className="absolute top-5 right-4 glass-card-strong rounded-xl mockup-shadow animate-float p-3 z-10">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
@@ -272,12 +427,14 @@ export default function Index() {
               </div>
             </div>
             <div className="flex-1 text-center lg:text-left">
-              <h3 className="font-display text-2xl sm:text-3xl font-bold text-primary-foreground">Dashboard inteligente com KPIs em tempo real</h3>
+              <h3 className="font-display text-2xl sm:text-3xl font-bold text-primary-foreground">
+                Pare de adivinhar. Veja o que está travado.
+              </h3>
               <p className="mt-4 text-primary-foreground/70 leading-relaxed">
-                Visualize a operação inteira em um único quadro Kanban. Acompanhe prazos, identifique gargalos e tome decisões baseadas em dados reais.
+                O Kanban mostra cada declaração como um card. Quem está parado, quem falta documento, quem está pronto. Sem ligar pro cliente pra perguntar.
               </p>
               <ul className="mt-6 space-y-3">
-                {['KPIs atualizados automaticamente', 'Filtro por contador, status e urgência', 'Drag & drop entre etapas da declaração'].map(b => (
+                {['Drag & drop entre etapas', 'KPIs em tempo real — sem planilha', 'Filtro por urgência e responsável'].map(b => (
                   <li key={b} className="flex items-start gap-3 text-sm text-primary-foreground/80">
                     <CheckCircle2 className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                     <span>{b}</span>
@@ -287,8 +444,8 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Feature 2 — Mobile / Portal */}
-          <div className="flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-16 mb-20">
+          {/* Feature 2 — Portal */}
+          <div className="flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-16">
             <div className="flex-1 relative w-full max-w-md lg:max-w-none">
               <div className="relative rounded-3xl overflow-hidden">
                 <img src={featureMobile} alt="Cliente enviando documentos pelo celular" className="w-full h-[360px] lg:h-[400px] object-cover" loading="lazy" width={960} height={640} />
@@ -305,71 +462,16 @@ export default function Index() {
                   </div>
                 </div>
               </div>
-              <div className="absolute bottom-10 right-4 glass-card-strong rounded-xl mockup-shadow animate-float-delayed p-3 z-10">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
-                    <Clock className="h-4 w-4 text-accent" />
-                  </div>
-                  <div>
-                    <p className="font-display font-bold text-foreground text-sm">-85%</p>
-                    <p className="text-[9px] text-muted-foreground">tempo de coleta</p>
-                  </div>
-                </div>
-              </div>
             </div>
             <div className="flex-1 text-center lg:text-left">
-              <h3 className="font-display text-2xl sm:text-3xl font-bold text-primary-foreground">Seu cliente envia tudo pelo celular</h3>
+              <h3 className="font-display text-2xl sm:text-3xl font-bold text-primary-foreground">
+                Seu cliente manda tudo certo. Sem te incomodar.
+              </h3>
               <p className="mt-4 text-primary-foreground/70 leading-relaxed">
-                Chega de WhatsApp e e-mail para pedir documentos. O portal do cliente é 100% mobile, guiado e com checklist inteligente.
+                Chega de "manda de novo", "faltou esse", "mandou no grupo errado". O portal guia o cliente, e você recebe tudo organizado.
               </p>
               <ul className="mt-6 space-y-3">
-                {['Upload direto pelo celular com câmera', 'Checklist gerado pelo perfil fiscal', 'Notificações automáticas de pendência'].map(b => (
-                  <li key={b} className="flex items-start gap-3 text-sm text-primary-foreground/80">
-                    <CheckCircle2 className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Feature 3 — Team / Whitelabel */}
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-            <div className="flex-1 relative w-full max-w-md lg:max-w-none">
-              <div className="relative rounded-3xl overflow-hidden">
-                <img src={featureTeam} alt="Equipe de contadores colaborando" className="w-full h-[360px] lg:h-[400px] object-cover" loading="lazy" width={960} height={640} />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/50 via-transparent to-transparent" />
-              </div>
-              <div className="absolute top-5 right-4 glass-card-strong rounded-xl mockup-shadow animate-float p-3 z-10">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
-                    <Palette className="h-4 w-4 text-accent" />
-                  </div>
-                  <div>
-                    <p className="font-display font-bold text-foreground text-sm">100%</p>
-                    <p className="text-[9px] text-muted-foreground">sua marca</p>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute bottom-10 left-4 glass-card-strong rounded-xl mockup-shadow animate-float-delayed p-3 z-10">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-success/15 flex items-center justify-center">
-                    <Receipt className="h-4 w-4 text-success" />
-                  </div>
-                  <div>
-                    <p className="font-display font-bold text-foreground text-sm">Pix/Boleto</p>
-                    <p className="text-[9px] text-muted-foreground">cobranças integradas</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 text-center lg:text-left">
-              <h3 className="font-display text-2xl sm:text-3xl font-bold text-primary-foreground">Whitelabel + cobranças em um só lugar</h3>
-              <p className="mt-4 text-primary-foreground/70 leading-relaxed">
-                Personalize o portal com sua marca, gere cobranças via Pix e boleto e gerencie a equipe inteira com permissões granulares.
-              </p>
-              <ul className="mt-6 space-y-3">
-                {['Portal com logo, cores e nome do escritório', 'Cobranças via Pix e boleto integradas', 'Gestão de equipe com papéis e permissões'].map(b => (
+                {['Upload direto pelo celular com câmera', 'Checklist gerado pelo perfil fiscal', 'Cliente acompanha o status em tempo real'].map(b => (
                   <li key={b} className="flex items-start gap-3 text-sm text-primary-foreground/80">
                     <CheckCircle2 className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                     <span>{b}</span>
@@ -380,149 +482,17 @@ export default function Index() {
           </div>
         </div>
       </Section>
-      <section id="como-funciona" className="py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
-          <div className="text-center max-w-2xl mx-auto">
-            <Badge variant="secondary" className="mb-4 text-xs">Como funciona</Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-              Do documento à transmissão,{' '}
-              <span className="text-accent">tudo em um só lugar</span>
-            </h2>
-          </div>
 
-          <FeatureShowcase
-            title="Organize todas as declarações visualmente"
-            description="Visualize cada declaração como um card em um board Kanban. Arraste entre colunas, filtre por status e nunca perca prazos."
-            bullets={[
-              'Drag & drop entre status',
-              'KPIs em tempo real no topo',
-              'Filtro por contador responsável',
-              'Cores por urgência e prazo',
-            ]}
-            mockup={<KanbanMockup />}
-          />
-
-          <FeatureShowcase
-            title="Seu cliente envia tudo pelo portal"
-            description="Cada cliente acessa um portal personalizado com a sua marca, envia documentos, preenche o formulário e acompanha o status em tempo real."
-            bullets={[
-              'Portal 100% whitelabel',
-              'Upload de documentos com checklist',
-              'Formulário guiado de IRPF',
-              'Acompanhamento por etapas',
-            ]}
-            mockup={<PortalMockup />}
-            reversed
-          />
-        </div>
-      </section>
-
-      {/* ── DEIXE A BUROCRACIA CONOSCO — Split Section ── */}
-      <Section className="py-20 lg:py-28 bg-primary relative overflow-hidden">
-        {/* Decorative blobs */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent/5 rounded-full blur-3xl" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-            {/* Left — Text */}
-            <div className="flex-1 text-center lg:text-left">
-              <Badge className="mb-6 bg-accent/20 text-accent border-accent/30 hover:bg-accent/30">
-                <Briefcase className="h-3 w-3 mr-1.5" /> Foque no que importa
-              </Badge>
-              <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
-                Deixe a burocracia{' '}
-                <span className="text-accent">conosco</span>
-              </h2>
-              <p className="mt-5 text-primary-foreground/70 text-lg leading-relaxed max-w-md">
-                Enquanto o DeclaraIR cuida do fluxo de documentos, cobranças e comunicação, você se concentra em entregar o melhor serviço aos seus clientes.
-              </p>
-              <Link to="/cadastro">
-                <Button size="lg" variant="secondary" className="mt-8 text-base px-8 h-12 shadow-xl">
-                  Experimentar Grátis <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Right — Person with floating cards */}
-            <div className="flex-1 relative w-full max-w-md lg:max-w-none">
-              <div className="relative rounded-3xl overflow-hidden">
-                <img
-                  src={ctaPerson}
-                  alt="Profissional usando celular"
-                  className="w-full h-[400px] lg:h-[460px] object-cover object-top"
-                  loading="lazy"
-                  width={1280}
-                  height={640}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />
-              </div>
-
-              {/* Floating benefit cards */}
-              <div className="absolute top-6 right-4 glass-card-strong rounded-xl mockup-shadow animate-float p-3 z-10">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-success/15 flex items-center justify-center">
-                    <Clock className="h-4 w-4 text-success" />
-                  </div>
-                  <div>
-                    <p className="font-display font-bold text-foreground text-sm">-85%</p>
-                    <p className="text-[9px] text-muted-foreground">tempo de coleta</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute bottom-12 left-4 glass-card-strong rounded-xl mockup-shadow animate-float-delayed p-3 z-10">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
-                    <TrendingUp className="h-4 w-4 text-accent" />
-                  </div>
-                  <div>
-                    <p className="font-display font-bold text-foreground text-sm">3x mais</p>
-                    <p className="text-[9px] text-muted-foreground">produtividade</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ── FEATURES GRID ── */}
-      <Section id="features" className="py-20 lg:py-28 bg-gradient-to-b from-background to-secondary/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4 text-xs">Funcionalidades</Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-              Tudo que seu escritório precisa
-            </h2>
-            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Cada funcionalidade foi pensada para eliminar gargalos reais da temporada de IRPF.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f) => (
-              <GlassCard
-                key={f.title}
-                className="p-6 group hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
-              >
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 group-hover:from-accent/30 group-hover:to-accent/10 transition-colors">
-                  <f.icon className="h-5 w-5 text-accent" />
-                </div>
-                <h3 className="font-display font-bold text-foreground text-lg">{f.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </GlassCard>
-            ))}
-          </div>
-        </div>
-      </Section>
-
-
-      {/* ── TESTIMONIALS ── */}
+      {/* ══════════════════════════════════════════════════════
+          7. PROVA SOCIAL — Depoimentos
+         ══════════════════════════════════════════════════════ */}
       <Section className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <Badge variant="secondary" className="mb-4 text-xs">Depoimentos</Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">O que nossos usuários dizem</h2>
+            <Badge variant="secondary" className="mb-4 text-xs">Quem já usa, não volta</Badge>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
+              Resultados reais de contadores reais
+            </h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((t) => (
@@ -532,16 +502,9 @@ export default function Index() {
                     <Star key={i} className="h-4 w-4 fill-warning text-warning" />
                   ))}
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-5">"{t.text}"</p>
+                <p className="text-sm text-foreground leading-relaxed mb-5 font-medium">"{t.text}"</p>
                 <div className="flex items-center gap-3">
-                  <img
-                    src={t.avatar}
-                    alt={t.name}
-                    className="h-10 w-10 rounded-full object-cover ring-2 ring-accent/20"
-                    loading="lazy"
-                    width={40}
-                    height={40}
-                  />
+                  <img src={t.avatar} alt={t.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-accent/20" loading="lazy" width={40} height={40} />
                   <div>
                     <p className="font-medium text-foreground text-sm">{t.name}</p>
                     <p className="text-xs text-muted-foreground">{t.role}</p>
@@ -550,24 +513,90 @@ export default function Index() {
               </GlassCard>
             ))}
           </div>
+
+          {/* Metrics bar */}
+          <div className="mt-16 glass-card rounded-2xl p-8 sm:p-10">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+              <MetricCounter end="500" suffix="+" label="Escritórios ativos" />
+              <MetricCounter end="1200" suffix="+" label="Declarações processadas" />
+              <MetricCounter end="85" suffix="%" label="Menos tempo de coleta" />
+              <MetricCounter end="98" suffix="%" label="Satisfação dos contadores" />
+            </div>
+          </div>
         </div>
       </Section>
 
-      {/* ── PRICING ── */}
-      <Section id="pricing" className="py-20 lg:py-28 bg-gradient-to-b from-secondary/30 to-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-         <div className="text-center">
-            <Badge variant="secondary" className="mb-4 text-xs">Planos</Badge>
+      {/* ══════════════════════════════════════════════════════
+          8. QUEBRA DE OBJEÇÃO
+         ══════════════════════════════════════════════════════ */}
+      <Section className="py-20 lg:py-28 bg-gradient-to-b from-secondary/30 to-background">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <Badge variant="secondary" className="mb-4 text-xs">Sem desculpa</Badge>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-              Comece grátis, escale com o Pro
+              "Mas eu já…" — Calma. Lê isso aqui.
             </h2>
-            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Apenas 2 planos: Free com 3 declarações ou Pro ilimitado por R$ 49,90/mês.
-              Adicione Recursos Extras conforme sua necessidade.
+          </div>
+          <div className="space-y-4">
+            {objections.map((obj) => (
+              <GlassCard key={obj.objection} className="p-6 hover:shadow-lg transition-shadow">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                  <div className="shrink-0">
+                    <span className="inline-block px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-sm font-bold">
+                      {obj.objection}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{obj.answer}</p>
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════
+          9. PRICING + ANCORAGEM
+         ══════════════════════════════════════════════════════ */}
+      <Section id="pricing" className="py-20 lg:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="text-center space-y-4">
+            <Badge variant="secondary" className="mb-2 text-xs">Preços</Badge>
+            <p className="text-muted-foreground text-sm max-w-lg mx-auto italic">
+              "Um único erro no IR pode custar mais que um ano inteiro do sistema."
+            </p>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
+              Comece grátis. Escale quando quiser.
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Dois planos. Sem contrato. Sem surpresas. Sem letras miúdas.
             </p>
           </div>
           <PlanosCardsPublic />
           <TabelaAvulso />
+        </div>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════
+          10. URGÊNCIA
+         ══════════════════════════════════════════════════════ */}
+      <Section className="py-16 lg:py-20 bg-warning/5 border-y border-warning/20">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+          <div className="h-14 w-14 rounded-full bg-warning/15 flex items-center justify-center mx-auto animate-float">
+            <Flame className="h-7 w-7 text-warning" />
+          </div>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
+            A temporada de IR não espera.
+          </h2>
+          <p className="text-muted-foreground text-lg leading-relaxed max-w-xl mx-auto">
+            Quem se organiza antes, <span className="font-bold text-foreground">lucra mais</span>.
+            <br />
+            Quem deixa pra depois… entra em modo sobrevivência.
+          </p>
+          <Link to="/cadastro">
+            <Button size="lg" className="text-base px-10 h-13 shadow-xl font-bold uppercase tracking-wide mt-2">
+              Começar agora <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </Link>
         </div>
       </Section>
 
@@ -576,7 +605,7 @@ export default function Index() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <Badge variant="secondary" className="mb-4 text-xs">FAQ</Badge>
-            <h2 className="font-display text-3xl font-bold text-foreground">Perguntas Frequentes</h2>
+            <h2 className="font-display text-3xl font-bold text-foreground">Perguntas diretas, respostas diretas</h2>
           </div>
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((f, i) => (
@@ -589,41 +618,40 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ── CTA FINAL ── */}
+      {/* ══════════════════════════════════════════════════════
+          11. CTA FINAL — FECHAMENTO
+         ══════════════════════════════════════════════════════ */}
       <Section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-3xl overflow-hidden">
-            {/* Background image */}
             <div className="absolute inset-0">
-              <img
-                src={ctaPerson}
-                alt=""
-                className="w-full h-full object-cover"
-                loading="lazy"
-                width={1280}
-                height={640}
-              />
+              <img src={ctaPerson} alt="" className="w-full h-full object-cover" loading="lazy" width={1280} height={640} />
               <div className="absolute inset-0 bg-gradient-to-br from-primary/95 via-primary/90 to-accent/70" />
             </div>
 
             <div className="relative p-10 sm:p-16 text-center">
-              {/* Decorative */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
 
               <div className="relative">
                 <img src={logoHero} alt="DeclaraIR" className="h-16 sm:h-20 mx-auto mb-6 drop-shadow-2xl" />
-                <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground">
-                  Pronto para modernizar seu escritório?
+                <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
+                  Pare de operar no caos.
                 </h2>
-                <p className="mt-4 text-primary-foreground/80 max-w-xl mx-auto text-lg">
-                  Junte-se a mais de 500 escritórios que já simplificaram a gestão de IR com DeclaraIR. Comece grátis em 30 segundos.
+                <p className="mt-3 text-primary-foreground/90 max-w-xl mx-auto text-xl font-medium">
+                  Transforme seu IR em um processo simples, previsível e lucrativo.
+                </p>
+                <p className="mt-6 text-primary-foreground/60 text-sm italic">
+                  "Você não precisa trabalhar mais. Precisa trabalhar organizado."
                 </p>
                 <Link to="/cadastro">
-                  <Button size="lg" variant="secondary" className="mt-8 text-base px-10 h-13 shadow-xl">
-                    Começar Agora <ArrowRight className="h-4 w-4 ml-2" />
+                  <Button size="lg" variant="secondary" className="mt-8 text-base px-10 h-13 shadow-xl font-bold uppercase tracking-wide">
+                    Começar agora <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </Link>
+                <p className="mt-3 text-primary-foreground/50 text-xs">
+                  Sem cartão • 3 declarações grátis • Cancele quando quiser
+                </p>
               </div>
             </div>
           </div>
@@ -640,7 +668,7 @@ export default function Index() {
                 <img src={logoFull} alt="DeclaraIR" className="h-5" />
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                A plataforma completa para gestão de declarações IRPF.
+                O sistema que organiza o IR do seu escritório.
               </p>
             </div>
             <div>
