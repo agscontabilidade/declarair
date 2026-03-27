@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { QueryError } from '@/components/ui/QueryError';
+import { DeclaracoesLimitBanner } from '@/components/billing/DeclaracoesLimitBanner';
 
 const years = [2023, 2024, 2025, 2026];
 
