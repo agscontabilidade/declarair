@@ -170,3 +170,16 @@
 [data-sonner-toast][data-type="info"] [data-icon] {
   color: inherit !important;
 }
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Touch-friendly tap targets */
+  button, a, [role="button"] {
+    min-height: 36px;
+  }
+}
