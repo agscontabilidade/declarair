@@ -60,10 +60,10 @@ export function PlanosCardsPublic() {
         return (
           <Card
             key={plano.id}
-            className={`relative flex flex-col transition-all duration-200 hover:shadow-lg ${
+            className={`relative flex flex-col transition-all duration-300 backdrop-blur-sm ${
               plano.destaque
-                ? 'ring-2 ring-accent shadow-xl scale-[1.02]'
-                : 'shadow-sm hover:-translate-y-1'
+                ? 'ring-2 ring-accent shadow-2xl shadow-accent/10 scale-[1.02] bg-gradient-to-b from-card to-accent/[0.03]'
+                : 'shadow-md hover:shadow-xl hover:-translate-y-1 glass-card'
             }`}
           >
             {plano.badge && (
