@@ -303,10 +303,9 @@ export default function Upgrade() {
                       </Alert>
 
                       <div className="pt-4 border-t">
-                        <p className="text-sm text-muted-foreground text-center">
-                          💡 <strong>Dica:</strong> Se você faz mais de 5 declarações/mês, o plano
-                          Pro sai mais barato!
-                        </p>
+                         <p className="text-sm text-muted-foreground text-center">
+                           💡 <strong>Dica:</strong> Cada declaração extra custa R$ 9,90 e é válida por 30 dias
+                         </p>
                       </div>
                     </div>
                   </div>
