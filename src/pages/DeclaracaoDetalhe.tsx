@@ -159,14 +159,8 @@ export default function DeclaracaoDetalhe() {
             />
           </TabsContent>
 
-          <TabsContent value="calculo" className="mt-4">
-            <SecaoCalculoIR
-              formulario={hook.formularioIR}
-              declaracao={hook.declaracao}
-              onSaveForma={handleSaveForma}
-              savingForma={savingForma}
-            />
-          </TabsContent>
+
+
 
           <TabsContent value="resultado" className="mt-4 space-y-6">
             <SecaoResultado
