@@ -199,7 +199,7 @@ export default function Upgrade() {
                     <div className="space-y-4 flex flex-col justify-center">
                       <div className="text-center p-6 bg-accent/5 rounded-xl">
                         <p className="text-sm text-muted-foreground mb-2">Por apenas</p>
-                        <p className="text-4xl font-bold text-accent">R$ 49,90</p>
+                        <p className="text-4xl font-bold text-accent">R$ 29,90</p>
                         <p className="text-sm text-muted-foreground">/mês</p>
                       </div>
 
