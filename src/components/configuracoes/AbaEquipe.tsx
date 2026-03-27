@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UserPlus, Copy, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
+import { formatarPapel } from '@/lib/formatters';
 
 type Usuario = Tables<'usuarios'>;
 
