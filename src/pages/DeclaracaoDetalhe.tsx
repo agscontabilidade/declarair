@@ -81,23 +81,8 @@ export default function DeclaracaoDetalhe() {
     });
   };
 
-  const handleSaveForma = async (forma: string) => {
-    if (!id) return;
-    setSavingForma(true);
-    try {
-      const { error } = await supabase
-        .from('declaracoes')
-        .update({ forma_tributacao: forma })
-        .eq('id', id);
-      if (error) throw error;
-      toast.success(`Forma de tributação definida: ${forma === 'completa' ? 'Completa' : 'Simplificada'}`);
-      queryClient.invalidateQueries({ queryKey: ['declaracao', id] });
-    } catch {
-      toast.error('Erro ao salvar forma de tributação');
-    } finally {
-      setSavingForma(false);
-    }
-  };
+
+
 
   if (hook.isError) {
     return (
