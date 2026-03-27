@@ -152,8 +152,8 @@ export default function Upgrade() {
         {/* Tabs */}
         <Tabs defaultValue={isFree ? 'upgrade' : 'addons'}>
           <TabsList className="grid w-full max-w-md grid-cols-3">
-            {isFree && <TabsTrigger value="upgrade">Upgrade</TabsTrigger>}
-            {isFree && <TabsTrigger value="extras">Declarações Extras</TabsTrigger>}
+          {isFree && <TabsTrigger value="upgrade">Upgrade</TabsTrigger>}
+            <TabsTrigger value="extras">Declarações Extras</TabsTrigger>
             <TabsTrigger value="addons">Recursos Adicionais</TabsTrigger>
           </TabsList>
 
