@@ -515,7 +515,7 @@ export default function Index() {
           </div>
 
           {/* Metrics bar */}
-          <div className="mt-16 glass-card rounded-2xl p-8 sm:p-10">
+          <div className="mt-16 bg-primary rounded-2xl p-8 sm:p-10 shadow-xl">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
               <MetricCounter end="500" suffix="+" label="Escritórios ativos" />
               <MetricCounter end="1200" suffix="+" label="Declarações processadas" />
