@@ -234,9 +234,9 @@ export default function Upgrade() {
               <Card>
                 <CardHeader>
                   <CardTitle>Comprar Declarações Extras</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Adicione declarações sem fazer upgrade
-                  </p>
+                       <p className="text-sm text-muted-foreground">
+                        {isFree ? 'Faça upgrade para Pro para comprar extras' : 'Adicione declarações além das 3 inclusas'}
+                       </p>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
