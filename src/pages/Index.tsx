@@ -27,11 +27,11 @@ import { TabelaAvulso } from '@/components/planos/TabelaAvulso';
 /* ── Data ── */
 const features = [
   { icon: Layout, title: 'Dashboard Kanban', desc: 'Visualize todas as declarações em um quadro intuitivo com drag & drop e KPIs em tempo real.' },
+  { icon: Shield, title: 'Malha Fina Gratuita', desc: 'Análise automatizada via BrasilAPI. Evite problemas antes de enviar para a Receita. Incluso em todos os planos.' },
+  { icon: Zap, title: 'Calculadora IR Integrada', desc: 'Simule cenários em segundos. Tabela 2026 atualizada. Compare Simplificada vs Completa automaticamente.' },
+  { icon: MessageSquare, title: 'Chat em Tempo Real', desc: 'Converse com seus clientes sem sair da plataforma. Integração com WhatsApp disponível como Recurso Extra.' },
   { icon: FileText, title: 'Checklist Inteligente', desc: 'Documentos exigidos gerados automaticamente com base no perfil fiscal do cliente.' },
-  { icon: Zap, title: 'Cálculo Automático IR', desc: 'Compare Simplificada vs Completa com tabela 2026 atualizada e recomendação automática.' },
-  { icon: Shield, title: 'Monitoramento Malha Fina', desc: 'Acompanhe o status de cada declaração na Receita Federal com alertas automáticos.' },
-  { icon: MessageSquare, title: 'Chat Integrado', desc: 'Comunicação em tempo real com o cliente, direto na declaração. Sem WhatsApp paralelo.' },
-  { icon: Bell, title: 'Notificações Automáticas', desc: 'Emails e alertas disparados automaticamente a cada mudança de status.' },
+  { icon: Bell, title: 'Notificações Automáticas', desc: 'Emails e alertas disparados automaticamente a cada mudança de status da declaração.' },
 ];
 
 
