@@ -44,8 +44,8 @@ export default function Planos() {
         <Section className="py-20 px-4 bg-gradient-to-b from-primary/5 to-background">
           <div className="max-w-6xl mx-auto text-center space-y-6">
             <div className="inline-block">
-              <span className="bg-accent/10 text-accent text-sm font-medium px-4 py-1.5 rounded-full">
-                🎉 Teste grátis com 3 declarações
+             <span className="bg-accent/10 text-accent text-sm font-medium px-4 py-1.5 rounded-full">
+                🎉 Teste grátis com 1 declaração
               </span>
             </div>
 
