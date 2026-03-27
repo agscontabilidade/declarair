@@ -4,8 +4,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 async function callWhatsApp(action: string, body?: any) {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    await supabase.auth.signOut({ scope: 'local' });
+    throw new Error('Sessão expirada. Faça login novamente.');
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Não autenticado');
+  if (!session?.access_token) {
+    await supabase.auth.signOut({ scope: 'local' });
+    throw new Error('Sessão expirada. Faça login novamente.');
+  }
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const url = `https://${projectId}.supabase.co/functions/v1/whatsapp-service?action=${action}`;
@@ -15,11 +24,16 @@ async function callWhatsApp(action: string, body?: any) {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${session.access_token}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
 
   const data = await res.json();
+  if (res.status === 401) {
+    await supabase.auth.signOut({ scope: 'local' });
+    throw new Error('Sessão expirada. Faça login novamente.');
+  }
   if (!res.ok) throw new Error(data.error || 'Erro no WhatsApp');
   return data;
 }

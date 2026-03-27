@@ -45,6 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile>(emptyProfile);
   const [loading, setLoading] = useState(true);
 
+  const resetAuthState = useCallback(() => {
+    setSession(null);
+    setUser(null);
+    setUserType(null);
+    setProfile(emptyProfile);
+  }, []);
+
+  const clearInvalidSession = useCallback(async () => {
+    await supabase.auth.signOut({ scope: 'local' });
+    resetAuthState();
+  }, [resetAuthState]);
+
   const loadProfile = useCallback(async (currentUser: User) => {
     try {
       // Check if is contador
@@ -114,32 +126,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (event === 'SIGNED_IN' && newSession?.user) {
           setLoading(true);
-          // Fire-and-forget: do NOT await here to avoid blocking the auth lock
           loadProfile(newSession.user).finally(() => setLoading(false));
         } else if (event === 'SIGNED_OUT') {
-          setUserType(null);
-          setProfile(emptyProfile);
+          resetAuthState();
           setLoading(false);
         } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
-          // Silently refresh profile without loading state
           loadProfile(newSession.user);
         }
       }
     );
 
-    // 2. Then check for existing session
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        loadProfile(s.user).finally(() => setLoading(false));
-      } else {
+    const initializeAuth = async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+      if (!currentSession) {
+        resetAuthState();
         setLoading(false);
+        return;
       }
-    });
+
+      const { data: { user: verifiedUser }, error } = await supabase.auth.getUser();
+      if (error || !verifiedUser) {
+        console.warn('[AuthContext] Invalid local session cleared');
+        await clearInvalidSession();
+        setLoading(false);
+        return;
+      }
+
+      setSession(currentSession);
+      setUser(verifiedUser);
+      await loadProfile(verifiedUser);
+      setLoading(false);
+    };
+
+    initializeAuth();
 
     return () => subscription.unsubscribe();
-  }, [loadProfile]);
+  }, [clearInvalidSession, loadProfile, resetAuthState]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
