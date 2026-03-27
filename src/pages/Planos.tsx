@@ -119,12 +119,12 @@ export default function Planos() {
                   </Link>
 
                   <div className="space-y-3 pt-4 border-t">
-                    {[
-                      { bold: true, text: '3 declarações ativas', extra: ' (CPFs únicos)' },
-                      { bold: false, text: 'Plataforma completa' },
-                      { bold: false, text: 'Malha fina + Calculadora' },
+                     {[
+                      { bold: true, text: '1 declaração ativa', extra: '' },
+                      { bold: false, text: '500 MB de armazenamento' },
                       { bold: false, text: 'Chat com clientes' },
-                      { bold: false, text: 'Dashboard e relatórios' },
+                      { bold: false, text: 'Kanban de declarações' },
+                      { bold: false, text: 'Suporte por chat' },
                     ].map((item) => (
                       <div key={item.text} className="flex items-start gap-3">
                         <Check className="h-5 w-5 text-accent shrink-0 mt-0.5" />
