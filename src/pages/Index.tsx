@@ -588,10 +588,14 @@ export default function Index() {
       {/* ══════════════════════════════════════════════════════
           9. PRICING + ANCORAGEM
          ══════════════════════════════════════════════════════ */}
-      <Section id="pricing" className="py-24 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <Section id="pricing" className="relative overflow-hidden py-24 lg:py-32">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-accent/[0.04] to-primary/[0.03]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-accent/5 blur-3xl" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center space-y-5">
-            <Badge variant="secondary" className="mb-3 text-sm px-5 py-2">Preços</Badge>
+            <Badge className="mb-3 bg-accent/10 text-accent border-accent/20 text-sm px-5 py-2">
+              <DollarSign className="h-4 w-4 mr-2" /> Preços
+            </Badge>
             <p className="text-muted-foreground text-base max-w-lg mx-auto italic">
               "Um único erro no IR pode custar mais que um ano inteiro do sistema."
             </p>
