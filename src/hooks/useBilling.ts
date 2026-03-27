@@ -95,7 +95,7 @@ export function useListWebhooks() {
   });
 }
 
-/** Hook unificado para informações de billing com novo modelo Free/Pro */
+/** Hook unificado para informações de billing com modelo Free/Pro */
 export function useBilling() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();

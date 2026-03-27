@@ -4,17 +4,17 @@ export const PLANOS = {
     nome: 'Free',
     preco: 0,
     limites: {
-      declaracoes: 3,
+      declaracoes: 1,
       usuarios: 1,
-      storage_gb: 5,
+      storage_mb: 500,
     },
     features: {
-      malha_fina: true,
-      calculadora_ir: true,
+      malha_fina: false,
+      calculadora_ir: false,
       chat_clientes: true,
       kanban: true,
       dashboard: true,
-      notificacoes_email: true,
+      notificacoes_email: false,
       whatsapp: false,
       portal_cliente: false,
       api_publica: false,
@@ -24,11 +24,11 @@ export const PLANOS = {
   PRO: {
     id: 'pro',
     nome: 'Pro',
-    preco: 49.90,
+    preco: 29.90,
     limites: {
-      declaracoes: null, // ilimitado
+      declaracoes: 3, // 3 inclusas, extras a R$9,90
       usuarios: 5,
-      storage_gb: null, // ilimitado
+      storage_mb: null, // ilimitado
     },
     features: {
       malha_fina: true,
@@ -42,8 +42,6 @@ export const PLANOS = {
       api_publica: false, // addon
       whitelabel: false, // addon
       usuarios_multiplos: true,
-      declaracoes_ilimitadas: true,
-      storage_ilimitado: true,
       suporte_prioritario: true,
     },
   },
