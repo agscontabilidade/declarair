@@ -156,9 +156,20 @@ export default function Cadastro() {
 
       toast({
         title: 'Conta criada com sucesso!',
-        description: 'Verifique seu email para confirmar a conta e depois faça login.',
+        description: 'Vamos configurar seu escritório agora.',
       });
-      navigate('/login');
+      // Se auto-confirm está ativo, sessão já existe → ir direto ao onboarding
+      // Senão, ir para login para confirmar email primeiro
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        toast({
+          title: 'Verifique seu email',
+          description: 'Confirme sua conta e depois faça login.',
+        });
+        navigate('/login');
+      }
     } catch (err: any) {
       toast({ title: 'Erro ao criar conta', description: err.message, variant: 'destructive' });
     } finally {
