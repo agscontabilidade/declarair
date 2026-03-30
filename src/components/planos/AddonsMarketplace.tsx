@@ -36,7 +36,7 @@ const ADDONS_CONFIG = [
     keyword: 'whitelabel',
     nome: 'Whitelabel',
     descricao: 'Personalize com sua marca: logo, cores e domínio próprio',
-    preco: 9.90,
+    preco: 49.90,
     icon: Palette,
     beneficios: [
       'Logo personalizada',
