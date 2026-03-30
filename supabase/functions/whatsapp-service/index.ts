@@ -58,12 +58,11 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
 
     // Get escritorio_id
     const { data: usuario } = await supabaseAdmin
