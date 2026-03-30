@@ -36,6 +36,7 @@ const BENEFIT_MAP: Record<string, string[]> = {
     'Portal 100% com sua marca',
     'Domínio personalizado',
     'E-mails e comunicações com sua identidade',
+    'Sem marca DeclaraIR',
   ],
 };
 

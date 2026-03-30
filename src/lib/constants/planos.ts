@@ -55,13 +55,6 @@ export const ADDONS = {
     preco: 19.90,
     icone: 'message-circle',
   },
-  PORTAL_CLIENTE: {
-    id: 'portal_cliente',
-    nome: 'Portal do Cliente',
-    descricao: 'Área exclusiva para seus clientes',
-    preco: 14.90,
-    icone: 'user-circle',
-  },
   API_PUBLICA: {
     id: 'api_publica',
     nome: 'API Pública',
@@ -73,7 +66,7 @@ export const ADDONS = {
     id: 'whitelabel',
     nome: 'Whitelabel',
     descricao: 'Sua marca no portal',
-    preco: 9.90,
+    preco: 49.90,
     icone: 'palette',
   },
   USUARIO_EXTRA: {
