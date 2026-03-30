@@ -82,9 +82,8 @@ async function createCustomer(escritorio: any, admin: any) {
 }
 
 const PLANOS_CONFIG: Record<string, { valor: number; nome: string; limite: number; storage: number; usuarios: number }> = {
-  starter: { valor: 29.9, nome: "Starter", limite: 10, storage: 10240, usuarios: 1 },
-  profissional: { valor: 49.9, nome: "Profissional", limite: 20, storage: 30720, usuarios: 5 },
-  enterprise: { valor: 199.9, nome: "Enterprise", limite: 9999, storage: 102400, usuarios: 9999 },
+  pro: { valor: 29.9, nome: "Pro", limite: 3, storage: 102400, usuarios: 5 },
+  profissional: { valor: 29.9, nome: "Pro", limite: 3, storage: 102400, usuarios: 5 },
 };
 
 async function createSubscription(
