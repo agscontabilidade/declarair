@@ -41,7 +41,7 @@ export function UpsellModal({ open, onContinueFree, onUpgrade }: UpsellModalProp
           </div>
           <DialogTitle className="font-display text-xl">Antes de continuar...</DialogTitle>
           <DialogDescription className="text-sm">
-            O plano <span className="font-semibold text-foreground">Profissional</span> por apenas <span className="font-bold text-accent">R$ 49,90/mês</span> oferece muito mais para seu escritório:
+            O plano <span className="font-semibold text-foreground">Pro</span> por apenas <span className="font-bold text-accent">R$ 29,90/mês</span> oferece muito mais para seu escritório:
           </DialogDescription>
         </DialogHeader>
 
