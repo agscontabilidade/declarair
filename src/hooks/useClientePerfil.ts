@@ -78,82 +78,112 @@ export function useClientePerfil(clienteId: string | undefined) {
     enabled: !!escritorioId,
   });
 
+  /** Generates the invite token + URL. Returns the URL string. */
+  async function gerarTokenConvite(): Promise<string> {
+    if (!clienteId) throw new Error('Sem cliente');
+    const token = crypto.randomUUID();
+    const expiraEm = new Date();
+    expiraEm.setDate(expiraEm.getDate() + 7);
+
+    const { error } = await supabase
+      .from('clientes')
+      .update({
+        token_convite: token,
+        token_convite_expira_em: expiraEm.toISOString(),
+        status_onboarding: 'convite_enviado',
+      })
+      .eq('id', clienteId);
+    if (error) throw error;
+
+    return `${PORTAL_BASE_URL}/cliente/convite/${token}`;
+  }
+
+  /** Try sending invite via WhatsApp edge function */
+  async function enviarViaWhatsApp(url: string) {
+    const clienteData = cliente.data;
+    if (!clienteData?.telefone) return;
+
+    const { data: esc } = await supabase
+      .from('escritorios')
+      .select('nome')
+      .eq('id', escritorioId!)
+      .single();
+
+    const { data: tmpl } = await supabase
+      .from('templates_mensagem')
+      .select('id, corpo')
+      .eq('escritorio_id', escritorioId!)
+      .eq('canal', 'whatsapp')
+      .ilike('nome', '%boas-vindas%')
+      .eq('ativo', true)
+      .limit(1)
+      .maybeSingle();
+
+    const mensagem = tmpl
+      ? tmpl.corpo
+          .replace(/{nome_cliente}/g, clienteData.nome)
+          .replace(/{nome_escritorio}/g, esc?.nome || '')
+          .replace(/{link_portal}/g, `${PORTAL_BASE_URL}/cliente/login`)
+          .replace(/{link_convite}/g, url)
+      : `Olá ${clienteData.nome}! Acesse seu portal de declaração de IR: ${url}`;
+
+    const phone = clienteData.telefone.replace(/\D/g, '');
+    const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Sessão expirada');
+
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const res = await fetch(`https://${projectId}.supabase.co/functions/v1/whatsapp-service?action=send-message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+      body: JSON.stringify({
+        phone: fullPhone,
+        message: mensagem,
+        clienteId,
+        templateId: tmpl?.id || null,
+      }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Erro ao enviar WhatsApp');
+    }
+  }
+
   const enviarConvite = useMutation({
-    mutationFn: async () => {
-      if (!clienteId) throw new Error('Sem cliente');
-      const token = crypto.randomUUID();
-      const expiraEm = new Date();
-      expiraEm.setDate(expiraEm.getDate() + 7);
-
-      const { error } = await supabase
-        .from('clientes')
-        .update({
-          token_convite: token,
-          token_convite_expira_em: expiraEm.toISOString(),
-          status_onboarding: 'convite_enviado',
-        })
-        .eq('id', clienteId);
-      if (error) throw error;
-
-      const url = `${PORTAL_BASE_URL}/cliente/convite/${token}`;
-      await navigator.clipboard.writeText(url);
-
-      // Auto-send WhatsApp welcome if connected
+    mutationFn: async (mode: 'auto' | 'copy' | 'email' | 'whatsapp-manual') => {
+      const url = await gerarTokenConvite();
       const clienteData = cliente.data;
-      if (clienteData?.telefone) {
-        try {
-          // Get escritorio name
-          const { data: esc } = await supabase
-            .from('escritorios')
-            .select('nome')
-            .eq('id', escritorioId!)
-            .single();
 
-          // Get welcome template
-          const { data: tmpl } = await supabase
-            .from('templates_mensagem')
-            .select('id, corpo')
-            .eq('escritorio_id', escritorioId!)
-            .eq('canal', 'whatsapp')
-            .ilike('nome', '%boas-vindas%')
-            .eq('ativo', true)
-            .limit(1)
-            .maybeSingle();
-
-          if (tmpl) {
-            const mensagem = tmpl.corpo
-              .replace(/{nome_cliente}/g, clienteData.nome)
-              .replace(/{nome_escritorio}/g, esc?.nome || '')
-              .replace(/{link_portal}/g, `${PORTAL_BASE_URL}/cliente/login`)
-              .replace(/{link_convite}/g, url);
-
-            const phone = clienteData.telefone.replace(/\D/g, '');
-            const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
-
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-              const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-              await fetch(`https://${projectId}.supabase.co/functions/v1/whatsapp-service?action=send-message`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${session.access_token}`,
-                },
-                body: JSON.stringify({
-                  phone: fullPhone,
-                  message: mensagem,
-                  clienteId,
-                  templateId: tmpl.id,
-                }),
-              });
-            }
-          }
-        } catch {
-          // Silently fail — invite link was still copied
+      switch (mode) {
+        case 'auto': {
+          // Auto-send via connected WhatsApp
+          await enviarViaWhatsApp(url);
+          return { mode, url };
+        }
+        case 'copy': {
+          await navigator.clipboard.writeText(url);
+          return { mode, url };
+        }
+        case 'email': {
+          const assunto = 'Convite - Declaração de Imposto de Renda';
+          const corpo = `Olá ${clienteData?.nome || ''},\n\nAcesse o link abaixo para iniciar sua declaração de IR:\n\n${url}`;
+          window.location.href = `mailto:${clienteData?.email || ''}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+          return { mode, url };
+        }
+        case 'whatsapp-manual': {
+          const msg = `Olá ${clienteData?.nome || ''}! Acesse seu portal de declaração de IR: ${url}`;
+          const phone = (clienteData?.telefone || '').replace(/\D/g, '');
+          const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
+          window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+          return { mode, url };
         }
       }
-
-      return url;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cliente', clienteId] });

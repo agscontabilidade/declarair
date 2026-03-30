@@ -1,15 +1,24 @@
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { formatCPF, formatPhone, STATUS_LABELS } from '@/lib/formatters';
-import { Send, Copy } from 'lucide-react';
+import { Send, Copy, MessageCircle, Mail, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
   cliente: any;
   isLoading: boolean;
-  onEnviarConvite: () => void;
+  onEnviarConvite: (mode: 'auto' | 'copy' | 'email' | 'whatsapp-manual') => void;
   enviandoConvite: boolean;
+  whatsappConectado: boolean;
+  whatsappLoading: boolean;
 }
 
 const statusColors: Record<string, string> = {
@@ -19,7 +28,7 @@ const statusColors: Record<string, string> = {
   concluido: 'bg-emerald-100 text-emerald-800',
 };
 
-export function ClienteHeader({ cliente, isLoading, onEnviarConvite, enviandoConvite }: Props) {
+export function ClienteHeader({ cliente, isLoading, onEnviarConvite, enviandoConvite, whatsappConectado, whatsappLoading }: Props) {
   if (isLoading) {
     return (
       <div className="flex items-start gap-6 p-6 bg-card rounded-lg border shadow-sm">
@@ -36,6 +45,14 @@ export function ClienteHeader({ cliente, isLoading, onEnviarConvite, enviandoCon
   if (!cliente) return null;
 
   const initials = cliente.nome?.split(' ').filter(Boolean).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase() ?? '?';
+
+  const handleClick = () => {
+    if (whatsappConectado && cliente.telefone) {
+      // Auto-send via WhatsApp
+      onEnviarConvite('auto');
+    }
+    // If no WhatsApp, the dropdown handles it
+  };
 
   return (
     <div className="flex items-start gap-6 p-6 bg-card rounded-lg border shadow-sm flex-wrap">
@@ -61,14 +78,58 @@ export function ClienteHeader({ cliente, isLoading, onEnviarConvite, enviandoCon
         )}
       </div>
       {cliente.status_onboarding !== 'concluido' && (
-        <Button
-          onClick={onEnviarConvite}
-          disabled={enviandoConvite}
-          className="shrink-0"
-        >
-          <Send className="h-4 w-4 mr-2" />
-          Enviar Convite
-        </Button>
+        <>
+          {whatsappLoading ? (
+            <Button disabled className="shrink-0">
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Verificando...
+            </Button>
+          ) : whatsappConectado && cliente.telefone ? (
+            <Button
+              onClick={handleClick}
+              disabled={enviandoConvite}
+              className="shrink-0"
+            >
+              {enviandoConvite ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <MessageCircle className="h-4 w-4 mr-2" />
+              )}
+              Enviar via WhatsApp
+            </Button>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button disabled={enviandoConvite} className="shrink-0">
+                  {enviandoConvite ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  Enviar Convite
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => onEnviarConvite('copy')}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copiar link do convite
+                </DropdownMenuItem>
+                {cliente.telefone && (
+                  <DropdownMenuItem onClick={() => onEnviarConvite('whatsapp-manual')}>
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Enviar via WhatsApp Web
+                  </DropdownMenuItem>
+                )}
+                {cliente.email && (
+                  <DropdownMenuItem onClick={() => onEnviarConvite('email')}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Enviar por e-mail
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </>
       )}
     </div>
   );
