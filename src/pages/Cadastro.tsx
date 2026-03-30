@@ -18,14 +18,14 @@ import {
 const PLANOS = [
   {
     id: 'gratuito', nome: 'Free', preco: 'R$ 0', periodo: '/mês', icon: Zap,
-    declaracoes: '3', usuarios: '1',
-    features: ['Dashboard Kanban', 'Calculadora IR', 'Chat com Clientes', 'Notificações por Email'],
+    declaracoes: '1', usuarios: '1',
+    features: ['Dashboard Kanban', 'Chat com Clientes', 'Kanban de Declarações', '500 MB de Armazenamento'],
     popular: false,
   },
   {
-    id: 'pro', nome: 'Pro', preco: 'R$ 49,90', periodo: '/mês', icon: Crown,
-    declaracoes: 'Ilimitadas', usuarios: '5',
-    features: ['Tudo do Free', 'Declarações Ilimitadas', 'Storage Ilimitado', 'Suporte Prioritário', 'Múltiplos Usuários'],
+    id: 'pro', nome: 'Pro', preco: 'R$ 29,90', periodo: '/mês', icon: Crown,
+    declaracoes: '3 inclusas', usuarios: '5',
+    features: ['Tudo do Free', '3 declarações inclusas + extras por R$ 9,90', 'Storage Ilimitado', 'Malha Fina + Calculadora IR', 'Suporte Prioritário', 'Até 5 Usuários'],
     popular: true,
   },
 ];

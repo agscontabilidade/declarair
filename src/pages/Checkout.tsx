@@ -11,9 +11,8 @@ import { Check, CreditCard, QrCode, FileText, ArrowLeft, Loader2 } from 'lucide-
 import { useCreateSubscription } from '@/hooks/useBilling';
 
 const PLANOS = {
-  starter: { nome: 'Starter', preco: 'R$ 29,90', valor: 29.9, features: ['10 declarações', '1 usuário', '10 GB storage', 'Malha Fina', 'Calculadora IR', 'Chat'] },
-  profissional: { nome: 'Profissional', preco: 'R$ 49,90', valor: 49.9, features: ['20 declarações', '5 usuários', '30 GB storage', 'Whitelabel', 'Malha Fina', 'Calculadora IR', 'Chat', 'Afiliados'] },
-  enterprise: { nome: 'Enterprise', preco: 'R$ 199,90', valor: 199.9, features: ['Declarações ilimitadas', 'Usuários ilimitados', 'Storage personalizado', 'Tudo incluso', 'Suporte dedicado'] },
+  pro: { nome: 'Pro', preco: 'R$ 29,90', valor: 29.9, features: ['3 declarações inclusas', 'Extras por R$ 9,90/cada', 'Até 5 usuários', 'Storage ilimitado', 'Malha Fina + Calculadora IR', 'Suporte Prioritário'] },
+  profissional: { nome: 'Pro', preco: 'R$ 29,90', valor: 29.9, features: ['3 declarações inclusas', 'Extras por R$ 9,90/cada', 'Até 5 usuários', 'Storage ilimitado', 'Malha Fina + Calculadora IR', 'Suporte Prioritário'] },
 };
 
 type PlanoKey = keyof typeof PLANOS;
