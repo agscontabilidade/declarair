@@ -12,9 +12,10 @@ interface UpsellModalProps {
 }
 
 const BENEFITS = [
-  'Declarações ilimitadas',
-  '5 usuários simultâneos',
+  '3 declarações inclusas + extras por R$ 9,90',
+  'Até 5 usuários simultâneos',
   'Storage ilimitado',
+  'Malha Fina + Calculadora IR',
   'Suporte prioritário',
   'Addons disponíveis (WhatsApp, Portal, API)',
 ];
