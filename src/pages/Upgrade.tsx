@@ -181,9 +181,10 @@ export default function Upgrade() {
                       <p className="font-semibold text-sm">O que você ganha:</p>
                       <div className="space-y-2">
                         {[
-                          { bold: 'Declarações ilimitadas', text: ' - Sem limites de CPFs' },
-                          { bold: '5 usuários simultâneos', text: '' },
+                          { bold: '3 declarações inclusas', text: ' + extras por R$ 9,90/cada' },
+                          { bold: 'Até 5 usuários simultâneos', text: '' },
                           { bold: 'Storage ilimitado', text: '' },
+                          { bold: 'Malha Fina + Calculadora IR', text: '' },
                           { bold: 'Suporte prioritário', text: '' },
                         ].map((item) => (
                           <div key={item.bold} className="flex items-start gap-2">
