@@ -6,25 +6,17 @@ import { ChevronLeft, ChevronRight, Save, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import Step1DadosCadastrais from './wizard/Step1DadosCadastrais';
-import Step2Dependentes from './wizard/Step2Dependentes';
-import Step3Alimentandos from './wizard/Step3Alimentandos';
-import Step4Rendimentos from './wizard/Step4Rendimentos';
-import Step5Despesas from './wizard/Step5Despesas';
-import Step6BensDireitos from './wizard/Step6BensDireitos';
-import Step7Investimentos from './wizard/Step7Investimentos';
-import Step8Dividas from './wizard/Step8Dividas';
+import Step2DependentesAlimentandos from './wizard/Step2DependentesAlimentandos';
+import Step3ProcuracaoEcac from './wizard/Step3ProcuracaoEcac';
+import Step4EnvioDocumentos from './wizard/Step4EnvioDocumentos';
 
 import type { FormularioCompleto } from '@/lib/types/formularioCliente';
 
 const STEPS = [
   { id: 1, titulo: 'Dados Cadastrais', icone: '👤' },
-  { id: 2, titulo: 'Dependentes', icone: '👨‍👩‍👧‍👦' },
-  { id: 3, titulo: 'Alimentandos', icone: '💰' },
-  { id: 4, titulo: 'Rendimentos', icone: '💵' },
-  { id: 5, titulo: 'Despesas', icone: '🧾' },
-  { id: 6, titulo: 'Bens e Direitos', icone: '🏠' },
-  { id: 7, titulo: 'Investimentos', icone: '📈' },
-  { id: 8, titulo: 'Dívidas', icone: '💳' },
+  { id: 2, titulo: 'Dependentes e Alimentandos', icone: '👨‍👩‍👧‍👦' },
+  { id: 3, titulo: 'Procuração e-CAC', icone: '🔐' },
+  { id: 4, titulo: 'Envio de Documentos', icone: '📎' },
 ];
 
 export interface WizardStepProps {
@@ -73,13 +65,9 @@ export default function WizardFormulario() {
 
     switch (currentStep) {
       case 1: return <Step1DadosCadastrais {...props} />;
-      case 2: return <Step2Dependentes {...props} />;
-      case 3: return <Step3Alimentandos {...props} />;
-      case 4: return <Step4Rendimentos {...props} />;
-      case 5: return <Step5Despesas {...props} />;
-      case 6: return <Step6BensDireitos {...props} />;
-      case 7: return <Step7Investimentos {...props} />;
-      case 8: return <Step8Dividas {...props} />;
+      case 2: return <Step2DependentesAlimentandos {...props} />;
+      case 3: return <Step3ProcuracaoEcac {...props} />;
+      case 4: return <Step4EnvioDocumentos {...props} />;
       default: return null;
     }
   };
@@ -91,7 +79,7 @@ export default function WizardFormulario() {
         <CardContent className="pt-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-2xl font-bold text-foreground">Formulário de Declaração</h2>
+              <h2 className="font-display text-2xl font-bold text-foreground">Envio de Documentação</h2>
               <span className="text-sm text-muted-foreground">
                 Etapa {currentStep} de {STEPS.length}
               </span>
@@ -175,7 +163,7 @@ export default function WizardFormulario() {
           </Button>
         ) : (
           <Button className="w-full sm:w-auto bg-success hover:bg-success/90 active:scale-[0.98]" onClick={handleSave}>
-            <CheckCircle2 className="h-4 w-4 mr-2" /> Finalizar
+            <CheckCircle2 className="h-4 w-4 mr-2" /> Finalizar e Enviar
           </Button>
         )}
       </div>
