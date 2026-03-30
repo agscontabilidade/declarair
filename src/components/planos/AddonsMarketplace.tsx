@@ -20,19 +20,6 @@ const ADDONS_CONFIG = [
     ],
   },
   {
-    keyword: 'portal',
-    nome: 'Portal do Cliente',
-    descricao: 'Área exclusiva para clientes acompanharem a declaração em tempo real',
-    preco: 14.90,
-    icon: UserCircle,
-    beneficios: [
-      'Login independente',
-      'Upload de documentos',
-      'Acompanhamento 24/7',
-      'Notificações em tempo real',
-    ],
-  },
-  {
     keyword: 'api',
     nome: 'API Pública',
     descricao: 'Integre o DeclaraIR com seus sistemas e ferramentas externas',
