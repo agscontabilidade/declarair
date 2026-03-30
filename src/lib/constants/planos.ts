@@ -66,7 +66,7 @@ export const ADDONS = {
     id: 'whitelabel',
     nome: 'Whitelabel',
     descricao: 'Sua marca no portal',
-    preco: 9.90,
+    preco: 49.90,
     icone: 'palette',
   },
   USUARIO_EXTRA: {
