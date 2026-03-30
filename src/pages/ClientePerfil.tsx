@@ -9,6 +9,7 @@ import { AbaCobrancas } from '@/components/cliente-perfil/AbaCobrancas';
 import { AbaComunicacoes } from '@/components/cliente-perfil/AbaComunicacoes';
 import { useClientePerfil } from '@/hooks/useClientePerfil';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
+import { useWhatsAppStatus } from '@/hooks/useWhatsApp';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -28,21 +29,38 @@ export default function ClientePerfil() {
     marcarPago, criarCobranca,
   } = useClientePerfil(id);
 
-  // Find most recent active declaration for documents tab
+  const whatsappStatus = useWhatsAppStatus();
+  const whatsappConectado = whatsappStatus.data?.status === 'connected';
+
   const activeDeclaracao = declaracoes.find(d => d.status !== 'transmitida') || declaracoes[0];
   const declHook = useDeclaracao(activeDeclaracao?.id);
-
-  // Find latest formulario IR status
   const formularioStatus = declHook.formularioIR?.status_preenchimento;
 
-  const handleEnviarConvite = () => {
-    enviarConvite.mutate(undefined, {
-      onSuccess: () => {
-        toast.success('Convite enviado via WhatsApp e link copiado!', {
-          description: cliente?.telefone
-            ? 'A mensagem de boas-vindas foi disparada automaticamente.'
-            : 'O cliente não possui telefone cadastrado. Link copiado para envio manual.',
-        });
+  const handleEnviarConvite = (mode: 'auto' | 'copy' | 'email' | 'whatsapp-manual') => {
+    enviarConvite.mutate(mode, {
+      onSuccess: (result) => {
+        switch (result?.mode) {
+          case 'auto':
+            toast.success('Convite enviado via WhatsApp!', {
+              description: 'A mensagem foi disparada automaticamente para o cliente.',
+            });
+            break;
+          case 'copy':
+            toast.success('Link copiado!', {
+              description: 'Cole o link e envie para o cliente manualmente.',
+            });
+            break;
+          case 'email':
+            toast.success('Convite gerado!', {
+              description: 'O e-mail foi aberto para envio.',
+            });
+            break;
+          case 'whatsapp-manual':
+            toast.success('Convite gerado!', {
+              description: 'O WhatsApp Web foi aberto para envio.',
+            });
+            break;
+        }
       },
       onError: () => toast.error('Erro ao gerar convite'),
     });
@@ -95,6 +113,8 @@ export default function ClientePerfil() {
           isLoading={isLoading}
           onEnviarConvite={handleEnviarConvite}
           enviandoConvite={enviarConvite.isPending}
+          whatsappConectado={whatsappConectado}
+          whatsappLoading={whatsappStatus.isLoading}
         />
 
         <Tabs defaultValue="visao-geral">
