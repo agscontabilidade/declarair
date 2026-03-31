@@ -7,8 +7,8 @@ import {
   ArrowRight, Star, Layout, Smartphone, Lock,
   BarChart3, FolderCheck, Receipt, Palette,
   DollarSign, Flame, Target, XCircle, AlertTriangle,
+  MessageSquareWarning, FileQuestion, Clock, RotateCcw, TrendingDown,
 } from 'lucide-react';
-import LottieIcon from '@/components/landing/LottieIcon';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import logoHero from '@/assets/logo-hero.png';
@@ -29,11 +29,11 @@ import { TabelaAvulso } from '@/components/planos/TabelaAvulso';
 
 /* ── Data ── */
 const painPoints = [
-  { lottie: 'https://lottie.host/a3a14b8e-862c-4e42-808a-2f4e0e9c3b5e/JmGJWMrykF.json', text: 'Cliente mandando documento solto no WhatsApp' },
-  { lottie: 'https://lottie.host/35b1a78e-3b6f-4a0e-bf5a-5cedf70e4c1c/k0gOlVPqoH.json', text: 'Informações incompletas toda vez' },
-  { lottie: 'https://lottie.host/d5921d47-067f-4e3f-8056-a3f0e4a05f71/7YlVQmBQs2.json', text: 'Você perdendo horas organizando o que o cliente deveria ter mandado certo' },
-  { lottie: 'https://lottie.host/8e98a4a4-3eb6-4e4c-8e9c-7e2b4a4b6c5a/ZpBr1Yw8Ey.json', text: 'Retrabalho constante — e na reta final, o caos dobra' },
-  { lottie: 'https://lottie.host/d946cc4e-4880-4767-b2a9-3f7a57d0f5c9/y6Y1LPxGmY.json', text: 'Baixa lucratividade pelo esforço absurdo' },
+  { icon: MessageSquareWarning, text: 'Cliente mandando documento solto no WhatsApp' },
+  { icon: FileQuestion, text: 'Informações incompletas toda vez' },
+  { icon: Clock, text: 'Você perdendo horas organizando o que o cliente deveria ter mandado certo' },
+  { icon: RotateCcw, text: 'Retrabalho constante — e na reta final, o caos dobra' },
+  { icon: TrendingDown, text: 'Baixa lucratividade pelo esforço absurdo' },
 ];
 
 const beforeAfter = [
@@ -210,8 +210,8 @@ export default function Index() {
             <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto text-left">
               {painPoints.map((p) => (
                 <div key={p.text} className="flex items-start gap-4 glass-card-strong rounded-xl p-5 hover:scale-[1.03] transition-transform backdrop-blur-xl">
-                  <div className="h-12 w-12 shrink-0 mt-0.5">
-                    <LottieIcon url={p.lottie} className="h-12 w-12" />
+                  <div className="h-12 w-12 shrink-0 mt-0.5 rounded-xl bg-destructive/15 flex items-center justify-center">
+                    <p.icon className="h-6 w-6 text-destructive" />
                   </div>
                   <p className="text-base text-foreground font-medium leading-relaxed">{p.text}</p>
                 </div>
