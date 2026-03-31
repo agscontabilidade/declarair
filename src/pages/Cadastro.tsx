@@ -177,8 +177,7 @@ export default function Cadastro() {
         <div className="absolute bottom-32 -left-16 w-56 h-56 rounded-3xl border border-primary-foreground/10 rotate-12" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
-            <img src={logoIcon} alt="DeclaraIR" className="h-11 w-11" />
-            <img src={logoFull} alt="DeclaraIR" className="h-8 brightness-0 invert" />
+            <img src={logoFull} alt="DeclaraIR" className="h-10 brightness-0 invert" />
           </div>
         </div>
         <div className="relative z-10 space-y-6">
@@ -201,8 +200,7 @@ export default function Cadastro() {
         <div className="w-full max-w-lg">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
-            <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10" />
-            <img src={logoFull} alt="DeclaraIR" className="h-7" />
+            <img src={logoFull} alt="DeclaraIR" className="h-9" />
           </div>
 
           <StepIndicator currentStep={step} />
