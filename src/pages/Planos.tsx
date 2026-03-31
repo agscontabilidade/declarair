@@ -74,7 +74,7 @@ export default function Planos() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              ✓ Sem cartão de crédito  ✓ 1 declaração grátis  ✓ Pro por R$ 29,90/mês
+              ✓ Teste grátis com 1 declaração  ✓ Pro por R$ 29,90/mês  ✓ Cancele quando quiser
             </p>
           </div>
         </Section>
