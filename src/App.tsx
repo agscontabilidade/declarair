@@ -65,6 +65,7 @@ function RootRedirect() {
   }
 
   if (!session) return <Index />;
+  if (userType === 'admin') return <Navigate to="/admin" replace />;
   if (userType === 'contador') return <Navigate to="/dashboard" replace />;
   if (userType === 'cliente') return <Navigate to="/cliente/dashboard" replace />;
   return <Index />;
