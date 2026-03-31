@@ -255,7 +255,7 @@ export default function Index() {
       </Section>
 
       {/* ══════════ 4. PRODUTO ══════════ */}
-      <Section id="solucao" className="bg-foreground">
+      <Section id="solucao" className="gradient-brand">
         <div className="py-20 lg:py-28">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
