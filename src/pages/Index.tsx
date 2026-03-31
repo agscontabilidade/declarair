@@ -10,7 +10,6 @@ import {
   MessageSquareWarning, FileQuestion, Clock, RotateCcw, TrendingDown,
 } from 'lucide-react';
 import logoFull from '@/assets/logo-full.png';
-import logoHero from '@/assets/logo-hero.png';
 import ctaPerson from '@/assets/cta-person.jpg';
 import heroStressed from '@/assets/hero-stressed-person.jpg';
 import featureDashboard from '@/assets/feature-dashboard.jpg';
@@ -20,7 +19,6 @@ import mockupDashboard from '@/assets/mockup-dashboard.jpg';
 import avatarCarlos from '@/assets/avatar-carlos.jpg';
 import avatarAna from '@/assets/avatar-ana.jpg';
 import avatarRoberto from '@/assets/avatar-roberto.jpg';
-import GlassCard from '@/components/landing/GlassCard';
 import MetricCounter from '@/components/landing/MetricCounter';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { PlanosCardsPublic } from '@/components/planos/PlanosCardsPublic';
