@@ -171,14 +171,21 @@ export default function Cadastro() {
         });
         navigate('/login');
       }
-    } catch (err: any) {
-      const msg = err.message || '';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
         toast({
           title: 'Este email já está cadastrado',
           description: 'Faça login com sua conta existente ou use outro email.',
           variant: 'destructive',
         });
+      } else if (msg.toLowerCase().includes('weak') || msg.toLowerCase().includes('easy to guess')) {
+        toast({
+          title: 'Senha muito fraca',
+          description: 'Essa senha é conhecida por ser fácil de adivinhar. Escolha uma senha mais forte e única.',
+          variant: 'destructive',
+        });
+        setStep(0);
       } else {
         toast({ title: 'Erro ao criar conta', description: msg, variant: 'destructive' });
       }
