@@ -106,6 +106,8 @@ export default function Checkout() {
     }
   };
 
+  const successRedirect = fromCadastro ? '/onboarding' : '/dashboard';
+
   if (success) {
     return (
       <DashboardLayout>
@@ -115,10 +117,10 @@ export default function Checkout() {
           </div>
           <h1 className="text-2xl font-bold">Pagamento confirmado!</h1>
           <p className="text-muted-foreground">
-            Seu plano Pro foi ativado com sucesso. Aproveite todos os recursos!
+            Seu plano Pro foi ativado com sucesso. {fromCadastro ? 'Vamos configurar seu escritório!' : 'Aproveite todos os recursos!'}
           </p>
-          <Button onClick={() => navigate('/dashboard')} size="lg" className="bg-accent hover:bg-accent/90">
-            Ir para o Dashboard
+          <Button onClick={() => navigate(successRedirect)} size="lg" className="bg-accent hover:bg-accent/90">
+            {fromCadastro ? 'Configurar Escritório' : 'Ir para o Dashboard'}
           </Button>
         </div>
       </DashboardLayout>
