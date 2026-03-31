@@ -94,7 +94,7 @@ export default function Index() {
       <header className="fixed top-0 left-0 right-0 z-50 glass-navbar shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img src={logoFull} alt="DeclaraIR" className="h-10 sm:h-11" />
+            <img src={logoFull} alt="DeclaraIR" className="h-12 sm:h-14 w-auto object-contain" />
           </Link>
           <nav className="hidden md:flex items-center gap-8 text-base text-muted-foreground font-medium">
             <a href="#dor" className="hover:text-foreground transition-colors">A Dor</a>
