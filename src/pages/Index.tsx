@@ -579,7 +579,7 @@ export default function Index() {
             </div>
 
             <div className="relative p-10 sm:p-16 text-center">
-              <img src={logoHero} alt="DeclaraIR" className="h-14 sm:h-16 mx-auto mb-6 brightness-0 invert opacity-80" />
+              <img src={logoFull} alt="DeclaraIR" className="h-12 sm:h-14 mx-auto mb-6 brightness-0 invert" />
               <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
                 Pare de operar no caos.
               </h2>
