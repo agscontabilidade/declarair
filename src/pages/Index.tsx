@@ -13,6 +13,7 @@ import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import logoHero from '@/assets/logo-hero.png';
 import ctaPerson from '@/assets/cta-person.jpg';
+import heroStressed from '@/assets/hero-stressed-person.jpg';
 import featureDashboard from '@/assets/feature-dashboard.jpg';
 import featureMobile from '@/assets/feature-mobile.jpg';
 import lionBrave from '@/assets/lion-brave.jpg';
