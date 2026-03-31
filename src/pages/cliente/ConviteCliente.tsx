@@ -104,8 +104,7 @@ export default function ConviteCliente() {
           <div className="absolute bottom-32 -left-16 w-56 h-56 rounded-3xl border border-primary-foreground/10 rotate-12" />
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
-              <img src={logoIcon} alt="DeclaraIR" className="h-11 w-11" />
-              <img src={logoFull} alt="DeclaraIR" className="h-8 brightness-0 invert" />
+              <img src={logoFull} alt="DeclaraIR" className="h-10 brightness-0 invert" />
             </div>
           </div>
           <div className="relative z-10" />
