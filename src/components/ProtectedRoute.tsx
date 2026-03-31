@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedType: 'contador' | 'cliente';
+  allowedType: 'contador' | 'cliente' | 'admin';
 }
 
 export function ProtectedRoute({ children, allowedType }: ProtectedRouteProps) {
