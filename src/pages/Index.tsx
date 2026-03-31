@@ -334,7 +334,7 @@ export default function Index() {
           </p>
           <div className="text-center mt-6">
             <Link to="/cadastro">
-              <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
+              <Button size="lg" variant="gradient" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
                 Quero essa transformação <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </Link>
