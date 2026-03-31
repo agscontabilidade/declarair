@@ -79,6 +79,7 @@ export default function Checkout() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const planoId = (searchParams.get('plano') || 'pro') as PlanoKey;
+  const fromCadastro = searchParams.get('from') === 'cadastro';
   const plano = PLANOS[planoId] || PLANOS.pro;
 
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix'>('card');
@@ -105,6 +106,8 @@ export default function Checkout() {
     }
   };
 
+  const successRedirect = fromCadastro ? '/onboarding' : '/dashboard';
+
   if (success) {
     return (
       <DashboardLayout>
@@ -114,10 +117,10 @@ export default function Checkout() {
           </div>
           <h1 className="text-2xl font-bold">Pagamento confirmado!</h1>
           <p className="text-muted-foreground">
-            Seu plano Pro foi ativado com sucesso. Aproveite todos os recursos!
+            Seu plano Pro foi ativado com sucesso. {fromCadastro ? 'Vamos configurar seu escritório!' : 'Aproveite todos os recursos!'}
           </p>
-          <Button onClick={() => navigate('/dashboard')} size="lg" className="bg-accent hover:bg-accent/90">
-            Ir para o Dashboard
+          <Button onClick={() => navigate(successRedirect)} size="lg" className="bg-accent hover:bg-accent/90">
+            {fromCadastro ? 'Configurar Escritório' : 'Ir para o Dashboard'}
           </Button>
         </div>
       </DashboardLayout>
@@ -127,8 +130,8 @@ export default function Checkout() {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-6">
-        <Button variant="ghost" onClick={() => navigate('/meus-planos')} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Voltar aos planos
+        <Button variant="ghost" onClick={() => navigate(fromCadastro ? '/onboarding' : '/meus-planos')} className="gap-2">
+          <ArrowLeft className="h-4 w-4" /> {fromCadastro ? 'Pular pagamento' : 'Voltar aos planos'}
         </Button>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

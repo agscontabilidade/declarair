@@ -121,6 +121,11 @@ export default function Cadastro() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Erro ao criar conta');
 
+      // Supabase returns a fake user with empty identities when email already exists
+      if (authData.user.identities && authData.user.identities.length === 0) {
+        throw new Error('already registered');
+      }
+
       const { error: rpcError } = await supabase.rpc('handle_new_accountant_signup', {
         p_user_id: authData.user.id,
         p_nome: nome,
@@ -145,13 +150,12 @@ export default function Cadastro() {
         if (pendingUpdates.telefone) {
           await supabase.from('usuarios').update({ telefone: pendingUpdates.telefone }).eq('id', authData.user.id);
         }
-        if (pendingUpdates.plano !== 'gratuito') {
-          const { data: usuario } = await supabase.from('usuarios').select('escritorio_id').eq('id', authData.user.id).single();
-          if (usuario?.escritorio_id) {
-            await supabase.from('escritorios').update({ plano: pendingUpdates.plano }).eq('id', usuario.escritorio_id);
-          }
+        if (pendingUpdates.plano === 'pro') {
+          // Redirect to checkout for Pro plan payment before onboarding
+          navigate('/checkout?plano=pro&from=cadastro', { replace: true });
+        } else {
+          navigate('/onboarding', { replace: true });
         }
-        navigate('/onboarding', { replace: true });
       } else {
         toast({
           title: 'Verifique seu email',
