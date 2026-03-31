@@ -160,7 +160,16 @@ export default function Cadastro() {
         navigate('/login');
       }
     } catch (err: any) {
-      toast({ title: 'Erro ao criar conta', description: err.message, variant: 'destructive' });
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
+        toast({
+          title: 'Este email já está cadastrado',
+          description: 'Faça login com sua conta existente ou use outro email.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({ title: 'Erro ao criar conta', description: msg, variant: 'destructive' });
+      }
     } finally {
       setLoading(false);
     }
