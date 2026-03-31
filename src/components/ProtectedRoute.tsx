@@ -19,10 +19,12 @@ export function ProtectedRoute({ children, allowedType }: ProtectedRouteProps) {
   }
 
   if (!session) {
+    if (allowedType === 'admin') return <Navigate to="/admin/login" replace />;
     return <Navigate to={allowedType === 'cliente' ? '/cliente/login' : '/login'} replace />;
   }
 
   if (userType !== allowedType) {
+    if (userType === 'admin') return <Navigate to="/admin" replace />;
     if (userType === 'contador') return <Navigate to="/dashboard" replace />;
     if (userType === 'cliente') return <Navigate to="/cliente/dashboard" replace />;
     return <Navigate to="/login" replace />;
