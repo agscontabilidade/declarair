@@ -129,7 +129,7 @@ export default function Index() {
 
               <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start gap-3 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
                 <Link to="/cadastro">
-                  <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
+                  <Button size="lg" variant="gradient" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
                     Quero organizar meu IR agora <ArrowRight className="h-4 w-4 ml-1.5" />
                   </Button>
                 </Link>
