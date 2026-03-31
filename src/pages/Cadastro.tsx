@@ -167,6 +167,7 @@ export default function Cadastro() {
       // Store them temporarily to apply after session is established
       const pendingUpdates = { telefone: telefone.trim(), plano: planoSelecionado };
 
+      sessionStorage.removeItem(CADASTRO_STORAGE_KEY);
       toast({
         title: 'Conta criada com sucesso!',
         description: 'Vamos configurar seu escritório agora.',
