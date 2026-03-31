@@ -150,13 +150,12 @@ export default function Cadastro() {
         if (pendingUpdates.telefone) {
           await supabase.from('usuarios').update({ telefone: pendingUpdates.telefone }).eq('id', authData.user.id);
         }
-        if (pendingUpdates.plano !== 'gratuito') {
-          const { data: usuario } = await supabase.from('usuarios').select('escritorio_id').eq('id', authData.user.id).single();
-          if (usuario?.escritorio_id) {
-            await supabase.from('escritorios').update({ plano: pendingUpdates.plano }).eq('id', usuario.escritorio_id);
-          }
+        if (pendingUpdates.plano === 'pro') {
+          // Redirect to checkout for Pro plan payment before onboarding
+          navigate('/checkout?plano=pro&from=cadastro', { replace: true });
+        } else {
+          navigate('/onboarding', { replace: true });
         }
-        navigate('/onboarding', { replace: true });
       } else {
         toast({
           title: 'Verifique seu email',
