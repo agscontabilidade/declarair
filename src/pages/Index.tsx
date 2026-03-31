@@ -461,7 +461,7 @@ export default function Index() {
             ))}
           </div>
 
-          <div className="mt-14 rounded-2xl bg-foreground p-8 sm:p-10">
+          <div className="mt-14 rounded-2xl gradient-brand p-8 sm:p-10">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
               <MetricCounter end="500" suffix="+" label="Escritórios ativos" />
               <MetricCounter end="1200" suffix="+" label="Declarações processadas" />
