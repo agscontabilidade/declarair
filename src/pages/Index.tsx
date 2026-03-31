@@ -616,7 +616,7 @@ export default function Index() {
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
 
               <div className="relative">
-                <img src={logoHero} alt="DeclaraIR" className="h-20 sm:h-24 mx-auto mb-8 drop-shadow-2xl" />
+                <img src={logoHero} alt="DeclaraIR" className="h-20 sm:h-24 mx-auto mb-8 drop-shadow-2xl brightness-0 invert" />
                 <h2 className="font-display text-4xl sm:text-5xl font-bold text-primary-foreground leading-tight">
                   Pare de operar no caos.
                 </h2>
