@@ -540,7 +540,7 @@ export default function Index() {
             Quem deixa pra depois… entra em modo sobrevivência.
           </p>
           <Link to="/cadastro">
-            <Button size="lg" className="text-base px-10 h-12 font-bold uppercase tracking-wide mt-2">
+            <Button size="lg" variant="gradient" className="text-base px-10 h-12 font-bold uppercase tracking-wide mt-2">
               Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </Link>
