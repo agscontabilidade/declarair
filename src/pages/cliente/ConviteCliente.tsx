@@ -113,8 +113,7 @@ export default function ConviteCliente() {
         <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10">
           <div className="w-full max-w-md text-center space-y-4">
             <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
-              <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10" />
-              <img src={logoFull} alt="DeclaraIR" className="h-7" />
+              <img src={logoFull} alt="DeclaraIR" className="h-9" />
             </div>
             <h1 className="font-display text-2xl font-bold text-destructive">Convite Inválido</h1>
             <p className="text-muted-foreground">Este link de convite expirou ou já foi utilizado.</p>
