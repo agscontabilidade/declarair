@@ -196,6 +196,7 @@ export default function Onboarding() {
         onboarding_completo: true,
       }).eq('id', profile.escritorioId);
 
+      sessionStorage.removeItem(ONBOARDING_STORAGE_KEY);
       toast({ title: 'Configuração concluída!', description: 'Bem-vindo ao DeclaraIR!' });
       // Force full reload so AuthContext picks up onboarding_completo = true
       window.location.href = '/dashboard';
