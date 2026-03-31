@@ -20,7 +20,6 @@ import mockupDashboard from '@/assets/mockup-dashboard.jpg';
 import avatarCarlos from '@/assets/avatar-carlos.jpg';
 import avatarAna from '@/assets/avatar-ana.jpg';
 import avatarRoberto from '@/assets/avatar-roberto.jpg';
-import HeroMockup from '@/components/landing/HeroMockup';
 import GlassCard from '@/components/landing/GlassCard';
 import MetricCounter from '@/components/landing/MetricCounter';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
