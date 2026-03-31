@@ -294,16 +294,22 @@ export default function Onboarding() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
+                  <Label>CNPJ *</Label>
+                  <div className="relative">
+                    <Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} placeholder="00.000.000/0000-00" maxLength={18} disabled={buscandoCnpj} />
+                    {buscandoCnpj && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground animate-pulse">Buscando...</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Digite o CNPJ para preencher automaticamente</p>
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Razão Social *</Label>
                   <Input value={razaoSocial} onChange={e => setRazaoSocial(e.target.value)} placeholder="Contabilidade Silva Ltda" />
                 </div>
                 <div className="space-y-2">
                   <Label>Nome Fantasia</Label>
                   <Input value={nomeFantasia} onChange={e => setNomeFantasia(e.target.value)} placeholder="ContaSilva" />
-                </div>
-                <div className="space-y-2">
-                  <Label>CNPJ *</Label>
-                  <Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} placeholder="00.000.000/0000-00" maxLength={18} disabled={buscandoCnpj} />
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
