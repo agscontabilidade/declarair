@@ -361,7 +361,7 @@ export default function Cadastro() {
                 <Button variant="outline" className="flex-1 h-11" onClick={() => setStep(1)}>
                   <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
                 </Button>
-                <Button className="flex-1 h-11" onClick={handleCriarConta} disabled={loading}>
+                <Button variant="gradient" className="flex-1 h-11" onClick={handleCriarConta} disabled={loading}>
                   {loading ? 'Criando...' : planoSelecionado === 'gratuito' ? 'Criar Conta Grátis' : `Assinar ${planoInfo.nome}`}
                 </Button>
               </div>

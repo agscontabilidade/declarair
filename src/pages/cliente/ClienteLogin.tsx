@@ -105,7 +105,7 @@ export default function ClienteLogin() {
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-11" disabled={isSubmitting || loading}>
+              <Button type="submit" variant="gradient" className="w-full h-11" disabled={isSubmitting || loading}>
                 {isSubmitting ? 'Entrando...' : 'Entrar'}
               </Button>
               <Link to="/recuperar-senha" className="block text-center">

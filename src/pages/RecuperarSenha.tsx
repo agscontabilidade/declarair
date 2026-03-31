@@ -104,7 +104,7 @@ export default function RecuperarSenha() {
                     placeholder="seu@email.com"
                   />
                 </div>
-                <Button type="submit" className="w-full h-11" disabled={loading}>
+                <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
                   {loading ? 'Enviando...' : 'Enviar link de recuperação'}
                 </Button>
                 <Link to="/login" className="block text-center">
