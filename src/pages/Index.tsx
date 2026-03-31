@@ -81,7 +81,7 @@ const objections = [
 ];
 
 const faqs = [
-   { q: 'Preciso de cartão de crédito para começar?', a: 'Não. O plano Free é gratuito, sem cartão, sem pegadinha. Teste com 1 declaração completa.' },
+   { q: 'Como funciona o plano gratuito?', a: 'O plano Free libera 1 declaração completa, chat, kanban e 500 MB de armazenamento. Perfeito para testar o sistema.' },
   { q: 'Como funciona a malha fina?', a: 'Disponível no plano Pro. Cruzamos dados automaticamente via BrasilAPI antes da transmissão. Se tiver inconsistência, você é alertado antes de dar problema.' },
   { q: 'Qual a diferença entre Free e Pro?', a: 'Free: 1 declaração, 1 usuário, 500 MB, chat e kanban. Pro (R$ 29,90/mês): 3 declarações inclusas + extras por R$ 9,90, até 5 usuários, storage ilimitado, malha fina, calculadora IR e suporte prioritário.' },
   { q: 'O que são Recursos Extras?', a: 'Módulos opcionais: WhatsApp (R$ 19,90), Portal do Cliente (R$ 14,90), API Pública (R$ 29,90), Whitelabel (R$ 9,90), Usuário Extra (R$ 9,90).' },
