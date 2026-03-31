@@ -376,7 +376,7 @@ export default function Index() {
       </Section>
 
       {/* ══════════ FEATURE SHOWCASES ══════════ */}
-      <Section className="bg-foreground">
+      <Section className="gradient-brand">
         <div className="py-20 lg:py-28">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
             {/* Feature 1 */}
