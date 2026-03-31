@@ -180,8 +180,8 @@ export default function Cadastro() {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - branding */}
-      <div className="hidden lg:flex lg:w-[42%] bg-primary relative flex-col justify-between p-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-accent/30" />
+      <div className="hidden lg:flex lg:w-[42%] relative flex-col justify-between p-10 overflow-hidden gradient-brand">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent" />
         <div className="absolute top-20 -right-20 w-72 h-72 rounded-full border border-primary-foreground/10" />
         <div className="absolute bottom-32 -left-16 w-56 h-56 rounded-3xl border border-primary-foreground/10 rotate-12" />
         <div className="relative z-10">
@@ -242,7 +242,7 @@ export default function Cadastro() {
                   </button>
                 </div>
               </div>
-              <Button className="w-full h-11" onClick={handleStep1Next}>
+              <Button variant="gradient" className="w-full h-11" onClick={handleStep1Next}>
                 Continuar <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
               <p className="text-center text-sm text-muted-foreground">
@@ -302,7 +302,7 @@ export default function Cadastro() {
                 <Button variant="outline" className="flex-1 h-11" onClick={() => setStep(0)}>
                   <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
                 </Button>
-                <Button className="flex-1 h-11" onClick={handleStep2Next}>
+                <Button variant="gradient" className="flex-1 h-11" onClick={handleStep2Next}>
                   Continuar <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
@@ -361,7 +361,7 @@ export default function Cadastro() {
                 <Button variant="outline" className="flex-1 h-11" onClick={() => setStep(1)}>
                   <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
                 </Button>
-                <Button className="flex-1 h-11" onClick={handleCriarConta} disabled={loading}>
+                <Button variant="gradient" className="flex-1 h-11" onClick={handleCriarConta} disabled={loading}>
                   {loading ? 'Criando...' : planoSelecionado === 'gratuito' ? 'Criar Conta Grátis' : `Assinar ${planoInfo.nome}`}
                 </Button>
               </div>

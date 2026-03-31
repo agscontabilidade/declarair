@@ -101,7 +101,7 @@ export default function Index() {
           </nav>
           <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" size="sm" className="text-sm font-medium">Entrar</Button></Link>
-            <Link to="/cadastro"><Button size="sm" className="text-sm px-5 font-semibold">Começar Grátis</Button></Link>
+            <Link to="/cadastro"><Button size="sm" variant="gradient" className="text-sm px-5 font-semibold">Começar Grátis</Button></Link>
           </div>
         </div>
       </header>
@@ -109,7 +109,7 @@ export default function Index() {
       <div className="h-16" />
 
       {/* ══════════ 1. HERO ══════════ */}
-      <section className="relative dot-grid">
+      <section className="relative dot-grid bg-gradient-to-b from-background to-secondary/30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 lg:pt-28 lg:pb-28">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             <div className="flex-1 text-center lg:text-left">
@@ -129,7 +129,7 @@ export default function Index() {
 
               <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start gap-3 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
                 <Link to="/cadastro">
-                  <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
+                  <Button size="lg" variant="gradient" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
                     Quero organizar meu IR agora <ArrowRight className="h-4 w-4 ml-1.5" />
                   </Button>
                 </Link>
@@ -165,7 +165,7 @@ export default function Index() {
       </section>
 
       {/* ══════════ 1.5 STORYTELLING ══════════ */}
-      <Section className="bg-foreground">
+      <Section className="gradient-brand">
         <div className="py-20 lg:py-28">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
             <p className="text-xl sm:text-2xl lg:text-3xl font-light text-white/50 leading-relaxed italic">
@@ -179,7 +179,7 @@ export default function Index() {
             </p>
             <div className="pt-8">
               <Link to="/cadastro">
-                <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide bg-accent hover:bg-accent/90 text-accent-foreground">
+                <Button size="lg" variant="outline" className="text-base px-8 h-12 font-bold uppercase tracking-wide border-white/20 text-white hover:bg-white/10 hover:text-white">
                   Chega de caos <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </Link>
@@ -247,7 +247,7 @@ export default function Index() {
             IR não é difícil. Difícil é trabalhar no caos.
           </p>
           <Link to="/cadastro">
-            <Button size="lg" className="mt-4 text-base px-8 h-12 font-bold uppercase tracking-wide">
+            <Button size="lg" variant="gradient" className="mt-4 text-base px-8 h-12 font-bold uppercase tracking-wide">
               Testar grátis agora <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </Link>
@@ -255,7 +255,7 @@ export default function Index() {
       </Section>
 
       {/* ══════════ 4. PRODUTO ══════════ */}
-      <Section id="solucao" className="bg-foreground">
+      <Section id="solucao" className="gradient-brand">
         <div className="py-20 lg:py-28">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
@@ -334,7 +334,7 @@ export default function Index() {
           </p>
           <div className="text-center mt-6">
             <Link to="/cadastro">
-              <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
+              <Button size="lg" variant="gradient" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
                 Quero essa transformação <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </Link>
@@ -367,7 +367,7 @@ export default function Index() {
           </div>
           <div className="text-center mt-12">
             <Link to="/cadastro">
-              <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
+              <Button size="lg" variant="gradient" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
                 Começar grátis agora <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </Link>
@@ -376,7 +376,7 @@ export default function Index() {
       </Section>
 
       {/* ══════════ FEATURE SHOWCASES ══════════ */}
-      <Section className="bg-foreground">
+      <Section className="gradient-brand">
         <div className="py-20 lg:py-28">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
             {/* Feature 1 */}
@@ -461,7 +461,7 @@ export default function Index() {
             ))}
           </div>
 
-          <div className="mt-14 rounded-2xl bg-foreground p-8 sm:p-10">
+          <div className="mt-14 rounded-2xl gradient-brand p-8 sm:p-10">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
               <MetricCounter end="500" suffix="+" label="Escritórios ativos" />
               <MetricCounter end="1200" suffix="+" label="Declarações processadas" />
@@ -540,7 +540,7 @@ export default function Index() {
             Quem deixa pra depois… entra em modo sobrevivência.
           </p>
           <Link to="/cadastro">
-            <Button size="lg" className="text-base px-10 h-12 font-bold uppercase tracking-wide mt-2">
+            <Button size="lg" variant="gradient" className="text-base px-10 h-12 font-bold uppercase tracking-wide mt-2">
               Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </Link>
@@ -569,9 +569,9 @@ export default function Index() {
       <Section className="py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-2xl overflow-hidden border border-white/10">
+            <div className="absolute inset-0 gradient-brand" />
             <div className="absolute inset-0">
-              <img src={ctaPerson} alt="" className="w-full h-full object-cover" loading="lazy" width={1280} height={640} />
-              <div className="absolute inset-0 bg-foreground/90" />
+              <img src={ctaPerson} alt="" className="w-full h-full object-cover opacity-20 mix-blend-overlay" loading="lazy" width={1280} height={640} />
             </div>
 
             <div className="relative p-10 sm:p-16 text-center">

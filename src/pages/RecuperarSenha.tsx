@@ -35,8 +35,8 @@ export default function RecuperarSenha() {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - branding */}
-      <div className="hidden lg:flex lg:w-[42%] bg-primary relative flex-col justify-between p-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-accent/30" />
+      <div className="hidden lg:flex lg:w-[42%] relative flex-col justify-between p-10 overflow-hidden gradient-brand">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent" />
         <div className="absolute top-20 -right-20 w-72 h-72 rounded-full border border-primary-foreground/10" />
         <div className="absolute bottom-32 -left-16 w-56 h-56 rounded-3xl border border-primary-foreground/10 rotate-12" />
         <div className="relative z-10">
@@ -104,7 +104,7 @@ export default function RecuperarSenha() {
                     placeholder="seu@email.com"
                   />
                 </div>
-                <Button type="submit" className="w-full h-11" disabled={loading}>
+                <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
                   {loading ? 'Enviando...' : 'Enviar link de recuperação'}
                 </Button>
                 <Link to="/login" className="block text-center">

@@ -46,6 +46,9 @@
 
     --radius: 0.75rem;
 
+    --gradient-from: 210 40% 12%;
+    --gradient-to: 185 35% 18%;
+
     --sidebar-background: 220 20% 8%;
     --sidebar-foreground: 220 14% 96%;
     --sidebar-primary: 195 100% 42%;
@@ -137,6 +140,10 @@
 .glass-card-strong {
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
+}
+
+.gradient-brand {
+  background: linear-gradient(135deg, hsl(var(--gradient-from)), hsl(var(--gradient-to)));
 }
 
 .glass-navbar {
