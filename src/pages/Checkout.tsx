@@ -79,6 +79,7 @@ export default function Checkout() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const planoId = (searchParams.get('plano') || 'pro') as PlanoKey;
+  const fromCadastro = searchParams.get('from') === 'cadastro';
   const plano = PLANOS[planoId] || PLANOS.pro;
 
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix'>('card');
