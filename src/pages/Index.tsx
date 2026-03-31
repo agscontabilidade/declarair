@@ -117,7 +117,7 @@ export default function Index() {
                 <Flame className="h-3.5 w-3.5 mr-1.5" /> A temporada de IR não espera
               </Badge>
 
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-foreground leading-[1.12] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.12] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                 O problema não é IRPF.
                 <br />
                 <span className="bg-gradient-to-r from-accent to-[hsl(170,60%,50%)] bg-clip-text text-transparent">É o seu processo desorganizado!</span>
@@ -263,7 +263,7 @@ export default function Index() {
                 <Badge variant="outline" className="mb-2 border-accent/30 bg-accent/10 text-accent text-xs px-4 py-1.5 font-medium rounded-full">
                   <Zap className="h-3.5 w-3.5 mr-1.5" /> Conheça o DeclaraIR
                 </Badge>
-                <h2 className="font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-white leading-[1.15] tracking-tight">
+                <h2 className="font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-white leading-[1.15] tracking-tight">
                   O sistema que transforma o caos do IR em um{' '}
                   <span className="bg-gradient-to-r from-accent to-[hsl(170,60%,50%)] bg-clip-text text-transparent">processo previsível e lucrativo</span>.
                 </h2>
