@@ -3,15 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
-  FileText, Shield, Zap, Users, CheckCircle2,
+  Shield, Zap, CheckCircle2,
   ArrowRight, Star, Layout, Smartphone, Lock,
-  BarChart3, FolderCheck, Receipt, Palette,
+  Receipt, Palette,
   DollarSign, Flame, Target, XCircle, AlertTriangle,
   MessageSquareWarning, FileQuestion, Clock, RotateCcw, TrendingDown,
 } from 'lucide-react';
-import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
-import logoHero from '@/assets/logo-hero.png';
 import ctaPerson from '@/assets/cta-person.jpg';
 import heroStressed from '@/assets/hero-stressed-person.jpg';
 import featureDashboard from '@/assets/feature-dashboard.jpg';
@@ -21,8 +19,6 @@ import mockupDashboard from '@/assets/mockup-dashboard.jpg';
 import avatarCarlos from '@/assets/avatar-carlos.jpg';
 import avatarAna from '@/assets/avatar-ana.jpg';
 import avatarRoberto from '@/assets/avatar-roberto.jpg';
-import HeroMockup from '@/components/landing/HeroMockup';
-import GlassCard from '@/components/landing/GlassCard';
 import MetricCounter from '@/components/landing/MetricCounter';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { PlanosCardsPublic } from '@/components/planos/PlanosCardsPublic';
