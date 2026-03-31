@@ -130,9 +130,11 @@ export default function Checkout() {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-6">
-        <Button variant="ghost" onClick={() => navigate(fromCadastro ? '/onboarding' : '/meus-planos')} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> {fromCadastro ? 'Pular pagamento' : 'Voltar aos planos'}
-        </Button>
+        {!fromCadastro && (
+          <Button variant="ghost" onClick={() => navigate('/meus-planos')} className="gap-2">
+            <ArrowLeft className="h-4 w-4" /> Voltar aos planos
+          </Button>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Plan summary */}
