@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -58,22 +58,43 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
   );
 }
 
+const CADASTRO_STORAGE_KEY = 'declarair_cadastro_draft';
+
+function loadCadastroDraft() {
+  try {
+    const raw = sessionStorage.getItem(CADASTRO_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
 export default function Cadastro() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
+  const draft = loadCadastroDraft();
+  const [step, setStep] = useState<number>(draft?.step ?? 0);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
 
   // Step 1
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [telefone, setTelefone] = useState('');
+  const [nome, setNome] = useState(draft?.nome ?? '');
+  const [email, setEmail] = useState(draft?.email ?? '');
+  const [telefone, setTelefone] = useState(draft?.telefone ?? '');
   const [senha, setSenha] = useState('');
 
   // Step 2
-  const [planoSelecionado, setPlanoSelecionado] = useState('gratuito');
-  const [nomeEscritorio, setNomeEscritorio] = useState('');
+  const [planoSelecionado, setPlanoSelecionado] = useState(draft?.planoSelecionado ?? 'gratuito');
+  const [nomeEscritorio, setNomeEscritorio] = useState(draft?.nomeEscritorio ?? '');
+
+  // Persist draft to sessionStorage (exclude senha for security)
+  const saveDraft = useCallback(() => {
+    try {
+      sessionStorage.setItem(CADASTRO_STORAGE_KEY, JSON.stringify({
+        step, nome, email, telefone, planoSelecionado, nomeEscritorio,
+      }));
+    } catch { /* quota exceeded - ignore */ }
+  }, [step, nome, email, telefone, planoSelecionado, nomeEscritorio]);
+
+  useEffect(() => { saveDraft(); }, [saveDraft]);
 
   function handleStep1Next() {
     if (!nome.trim() || !email.trim() || !senha.trim()) {
@@ -146,6 +167,7 @@ export default function Cadastro() {
       // Store them temporarily to apply after session is established
       const pendingUpdates = { telefone: telefone.trim(), plano: planoSelecionado };
 
+      sessionStorage.removeItem(CADASTRO_STORAGE_KEY);
       toast({
         title: 'Conta criada com sucesso!',
         description: 'Vamos configurar seu escritório agora.',

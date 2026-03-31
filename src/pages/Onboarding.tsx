@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,10 +17,20 @@ import {
 
 const STEPS = ['Bem-vindo', 'Seu Perfil', 'Dados da Empresa', 'Identidade Visual'];
 
+const ONBOARDING_STORAGE_KEY = 'declarair_onboarding_draft';
+
+function loadOnboardingDraft() {
+  try {
+    const raw = sessionStorage.getItem(ONBOARDING_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const [step, setStep] = useState(0);
+  const draft = loadOnboardingDraft();
+  const [step, setStep] = useState<number>(draft?.step ?? 0);
   const [loading, setLoading] = useState(false);
 
   // Step 2: Profile
@@ -28,25 +38,38 @@ export default function Onboarding() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   // Step 3: Company
-  const [razaoSocial, setRazaoSocial] = useState('');
-  const [nomeFantasia, setNomeFantasia] = useState('');
-  const [cnpj, setCnpj] = useState('');
-  const [emailEmpresa, setEmailEmpresa] = useState('');
-  const [telefoneEmpresa, setTelefoneEmpresa] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [chavePix, setChavePix] = useState('');
-  const [cep, setCep] = useState('');
-  const [logradouro, setLogradouro] = useState('');
-  const [numero, setNumero] = useState('');
-  const [complemento, setComplemento] = useState('');
-  const [bairro, setBairro] = useState('');
-  const [cidade, setCidade] = useState('');
-  const [uf, setUf] = useState('');
+  const [razaoSocial, setRazaoSocial] = useState(draft?.razaoSocial ?? '');
+  const [nomeFantasia, setNomeFantasia] = useState(draft?.nomeFantasia ?? '');
+  const [cnpj, setCnpj] = useState(draft?.cnpj ?? '');
+  const [emailEmpresa, setEmailEmpresa] = useState(draft?.emailEmpresa ?? '');
+  const [telefoneEmpresa, setTelefoneEmpresa] = useState(draft?.telefoneEmpresa ?? '');
+  const [whatsapp, setWhatsapp] = useState(draft?.whatsapp ?? '');
+  const [chavePix, setChavePix] = useState(draft?.chavePix ?? '');
+  const [cep, setCep] = useState(draft?.cep ?? '');
+  const [logradouro, setLogradouro] = useState(draft?.logradouro ?? '');
+  const [numero, setNumero] = useState(draft?.numero ?? '');
+  const [complemento, setComplemento] = useState(draft?.complemento ?? '');
+  const [bairro, setBairro] = useState(draft?.bairro ?? '');
+  const [cidade, setCidade] = useState(draft?.cidade ?? '');
+  const [uf, setUf] = useState(draft?.uf ?? '');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   // Step 4: Visual
-  const [corPrimaria, setCorPrimaria] = useState('#1E3A5F');
+  const [corPrimaria, setCorPrimaria] = useState(draft?.corPrimaria ?? '#1E3A5F');
+
+  // Persist draft to sessionStorage (exclude files)
+  const saveDraft = useCallback(() => {
+    try {
+      sessionStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify({
+        step, razaoSocial, nomeFantasia, cnpj, emailEmpresa, telefoneEmpresa,
+        whatsapp, chavePix, cep, logradouro, numero, complemento, bairro, cidade, uf, corPrimaria,
+      }));
+    } catch { /* ignore */ }
+  }, [step, razaoSocial, nomeFantasia, cnpj, emailEmpresa, telefoneEmpresa,
+    whatsapp, chavePix, cep, logradouro, numero, complemento, bairro, cidade, uf, corPrimaria]);
+
+  useEffect(() => { saveDraft(); }, [saveDraft]);
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -173,6 +196,7 @@ export default function Onboarding() {
         onboarding_completo: true,
       }).eq('id', profile.escritorioId);
 
+      sessionStorage.removeItem(ONBOARDING_STORAGE_KEY);
       toast({ title: 'Configuração concluída!', description: 'Bem-vindo ao DeclaraIR!' });
       // Force full reload so AuthContext picks up onboarding_completo = true
       window.location.href = '/dashboard';
