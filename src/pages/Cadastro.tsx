@@ -80,8 +80,16 @@ export default function Cadastro() {
       toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
       return;
     }
-    if (senha.length < 6) {
-      toast({ title: 'A senha deve ter no mínimo 6 caracteres', variant: 'destructive' });
+    if (senha.length < 8) {
+      toast({ title: 'A senha deve ter no mínimo 8 caracteres', variant: 'destructive' });
+      return;
+    }
+    if (!/[A-Z]/.test(senha)) {
+      toast({ title: 'A senha deve conter pelo menos uma letra maiúscula', variant: 'destructive' });
+      return;
+    }
+    if (!/[0-9]/.test(senha)) {
+      toast({ title: 'A senha deve conter pelo menos um número', variant: 'destructive' });
       return;
     }
     setStep(1);
