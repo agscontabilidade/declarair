@@ -210,8 +210,8 @@ export default function Index() {
             <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto text-left">
               {painPoints.map((p) => (
                 <div key={p.text} className="flex items-start gap-4 glass-card-strong rounded-xl p-5 hover:scale-[1.03] transition-transform backdrop-blur-xl">
-                  <div className="h-12 w-12 shrink-0 mt-0.5">
-                    <LottieIcon url={p.lottie} className="h-12 w-12" />
+                  <div className="h-12 w-12 shrink-0 mt-0.5 rounded-xl bg-destructive/15 flex items-center justify-center">
+                    <p.icon className="h-6 w-6 text-destructive" />
                   </div>
                   <p className="text-base text-foreground font-medium leading-relaxed">{p.text}</p>
                 </div>
