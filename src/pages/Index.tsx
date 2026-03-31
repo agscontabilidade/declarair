@@ -195,8 +195,8 @@ export default function Index() {
             </p>
             <div className="pt-6">
               <Link to="/cadastro">
-                <Button size="lg" className="text-base px-10 h-13 shadow-2xl shadow-accent/25 font-black uppercase tracking-widest rounded-sm bg-accent hover:bg-accent/90 text-accent-foreground border-0">
-                  Chega de caos <ArrowRight className="h-5 w-5 ml-2" />
+                <Button size="lg" className="text-base px-8 h-12 shadow-lg shadow-accent/25 font-bold uppercase tracking-wide rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground border-0">
+                  Chega de caos <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </Link>
             </div>
