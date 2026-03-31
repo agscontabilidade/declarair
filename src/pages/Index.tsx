@@ -112,18 +112,18 @@ export default function Index() {
       <section className="relative dot-grid bg-gradient-to-b from-background to-secondary/30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 lg:pt-28 lg:pb-28">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-            <div className="flex-1 text-center lg:text-left">
-              <Badge variant="outline" className="mb-6 text-xs px-3 py-1 font-medium border-destructive/30 text-destructive bg-destructive/5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                <Flame className="h-3 w-3 mr-1.5" /> A temporada de IR não espera
+            <div className="flex-1 text-center lg:text-left space-y-6">
+              <Badge variant="outline" className="mb-2 text-xs px-4 py-1.5 font-medium border-destructive/30 text-destructive bg-destructive/5 rounded-full animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                <Flame className="h-3.5 w-3.5 mr-1.5" /> A temporada de IR não espera
               </Badge>
 
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-[1.1] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-foreground leading-[1.12] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                 O problema não é IRPF.
                 <br />
-                <span className="text-accent">É o seu processo desorganizado!</span>
+                <span className="bg-gradient-to-r from-accent to-[hsl(170,60%,50%)] bg-clip-text text-transparent">É o seu processo desorganizado!</span>
               </h1>
 
-              <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-md animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+              <p className="text-lg text-muted-foreground leading-relaxed max-w-md animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
                 Organize tudo, elimine retrabalho e entregue declarações em <span className="text-foreground font-semibold">metade do tempo</span>.
               </p>
 
@@ -259,19 +259,19 @@ export default function Index() {
         <div className="py-20 lg:py-28">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-              <div className="flex-1 text-center lg:text-left">
-                <Badge variant="outline" className="mb-6 border-accent/40 bg-accent/10 text-accent text-xs px-3 py-1 font-medium">
-                  <Zap className="h-3 w-3 mr-1.5" /> Conheça o DeclaraIR
+              <div className="flex-1 text-center lg:text-left space-y-6">
+                <Badge variant="outline" className="mb-2 border-accent/30 bg-accent/10 text-accent text-xs px-4 py-1.5 font-medium rounded-full">
+                  <Zap className="h-3.5 w-3.5 mr-1.5" /> Conheça o DeclaraIR
                 </Badge>
-                <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
+                <h2 className="font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-white leading-[1.15] tracking-tight">
                   O sistema que transforma o caos do IR em um{' '}
-                  <span className="text-accent">processo previsível e lucrativo</span>.
+                  <span className="bg-gradient-to-r from-accent to-[hsl(170,60%,50%)] bg-clip-text text-transparent">processo previsível e lucrativo</span>.
                 </h2>
-                <p className="mt-5 text-primary-foreground/60 text-lg leading-relaxed max-w-lg">
+                <p className="text-white/50 text-lg leading-relaxed max-w-lg">
                   Você não precisa trabalhar mais. Precisa trabalhar organizado.
                 </p>
                 <Link to="/cadastro">
-                  <Button size="lg" variant="secondary" className="mt-8 text-base px-8 h-12 font-bold uppercase tracking-wide">
+                  <Button size="lg" variant="secondary" className="mt-2 text-base px-8 h-12 font-bold uppercase tracking-wide">
                     Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
                   </Button>
                 </Link>
