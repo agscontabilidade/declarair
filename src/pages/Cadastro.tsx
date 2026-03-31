@@ -242,7 +242,7 @@ export default function Cadastro() {
                   </button>
                 </div>
               </div>
-              <Button className="w-full h-11" onClick={handleStep1Next}>
+              <Button variant="gradient" className="w-full h-11" onClick={handleStep1Next}>
                 Continuar <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
               <p className="text-center text-sm text-muted-foreground">
