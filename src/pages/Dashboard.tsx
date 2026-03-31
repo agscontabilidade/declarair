@@ -53,7 +53,10 @@ export default function Dashboard() {
 
   async function handleCriarDeclaracao() {
     if (!novoClienteId || !profile.escritorioId) return;
+
     setSaving(true);
+    let createdDeclId: string | null = null;
+
     try {
       const { data: newDecl, error: declErr } = await supabase
         .from('declaracoes')
@@ -68,20 +71,21 @@ export default function Dashboard() {
         .single();
       if (declErr) throw declErr;
 
-      const items = checklistPadrao.map(item => ({
+      createdDeclId = newDecl.id;
+
+      const items = checklistPadrao.map((item) => ({
         ...item,
         declaracao_id: newDecl.id,
       }));
-      const { error: checkErr } = await supabase.from('checklist_documentos').insert(items);
-      if (checkErr) throw checkErr;
 
-      const { error: formErr } = await supabase.from('formulario_ir').insert({
-        declaracao_id: newDecl.id,
-        cliente_id: novoClienteId,
-        ano_base: Number(novoAno),
-        status_preenchimento: 'nao_iniciado',
-      });
-      if (formErr) throw formErr;
+      const { error: checkErr } = await supabase
+        .from('checklist_documentos')
+        .insert(items);
+
+      if (checkErr) {
+        await supabase.from('declaracoes').delete().eq('id', newDecl.id);
+        throw checkErr;
+      }
 
       toast({ title: 'Declaração criada com sucesso!' });
       setShowModal(false);
@@ -89,8 +93,15 @@ export default function Dashboard() {
       setNovoContadorId('');
       queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
-    } catch (err: any) {
-      toast({ title: 'Erro ao criar declaração', description: err.message, variant: 'destructive' });
+      queryClient.invalidateQueries({ queryKey: ['declaracoes'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracoes'] });
+    } catch (err: unknown) {
+      if (createdDeclId) {
+        await supabase.from('declaracoes').delete().eq('id', createdDeclId);
+      }
+
+      const description = err instanceof Error ? err.message : 'Não foi possível criar a declaração.';
+      toast({ title: 'Erro ao criar declaração', description, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
