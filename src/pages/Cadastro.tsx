@@ -121,6 +121,11 @@ export default function Cadastro() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Erro ao criar conta');
 
+      // Supabase returns a fake user with empty identities when email already exists
+      if (authData.user.identities && authData.user.identities.length === 0) {
+        throw new Error('already registered');
+      }
+
       const { error: rpcError } = await supabase.rpc('handle_new_accountant_signup', {
         p_user_id: authData.user.id,
         p_nome: nome,
