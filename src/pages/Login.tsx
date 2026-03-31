@@ -85,8 +85,7 @@ export default function Login() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
-            <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10" />
-            <img src={logoFull} alt="DeclaraIR" className="h-7" />
+            <img src={logoFull} alt="DeclaraIR" className="h-9" />
           </div>
 
           <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-5">
