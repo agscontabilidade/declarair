@@ -367,7 +367,7 @@ export default function Index() {
           </div>
           <div className="text-center mt-12">
             <Link to="/cadastro">
-              <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
+              <Button size="lg" variant="gradient" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
                 Começar grátis agora <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </Link>
