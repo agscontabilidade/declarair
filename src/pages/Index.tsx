@@ -259,19 +259,19 @@ export default function Index() {
         <div className="py-20 lg:py-28">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-              <div className="flex-1 text-center lg:text-left">
-                <Badge variant="outline" className="mb-6 border-accent/40 bg-accent/10 text-accent text-xs px-3 py-1 font-medium">
-                  <Zap className="h-3 w-3 mr-1.5" /> Conheça o DeclaraIR
+              <div className="flex-1 text-center lg:text-left space-y-6">
+                <Badge variant="outline" className="mb-2 border-accent/30 bg-accent/10 text-accent text-xs px-4 py-1.5 font-medium rounded-full">
+                  <Zap className="h-3.5 w-3.5 mr-1.5" /> Conheça o DeclaraIR
                 </Badge>
-                <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
+                <h2 className="font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-white leading-[1.15] tracking-tight">
                   O sistema que transforma o caos do IR em um{' '}
-                  <span className="text-accent">processo previsível e lucrativo</span>.
+                  <span className="bg-gradient-to-r from-accent to-[hsl(170,60%,50%)] bg-clip-text text-transparent">processo previsível e lucrativo</span>.
                 </h2>
-                <p className="mt-5 text-primary-foreground/60 text-lg leading-relaxed max-w-lg">
+                <p className="text-white/50 text-lg leading-relaxed max-w-lg">
                   Você não precisa trabalhar mais. Precisa trabalhar organizado.
                 </p>
                 <Link to="/cadastro">
-                  <Button size="lg" variant="secondary" className="mt-8 text-base px-8 h-12 font-bold uppercase tracking-wide">
+                  <Button size="lg" variant="secondary" className="mt-2 text-base px-8 h-12 font-bold uppercase tracking-wide">
                     Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
                   </Button>
                 </Link>
