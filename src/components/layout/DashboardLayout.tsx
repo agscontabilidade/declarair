@@ -10,6 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BillingBanner } from '@/components/billing/BillingBanner';
 import { UsageBanner } from '@/components/billing/UsageBanner';
+import { ReportBugModal } from '@/components/bug-report/ReportBugModal';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userType } = useAuth();
