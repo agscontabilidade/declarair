@@ -129,9 +129,10 @@ export default function Index() {
                 <Flame className="h-3.5 w-3.5 mr-1.5 text-destructive" /> A temporada de IR não espera
               </Badge>
 
-              <h1 className="font-display text-3xl sm:text-4xl lg:text-[3.25rem] font-extrabold text-foreground leading-[1.1] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                O problema não é IRPF.{' '}
-                <span className="relative inline-block">
+              <h1 className="font-display text-3xl sm:text-4xl lg:text-[3.5rem] font-extrabold text-foreground leading-[1.15] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                O problema não é IRPF.
+                <br />
+                <span className="relative inline-block mt-2">
                   <span className="text-accent">É o seu processo desorganizado!</span>
                   <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 300 8" fill="none">
                     <path d="M1 5.5Q75 1 150 4T299 3" stroke="hsl(var(--accent))" strokeWidth="2" strokeLinecap="round" />
@@ -139,7 +140,7 @@ export default function Index() {
                 </span>
               </h1>
 
-              <p className="mt-6 text-lg sm:text-xl font-medium text-foreground/75 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+              <p className="mt-7 text-lg sm:text-xl font-medium text-foreground/70 leading-relaxed max-w-lg animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
                 Organize tudo, elimine retrabalho e entregue declarações em <span className="text-accent font-bold">metade do tempo</span>.
               </p>
 
