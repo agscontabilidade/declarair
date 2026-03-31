@@ -165,7 +165,7 @@ export default function Index() {
       </section>
 
       {/* ══════════ 1.5 STORYTELLING ══════════ */}
-      <Section className="bg-foreground">
+      <Section className="gradient-brand">
         <div className="py-20 lg:py-28">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
             <p className="text-xl sm:text-2xl lg:text-3xl font-light text-white/50 leading-relaxed italic">
