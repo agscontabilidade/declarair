@@ -170,9 +170,17 @@ export default function Index() {
               </div>
             </div>
 
-            {/* Right — Mockups */}
-            <div className="flex-1 w-full animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
-              <HeroMockup />
+            {/* Right — Hero Image */}
+            <div className="flex-1 w-full max-w-xl animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
+              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-foreground/15">
+                <img
+                  src={heroStressed}
+                  alt="Contador estressado com papéis de IRPF"
+                  className="w-full h-auto object-cover"
+                  width={1024}
+                  height={1024}
+                />
+              </div>
             </div>
           </div>
         </div>
