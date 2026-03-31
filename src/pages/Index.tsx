@@ -3,13 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
-  FileText, Shield, Zap, Users, CheckCircle2,
+  Shield, Zap, CheckCircle2,
   ArrowRight, Star, Layout, Smartphone, Lock,
-  BarChart3, FolderCheck, Receipt, Palette,
+  Receipt, Palette,
   DollarSign, Flame, Target, XCircle, AlertTriangle,
   MessageSquareWarning, FileQuestion, Clock, RotateCcw, TrendingDown,
 } from 'lucide-react';
-import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import logoHero from '@/assets/logo-hero.png';
 import ctaPerson from '@/assets/cta-person.jpg';
