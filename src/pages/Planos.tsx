@@ -56,7 +56,7 @@ export default function Planos() {
 
              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Comece grátis com 1 declaração. Desbloqueie o sistema completo por apenas R$ 29,90/mês.
-              Sem cartão de crédito. Sem pegadinhas.
+              Sem contrato. Sem pegadinhas.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
