@@ -21,7 +21,7 @@ import mockupDashboard from '@/assets/mockup-dashboard.jpg';
 import avatarCarlos from '@/assets/avatar-carlos.jpg';
 import avatarAna from '@/assets/avatar-ana.jpg';
 import avatarRoberto from '@/assets/avatar-roberto.jpg';
-import HeroMockup from '@/components/landing/HeroMockup'; // kept for potential reuse
+import HeroMockup from '@/components/landing/HeroMockup';
 import GlassCard from '@/components/landing/GlassCard';
 import MetricCounter from '@/components/landing/MetricCounter';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
@@ -91,88 +91,70 @@ function Section({ children, className = '', id }: { children: React.ReactNode; 
 export default function Index() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* ── HEADER — sticky overlay ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass-navbar shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      {/* ── HEADER ── */}
+      <header className="fixed top-0 left-0 right-0 z-50 glass-navbar">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center">
             <img src={logoFull} alt="DeclaraIR" className="h-12 sm:h-14 w-auto object-contain" />
           </Link>
-          <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground font-medium tracking-wide">
+          <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground font-medium">
             <a href="#dor" className="hover:text-foreground transition-colors">A Dor</a>
             <a href="#solucao" className="hover:text-foreground transition-colors">Solução</a>
             <a href="#pricing" className="hover:text-foreground transition-colors">Preços</a>
             <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
           </nav>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" size="sm" className="text-sm font-medium">Entrar</Button></Link>
-            <Link to="/cadastro"><Button size="sm" className="shadow-md shadow-accent/15 text-sm rounded-lg px-5 font-semibold">Começar Grátis</Button></Link>
+            <Link to="/cadastro"><Button size="sm" className="text-sm px-5 font-semibold">Começar Grátis</Button></Link>
           </div>
         </div>
       </header>
 
-      {/* Spacer for fixed header */}
       <div className="h-16" />
 
-      {/* ══════════════════════════════════════════════════════
-          1. HERO
-         ══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-accent/8 blur-3xl animate-blob" />
-        <div className="absolute bottom-[-30%] right-[-15%] w-[600px] h-[600px] rounded-full bg-primary/6 blur-3xl animate-blob-delayed" />
-        <div className="absolute top-[40%] left-[50%] w-[300px] h-[300px] rounded-full bg-destructive/4 blur-3xl animate-blob" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-6 relative">
-          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
-            {/* Left — Text */}
+      {/* ══════════ 1. HERO ══════════ */}
+      <section className="relative dot-grid">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 lg:pt-28 lg:pb-28">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             <div className="flex-1 text-center lg:text-left">
-              <Badge variant="secondary" className="mb-5 text-xs px-4 py-1.5 glass-card border-destructive/20 animate-fade-in-up font-medium" style={{ animationDelay: '0.3s' }}>
-                <Flame className="h-3.5 w-3.5 mr-1.5 text-destructive" /> A temporada de IR não espera
+              <Badge variant="outline" className="mb-6 text-xs px-3 py-1 font-medium border-destructive/30 text-destructive bg-destructive/5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                <Flame className="h-3 w-3 mr-1.5" /> A temporada de IR não espera
               </Badge>
 
-              <h1 className="font-display text-3xl sm:text-4xl lg:text-[3.5rem] font-extrabold text-foreground leading-[1.15] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-[1.1] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                 O problema não é IRPF.
                 <br />
-                <span className="relative inline-block mt-2">
-                  <span className="text-accent">É o seu processo desorganizado!</span>
-                  <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 300 8" fill="none">
-                    <path d="M1 5.5Q75 1 150 4T299 3" stroke="hsl(var(--accent))" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                </span>
+                <span className="text-accent">É o seu processo desorganizado!</span>
               </h1>
 
-              <p className="mt-7 text-lg sm:text-xl font-medium text-foreground/70 leading-relaxed max-w-lg animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
-                Organize tudo, elimine retrabalho e entregue declarações em <span className="text-accent font-bold">metade do tempo</span>.
+              <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-md animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+                Organize tudo, elimine retrabalho e entregue declarações em <span className="text-foreground font-semibold">metade do tempo</span>.
               </p>
 
-              <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start lg:justify-start justify-center gap-3 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
+              <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start gap-3 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
                 <Link to="/cadastro">
-                  <Button size="lg" className="text-base px-8 h-12 shadow-lg shadow-primary/20 font-bold uppercase tracking-wide rounded-xl">
+                  <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
                     Quero organizar meu IR agora <ArrowRight className="h-4 w-4 ml-1.5" />
                   </Button>
                 </Link>
                 <a href="#solucao">
-                  <Button size="lg" variant="outline" className="text-base px-6 h-12 rounded-xl font-semibold">
+                  <Button size="lg" variant="outline" className="text-base px-6 h-12 font-semibold">
                     Ver como funciona
                   </Button>
                 </a>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center lg:justify-start justify-center gap-x-6 gap-y-1.5 text-muted-foreground animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
-                <div className="flex items-center gap-1.5 text-xs">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Plano Free disponível
-                </div>
-                <div className="flex items-center gap-1.5 text-xs">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Começa em 2 minutos
-                </div>
-                <div className="flex items-center gap-1.5 text-xs">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Cancele quando quiser
-                </div>
+              <div className="mt-6 flex flex-wrap items-center lg:justify-start justify-center gap-x-5 gap-y-2 text-muted-foreground animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
+                {['Plano Free disponível', 'Começa em 2 minutos', 'Cancele quando quiser'].map(t => (
+                  <div key={t} className="flex items-center gap-1.5 text-xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-success" /> {t}
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Right — Hero Image */}
-            <div className="flex-1 w-full max-w-xl animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
-              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-foreground/15">
+            <div className="flex-1 w-full max-w-lg animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
+              <div className="rounded-2xl overflow-hidden border border-border shadow-xl">
                 <img
                   src={heroStressed}
                   alt="Contador estressado com papéis de IRPF"
@@ -186,26 +168,22 @@ export default function Index() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          1.5. STORYTELLING — FRASE DE IMPACTO
-         ══════════════════════════════════════════════════════ */}
-      <Section className="relative bg-foreground overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-foreground via-foreground to-primary/80" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
-        <div className="relative py-16 lg:py-24">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-            <p className="text-xl sm:text-2xl lg:text-3xl font-light text-white/55 leading-relaxed italic">
+      {/* ══════════ 1.5 STORYTELLING ══════════ */}
+      <Section className="bg-foreground">
+        <div className="py-20 lg:py-28">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
+            <p className="text-xl sm:text-2xl lg:text-3xl font-light text-white/50 leading-relaxed italic">
               Todo ano começa igual.
             </p>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-light text-white/65 leading-relaxed italic">
+            <p className="text-xl sm:text-2xl lg:text-3xl font-light text-white/60 leading-relaxed italic">
               Cliente mandando documento no WhatsApp. Informação incompleta.
             </p>
             <p className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white leading-relaxed">
               Prazo chegando. E você… tentando dar conta do caos.
             </p>
-            <div className="pt-6">
+            <div className="pt-8">
               <Link to="/cadastro">
-                <Button size="lg" className="text-base px-8 h-12 shadow-lg shadow-accent/25 font-bold uppercase tracking-wide rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground border-0">
+                <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide bg-accent hover:bg-accent/90 text-accent-foreground">
                   Chega de caos <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </Link>
@@ -214,43 +192,41 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          2. AMPLIFICAÇÃO DA DOR
-         ══════════════════════════════════════════════════════ */}
+      {/* ══════════ 2. DOR ══════════ */}
       <Section id="dor" className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <img src={lionBrave} alt="" className="w-full h-full object-cover" loading="lazy" width={1920} height={800} style={{ transform: 'translateZ(0)' }} />
-          <div className="absolute inset-0 bg-primary/90" />
+          <img src={lionBrave} alt="" className="w-full h-full object-cover" loading="lazy" width={1920} height={800} />
+          <div className="absolute inset-0 bg-foreground/90" />
         </div>
 
         <div className="relative py-20 lg:py-28">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <Badge className="mb-6 bg-destructive/20 text-destructive-foreground border-destructive/30 hover:bg-destructive/30 text-xs px-4 py-1.5 font-medium">
-              <AlertTriangle className="h-3.5 w-3.5 mr-1.5" /> Isso é familiar?
+            <Badge variant="outline" className="mb-6 border-destructive/40 bg-destructive/10 text-destructive-foreground text-xs px-3 py-1 font-medium">
+              <AlertTriangle className="h-3 w-3 mr-1.5" /> Isso é familiar?
             </Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight mb-10">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight mb-12">
               Se você não resolver isso,<br />
               <span className="text-warning">todo ano será a mesma guerra.</span>
             </h2>
 
-            <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto text-left">
+            <div className="grid sm:grid-cols-2 gap-3 max-w-3xl mx-auto text-left">
               {painPoints.map((p) => (
-                <div key={p.text} className="flex items-start gap-3 glass-card-strong rounded-xl p-4 hover:scale-[1.02] transition-transform backdrop-blur-xl">
-                  <div className="h-10 w-10 shrink-0 mt-0.5 rounded-lg bg-destructive/15 flex items-center justify-center">
-                    <p.icon className="h-5 w-5 text-destructive" />
+                <div key={p.text} className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors">
+                  <div className="h-9 w-9 shrink-0 rounded-lg bg-destructive/15 flex items-center justify-center">
+                    <p.icon className="h-4 w-4 text-destructive" />
                   </div>
-                  <p className="text-sm text-foreground font-medium leading-relaxed">{p.text}</p>
+                  <p className="text-sm text-primary-foreground/80 font-medium leading-relaxed">{p.text}</p>
                 </div>
               ))}
             </div>
 
-            <p className="mt-12 text-primary-foreground/65 text-lg italic max-w-2xl mx-auto">
+            <p className="mt-12 text-primary-foreground/50 text-lg italic max-w-xl mx-auto">
               "Enquanto você organiza documento, outro contador está faturando."
             </p>
 
             <div className="mt-8">
               <Link to="/cadastro">
-                <Button size="lg" className="text-base px-8 h-12 shadow-lg shadow-accent/25 font-bold uppercase tracking-wide rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground">
+                <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide bg-accent hover:bg-accent/90 text-accent-foreground">
                   Resolver isso agora <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </Link>
@@ -259,64 +235,55 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          3. VIRADA / INSIGHT
-         ══════════════════════════════════════════════════════ */}
-      <Section className="py-20 lg:py-28">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <div className="h-16 w-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
-            <Target className="h-8 w-8 text-accent" />
+      {/* ══════════ 3. VIRADA ══════════ */}
+      <Section className="py-20 lg:py-28 dot-grid">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
+          <div className="h-14 w-14 rounded-2xl border border-border bg-background flex items-center justify-center mx-auto">
+            <Target className="h-6 w-6 text-accent" />
           </div>
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-tight">
             O problema nunca foi o volume de declarações.
           </h2>
-          <p className="text-xl text-muted-foreground leading-relaxed">
-            É a falta de um sistema que <span className="text-accent font-bold">organize o jogo pra você</span>.
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            É a falta de um sistema que <span className="text-accent font-semibold">organize o jogo pra você</span>.
           </p>
           <p className="text-foreground font-bold text-lg">
             IR não é difícil. Difícil é trabalhar no caos.
           </p>
           <Link to="/cadastro">
-            <Button size="lg" className="mt-3 text-base px-8 h-12 shadow-lg shadow-primary/20 font-bold uppercase tracking-wide rounded-xl">
+            <Button size="lg" className="mt-4 text-base px-8 h-12 font-bold uppercase tracking-wide">
               Testar grátis agora <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </Link>
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          4. APRESENTAÇÃO DO PRODUTO
-         ══════════════════════════════════════════════════════ */}
-      <Section id="solucao" className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-primary" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent/5 rounded-full blur-3xl" />
-
-        <div className="relative py-20 lg:py-28">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+      {/* ══════════ 4. PRODUTO ══════════ */}
+      <Section id="solucao" className="bg-foreground">
+        <div className="py-20 lg:py-28">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
               <div className="flex-1 text-center lg:text-left">
-                <Badge className="mb-6 bg-accent/20 text-accent border-accent/30 hover:bg-accent/30 text-xs px-4 py-1.5 font-medium">
-                  <Zap className="h-3.5 w-3.5 mr-1.5" /> Conheça o DeclaraIR
+                <Badge variant="outline" className="mb-6 border-accent/40 bg-accent/10 text-accent text-xs px-3 py-1 font-medium">
+                  <Zap className="h-3 w-3 mr-1.5" /> Conheça o DeclaraIR
                 </Badge>
                 <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
                   O sistema que transforma o caos do IR em um{' '}
                   <span className="text-accent">processo previsível e lucrativo</span>.
                 </h2>
-                <p className="mt-5 text-primary-foreground/65 text-lg leading-relaxed max-w-lg">
+                <p className="mt-5 text-primary-foreground/60 text-lg leading-relaxed max-w-lg">
                   Você não precisa trabalhar mais. Precisa trabalhar organizado.
                 </p>
                 <Link to="/cadastro">
-                  <Button size="lg" variant="secondary" className="mt-8 text-base px-8 h-12 shadow-lg font-bold uppercase tracking-wide rounded-xl">
+                  <Button size="lg" variant="secondary" className="mt-8 text-base px-8 h-12 font-bold uppercase tracking-wide">
                     Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
                   </Button>
                 </Link>
               </div>
 
               <div className="flex-1 relative w-full max-w-lg lg:max-w-none">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+                <div className="rounded-2xl overflow-hidden border border-white/10">
                   <img src={mockupDashboard} alt="Dashboard DeclaraIR" className="w-full h-auto object-cover" loading="lazy" width={1280} height={800} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/30 via-transparent to-transparent" />
                 </div>
               </div>
             </div>
@@ -324,44 +291,42 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          5. TRANSFORMAÇÃO — ANTES vs DEPOIS
-         ══════════════════════════════════════════════════════ */}
+      {/* ══════════ 5. ANTES vs DEPOIS ══════════ */}
       <Section className="py-20 lg:py-28">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <Badge variant="secondary" className="mb-4 text-xs px-4 py-1.5 font-medium">Transformação</Badge>
+            <Badge variant="outline" className="mb-4 text-xs px-3 py-1 font-medium">Transformação</Badge>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
               Veja a diferença com os próprios olhos
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-7 space-y-4">
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="h-9 w-9 rounded-lg bg-destructive/15 flex items-center justify-center">
-                  <XCircle className="h-4.5 w-4.5 text-destructive" />
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6 space-y-3">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                  <XCircle className="h-4 w-4 text-destructive" />
                 </div>
-                <h3 className="font-display font-bold text-destructive text-lg">ANTES</h3>
+                <h3 className="font-display font-bold text-destructive">ANTES</h3>
               </div>
               {beforeAfter.map((item) => (
                 <div key={item.before} className="flex items-center gap-2.5 text-sm">
-                  <XCircle className="h-4 w-4 text-destructive/60 shrink-0" />
-                  <span className="text-foreground/70">{item.before}</span>
+                  <XCircle className="h-3.5 w-3.5 text-destructive/50 shrink-0" />
+                  <span className="text-muted-foreground">{item.before}</span>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-2xl border border-success/25 bg-success/5 p-7 space-y-4">
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="h-9 w-9 rounded-lg bg-success/15 flex items-center justify-center">
-                  <CheckCircle2 className="h-4.5 w-4.5 text-success" />
+            <div className="rounded-2xl border border-success/20 bg-success/5 p-6 space-y-3">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                 </div>
-                <h3 className="font-display font-bold text-success text-lg">DEPOIS</h3>
+                <h3 className="font-display font-bold text-success">DEPOIS</h3>
               </div>
               {beforeAfter.map((item) => (
                 <div key={item.after} className="flex items-center gap-2.5 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-success/70 shrink-0" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success/60 shrink-0" />
                   <span className="text-foreground font-medium">{item.after}</span>
                 </div>
               ))}
@@ -373,7 +338,7 @@ export default function Index() {
           </p>
           <div className="text-center mt-6">
             <Link to="/cadastro">
-              <Button size="lg" className="text-base px-8 h-12 shadow-lg shadow-primary/20 font-bold uppercase tracking-wide rounded-xl">
+              <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
                 Quero essa transformação <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </Link>
@@ -381,13 +346,11 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          6. FUNCIONALIDADES
-         ══════════════════════════════════════════════════════ */}
-      <Section id="features" className="py-20 lg:py-28 bg-gradient-to-b from-background to-secondary/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ══════════ 6. FUNCIONALIDADES ══════════ */}
+      <Section id="features" className="py-20 lg:py-28 bg-secondary/50 dot-grid">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4 text-xs px-4 py-1.5 font-medium">Na prática</Badge>
+            <Badge variant="outline" className="mb-4 text-xs px-3 py-1 font-medium">Na prática</Badge>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
               Cada funcionalidade é um problema a menos
             </h2>
@@ -395,20 +358,20 @@ export default function Index() {
               Nada de feature bonita que não resolve. Aqui cada botão economiza tempo ou gera dinheiro.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {featuresTranslated.map((f) => (
-              <GlassCard key={f.title} className="p-6 group hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 group-hover:from-accent/30 group-hover:to-accent/10 transition-colors">
+              <div key={f.title} className="rounded-2xl border border-border bg-card p-6 hover:border-accent/30 hover:shadow-md transition-all duration-200 group">
+                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/15 transition-colors">
                   <f.icon className="h-5 w-5 text-accent" />
                 </div>
-                <h3 className="font-display font-bold text-foreground text-lg">{f.title}</h3>
-                <p className="mt-2.5 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </GlassCard>
+                <h3 className="font-display font-bold text-foreground">{f.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+              </div>
             ))}
           </div>
           <div className="text-center mt-12">
             <Link to="/cadastro">
-              <Button size="lg" className="text-base px-8 h-12 shadow-lg shadow-primary/20 font-bold uppercase tracking-wide rounded-xl">
+              <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
                 Começar grátis agora <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </Link>
@@ -416,34 +379,27 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          FEATURE SHOWCASES
-         ══════════════════════════════════════════════════════ */}
-      <Section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-primary" />
-        <div className="absolute top-[-50%] left-[20%] w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-50%] right-[10%] w-72 h-72 bg-accent/8 rounded-full blur-3xl" />
-
-        <div className="relative py-20 lg:py-28">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
-            {/* Feature 1 — Dashboard */}
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+      {/* ══════════ FEATURE SHOWCASES ══════════ */}
+      <Section className="bg-foreground">
+        <div className="py-20 lg:py-28">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
+            {/* Feature 1 */}
+            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
               <div className="flex-1 relative w-full max-w-lg lg:max-w-none">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+                <div className="rounded-2xl overflow-hidden border border-white/10">
                   <img src={featureDashboard} alt="Dashboard de gestão de IR" className="w-full h-[320px] lg:h-[380px] object-cover" loading="lazy" width={960} height={640} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent" />
                 </div>
               </div>
               <div className="flex-1 text-center lg:text-left">
                 <h3 className="font-display text-2xl sm:text-3xl font-bold text-primary-foreground">
                   Pare de adivinhar. Veja o que está travado.
                 </h3>
-                <p className="mt-4 text-base text-primary-foreground/65 leading-relaxed">
+                <p className="mt-4 text-base text-primary-foreground/60 leading-relaxed">
                   O Kanban mostra cada declaração como um card. Quem está parado, quem falta documento, quem está pronto. Sem ligar pro cliente pra perguntar.
                 </p>
                 <ul className="mt-6 space-y-3">
                   {['Drag & drop entre etapas', 'KPIs em tempo real — sem planilha', 'Filtro por urgência e responsável'].map(b => (
-                    <li key={b} className="flex items-start gap-2.5 text-sm text-primary-foreground/75">
+                    <li key={b} className="flex items-start gap-2.5 text-sm text-primary-foreground/70">
                       <CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
                       <span>{b}</span>
                     </li>
@@ -452,24 +408,23 @@ export default function Index() {
               </div>
             </div>
 
-            {/* Feature 2 — Portal */}
-            <div className="flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-16">
+            {/* Feature 2 */}
+            <div className="flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-20">
               <div className="flex-1 relative w-full max-w-lg lg:max-w-none">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+                <div className="rounded-2xl overflow-hidden border border-white/10">
                   <img src={featureMobile} alt="Cliente enviando documentos pelo celular" className="w-full h-[320px] lg:h-[380px] object-cover" loading="lazy" width={960} height={640} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent" />
                 </div>
               </div>
               <div className="flex-1 text-center lg:text-left">
                 <h3 className="font-display text-2xl sm:text-3xl font-bold text-primary-foreground">
                   Seu cliente manda tudo certo. Sem te incomodar.
                 </h3>
-                <p className="mt-4 text-base text-primary-foreground/65 leading-relaxed">
+                <p className="mt-4 text-base text-primary-foreground/60 leading-relaxed">
                   Chega de "manda de novo", "faltou esse", "mandou no grupo errado". O portal guia o cliente, e você recebe tudo organizado.
                 </p>
                 <ul className="mt-6 space-y-3">
                   {['Upload direto pelo celular com câmera', 'Checklist gerado pelo perfil fiscal', 'Cliente acompanha o status em tempo real'].map(b => (
-                    <li key={b} className="flex items-start gap-2.5 text-sm text-primary-foreground/75">
+                    <li key={b} className="flex items-start gap-2.5 text-sm text-primary-foreground/70">
                       <CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
                       <span>{b}</span>
                     </li>
@@ -481,20 +436,18 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          7. PROVA SOCIAL
-         ══════════════════════════════════════════════════════ */}
+      {/* ══════════ 7. PROVA SOCIAL ══════════ */}
       <Section className="py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <Badge variant="secondary" className="mb-4 text-xs px-4 py-1.5 font-medium">Quem já usa, não volta</Badge>
+            <Badge variant="outline" className="mb-4 text-xs px-3 py-1 font-medium">Quem já usa, não volta</Badge>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
               Resultados reais de contadores reais
             </h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-4">
             {testimonials.map((t) => (
-              <GlassCard key={t.name} className="p-6 hover:shadow-lg transition-shadow">
+              <div key={t.name} className="rounded-2xl border border-border bg-card p-6 hover:border-accent/20 transition-colors">
                 <div className="flex gap-0.5 mb-4">
                   {Array.from({ length: t.stars }).map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-warning text-warning" />
@@ -502,17 +455,17 @@ export default function Index() {
                 </div>
                 <p className="text-sm text-foreground leading-relaxed mb-5 font-medium">"{t.text}"</p>
                 <div className="flex items-center gap-3">
-                  <img src={t.avatar} alt={t.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-accent/15" loading="lazy" width={48} height={48} />
+                  <img src={t.avatar} alt={t.name} className="h-10 w-10 rounded-full object-cover border-2 border-border" loading="lazy" width={48} height={48} />
                   <div>
                     <p className="font-medium text-foreground text-sm">{t.name}</p>
                     <p className="text-xs text-muted-foreground">{t.role}</p>
                   </div>
                 </div>
-              </GlassCard>
+              </div>
             ))}
           </div>
 
-          <div className="mt-16 bg-primary rounded-2xl p-8 sm:p-10 shadow-xl">
+          <div className="mt-14 rounded-2xl bg-foreground p-8 sm:p-10">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
               <MetricCounter end="500" suffix="+" label="Escritórios ativos" />
               <MetricCounter end="1200" suffix="+" label="Declarações processadas" />
@@ -523,33 +476,29 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          8. QUEBRA DE OBJEÇÃO
-         ══════════════════════════════════════════════════════ */}
+      {/* ══════════ 8. OBJEÇÕES ══════════ */}
       <Section className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <img src={lionBrave} alt="" className="w-full h-full object-cover object-center" loading="lazy" width={1920} height={800} style={{ filter: 'grayscale(0.3) brightness(0.3)' }} />
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/85 to-primary/90" />
+          <img src={lionBrave} alt="" className="w-full h-full object-cover" loading="lazy" width={1920} height={800} style={{ filter: 'grayscale(0.3) brightness(0.25)' }} />
+          <div className="absolute inset-0 bg-foreground/85" />
         </div>
 
         <div className="relative py-20 lg:py-28">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-14">
-              <Badge className="mb-4 bg-white/10 text-primary-foreground border-white/20 text-xs px-4 py-1.5 font-medium">Sem desculpa</Badge>
+              <Badge variant="outline" className="mb-4 border-white/20 text-primary-foreground text-xs px-3 py-1 font-medium">Sem desculpa</Badge>
               <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground">
                 "Mas eu já…" — Calma. Lê isso aqui.
               </h2>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {objections.map((obj) => (
-                <div key={obj.objection} className="glass-card-strong rounded-xl p-5 hover:shadow-lg transition-all hover:scale-[1.01] backdrop-blur-xl">
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                    <div className="shrink-0">
-                      <span className="inline-block px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-sm font-bold">
-                        {obj.objection}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{obj.answer}</p>
+                <div key={obj.objection} className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/10 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                    <span className="inline-block shrink-0 px-3 py-1 rounded-lg bg-destructive/15 text-destructive-foreground text-sm font-bold border border-destructive/20">
+                      {obj.objection}
+                    </span>
+                    <p className="text-sm text-primary-foreground/70 leading-relaxed">{obj.answer}</p>
                   </div>
                 </div>
               ))}
@@ -558,16 +507,12 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          9. PRICING
-         ══════════════════════════════════════════════════════ */}
-      <Section id="pricing" className="relative overflow-hidden py-20 lg:py-28">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-accent/[0.04] to-primary/[0.03]" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-accent/5 blur-3xl" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      {/* ══════════ 9. PRICING ══════════ */}
+      <Section id="pricing" className="py-20 lg:py-28 dot-grid">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="text-center space-y-4">
-            <Badge className="mb-2 bg-accent/10 text-accent border-accent/20 text-xs px-4 py-1.5 font-medium">
-              <DollarSign className="h-3.5 w-3.5 mr-1.5" /> Preços
+            <Badge variant="outline" className="mb-2 text-xs px-3 py-1 font-medium">
+              <DollarSign className="h-3 w-3 mr-1.5" /> Preços
             </Badge>
             <p className="text-muted-foreground text-sm max-w-lg mx-auto italic">
               "Um único erro no IR pode custar mais que um ano inteiro do sistema."
@@ -584,24 +529,22 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          10. URGÊNCIA
-         ══════════════════════════════════════════════════════ */}
-      <Section className="py-16 lg:py-20 bg-warning/5 border-y border-warning/15">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <div className="h-14 w-14 rounded-2xl bg-warning/15 flex items-center justify-center mx-auto animate-float">
-            <Flame className="h-7 w-7 text-warning" />
+      {/* ══════════ 10. URGÊNCIA ══════════ */}
+      <Section className="py-16 lg:py-20 border-y border-border">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
+          <div className="h-12 w-12 rounded-2xl border border-warning/20 bg-warning/5 flex items-center justify-center mx-auto">
+            <Flame className="h-5 w-5 text-warning" />
           </div>
           <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
             A temporada de IR não espera.
           </h2>
           <p className="text-base text-muted-foreground leading-relaxed max-w-lg mx-auto">
-            Quem se organiza antes, <span className="font-bold text-foreground">lucra mais</span>.
+            Quem se organiza antes, <span className="font-semibold text-foreground">lucra mais</span>.
             <br />
             Quem deixa pra depois… entra em modo sobrevivência.
           </p>
           <Link to="/cadastro">
-            <Button size="lg" className="text-base px-10 h-12 shadow-lg font-bold uppercase tracking-wide rounded-xl mt-3">
+            <Button size="lg" className="text-base px-10 h-12 font-bold uppercase tracking-wide mt-2">
               Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </Link>
@@ -610,14 +553,14 @@ export default function Index() {
 
       {/* ── FAQ ── */}
       <Section id="faq" className="py-20 lg:py-28">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <Badge variant="secondary" className="mb-4 text-xs px-4 py-1.5 font-medium">FAQ</Badge>
+            <Badge variant="outline" className="mb-4 text-xs px-3 py-1 font-medium">FAQ</Badge>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">Perguntas diretas, respostas diretas</h2>
           </div>
-          <Accordion type="single" collapsible className="space-y-3">
+          <Accordion type="single" collapsible className="space-y-2">
             {faqs.map((f, i) => (
-              <AccordionItem key={i} value={`faq-${i}`} className="glass-card rounded-xl px-5 border-0">
+              <AccordionItem key={i} value={`faq-${i}`} className="rounded-xl border border-border bg-card px-5">
                 <AccordionTrigger className="text-left text-sm font-medium text-foreground hover:no-underline py-4">{f.q}</AccordionTrigger>
                 <AccordionContent className="text-sm text-muted-foreground pb-4">{f.a}</AccordionContent>
               </AccordionItem>
@@ -626,54 +569,45 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════════════════════════════════════════════════
-          11. CTA FINAL
-         ══════════════════════════════════════════════════════ */}
+      {/* ══════════ 11. CTA FINAL ══════════ */}
       <Section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-2xl overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative rounded-2xl overflow-hidden border border-white/10">
             <div className="absolute inset-0">
               <img src={ctaPerson} alt="" className="w-full h-full object-cover" loading="lazy" width={1280} height={640} />
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/95 via-primary/90 to-accent/70" />
+              <div className="absolute inset-0 bg-foreground/90" />
             </div>
 
             <div className="relative p-10 sm:p-16 text-center">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
-
-              <div className="relative">
-                <img src={logoHero} alt="DeclaraIR" className="h-16 sm:h-20 mx-auto mb-6 drop-shadow-2xl brightness-0 invert" />
-                <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
-                  Pare de operar no caos.
-                </h2>
-                <p className="mt-3 text-primary-foreground/85 max-w-xl mx-auto text-xl font-medium">
-                  Transforme seu IR em um processo simples, previsível e lucrativo.
-                </p>
-                <p className="mt-6 text-primary-foreground/55 text-sm italic">
-                  "Você não precisa trabalhar mais. Precisa trabalhar organizado."
-                </p>
-                <Link to="/cadastro">
-                  <Button size="lg" variant="secondary" className="mt-8 text-base px-10 h-12 shadow-lg font-bold uppercase tracking-wide rounded-xl">
-                    Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
-                  </Button>
-                </Link>
-                <p className="mt-3 text-primary-foreground/45 text-xs">
-                  Teste grátis • 3 declarações no Pro • Cancele quando quiser
-                </p>
-              </div>
+              <img src={logoHero} alt="DeclaraIR" className="h-14 sm:h-16 mx-auto mb-6 brightness-0 invert opacity-80" />
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
+                Pare de operar no caos.
+              </h2>
+              <p className="mt-3 text-primary-foreground/80 max-w-xl mx-auto text-xl font-medium">
+                Transforme seu IR em um processo simples, previsível e lucrativo.
+              </p>
+              <p className="mt-5 text-primary-foreground/40 text-sm italic">
+                "Você não precisa trabalhar mais. Precisa trabalhar organizado."
+              </p>
+              <Link to="/cadastro">
+                <Button size="lg" variant="secondary" className="mt-8 text-base px-10 h-12 font-bold uppercase tracking-wide">
+                  Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+              </Link>
+              <p className="mt-3 text-primary-foreground/35 text-xs">
+                Teste grátis • 3 declarações no Pro • Cancele quando quiser
+              </p>
             </div>
           </div>
         </div>
       </Section>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="border-t border-border py-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <img src={logoFull} alt="DeclaraIR" className="h-8" />
-              </div>
+              <img src={logoFull} alt="DeclaraIR" className="h-8 mb-3" />
               <p className="text-xs text-muted-foreground leading-relaxed">
                 O sistema que organiza o IR do seu escritório.
               </p>
@@ -701,7 +635,7 @@ export default function Index() {
               </ul>
             </div>
           </div>
-          <div className="border-t pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} DeclaraIR. Todos os direitos reservados.</p>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Lock className="h-3 w-3" /> Dados protegidos com criptografia
