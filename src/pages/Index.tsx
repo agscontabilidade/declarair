@@ -109,7 +109,7 @@ export default function Index() {
       <div className="h-16" />
 
       {/* ══════════ 1. HERO ══════════ */}
-      <section className="relative dot-grid">
+      <section className="relative dot-grid bg-gradient-to-b from-background to-secondary/30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 lg:pt-28 lg:pb-28">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             <div className="flex-1 text-center lg:text-left">
