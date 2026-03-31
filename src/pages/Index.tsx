@@ -124,23 +124,11 @@ export default function Index() {
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             {/* Left — Text */}
             <div className="flex-1 text-center lg:text-left">
-              <div className="mb-8 space-y-1.5">
-                <p className="text-muted-foreground text-base sm:text-lg italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                  Todo ano começa igual.
-                </p>
-                <p className="text-muted-foreground text-base sm:text-lg italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                  Cliente mandando documento no WhatsApp. Informação incompleta.
-                </p>
-                <p className="text-muted-foreground text-base sm:text-lg italic leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                  Prazo chegando. E você… tentando dar conta do caos.
-                </p>
-              </div>
-
-              <Badge variant="secondary" className="mb-6 text-sm px-5 py-2 glass-card border-destructive/20 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+              <Badge variant="secondary" className="mb-6 text-sm px-5 py-2 glass-card border-destructive/20 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                 <Flame className="h-4 w-4 mr-2 text-destructive" /> A temporada de IR não espera
               </Badge>
 
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-[1.08] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-[1.08] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                 O problema não é o IR.{' '}
                 <span className="relative inline-block">
                   <span className="text-accent">É a desorganização do seu processo.</span>
@@ -150,11 +138,11 @@ export default function Index() {
                 </span>
               </h1>
 
-              <p className="mt-8 text-xl sm:text-2xl font-medium text-foreground/80 leading-relaxed animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
+              <p className="mt-8 text-xl sm:text-2xl font-medium text-foreground/80 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
                 Organize tudo, elimine retrabalho e entregue declarações em <span className="text-accent font-bold">metade do tempo</span>.
               </p>
 
-              <div className="mt-10 flex flex-col sm:flex-row items-center lg:items-start lg:justify-start justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
+              <div className="mt-10 flex flex-col sm:flex-row items-center lg:items-start lg:justify-start justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
                 <Link to="/cadastro">
                   <Button size="lg" className="text-lg px-10 h-14 shadow-xl shadow-primary/25 font-bold uppercase tracking-wide rounded-lg">
                     Quero organizar meu IR agora <ArrowRight className="h-5 w-5 ml-2" />
@@ -167,7 +155,7 @@ export default function Index() {
                 </a>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center lg:justify-start justify-center gap-x-8 gap-y-2 text-muted-foreground animate-fade-in-up" style={{ animationDelay: '1.5s' }}>
+              <div className="mt-5 flex flex-wrap items-center lg:justify-start justify-center gap-x-8 gap-y-2 text-muted-foreground animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle2 className="h-4 w-4 text-success" /> Plano Free disponível
                 </div>
@@ -181,12 +169,40 @@ export default function Index() {
             </div>
 
             {/* Right — Mockups */}
-            <div className="flex-1 w-full animate-fade-in-up" style={{ animationDelay: '1.7s' }}>
+            <div className="flex-1 w-full animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
               <HeroMockup />
             </div>
           </div>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════════════════
+          1.5. STORYTELLING — FRASE DE IMPACTO
+         ══════════════════════════════════════════════════════ */}
+      <Section className="relative bg-foreground overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-foreground via-foreground to-primary/80" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+        <div className="relative py-20 lg:py-28">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-light text-white/60 leading-relaxed italic">
+              Todo ano começa igual.
+            </p>
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-light text-white/70 leading-relaxed italic">
+              Cliente mandando documento no WhatsApp. Informação incompleta.
+            </p>
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white leading-relaxed">
+              Prazo chegando. E você… tentando dar conta do caos.
+            </p>
+            <div className="pt-8">
+              <Link to="/cadastro">
+                <Button size="lg" className="text-xl px-14 h-16 shadow-2xl shadow-accent/30 font-black uppercase tracking-widest rounded-none bg-accent hover:bg-accent/90 text-accent-foreground border-0">
+                  Chega de caos <ArrowRight className="h-6 w-6 ml-3" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </Section>
 
       {/* ══════════════════════════════════════════════════════
           2. AMPLIFICAÇÃO DA DOR — LION BACKGROUND
