@@ -255,7 +255,7 @@ export default function Cadastro() {
               <div className="space-y-2">
                 <Label htmlFor="senha">Senha *</Label>
                 <div className="relative">
-                  <Input id="senha" type={showPassword ? 'text' : 'password'} value={senha} onChange={e => setSenha(e.target.value)} placeholder="Mínimo 6 caracteres" />
+                  <Input id="senha" type={showPassword ? 'text' : 'password'} value={senha} onChange={e => setSenha(e.target.value)} placeholder="Mínimo 8 caracteres, 1 maiúscula, 1 número" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
