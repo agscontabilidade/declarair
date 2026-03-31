@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { 
-  LayoutDashboard, Building2, Users, CreditCard, LogOut, Shield, Menu, X, ChevronRight 
+  LayoutDashboard, Building2, Users, CreditCard, LogOut, Shield, Menu, X, ChevronRight, Bug 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -12,6 +12,7 @@ const navItems = [
   { label: 'Escritórios', icon: Building2, href: '/admin/escritorios' },
   { label: 'Usuários', icon: Users, href: '/admin/usuarios' },
   { label: 'Assinaturas', icon: CreditCard, href: '/admin/assinaturas' },
+  { label: 'Bug Reports', icon: Bug, href: '/admin/bugs' },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

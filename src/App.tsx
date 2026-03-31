@@ -45,6 +45,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEscritorios from "./pages/admin/AdminEscritorios";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminAssinaturas from "./pages/admin/AdminAssinaturas";
+import AdminBugReports from "./pages/admin/AdminBugReports";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 import PoliticaLGPD from "./pages/PoliticaLGPD";
@@ -103,6 +104,7 @@ const App = () => (
               <Route path="/admin/escritorios" element={<ProtectedRoute allowedType="admin"><AdminEscritorios /></ProtectedRoute>} />
               <Route path="/admin/usuarios" element={<ProtectedRoute allowedType="admin"><AdminUsuarios /></ProtectedRoute>} />
               <Route path="/admin/assinaturas" element={<ProtectedRoute allowedType="admin"><AdminAssinaturas /></ProtectedRoute>} />
+              <Route path="/admin/bugs" element={<ProtectedRoute allowedType="admin"><AdminBugReports /></ProtectedRoute>} />
 
               {/* Contador routes - billing gated */}
               <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><BillingGate><Dashboard /></BillingGate></ProtectedRoute>} />
