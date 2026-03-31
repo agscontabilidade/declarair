@@ -66,7 +66,7 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
               {nomePortal}
             </span>
           ) : (
-            <img src={logoFull} alt="DeclaraIR" className="h-7" />
+            <img src={logoFull} alt="DeclaraIR" className="h-10 w-auto object-contain" />
           )}
         </div>
         <nav className="flex items-center gap-1">
