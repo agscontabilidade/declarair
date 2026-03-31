@@ -142,6 +142,10 @@
   border: 1px solid hsl(var(--border));
 }
 
+.gradient-brand {
+  background: linear-gradient(135deg, hsl(var(--gradient-from)), hsl(var(--gradient-to)));
+}
+
 .glass-navbar {
   background: hsla(0, 0%, 100%, 0.85);
   backdrop-filter: blur(12px);
