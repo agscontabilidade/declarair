@@ -2,7 +2,7 @@
 export const PORTAL_BASE_URL =
   import.meta.env.VITE_PORTAL_URL ||
   import.meta.env.VITE_SITE_URL ||
-  'https://declarair.lovable.app';
+  'https://declarair.com.br';
 
 // Supabase API base URL
 export const API_BASE_URL =
