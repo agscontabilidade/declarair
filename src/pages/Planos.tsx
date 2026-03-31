@@ -290,7 +290,7 @@ export default function Planos() {
               Pronto para simplificar seu IR?
             </h2>
             <p className="text-xl opacity-90">
-              Comece grátis agora. Sem cartão de crédito.
+              Comece grátis agora. Sem contrato, sem compromisso.
             </p>
             <Link to="/cadastro">
               <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">

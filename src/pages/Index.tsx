@@ -708,7 +708,7 @@ export default function Index() {
                   </Button>
                 </Link>
                 <p className="mt-4 text-primary-foreground/50 text-sm">
-                  Sem cartão • 3 declarações grátis • Cancele quando quiser
+                  Teste grátis • 3 declarações no Pro • Cancele quando quiser
                 </p>
               </div>
             </div>
