@@ -80,8 +80,16 @@ export default function Cadastro() {
       toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
       return;
     }
-    if (senha.length < 6) {
-      toast({ title: 'A senha deve ter no mínimo 6 caracteres', variant: 'destructive' });
+    if (senha.length < 8) {
+      toast({ title: 'A senha deve ter no mínimo 8 caracteres', variant: 'destructive' });
+      return;
+    }
+    if (!/[A-Z]/.test(senha)) {
+      toast({ title: 'A senha deve conter pelo menos uma letra maiúscula', variant: 'destructive' });
+      return;
+    }
+    if (!/[0-9]/.test(senha)) {
+      toast({ title: 'A senha deve conter pelo menos um número', variant: 'destructive' });
       return;
     }
     setStep(1);
@@ -163,14 +171,21 @@ export default function Cadastro() {
         });
         navigate('/login');
       }
-    } catch (err: any) {
-      const msg = err.message || '';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
         toast({
           title: 'Este email já está cadastrado',
           description: 'Faça login com sua conta existente ou use outro email.',
           variant: 'destructive',
         });
+      } else if (msg.toLowerCase().includes('weak') || msg.toLowerCase().includes('easy to guess')) {
+        toast({
+          title: 'Senha muito fraca',
+          description: 'Essa senha é conhecida por ser fácil de adivinhar. Escolha uma senha mais forte e única.',
+          variant: 'destructive',
+        });
+        setStep(0);
       } else {
         toast({ title: 'Erro ao criar conta', description: msg, variant: 'destructive' });
       }
@@ -240,7 +255,7 @@ export default function Cadastro() {
               <div className="space-y-2">
                 <Label htmlFor="senha">Senha *</Label>
                 <div className="relative">
-                  <Input id="senha" type={showPassword ? 'text' : 'password'} value={senha} onChange={e => setSenha(e.target.value)} placeholder="Mínimo 6 caracteres" />
+                  <Input id="senha" type={showPassword ? 'text' : 'password'} value={senha} onChange={e => setSenha(e.target.value)} placeholder="Mínimo 8 caracteres, 1 maiúscula, 1 número" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
