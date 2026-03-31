@@ -76,7 +76,7 @@ const objections = [
   },
   {
     objection: '"Meu escritório é pequeno demais"',
-    answer: 'Comece grátis com 1 declaração. Sem cartão. Sem contrato. Se não servir, você não gastou nada. Se servir, desbloqueie tudo por R$ 29,90/mês.',
+    answer: 'Comece grátis com 1 declaração. Sem contrato. Se não servir, você não gastou nada. Se servir, desbloqueie tudo por R$ 29,90/mês.',
   },
 ];
 
