@@ -569,9 +569,9 @@ export default function Index() {
       <Section className="py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-2xl overflow-hidden border border-white/10">
+            <div className="absolute inset-0 gradient-brand" />
             <div className="absolute inset-0">
-              <img src={ctaPerson} alt="" className="w-full h-full object-cover" loading="lazy" width={1280} height={640} />
-              <div className="absolute inset-0 bg-foreground/90" />
+              <img src={ctaPerson} alt="" className="w-full h-full object-cover opacity-20 mix-blend-overlay" loading="lazy" width={1280} height={640} />
             </div>
 
             <div className="relative p-10 sm:p-16 text-center">
