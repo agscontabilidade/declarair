@@ -65,7 +65,7 @@ const objections = [
 
 const faqs = [
   { q: 'Como funciona o plano gratuito?', a: 'O plano Free libera 1 declaração completa, chat, kanban e 500 MB de armazenamento. Perfeito para testar o sistema.' },
-  { q: 'Como funciona a malha fina?', a: 'Disponível no plano Pro. Cruzamos dados automaticamente via BrasilAPI antes da transmissão. Se tiver inconsistência, você é alertado antes de dar problema.' },
+  { q: 'Meus dados estão seguros?', a: 'Sim. Utilizamos criptografia de ponta a ponta, banco de dados isolado por escritório (multi-tenancy) e autenticação segura. Seus dados e os dos seus clientes ficam protegidos conforme a LGPD.' },
   { q: 'Qual a diferença entre Free e Pro?', a: 'Free: 1 declaração, 1 usuário, 500 MB, chat e kanban. Pro (R$ 29,90/mês): 3 declarações inclusas + extras por R$ 9,90, até 5 usuários, storage ilimitado, malha fina, calculadora IR e suporte prioritário.' },
   { q: 'O que são Recursos Extras?', a: 'Módulos opcionais: WhatsApp (R$ 19,90/mês), API Pública (R$ 29,90/mês), Whitelabel (R$ 49,90/mês).' },
   { q: 'Meus clientes precisam instalar algo?', a: 'Não. Portal 100% web. Funciona no celular e computador. Basta enviar o link.' },
