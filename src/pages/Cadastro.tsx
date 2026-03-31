@@ -302,7 +302,7 @@ export default function Cadastro() {
                 <Button variant="outline" className="flex-1 h-11" onClick={() => setStep(0)}>
                   <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
                 </Button>
-                <Button className="flex-1 h-11" onClick={handleStep2Next}>
+                <Button variant="gradient" className="flex-1 h-11" onClick={handleStep2Next}>
                   Continuar <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
