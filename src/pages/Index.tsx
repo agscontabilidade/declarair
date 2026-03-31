@@ -181,7 +181,7 @@ export default function Index() {
 
               <div className="mt-5 flex flex-wrap items-center lg:justify-start justify-center gap-x-8 gap-y-2 text-muted-foreground animate-fade-in-up" style={{ animationDelay: '1.5s' }}>
                 <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-success" /> Sem cartão de crédito
+                  <CheckCircle2 className="h-4 w-4 text-success" /> Plano Free disponível
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle2 className="h-4 w-4 text-success" /> Começa em 2 minutos
