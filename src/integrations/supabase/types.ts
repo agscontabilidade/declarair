@@ -106,8 +106,11 @@ export type Database = {
           escritorio_id: string
           id: string
           plano: string
+          provider: string | null
           proxima_cobranca: string | null
           status: string
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
           updated_at: string
           valor: number
         }
@@ -119,8 +122,11 @@ export type Database = {
           escritorio_id: string
           id?: string
           plano?: string
+          provider?: string | null
           proxima_cobranca?: string | null
           status?: string
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
           valor?: number
         }
@@ -132,8 +138,11 @@ export type Database = {
           escritorio_id?: string
           id?: string
           plano?: string
+          provider?: string | null
           proxima_cobranca?: string | null
           status?: string
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
           valor?: number
         }
@@ -745,6 +754,7 @@ export type Database = {
           escritorio_id: string
           id: string
           status: string
+          stripe_subscription_item_id: string | null
         }
         Insert: {
           addon_id: string
@@ -754,6 +764,7 @@ export type Database = {
           escritorio_id: string
           id?: string
           status?: string
+          stripe_subscription_item_id?: string | null
         }
         Update: {
           addon_id?: string
@@ -763,6 +774,7 @@ export type Database = {
           escritorio_id?: string
           id?: string
           status?: string
+          stripe_subscription_item_id?: string | null
         }
         Relationships: [
           {
@@ -803,6 +815,7 @@ export type Database = {
           plano_expira_em: string | null
           razao_social: string | null
           storage_limite_mb: number | null
+          stripe_customer_id: string | null
           telefone: string | null
           texto_boas_vindas: string | null
           usuarios_limite: number | null
@@ -837,6 +850,7 @@ export type Database = {
           plano_expira_em?: string | null
           razao_social?: string | null
           storage_limite_mb?: number | null
+          stripe_customer_id?: string | null
           telefone?: string | null
           texto_boas_vindas?: string | null
           usuarios_limite?: number | null
@@ -871,6 +885,7 @@ export type Database = {
           plano_expira_em?: string | null
           razao_social?: string | null
           storage_limite_mb?: number | null
+          stripe_customer_id?: string | null
           telefone?: string | null
           texto_boas_vindas?: string | null
           usuarios_limite?: number | null
@@ -1254,7 +1269,10 @@ export type Database = {
           id: string
           pix_qrcode: string | null
           pix_qrcode_url: string | null
+          provider: string | null
           status: string
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
           valor: number
         }
         Insert: {
@@ -1270,7 +1288,10 @@ export type Database = {
           id?: string
           pix_qrcode?: string | null
           pix_qrcode_url?: string | null
+          provider?: string | null
           status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
           valor: number
         }
         Update: {
@@ -1286,7 +1307,10 @@ export type Database = {
           id?: string
           pix_qrcode?: string | null
           pix_qrcode_url?: string | null
+          provider?: string | null
           status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
           valor?: number
         }
         Relationships: [

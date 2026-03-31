@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, CreditCard, QrCode, FileText, ArrowLeft, Loader2 } from 'lucide-react';
-import { useCreateSubscription } from '@/hooks/useBilling';
+import { Check, CreditCard, QrCode, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
+import { useStripeCheckout } from '@/hooks/useStripe';
+import { stripePromise } from '@/lib/stripe';
+import { toast } from 'sonner';
 
 const PLANOS = {
   pro: { nome: 'Pro', preco: 'R$ 29,90', valor: 29.9, features: ['3 declarações inclusas', 'Extras por R$ 9,90/cada', 'Até 5 usuários', 'Storage ilimitado', 'Malha Fina + Calculadora IR', 'Suporte Prioritário'] },
@@ -17,113 +17,108 @@ const PLANOS = {
 
 type PlanoKey = keyof typeof PLANOS;
 
-export default function Checkout() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const planoId = (searchParams.get('plano') || 'profissional') as PlanoKey;
-  const plano = PLANOS[planoId] || PLANOS.profissional;
+// Inner form that uses Stripe hooks (must be inside Elements provider)
+function CheckoutForm({ plano, onSuccess }: { plano: typeof PLANOS.pro; onSuccess: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const [billingType, setBillingType] = useState('PIX');
-  const [cardData, setCardData] = useState({ holderName: '', number: '', expiryMonth: '', expiryYear: '', ccv: '' });
-  const [holderInfo, setHolderInfo] = useState({ name: '', email: '', cpfCnpj: '', postalCode: '', phone: '' });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
 
-  const createSub = useCreateSubscription();
-  const [paymentResult, setPaymentResult] = useState<any>(null);
+    setIsProcessing(true);
 
-  const handleSubmit = async () => {
-    const body: any = { plano: planoId, billingType };
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/meus-planos?payment=success`,
+      },
+      redirect: 'if_required',
+    });
 
-    if (billingType === 'CREDIT_CARD') {
-      body.creditCard = {
-        holderName: cardData.holderName,
-        number: cardData.number.replace(/\D/g, ''),
-        expiryMonth: cardData.expiryMonth,
-        expiryYear: cardData.expiryYear,
-        ccv: cardData.ccv,
-      };
-      body.creditCardHolderInfo = {
-        name: holderInfo.name,
-        email: holderInfo.email,
-        cpfCnpj: holderInfo.cpfCnpj.replace(/\D/g, ''),
-        postalCode: holderInfo.postalCode.replace(/\D/g, ''),
-        phone: holderInfo.phone.replace(/\D/g, ''),
-      };
-    }
-
-    const result = await createSub.mutateAsync(body);
-    if (result.paymentInfo) {
-      setPaymentResult(result.paymentInfo);
+    if (error) {
+      toast.error(error.message || 'Erro ao processar pagamento');
+      setIsProcessing(false);
     } else {
-      navigate('/meus-planos');
+      toast.success('Pagamento confirmado! Ativando seu plano...');
+      onSuccess();
     }
   };
 
-  if (paymentResult) {
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PaymentElement
+        options={{
+          layout: 'tabs',
+          defaultValues: {
+            billingDetails: { address: { country: 'BR' } },
+          },
+        }}
+      />
+      <Button
+        type="submit"
+        disabled={!stripe || !elements || isProcessing}
+        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+        size="lg"
+      >
+        {isProcessing ? (
+          <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
+        ) : (
+          `Assinar ${plano.nome} — ${plano.preco}/mês`
+        )}
+      </Button>
+      <p className="text-xs text-center text-muted-foreground">
+        🔒 Pagamento seguro processado pela Stripe. Seus dados estão protegidos.
+      </p>
+    </form>
+  );
+}
+
+export default function Checkout() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const planoId = (searchParams.get('plano') || 'pro') as PlanoKey;
+  const plano = PLANOS[planoId] || PLANOS.pro;
+
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix'>('card');
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const createSub = useStripeCheckout();
+
+  const handleStartCheckout = async () => {
+    setIsCreating(true);
+    try {
+      const result = await createSub.mutateAsync({
+        plano: planoId === 'profissional' ? 'pro' : planoId,
+        paymentMethod,
+      });
+      if (result.clientSecret) {
+        setClientSecret(result.clientSecret);
+      }
+    } catch {
+      // Error already handled by hook
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  if (success) {
     return (
       <DashboardLayout>
-        <div className="max-w-lg mx-auto space-y-6">
-          <Button variant="ghost" onClick={() => navigate('/meus-planos')} className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Voltar aos planos
+        <div className="max-w-lg mx-auto text-center space-y-6 py-12">
+          <div className="h-20 w-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+            <CheckCircle className="h-10 w-10 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-bold">Pagamento confirmado!</h1>
+          <p className="text-muted-foreground">
+            Seu plano Pro foi ativado com sucesso. Aproveite todos os recursos!
+          </p>
+          <Button onClick={() => navigate('/dashboard')} size="lg" className="bg-accent hover:bg-accent/90">
+            Ir para o Dashboard
           </Button>
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle>Pagamento Gerado</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {billingType === 'PIX' ? 'Escaneie o QR Code ou copie o código PIX' : 'Use o boleto abaixo para pagar'}
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4 text-center">
-              {paymentResult.pixQrCodeUrl && (
-                <div className="flex flex-col items-center gap-4">
-                  <img
-                    src={`data:image/png;base64,${paymentResult.pixQrCodeUrl}`}
-                    alt="QR Code PIX"
-                    className="w-48 h-48 border rounded-lg"
-                  />
-                  <div className="w-full">
-                    <Label className="text-xs text-muted-foreground">Código PIX (copie e cole)</Label>
-                    <div className="flex gap-2 mt-1">
-                      <Input value={paymentResult.pixQrCode || ''} readOnly className="text-xs" />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => { navigator.clipboard.writeText(paymentResult.pixQrCode); }}
-                      >
-                        Copiar
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {paymentResult.boletoUrl && (
-                <div className="space-y-3">
-                  {paymentResult.boletoLinhaDigitavel && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Linha Digitável</Label>
-                      <div className="flex gap-2 mt-1">
-                        <Input value={paymentResult.boletoLinhaDigitavel} readOnly className="text-xs" />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => { navigator.clipboard.writeText(paymentResult.boletoLinhaDigitavel); }}
-                        >
-                          Copiar
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  <Button asChild className="w-full">
-                    <a href={paymentResult.boletoUrl} target="_blank" rel="noopener noreferrer">
-                      Abrir Boleto
-                    </a>
-                  </Button>
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground mt-4">
-                Seu plano será ativado automaticamente após a confirmação do pagamento.
-              </p>
-            </CardContent>
-          </Card>
         </div>
       </DashboardLayout>
     );
@@ -150,7 +145,7 @@ export default function Checkout() {
               <div className="space-y-2">
                 {plano.features.map((f) => (
                   <div key={f} className="flex items-center gap-2 text-sm">
-                    <Check className="h-3.5 w-3.5 text-success" />
+                    <Check className="h-3.5 w-3.5 text-green-500" />
                     <span>{f}</span>
                   </div>
                 ))}
@@ -164,90 +159,67 @@ export default function Checkout() {
               <CardTitle className="text-lg">Forma de Pagamento</CardTitle>
             </CardHeader>
             <CardContent>
-              <Tabs value={billingType} onValueChange={setBillingType}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="PIX" className="gap-2"><QrCode className="h-4 w-4" /> PIX</TabsTrigger>
-                  <TabsTrigger value="CREDIT_CARD" className="gap-2"><CreditCard className="h-4 w-4" /> Cartão</TabsTrigger>
-                  <TabsTrigger value="BOLETO" className="gap-2"><FileText className="h-4 w-4" /> Boleto</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="PIX" className="mt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Ao confirmar, será gerado um QR Code PIX para pagamento imediato. O plano será ativado assim que o pagamento for confirmado.
-                  </p>
-                </TabsContent>
-
-                <TabsContent value="CREDIT_CARD" className="mt-4 space-y-4">
-                  <div className="grid grid-cols-1 gap-3">
-                    <div>
-                      <Label>Nome no cartão</Label>
-                      <Input value={cardData.holderName} onChange={(e) => setCardData(p => ({ ...p, holderName: e.target.value }))} placeholder="Como está no cartão" />
-                    </div>
-                    <div>
-                      <Label>Número do cartão</Label>
-                      <Input value={cardData.number} onChange={(e) => setCardData(p => ({ ...p, number: e.target.value }))} placeholder="0000 0000 0000 0000" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <Label>Mês</Label>
-                        <Input value={cardData.expiryMonth} onChange={(e) => setCardData(p => ({ ...p, expiryMonth: e.target.value }))} placeholder="MM" maxLength={2} />
-                      </div>
-                      <div>
-                        <Label>Ano</Label>
-                        <Input value={cardData.expiryYear} onChange={(e) => setCardData(p => ({ ...p, expiryYear: e.target.value }))} placeholder="AAAA" maxLength={4} />
-                      </div>
-                      <div>
-                        <Label>CVV</Label>
-                        <Input value={cardData.ccv} onChange={(e) => setCardData(p => ({ ...p, ccv: e.target.value }))} placeholder="000" maxLength={4} />
-                      </div>
-                    </div>
+              {!clientSecret ? (
+                <div className="space-y-6">
+                  {/* Payment method selection */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setPaymentMethod('card')}
+                      className={`p-4 rounded-lg border-2 transition-all text-center ${
+                        paymentMethod === 'card'
+                          ? 'border-accent bg-accent/5'
+                          : 'border-border hover:border-accent/50'
+                      }`}
+                    >
+                      <CreditCard className="h-6 w-6 mx-auto mb-2 text-accent" />
+                      <p className="font-medium text-sm">Cartão de Crédito</p>
+                      <p className="text-xs text-muted-foreground">Ativação imediata</p>
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod('pix')}
+                      className={`p-4 rounded-lg border-2 transition-all text-center ${
+                        paymentMethod === 'pix'
+                          ? 'border-accent bg-accent/5'
+                          : 'border-border hover:border-accent/50'
+                      }`}
+                    >
+                      <QrCode className="h-6 w-6 mx-auto mb-2 text-accent" />
+                      <p className="font-medium text-sm">PIX</p>
+                      <p className="text-xs text-muted-foreground">Confirmação em segundos</p>
+                    </button>
                   </div>
-                  <div className="border-t pt-4 space-y-3">
-                    <p className="text-sm font-medium">Dados do titular</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label>Nome completo</Label>
-                        <Input value={holderInfo.name} onChange={(e) => setHolderInfo(p => ({ ...p, name: e.target.value }))} />
-                      </div>
-                      <div>
-                        <Label>Email</Label>
-                        <Input value={holderInfo.email} onChange={(e) => setHolderInfo(p => ({ ...p, email: e.target.value }))} type="email" />
-                      </div>
-                      <div>
-                        <Label>CPF/CNPJ</Label>
-                        <Input value={holderInfo.cpfCnpj} onChange={(e) => setHolderInfo(p => ({ ...p, cpfCnpj: e.target.value }))} />
-                      </div>
-                      <div>
-                        <Label>CEP</Label>
-                        <Input value={holderInfo.postalCode} onChange={(e) => setHolderInfo(p => ({ ...p, postalCode: e.target.value }))} />
-                      </div>
-                      <div>
-                        <Label>Telefone</Label>
-                        <Input value={holderInfo.phone} onChange={(e) => setHolderInfo(p => ({ ...p, phone: e.target.value }))} />
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
 
-                <TabsContent value="BOLETO" className="mt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Ao confirmar, será gerado um boleto bancário. O plano será ativado após a compensação do pagamento (até 3 dias úteis).
-                  </p>
-                </TabsContent>
-              </Tabs>
-
-              <Button
-                onClick={handleSubmit}
-                disabled={createSub.isPending}
-                className="w-full mt-6 bg-accent hover:bg-accent/90"
-                size="lg"
-              >
-                {createSub.isPending ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Processando...</>
-                ) : (
-                  `Assinar ${plano.nome} — ${plano.preco}/mês`
-                )}
-              </Button>
+                  <Button
+                    onClick={handleStartCheckout}
+                    disabled={isCreating}
+                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                    size="lg"
+                  >
+                    {isCreating ? (
+                      <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Preparando pagamento...</>
+                    ) : (
+                      'Continuar para pagamento'
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret,
+                    appearance: {
+                      theme: 'stripe',
+                      variables: {
+                        colorPrimary: '#3B82F6',
+                        borderRadius: '8px',
+                      },
+                    },
+                    locale: 'pt-BR',
+                  }}
+                >
+                  <CheckoutForm plano={plano} onSuccess={() => setSuccess(true)} />
+                </Elements>
+              )}
             </CardContent>
           </Card>
         </div>
