@@ -97,6 +97,13 @@ const App = () => (
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/sobre" element={<SobreNos />} />
 
+              {/* Admin routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<ProtectedRoute allowedType="admin"><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/escritorios" element={<ProtectedRoute allowedType="admin"><AdminEscritorios /></ProtectedRoute>} />
+              <Route path="/admin/usuarios" element={<ProtectedRoute allowedType="admin"><AdminUsuarios /></ProtectedRoute>} />
+              <Route path="/admin/assinaturas" element={<ProtectedRoute allowedType="admin"><AdminAssinaturas /></ProtectedRoute>} />
+
               {/* Contador routes - billing gated */}
               <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><BillingGate><Dashboard /></BillingGate></ProtectedRoute>} />
               <Route path="/clientes/:id" element={<ProtectedRoute allowedType="contador"><BillingGate><ClientePerfil /></BillingGate></ProtectedRoute>} />
