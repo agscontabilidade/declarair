@@ -247,7 +247,7 @@ export default function Index() {
             IR não é difícil. Difícil é trabalhar no caos.
           </p>
           <Link to="/cadastro">
-            <Button size="lg" className="mt-4 text-base px-8 h-12 font-bold uppercase tracking-wide">
+            <Button size="lg" variant="gradient" className="mt-4 text-base px-8 h-12 font-bold uppercase tracking-wide">
               Testar grátis agora <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </Link>
