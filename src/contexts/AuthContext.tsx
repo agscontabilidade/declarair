@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, ReactNode 
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-type UserType = 'contador' | 'cliente' | null;
+type UserType = 'contador' | 'cliente' | 'admin' | null;
 
 interface UserProfile {
   escritorioId: string | null;
