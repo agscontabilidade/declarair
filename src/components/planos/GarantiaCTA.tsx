@@ -12,7 +12,7 @@ export function GarantiaCTA({ onNavigate }: GarantiaCTAProps) {
     <div className="max-w-2xl mx-auto text-center space-y-6 py-4">
       <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
         <ShieldCheck className="h-4 w-4 text-accent" />
-        <span className="text-sm font-medium text-foreground">Comece grátis. Sem cartão de crédito.</span>
+        <span className="text-sm font-medium text-foreground">Comece grátis. Teste antes de assinar.</span>
       </div>
       <h2 className="font-display text-2xl font-bold text-foreground">
         Pronto para profissionalizar seu IR?

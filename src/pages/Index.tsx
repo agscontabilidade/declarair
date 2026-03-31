@@ -76,12 +76,12 @@ const objections = [
   },
   {
     objection: '"Meu escritório é pequeno demais"',
-    answer: 'Comece grátis com 1 declaração. Sem cartão. Sem contrato. Se não servir, você não gastou nada. Se servir, desbloqueie tudo por R$ 29,90/mês.',
+    answer: 'Comece grátis com 1 declaração. Sem contrato. Se não servir, você não gastou nada. Se servir, desbloqueie tudo por R$ 29,90/mês.',
   },
 ];
 
 const faqs = [
-   { q: 'Preciso de cartão de crédito para começar?', a: 'Não. O plano Free é gratuito, sem cartão, sem pegadinha. Teste com 1 declaração completa.' },
+   { q: 'Como funciona o plano gratuito?', a: 'O plano Free libera 1 declaração completa, chat, kanban e 500 MB de armazenamento. Perfeito para testar o sistema.' },
   { q: 'Como funciona a malha fina?', a: 'Disponível no plano Pro. Cruzamos dados automaticamente via BrasilAPI antes da transmissão. Se tiver inconsistência, você é alertado antes de dar problema.' },
   { q: 'Qual a diferença entre Free e Pro?', a: 'Free: 1 declaração, 1 usuário, 500 MB, chat e kanban. Pro (R$ 29,90/mês): 3 declarações inclusas + extras por R$ 9,90, até 5 usuários, storage ilimitado, malha fina, calculadora IR e suporte prioritário.' },
   { q: 'O que são Recursos Extras?', a: 'Módulos opcionais: WhatsApp (R$ 19,90), Portal do Cliente (R$ 14,90), API Pública (R$ 29,90), Whitelabel (R$ 9,90), Usuário Extra (R$ 9,90).' },
@@ -181,7 +181,7 @@ export default function Index() {
 
               <div className="mt-5 flex flex-wrap items-center lg:justify-start justify-center gap-x-8 gap-y-2 text-muted-foreground animate-fade-in-up" style={{ animationDelay: '1.5s' }}>
                 <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-success" /> Sem cartão de crédito
+                  <CheckCircle2 className="h-4 w-4 text-success" /> Plano Free disponível
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle2 className="h-4 w-4 text-success" /> Começa em 2 minutos
@@ -708,7 +708,7 @@ export default function Index() {
                   </Button>
                 </Link>
                 <p className="mt-4 text-primary-foreground/50 text-sm">
-                  Sem cartão • 3 declarações grátis • Cancele quando quiser
+                  Teste grátis • 3 declarações no Pro • Cancele quando quiser
                 </p>
               </div>
             </div>

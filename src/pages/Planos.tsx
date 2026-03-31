@@ -56,7 +56,7 @@ export default function Planos() {
 
              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Comece grátis com 1 declaração. Desbloqueie o sistema completo por apenas R$ 29,90/mês.
-              Sem cartão de crédito. Sem pegadinhas.
+              Sem contrato. Sem pegadinhas.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -74,7 +74,7 @@ export default function Planos() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              ✓ Sem cartão de crédito  ✓ 1 declaração grátis  ✓ Pro por R$ 29,90/mês
+              ✓ Teste grátis com 1 declaração  ✓ Pro por R$ 29,90/mês  ✓ Cancele quando quiser
             </p>
           </div>
         </Section>
@@ -290,7 +290,7 @@ export default function Planos() {
               Pronto para simplificar seu IR?
             </h2>
             <p className="text-xl opacity-90">
-              Comece grátis agora. Sem cartão de crédito.
+              Comece grátis agora. Sem contrato, sem compromisso.
             </p>
             <Link to="/cadastro">
               <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">

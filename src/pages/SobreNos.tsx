@@ -120,7 +120,7 @@ export default function SobreNos() {
             Pronto para organizar seu IR?
           </h2>
           <p className="text-lg text-muted-foreground">
-            Comece grátis, sem cartão, sem compromisso.
+            Comece grátis, sem contrato, sem compromisso.
           </p>
           <Link to="/cadastro">
             <Button size="lg" className="text-lg px-12 h-14 shadow-xl font-bold uppercase tracking-wide rounded-lg">

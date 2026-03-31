@@ -190,7 +190,7 @@ export default function Cadastro() {
           </p>
           <div className="flex items-center gap-3 text-primary-foreground/60 text-sm">
             <CheckCircle2 className="h-4 w-4 text-accent" />
-            <span>Sem cartão de crédito</span>
+            <span>Comece em 2 minutos</span>
           </div>
         </div>
         <p className="relative z-10 text-primary-foreground/40 text-xs">© {new Date().getFullYear()} DeclaraIR</p>

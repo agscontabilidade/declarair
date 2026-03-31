@@ -35,8 +35,8 @@ const PLANOS_CONFIG = [
       { texto: 'Sua marca (Whitelabel)', disponivel: false, destaque: false, addon: true, preco: 9.90 },
     ],
     detalhes: [
-      'Sem cartão de crédito',
       'Ideal para testar',
+      'Comece em 2 minutos',
     ],
   },
   {
