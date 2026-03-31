@@ -7,8 +7,8 @@ import {
   ArrowRight, Star, Layout, Smartphone, Lock,
   BarChart3, FolderCheck, Receipt, Palette,
   DollarSign, Flame, Target, XCircle, AlertTriangle,
+  MessageSquareWarning, FileQuestion, Clock, RotateCcw, TrendingDown,
 } from 'lucide-react';
-import LottieIcon from '@/components/landing/LottieIcon';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import logoHero from '@/assets/logo-hero.png';
