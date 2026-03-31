@@ -59,6 +59,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadProfile = useCallback(async (currentUser: User) => {
     try {
+      // Check if is admin
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', currentUser.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (adminRole) {
+        setUserType('admin');
+        setProfile({
+          escritorioId: null,
+          papel: 'admin',
+          nome: currentUser.email ?? 'Admin',
+          clienteId: null,
+          onboardingCompleto: true,
+        });
+        return;
+      }
+
       // Check if is contador
       const { data: usuario } = await supabase
         .from('usuarios')
