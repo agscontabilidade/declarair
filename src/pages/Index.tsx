@@ -129,9 +129,9 @@ export default function Index() {
               </Badge>
 
               <h1 className="font-display text-3xl sm:text-4xl lg:text-[3.25rem] font-extrabold text-foreground leading-[1.1] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                O problema não é o IR.{' '}
+                O problema não é IRPF.{' '}
                 <span className="relative inline-block">
-                  <span className="text-accent">É a desorganização do seu processo.</span>
+                  <span className="text-accent">É o seu processo desorganizado!</span>
                   <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 300 8" fill="none">
                     <path d="M1 5.5Q75 1 150 4T299 3" stroke="hsl(var(--accent))" strokeWidth="2" strokeLinecap="round" />
                   </svg>
