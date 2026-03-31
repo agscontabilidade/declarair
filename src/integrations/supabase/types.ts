@@ -156,6 +156,57 @@ export type Database = {
           },
         ]
       }
+      bug_reports: {
+        Row: {
+          created_at: string
+          descricao: string
+          escritorio_id: string | null
+          id: string
+          pagina_url: string | null
+          prioridade: string
+          reportado_por: string
+          reportado_por_email: string | null
+          reportado_por_nome: string | null
+          resposta_admin: string | null
+          screenshots: Json | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          escritorio_id?: string | null
+          id?: string
+          pagina_url?: string | null
+          prioridade?: string
+          reportado_por: string
+          reportado_por_email?: string | null
+          reportado_por_nome?: string | null
+          resposta_admin?: string | null
+          screenshots?: Json | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          escritorio_id?: string | null
+          id?: string
+          pagina_url?: string | null
+          prioridade?: string
+          reportado_por?: string
+          reportado_por_email?: string | null
+          reportado_por_nome?: string | null
+          resposta_admin?: string | null
+          screenshots?: Json | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       checklist_documentos: {
         Row: {
           arquivo_nome: string | null
