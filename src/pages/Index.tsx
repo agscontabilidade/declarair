@@ -101,7 +101,7 @@ export default function Index() {
           </nav>
           <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" size="sm" className="text-sm font-medium">Entrar</Button></Link>
-            <Link to="/cadastro"><Button size="sm" className="text-sm px-5 font-semibold">Começar Grátis</Button></Link>
+            <Link to="/cadastro"><Button size="sm" variant="gradient" className="text-sm px-5 font-semibold">Começar Grátis</Button></Link>
           </div>
         </div>
       </header>
