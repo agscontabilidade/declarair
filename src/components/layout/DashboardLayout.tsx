@@ -32,6 +32,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             {children}
           </main>
         </div>
+        {isContador && <ReportBugModal />}
       </div>
     </SidebarProvider>
   );
