@@ -40,6 +40,11 @@ import ConviteColaborador from "./pages/ConviteColaborador";
 import ConfiguracoesAPI from "./pages/ConfiguracoesAPI";
 import CadastroCliente from "./pages/cliente/CadastroCliente";
 import NotFound from "./pages/NotFound";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminEscritorios from "./pages/admin/AdminEscritorios";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminAssinaturas from "./pages/admin/AdminAssinaturas";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 import PoliticaLGPD from "./pages/PoliticaLGPD";
@@ -60,6 +65,7 @@ function RootRedirect() {
   }
 
   if (!session) return <Index />;
+  if (userType === 'admin') return <Navigate to="/admin" replace />;
   if (userType === 'contador') return <Navigate to="/dashboard" replace />;
   if (userType === 'cliente') return <Navigate to="/cliente/dashboard" replace />;
   return <Index />;
@@ -90,6 +96,13 @@ const App = () => (
               <Route path="/cadastro-cliente/:token" element={<CadastroCliente />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/sobre" element={<SobreNos />} />
+
+              {/* Admin routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<ProtectedRoute allowedType="admin"><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/escritorios" element={<ProtectedRoute allowedType="admin"><AdminEscritorios /></ProtectedRoute>} />
+              <Route path="/admin/usuarios" element={<ProtectedRoute allowedType="admin"><AdminUsuarios /></ProtectedRoute>} />
+              <Route path="/admin/assinaturas" element={<ProtectedRoute allowedType="admin"><AdminAssinaturas /></ProtectedRoute>} />
 
               {/* Contador routes - billing gated */}
               <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><BillingGate><Dashboard /></BillingGate></ProtectedRoute>} />

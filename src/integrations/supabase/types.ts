@@ -1677,7 +1677,7 @@ export type Database = {
       user_tem_permissao: { Args: { permissao_nome: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "dono" | "colaborador"
+      app_role: "dono" | "colaborador" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1805,7 +1805,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["dono", "colaborador"],
+      app_role: ["dono", "colaborador", "admin"],
     },
   },
 } as const
