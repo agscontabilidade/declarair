@@ -104,8 +104,7 @@ export default function ConviteCliente() {
           <div className="absolute bottom-32 -left-16 w-56 h-56 rounded-3xl border border-primary-foreground/10 rotate-12" />
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
-              <img src={logoIcon} alt="DeclaraIR" className="h-11 w-11" />
-              <img src={logoFull} alt="DeclaraIR" className="h-8 brightness-0 invert" />
+              <img src={logoFull} alt="DeclaraIR" className="h-10 brightness-0 invert" />
             </div>
           </div>
           <div className="relative z-10" />
@@ -114,8 +113,7 @@ export default function ConviteCliente() {
         <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10">
           <div className="w-full max-w-md text-center space-y-4">
             <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
-              <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10" />
-              <img src={logoFull} alt="DeclaraIR" className="h-7" />
+              <img src={logoFull} alt="DeclaraIR" className="h-9" />
             </div>
             <h1 className="font-display text-2xl font-bold text-destructive">Convite Inválido</h1>
             <p className="text-muted-foreground">Este link de convite expirou ou já foi utilizado.</p>
@@ -134,8 +132,7 @@ export default function ConviteCliente() {
         <div className="absolute bottom-32 -left-16 w-56 h-56 rounded-3xl border border-primary-foreground/10 rotate-12" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
-            <img src={logoIcon} alt="DeclaraIR" className="h-11 w-11" />
-            <img src={logoFull} alt="DeclaraIR" className="h-8 brightness-0 invert" />
+            <img src={logoFull} alt="DeclaraIR" className="h-10 brightness-0 invert" />
           </div>
         </div>
         <div className="relative z-10 space-y-6">
@@ -163,8 +160,7 @@ export default function ConviteCliente() {
       <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
-            <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10" />
-            <img src={logoFull} alt="DeclaraIR" className="h-7" />
+            <img src={logoFull} alt="DeclaraIR" className="h-9" />
           </div>
 
           <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-5">
