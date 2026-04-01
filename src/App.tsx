@@ -98,6 +98,7 @@ const App = () => (
               <Route path="/cadastro-cliente/:token" element={<CadastroCliente />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/sobre" element={<SobreNos />} />
+              <Route path="/landing-v2" element={<LandingV2 />} />
 
               {/* Admin routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
