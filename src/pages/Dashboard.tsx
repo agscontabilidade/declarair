@@ -18,7 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { QueryError } from '@/components/ui/QueryError';
-import { DeclaracoesLimitBanner } from '@/components/billing/DeclaracoesLimitBanner';
+
 
 const years = [2023, 2024, 2025, 2026];
 
@@ -118,7 +118,7 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <DeclaracoesLimitBanner />
+        
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
           <div className="flex items-center gap-3">
