@@ -20,7 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const STEP_LABELS = [
   'Perfil Fiscal', 'Dados Pessoais', 'Dependentes',
-  'Dívidas e Ônus', 'Deduções', 'Informações Adicionais',
+  'Dívidas e Ônus', 'Informações Adicionais',
 ];
 
 const TOTAL_STEPS = STEP_LABELS.length;
