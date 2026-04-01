@@ -37,6 +37,7 @@
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
+    --warning-dark: 32 81% 29%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;

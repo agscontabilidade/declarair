@@ -48,11 +48,11 @@ export default function Mensagens() {
         </div>
 
         {!isWhatsAppConnected && (
-          <Alert className="border-warning/30 bg-warning/10">
-            <AlertCircle className="h-4 w-4 text-warning" />
-            <AlertDescription className="text-warning-foreground">
+          <Alert className="border-warning/40 bg-warning/10">
+            <AlertCircle className="h-4 w-4 text-warning-dark" />
+            <AlertDescription className="text-warning-dark">
               Para enviar mensagens via WhatsApp, conecte seu número primeiro.{' '}
-              <Link to="/whatsapp" className="font-semibold underline">Conectar WhatsApp →</Link>
+              <Link to="/whatsapp" className="font-semibold underline hover:opacity-80">Conectar WhatsApp →</Link>
             </AlertDescription>
           </Alert>
         )}

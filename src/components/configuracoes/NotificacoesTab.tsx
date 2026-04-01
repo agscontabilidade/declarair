@@ -113,9 +113,9 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
       </CardHeader>
       <CardContent>
         {!isWhatsAppConnected && (
-          <Alert className="mb-4 border-warning/30 bg-warning/5">
-            <Info className="h-4 w-4 text-warning" />
-            <AlertDescription className="text-sm">
+          <Alert className="mb-4 border-warning/40 bg-warning/10">
+            <Info className="h-4 w-4 text-warning-dark" />
+            <AlertDescription className="text-sm text-warning-dark">
               O canal WhatsApp será exibido após conectar seu número em <strong>WhatsApp</strong>.
             </AlertDescription>
           </Alert>
