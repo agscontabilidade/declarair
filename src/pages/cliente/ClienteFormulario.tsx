@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ClienteLayout } from '@/components/layout/ClienteLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,23 +9,23 @@ import { useFormularioIR } from '@/hooks/useFormularioIR';
 import { StepPerfilFiscal } from '@/components/formulario-ir/StepPerfilFiscal';
 import { StepDadosPessoais } from '@/components/formulario-ir/StepDadosPessoais';
 import { StepDependentes } from '@/components/formulario-ir/StepDependentes';
-
-
-
-
+import { StepDocumentos } from '@/components/formulario-ir/StepDocumentos';
 import { StepInfoAdicionais } from '@/components/formulario-ir/StepInfoAdicionais';
 import { toast } from 'sonner';
 import { DEFAULT_PERFIL, gerarChecklistPorPerfil, type PerfilFiscal } from '@/lib/checklistPorPerfil';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-const STEP_LABELS = [
-  'Perfil Fiscal', 'Dados Pessoais', 'Dependentes', 'Informações Adicionais',
-];
-
-const TOTAL_STEPS = STEP_LABELS.length;
+interface StepDef {
+  key: string;
+  label: string;
+}
 
 export default function ClienteFormulario() {
   const { formData, updateField, declaracao, formulario, isLoading, saving, lastSaved, finalizar } = useFormularioIR();
+  const { profile } = useAuth();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [confirmado, setConfirmado] = useState(false);
   const [concluido, setConcluido] = useState(false);
@@ -39,7 +39,37 @@ export default function ClienteFormulario() {
     }
   }, [formulario]);
 
-  const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
+  // Dynamic steps based on perfil
+  const steps = useMemo<StepDef[]>(() => {
+    const s: StepDef[] = [
+      { key: 'perfil', label: 'Perfil Fiscal' },
+      { key: 'dados', label: 'Dados Pessoais' },
+    ];
+    if (perfilFiscal.dependentes) {
+      s.push({ key: 'dependentes', label: 'Dependentes' });
+    }
+    s.push({ key: 'documentos', label: 'Envio de Documentos' });
+    s.push({ key: 'final', label: 'Revisão e Envio' });
+    return s;
+  }, [perfilFiscal]);
+
+  const totalSteps = steps.length;
+  const currentStep = steps[step] || steps[0];
+  const progress = Math.round(((step + 1) / totalSteps) * 100);
+
+  // Fetch checklist for the document step
+  const { data: checklist = [] } = useQuery({
+    queryKey: ['formulario-checklist', declaracao?.id],
+    queryFn: async () => {
+      if (!declaracao?.id) return [];
+      const { data } = await supabase
+        .from('checklist_documentos')
+        .select('id, nome_documento, categoria, obrigatorio, status, arquivo_nome, arquivo_url')
+        .eq('declaracao_id', declaracao.id);
+      return data || [];
+    },
+    enabled: !!declaracao?.id,
+  });
 
   if (isLoading) {
     return (
@@ -85,7 +115,6 @@ export default function ClienteFormulario() {
 
   const handlePerfilChange = async (newPerfil: PerfilFiscal) => {
     setPerfilFiscal(newPerfil);
-    // Save perfil to DB
     if (formulario?.id) {
       await supabase
         .from('formulario_ir')
@@ -95,27 +124,28 @@ export default function ClienteFormulario() {
   };
 
   const handleNextFromPerfil = async () => {
-    // Generate checklist based on perfil and update declaracao's checklist
-    if (declaracao?.id) {
-      const checklistItems = gerarChecklistPorPerfil(perfilFiscal);
+    if (!declaracao?.id) return;
+    
+    const checklistItems = gerarChecklistPorPerfil(perfilFiscal);
 
-      // Check if checklist already has items
-      const { data: existing } = await supabase
-        .from('checklist_documentos')
-        .select('id')
-        .eq('declaracao_id', declaracao.id)
-        .limit(1);
+    // Delete existing checklist and regenerate based on new perfil
+    const { data: existing } = await supabase
+      .from('checklist_documentos')
+      .select('id')
+      .eq('declaracao_id', declaracao.id)
+      .limit(1);
 
-      // Only regenerate if no checklist exists yet or user confirms
-      if (!existing || existing.length === 0) {
-        const items = checklistItems.map(item => ({
-          ...item,
-          declaracao_id: declaracao.id,
-        }));
-        await supabase.from('checklist_documentos').insert(items);
-        toast.success('Perfil fiscal salvo! Seu contador será notificado sobre os documentos necessários.');
-      }
+    if (!existing || existing.length === 0) {
+      const items = checklistItems.map(item => ({
+        ...item,
+        declaracao_id: declaracao.id,
+      }));
+      await supabase.from('checklist_documentos').insert(items);
     }
+
+    // Refresh checklist query
+    queryClient.invalidateQueries({ queryKey: ['formulario-checklist'] });
+    toast.success('Perfil fiscal salvo! Checklist de documentos gerado.');
     setStep(1);
   };
 
@@ -124,9 +154,56 @@ export default function ClienteFormulario() {
       toast.error('Confirme a veracidade das informações');
       return;
     }
+
+    // Check pending documents
+    const pendingDocs = checklist.filter(d => d.status === 'pendente');
+    
+    // Notify accountant about pending docs
+    if (pendingDocs.length > 0) {
+      try {
+        const obrigatoriosPendentes = pendingDocs.filter(d => d.obrigatorio);
+        const msg = obrigatoriosPendentes.length > 0
+          ? `Cliente finalizou o formulário com ${pendingDocs.length} documento(s) pendente(s), sendo ${obrigatoriosPendentes.length} obrigatório(s).`
+          : `Cliente finalizou o formulário com ${pendingDocs.length} documento(s) opcional(is) pendente(s).`;
+
+        await supabase.from('notificacoes').insert({
+          escritorio_id: declaracao.escritorio_id,
+          titulo: '⚠️ Documentos pendentes',
+          mensagem: msg,
+          link_destino: `/clientes/${declaracao.cliente_id}`,
+        });
+
+        // Register activity
+        await supabase.from('declaracao_atividades').insert({
+          declaracao_id: declaracao.id,
+          tipo: 'documento',
+          descricao: `Cliente finalizou formulário com ${pendingDocs.length} documento(s) pendente(s)`,
+          usuario_nome: 'Cliente',
+        });
+      } catch { /* best-effort */ }
+    }
+
     const ok = await finalizar();
-    if (ok) setConcluido(true);
+    if (ok) {
+      // Also notify about formulário completion
+      if (pendingDocs.length > 0) {
+        toast.info(`Formulário enviado! ${pendingDocs.length} documento(s) ainda pendente(s) — seu contador será notificado.`);
+      }
+      setConcluido(true);
+    }
   };
+
+  const handleNext = () => {
+    if (currentStep.key === 'perfil') {
+      handleNextFromPerfil();
+    } else {
+      setStep(s => Math.min(s + 1, totalSteps - 1));
+    }
+  };
+
+  const handlePrev = () => setStep(s => Math.max(0, s - 1));
+
+  const isLastStep = step === totalSteps - 1;
 
   return (
     <ClienteLayout>
@@ -135,7 +212,9 @@ export default function ClienteFormulario() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Formulário IR {declaracao.ano_base}</h1>
-            <p className="text-sm text-muted-foreground mt-1">Etapa {step + 1} de {TOTAL_STEPS} — {STEP_LABELS[step]}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Etapa {step + 1} de {totalSteps} — {currentStep.label}
+            </p>
           </div>
           {lastSaved && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -150,29 +229,59 @@ export default function ClienteFormulario() {
         {/* Step Content */}
         <Card className="shadow-sm">
           <CardContent className="p-6">
-            {step === 0 && <StepPerfilFiscal perfil={perfilFiscal} onChange={handlePerfilChange} />}
-            {step === 1 && <StepDadosPessoais data={formData} onChange={updateField} />}
-            {step === 2 && <StepDependentes data={formData} onChange={updateField} />}
-            {step === 3 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
+            {currentStep.key === 'perfil' && (
+              <StepPerfilFiscal perfil={perfilFiscal} onChange={handlePerfilChange} />
+            )}
+            {currentStep.key === 'dados' && (
+              <StepDadosPessoais data={formData} onChange={updateField} />
+            )}
+            {currentStep.key === 'dependentes' && (
+              <StepDependentes data={formData} onChange={updateField} />
+            )}
+            {currentStep.key === 'documentos' && (
+              <StepDocumentos
+                checklist={checklist}
+                declaracaoId={declaracao.id}
+                escritorioId={declaracao.escritorio_id}
+                clienteId={profile.clienteId || ''}
+              />
+            )}
+            {currentStep.key === 'final' && (
+              <StepInfoAdicionais
+                data={formData}
+                onChange={updateField}
+                confirmado={confirmado}
+                onConfirmChange={setConfirmado}
+              />
+            )}
           </CardContent>
         </Card>
 
         {/* Navigation */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={handlePrev}
+            disabled={step === 0}
+          >
             <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
           </Button>
-          {step === 0 ? (
-            <Button className="w-full sm:w-auto active:scale-[0.98]" onClick={handleNextFromPerfil}>
-              Próximo <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          ) : step < TOTAL_STEPS - 1 ? (
-            <Button className="w-full sm:w-auto active:scale-[0.98]" onClick={() => setStep(step + 1)}>
-              Próximo <ChevronRight className="h-4 w-4 ml-1" />
+
+          {isLastStep ? (
+            <Button
+              onClick={handleFinalizar}
+              disabled={saving}
+              className="w-full sm:w-auto bg-success hover:bg-success/90 active:scale-[0.98]"
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" /> Finalizar
             </Button>
           ) : (
-            <Button onClick={handleFinalizar} disabled={saving} className="w-full sm:w-auto bg-success hover:bg-success/90 active:scale-[0.98]">
-              <CheckCircle2 className="h-4 w-4 mr-2" /> Finalizar
+            <Button
+              className="w-full sm:w-auto active:scale-[0.98]"
+              onClick={handleNext}
+            >
+              Próximo <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           )}
         </div>
