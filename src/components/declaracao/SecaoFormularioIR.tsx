@@ -148,7 +148,7 @@ export function SecaoFormularioIR({ formulario, isLoading }: Props) {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                {renderJsonList(s.data)}
+                {s.customRender ? renderPerfilFiscal(s.data) : renderJsonList(s.data)}
               </AccordionContent>
             </AccordionItem>
           ))}
