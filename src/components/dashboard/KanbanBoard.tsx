@@ -1,11 +1,14 @@
 import { useState, useCallback } from 'react';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { KanbanColumn } from './KanbanColumn';
+import { KanbanCard } from './KanbanCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { DeclaracaoKanban } from '@/hooks/useDashboardData';
+import { triggerStatusAutomation, createInAppNotification } from './kanbanAutomations';
 
 const columns = [
   { status: 'aguardando_documentos', title: 'Aguardando Documentação', color: 'bg-warning/10' },
@@ -14,136 +17,18 @@ const columns = [
   { status: 'transmitida', title: 'Transmitidas', color: 'bg-muted' },
 ];
 
-async function triggerStatusAutomation(
-  escritorioId: string,
-  declaracaoId: string,
-  newStatus: string,
-  accessToken: string
-) {
-  try {
-    // Check if automation is configured for this status
-    const { data: configs } = await supabase
-      .from('configuracoes_escritorio')
-      .select('chave, valor')
-      .eq('escritorio_id', escritorioId)
-      .in('chave', [
-        `whatsapp_auto_${newStatus}_ativo`,
-        `whatsapp_auto_${newStatus}_template`,
-      ]);
-
-    if (!configs || configs.length === 0) return;
-
-    const ativoConfig = configs.find(c => c.chave === `whatsapp_auto_${newStatus}_ativo`);
-    const templateConfig = configs.find(c => c.chave === `whatsapp_auto_${newStatus}_template`);
-
-    if (ativoConfig?.valor !== 'true' || !templateConfig?.valor) return;
-
-    // Get declaration + client info
-    const { data: decl } = await supabase
-      .from('declaracoes')
-      .select('*, clientes(nome, telefone, cpf)')
-      .eq('id', declaracaoId)
-      .single();
-
-    if (!decl?.clientes) return;
-    const clienteData = decl.clientes as unknown as { nome: string; telefone: string; cpf: string };
-    if (!clienteData.telefone) return;
-
-    // Get template
-    const { data: tmpl } = await supabase
-      .from('templates_mensagem')
-      .select('id, corpo')
-      .eq('id', templateConfig.valor)
-      .eq('ativo', true)
-      .single();
-
-    if (!tmpl) return;
-
-    // Get escritorio name
-    const { data: esc } = await supabase
-      .from('escritorios')
-      .select('nome')
-      .eq('id', escritorioId)
-      .single();
-
-    // Replace tags
-    const statusLabels: Record<string, string> = {
-      aguardando_documentos: 'Aguardando Documentos',
-      documentacao_recebida: 'Documentação Recebida',
-      declaracao_pronta: 'Declaração Pronta',
-      transmitida: 'Transmitida',
-    };
-
-    const mensagem = tmpl.corpo
-      .replace(/{nome_cliente}/g, clienteData.nome || '')
-      .replace(/{nome_escritorio}/g, esc?.nome || '')
-      .replace(/{ano_base}/g, String(decl.ano_base))
-      .replace(/{status_declaracao}/g, statusLabels[newStatus] || newStatus)
-      .replace(/{tipo_resultado}/g, decl.tipo_resultado || '')
-      .replace(/{valor_resultado}/g, decl.valor_resultado ? String(decl.valor_resultado) : '')
-      .replace(/{numero_recibo}/g, decl.numero_recibo || '')
-      .replace(/{link_portal}/g, 'https://declarair.lovable.app/cliente/login');
-
-    const phone = clienteData.telefone.replace(/\D/g, '');
-    const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
-
-    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-    await fetch(`https://${projectId}.supabase.co/functions/v1/whatsapp-service?action=send-message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        phone: fullPhone,
-        message: mensagem,
-        clienteId: decl.cliente_id,
-        templateId: tmpl.id,
-      }),
-    });
-  } catch {
-    // Silent fail - don't block Kanban move
-  }
-}
-
-async function createInAppNotification(escritorioId: string, declaracaoId: string, newStatus: string) {
-  try {
-    const { data: decl } = await supabase
-      .from('declaracoes')
-      .select('ano_base, clientes(nome)')
-      .eq('id', declaracaoId)
-      .single();
-
-    if (!decl) return;
-
-    const statusLabels: Record<string, string> = {
-      aguardando_documentos: 'Aguardando Documentos',
-      documentacao_recebida: 'Documentação Recebida',
-      declaracao_pronta: 'Declaração Pronta',
-      transmitida: 'Transmitida',
-    };
-
-    const clienteNome = decl?.clientes ? (decl.clientes as unknown as { nome: string }).nome : 'Cliente';
-
-    await supabase.from('notificacoes').insert({
-      escritorio_id: escritorioId,
-      titulo: `Declaração movida: ${clienteNome}`,
-      mensagem: `A declaração ${decl.ano_base} foi movida para "${statusLabels[newStatus] || newStatus}".`,
-      link_destino: `/declaracoes/${declaracaoId}`,
-    });
-  } catch {
-    // Silent
-  }
-}
-
 export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKanban[]; isLoading: boolean; anoBase: number }) {
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [optimisticItems, setOptimisticItems] = useState<DeclaracaoKanban[] | null>(null);
-  const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [droppedId, setDroppedId] = useState<string | null>(null);
-  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [activeItem, setActiveItem] = useState<DeclaracaoKanban | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
 
   const displayItems = optimisticItems ?? items;
 
@@ -152,36 +37,27 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
     return acc;
   }, {} as Record<string, DeclaracaoKanban[]>);
 
-  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
-    e.dataTransfer.setData('text/plain', id);
-    setDraggedId(id);
-  }, []);
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const item = displayItems.find(i => i.id === event.active.id);
+    setActiveItem(item || null);
+  }, [displayItems]);
 
-  const handleDragEnd = useCallback(() => {
-    setDraggedId(null);
-    setDragOverCol(null);
-  }, []);
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveItem(null);
 
-  const handleDragOver = useCallback((e: React.DragEvent, status: string) => {
-    e.preventDefault();
-    setDragOverCol(status);
-  }, []);
+    if (!over) return;
 
-  const handleDrop = useCallback(async (e: React.DragEvent, newStatus: string) => {
-    e.preventDefault();
-    setDragOverCol(null);
-    setDraggedId(null);
-    const id = e.dataTransfer.getData('text/plain');
+    const id = active.id as string;
+    const newStatus = over.id as string;
     const item = displayItems.find(i => i.id === id);
-    if (!item || item.status === newStatus) return;
 
-    setDroppedId(id);
-    setTimeout(() => setDroppedId(null), 400);
+    if (!item || item.status === newStatus) return;
+    if (!columns.some(c => c.status === newStatus)) return;
 
     const prev = [...displayItems];
     setOptimisticItems(prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
 
-    // Optimistic locking: only update if version matches
     const { data, error } = await supabase
       .from('declaracoes')
       .update({ status: newStatus, ultima_atualizacao_status: new Date().toISOString() })
@@ -206,7 +82,6 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
       queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes', profile.escritorioId, anoBase] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-kpis', profile.escritorioId, anoBase] });
 
-      // Trigger automations in background
       if (profile.escritorioId) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
@@ -234,24 +109,23 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
   return (
     <div>
       <h2 className="font-display text-lg font-semibold mb-4">Declarações por Status</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto min-w-0">
-        {columns.map((col) => (
-          <KanbanColumn
-            key={col.status}
-            title={col.title}
-            status={col.status}
-            color={col.color}
-            items={grouped[col.status] || []}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            draggedId={draggedId}
-            droppedId={droppedId}
-            isDragOver={dragOverCol === col.status}
-          />
-        ))}
-      </div>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto min-w-0">
+          {columns.map((col) => (
+            <KanbanColumn
+              key={col.status}
+              title={col.title}
+              status={col.status}
+              color={col.color}
+              items={grouped[col.status] || []}
+            />
+          ))}
+        </div>
+
+        <DragOverlay dropAnimation={{ duration: 250, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+          {activeItem ? <KanbanCard item={activeItem} isOverlay /> : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }
