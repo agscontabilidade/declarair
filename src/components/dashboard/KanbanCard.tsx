@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { AlertTriangle, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -21,13 +23,10 @@ function isStale(date: string) {
 
 interface Props {
   item: DeclaracaoKanban;
-  onDragStart: (e: React.DragEvent, id: string) => void;
-  onDragEnd: () => void;
-  isDragging: boolean;
-  isDropped: boolean;
+  isOverlay?: boolean;
 }
 
-export function KanbanCard({ item, onDragStart, onDragEnd, isDragging, isDropped }: Props) {
+export function KanbanCard({ item, isOverlay }: Props) {
   const navigate = useNavigate();
   const nome = item.clientes?.nome ?? 'Cliente';
   const cpf = item.clientes?.cpf ?? '';
@@ -36,41 +35,38 @@ export function KanbanCard({ item, onDragStart, onDragEnd, isDragging, isDropped
   const receivedDocs = totalDocs - (item.pendingDocs || 0);
   const docPct = totalDocs > 0 ? Math.round((receivedDocs / totalDocs) * 100) : 0;
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: item.id,
+    data: { item },
+    disabled: !!isOverlay,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    opacity: isDragging ? 0.35 : 1,
+    transition: isDragging ? undefined : 'transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease',
+  };
+
   return (
     <div
-      draggable
-      onDragStart={(e) => {
-        // Set a minimal drag image to avoid the default ghost
-        const el = e.currentTarget;
-        const clone = el.cloneNode(true) as HTMLElement;
-        clone.style.width = `${el.offsetWidth}px`;
-        clone.style.position = 'absolute';
-        clone.style.top = '-9999px';
-        clone.style.opacity = '0.85';
-        clone.style.transform = 'rotate(2deg) scale(1.02)';
-        clone.style.boxShadow = '0 20px 40px -8px rgba(0,0,0,0.2)';
-        clone.style.borderRadius = '12px';
-        document.body.appendChild(clone);
-        e.dataTransfer.setDragImage(clone, el.offsetWidth / 2, 24);
-        requestAnimationFrame(() => document.body.removeChild(clone));
-        onDragStart(e, item.id);
-      }}
-      onDragEnd={onDragEnd}
-      onClick={() => navigate(`/declaracoes/${item.id}`)}
-      style={{
-        opacity: isDragging ? 0.35 : 1,
-        transform: isDragging
-          ? 'scale(0.96)'
-          : isDropped
-            ? 'scale(1)'
-            : 'scale(1)',
-        transition: 'opacity 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease',
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => {
+        if (!isDragging) navigate(`/declaracoes/${item.id}`);
       }}
       className={`
         group bg-card rounded-xl p-3.5 shadow-sm border border-border/40
         cursor-grab active:cursor-grabbing
         hover:shadow-lg hover:border-accent/30 hover:-translate-y-0.5
-        ${isDropped ? 'animate-kanban-land' : ''}
+        ${isOverlay ? 'shadow-2xl rotate-2 scale-105 ring-2 ring-accent/30' : ''}
       `}
     >
       <div className="flex items-start gap-3">
