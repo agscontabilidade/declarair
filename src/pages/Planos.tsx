@@ -178,8 +178,8 @@ export default function Planos() {
 
                   <div className="space-y-3 pt-4 border-t">
                      {[
-                      { bold: true, text: '3 declarações inclusas', extra: '' },
-                      { bold: true, text: 'Extras por R$ 9,90/cada', extra: '' },
+                      { bold: true, text: 'Declarações sob demanda', extra: '' },
+                      { bold: true, text: 'R$ 9,90/declaração', extra: '' },
                       { bold: false, text: 'Até 5 usuários simultâneos' },
                       { bold: false, text: 'Storage ilimitado' },
                       { bold: false, text: 'Malha fina + Calculadora IR' },

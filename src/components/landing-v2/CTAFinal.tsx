@@ -57,7 +57,7 @@ export default function CTAFinal() {
               </Button>
             </Link>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-              {['Teste grátis', '3 declarações no Pro', 'Cancele quando quiser'].map((t) => (
+              {['Teste grátis', 'Declarações por R$ 9,90', 'Cancele quando quiser'].map((t) => (
                 <div key={t} className="flex items-center gap-2 text-sm text-white/35">
                   <CheckCircle2 className="h-4 w-4 text-[hsl(var(--lv2-emerald)/0.5)]" />
                   {t}

@@ -65,7 +65,7 @@ const objections = [
 
 const faqs = [
   { q: 'Como funciona o plano gratuito?', a: 'O plano Free libera 1 declaração completa com chat, kanban e 500 MB de armazenamento — ideal para conhecer a plataforma sem compromisso.' },
-  { q: 'Qual a diferença entre Free e Pro?', a: 'O Pro (R$ 29,90/mês) inclui 3 declarações, até 5 usuários, armazenamento ilimitado, monitoramento de malha fina, calculadora de IR e suporte prioritário. Declarações extras saem por R$ 9,90 cada.' },
+  { q: 'Qual a diferença entre Free e Pro?', a: 'O Pro (R$ 29,90/mês) dá acesso ao sistema completo com até 5 usuários, armazenamento ilimitado, monitoramento de malha fina, calculadora de IR e suporte prioritário. Declarações são adquiridas sob demanda por R$ 9,90 cada.' },
   { q: 'Meus dados e os dos meus clientes estão seguros?', a: 'Sim. Utilizamos criptografia, banco de dados isolado por escritório e controle de acesso em nível de linha (RLS) em todas as tabelas, em conformidade com a LGPD.' },
   { q: 'Meus clientes precisam instalar algo?', a: 'Não. O portal do cliente é 100% web — funciona em qualquer celular ou computador. Basta enviar o link de convite.' },
   { q: 'O que são os Recursos Extras?', a: 'Módulos opcionais que ampliam a plataforma: integração com WhatsApp (R$ 19,90/mês), API Pública (R$ 29,90/mês) e Whitelabel com sua marca (R$ 49,90/mês).' },
@@ -590,7 +590,7 @@ export default function Index() {
                 </Button>
               </Link>
               <p className="mt-3 text-primary-foreground/35 text-xs">
-                Teste grátis • 3 declarações no Pro • Cancele quando quiser
+                Teste grátis • Declarações por R$ 9,90 no Pro • Cancele quando quiser
               </p>
             </div>
           </div>

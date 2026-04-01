@@ -115,12 +115,12 @@ export default function Upgrade() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm">
                   <Sparkles className="h-4 w-4 text-accent" />
-                  <span className="text-accent font-medium">3 declarações inclusas + extras por R$ 9,90/cada</span>
+                  <span className="text-accent font-medium">Declarações sob demanda por R$ 9,90/cada</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">Declarações Ativas</span>
                   <span className="text-muted-foreground">
-                    {declaracoesCount} de {limiteDeclaracoes} inclusas
+                    {declaracoesCount} ativas
                   </span>
                 </div>
                 <Progress value={limiteDeclaracoes ? Math.min((declaracoesCount / limiteDeclaracoes) * 100, 100) : 0} className="h-2" />
@@ -130,9 +130,9 @@ export default function Upgrade() {
             {/* Grid de Recursos */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
                <div className="text-center">
-                <p className="text-2xl font-bold">{isPro ? '3+' : '1'}</p>
+                <p className="text-2xl font-bold">{isPro ? '∞' : '1'}</p>
                 <p className="text-xs text-muted-foreground">Declarações</p>
-              </div>
+               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold">{isPro ? '5' : '1'}</p>
                 <p className="text-xs text-muted-foreground">Usuários</p>
@@ -169,7 +169,7 @@ export default function Upgrade() {
                     <div>
                       <CardTitle>Faça Upgrade para Pro</CardTitle>
                        <p className="text-sm text-muted-foreground">
-                        Sistema completo com 3 declarações inclusas
+                        Sistema completo com declarações sob demanda
                        </p>
                     </div>
                   </div>
@@ -180,8 +180,8 @@ export default function Upgrade() {
                     <div className="space-y-3">
                       <p className="font-semibold text-sm">O que você ganha:</p>
                       <div className="space-y-2">
-                        {[
-                          { bold: '3 declarações inclusas', text: ' + extras por R$ 9,90/cada' },
+                         {[
+                          { bold: 'Declarações sob demanda', text: ' por R$ 9,90/cada' },
                           { bold: 'Até 5 usuários simultâneos', text: '' },
                           { bold: 'Storage ilimitado', text: '' },
                           { bold: 'Malha Fina + Calculadora IR', text: '' },
@@ -220,9 +220,9 @@ export default function Upgrade() {
                   </div>
 
                   <div className="pt-4 border-t">
-                     <p className="text-sm text-muted-foreground text-center">
-                       💡 <strong>Economia:</strong> Com 4+ declarações, as extras já se pagam!
-                     </p>
+                       <p className="text-sm text-muted-foreground text-center">
+                           💡 <strong>Economia:</strong> Pacotes de 10 (10% off) ou 20 declarações (15% off)!
+                         </p>
                   </div>
                 </CardContent>
               </Card>
@@ -235,9 +235,9 @@ export default function Upgrade() {
               <Card>
                 <CardHeader>
                   <CardTitle>Comprar Declarações Extras</CardTitle>
-                       <p className="text-sm text-muted-foreground">
-                        {isFree ? 'Faça upgrade para Pro para comprar extras' : 'Adicione declarações além das 3 inclusas'}
-                       </p>
+                        <p className="text-sm text-muted-foreground">
+                         {isFree ? 'Faça upgrade para Pro para comprar extras' : 'Adicione mais declarações ao seu escritório'}
+                        </p>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
@@ -298,8 +298,7 @@ export default function Upgrade() {
                       <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription className="text-xs">
-                          Declarações extras são válidas por 30 dias e não acumulam. Será gerado um
-                          boleto/pix para pagamento.
+                          Declarações extras são válidas por 30 dias e não acumulam. O pagamento será processado via cartão de crédito.
                         </AlertDescription>
                       </Alert>
 
