@@ -205,6 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearInvalidSession, loadProfile, resetAuthState]);
 
   const signOut = async () => {
+    clearUserContext();
     await supabase.auth.signOut();
   };
 
