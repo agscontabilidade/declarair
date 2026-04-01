@@ -1,4 +1,5 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { HelpCircle } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 const faqs = [
@@ -14,34 +15,43 @@ export default function FAQSection() {
   const ref = useScrollReveal();
 
   return (
-    <section ref={ref} id="faq" className="v2-reveal py-24 lg:py-32 bg-white relative">
+    <section ref={ref} id="faq" className="v2-reveal py-28 lg:py-36 bg-white relative">
       <div className="section-divider absolute top-0 left-0 right-0" />
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide mb-6">
-            FAQ
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-[1fr,1.5fr] gap-16 lg:gap-20">
+          {/* Left sticky header */}
+          <div className="lg:sticky lg:top-32 lg:self-start space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide">
+              <HelpCircle className="h-3.5 w-3.5" /> FAQ
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[hsl(var(--lv2-slate-950))] leading-tight">
+              Perguntas diretas,<br />
+              <span className="gradient-text">respostas diretas</span>
+            </h2>
+            <p className="text-[hsl(var(--lv2-slate-500))] leading-relaxed">
+              Sem enrolação. Se sua dúvida não estiver aqui, fale com a gente no chat.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-[hsl(var(--lv2-slate-950))]">
-            Perguntas diretas, respostas diretas
-          </h2>
+
+          {/* Right accordion */}
+          <Accordion type="single" collapsible className="space-y-4">
+            {faqs.map((f, i) => (
+              <AccordionItem
+                key={i}
+                value={`faq-${i}`}
+                className="rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-[hsl(var(--lv2-slate-50))] px-7 data-[state=open]:border-[hsl(var(--lv2-emerald)/0.3)] data-[state=open]:bg-white data-[state=open]:shadow-lg data-[state=open]:shadow-[hsl(var(--lv2-emerald)/0.06)] transition-all duration-300"
+              >
+                <AccordionTrigger className="text-left text-base font-semibold text-[hsl(var(--lv2-slate-950))] hover:no-underline py-6">
+                  {f.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-[15px] text-[hsl(var(--lv2-slate-500))] pb-6 leading-relaxed">
+                  {f.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
-        <Accordion type="single" collapsible className="space-y-3">
-          {faqs.map((f, i) => (
-            <AccordionItem
-              key={i}
-              value={`faq-${i}`}
-              className="rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-[hsl(var(--lv2-slate-50))] px-6 data-[state=open]:border-[hsl(var(--lv2-emerald)/0.3)] transition-colors"
-            >
-              <AccordionTrigger className="text-left text-[15px] font-semibold text-[hsl(var(--lv2-slate-950))] hover:no-underline py-5">
-                {f.q}
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-[hsl(var(--lv2-slate-500))] pb-5 leading-relaxed">
-                {f.a}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
       </div>
     </section>
   );

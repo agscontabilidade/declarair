@@ -15,12 +15,12 @@ export default function BeforeAfter() {
   const ref = useScrollReveal();
 
   return (
-    <section ref={ref} className="v2-reveal py-24 lg:py-32 bg-[hsl(var(--lv2-slate-50))] relative">
+    <section ref={ref} className="v2-reveal py-28 lg:py-36 bg-[hsl(var(--lv2-slate-50))] relative">
       <div className="section-divider absolute top-0 left-0 right-0" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide mb-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide mb-6">
             Transformação
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[hsl(var(--lv2-slate-950))]">
@@ -28,36 +28,38 @@ export default function BeforeAfter() {
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-5">
+        <div className="grid md:grid-cols-2 gap-6">
           {/* Before */}
-          <div className="rounded-2xl border-2 border-[hsl(var(--lv2-red)/0.15)] bg-white p-7 space-y-4">
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="h-9 w-9 rounded-xl bg-[hsl(var(--lv2-red)/0.08)] flex items-center justify-center">
-                <XCircle className="h-5 w-5 text-[hsl(var(--lv2-red))]" />
+          <div className="rounded-2xl border-2 border-[hsl(var(--lv2-red)/0.15)] bg-white p-8 lg:p-10 space-y-5">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-11 w-11 rounded-xl bg-[hsl(var(--lv2-red)/0.08)] flex items-center justify-center">
+                <XCircle className="h-6 w-6 text-[hsl(var(--lv2-red))]" />
               </div>
-              <h3 className="font-bold text-lg text-[hsl(var(--lv2-red))]">ANTES</h3>
+              <h3 className="font-bold text-xl text-[hsl(var(--lv2-red))]">ANTES</h3>
             </div>
             {items.map((item) => (
-              <div key={item.before} className="flex items-center gap-3 text-sm">
-                <XCircle className="h-4 w-4 text-[hsl(var(--lv2-red)/0.35)] shrink-0" />
+              <div key={item.before} className="flex items-center gap-4 text-base">
+                <XCircle className="h-5 w-5 text-[hsl(var(--lv2-red)/0.35)] shrink-0" />
                 <span className="text-[hsl(var(--lv2-slate-500))]">{item.before}</span>
               </div>
             ))}
           </div>
 
           {/* After */}
-          <div className="rounded-2xl border-2 border-[hsl(var(--lv2-emerald)/0.2)] bg-white p-7 space-y-4 relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--lv2-emerald)/0.03)] to-transparent rounded-2xl" />
+          <div className="rounded-2xl border-2 border-[hsl(var(--lv2-emerald)/0.25)] bg-white p-8 lg:p-10 space-y-5 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--lv2-emerald)/0.04)] to-transparent rounded-2xl" />
+            {/* Glow */}
+            <div className="absolute -top-12 -right-12 w-40 h-40 bg-[hsl(var(--lv2-emerald)/0.08)] rounded-full blur-3xl" />
             <div className="relative">
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="h-9 w-9 rounded-xl bg-[hsl(var(--lv2-emerald)/0.08)] flex items-center justify-center">
-                  <CheckCircle2 className="h-5 w-5 text-[hsl(var(--lv2-emerald))]" />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-11 w-11 rounded-xl bg-[hsl(var(--lv2-emerald)/0.1)] flex items-center justify-center">
+                  <CheckCircle2 className="h-6 w-6 text-[hsl(var(--lv2-emerald))]" />
                 </div>
-                <h3 className="font-bold text-lg text-[hsl(var(--lv2-emerald))]">DEPOIS</h3>
+                <h3 className="font-bold text-xl text-[hsl(var(--lv2-emerald))]">DEPOIS</h3>
               </div>
               {items.map((item) => (
-                <div key={item.after} className="flex items-center gap-3 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-[hsl(var(--lv2-emerald)/0.5)] shrink-0" />
+                <div key={item.after} className="flex items-center gap-4 text-base">
+                  <CheckCircle2 className="h-5 w-5 text-[hsl(var(--lv2-emerald)/0.5)] shrink-0" />
                   <span className="text-[hsl(var(--lv2-slate-950))] font-medium">{item.after}</span>
                 </div>
               ))}
@@ -65,17 +67,17 @@ export default function BeforeAfter() {
           </div>
         </div>
 
-        <p className="text-center mt-12 text-xl font-bold text-[hsl(var(--lv2-slate-950))]">
+        <p className="text-center mt-14 text-2xl font-bold text-[hsl(var(--lv2-slate-950))]">
           "Você não trabalha mais. Você trabalha melhor — e{' '}
           <span className="gradient-text">fatura mais</span>."
         </p>
-        <div className="text-center mt-6">
+        <div className="text-center mt-8">
           <Link to="/cadastro">
             <Button
               size="lg"
-              className="glow-btn text-base px-8 h-13 font-bold bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full"
+              className="glow-btn text-base px-10 h-14 font-bold bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full"
             >
-              Quero essa transformação <ArrowRight className="h-4 w-4 ml-2" />
+              Quero essa transformação <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </Link>
         </div>

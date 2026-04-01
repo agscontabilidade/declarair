@@ -1,35 +1,51 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Flame } from 'lucide-react';
+import { ArrowRight, Flame, Clock, AlertTriangle } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 export default function UrgencyBand() {
   const ref = useScrollReveal();
 
   return (
-    <section ref={ref} className="v2-reveal relative overflow-hidden bg-[hsl(var(--lv2-slate-950))] grain">
-      {/* Gradient accent */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--lv2-amber)/0.08)] via-transparent to-[hsl(var(--lv2-emerald)/0.06)]" />
+    <section ref={ref} className="v2-reveal relative overflow-hidden">
+      {/* Dramatic gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--lv2-amber)/0.15)] via-[hsl(var(--lv2-slate-950))] to-[hsl(var(--lv2-slate-950))]" />
+      <div className="absolute inset-0 grain" />
+      
+      {/* Animated pulse rings */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-[hsl(var(--lv2-amber)/0.08)] animate-ping" style={{ animationDuration: '4s' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-[hsl(var(--lv2-amber)/0.05)] animate-ping" style={{ animationDuration: '4s', animationDelay: '1s' }} />
 
-      <div className="relative py-20 lg:py-24">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <div className="h-14 w-14 rounded-2xl bg-[hsl(var(--lv2-amber)/0.1)] border border-[hsl(var(--lv2-amber)/0.2)] flex items-center justify-center mx-auto">
-            <Flame className="h-6 w-6 text-[hsl(var(--lv2-amber))]" />
+      <div className="relative py-28 lg:py-36">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+          {/* Icon cluster */}
+          <div className="flex items-center justify-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-[hsl(var(--lv2-amber)/0.15)] border border-[hsl(var(--lv2-amber)/0.25)] flex items-center justify-center">
+              <Clock className="h-5 w-5 text-[hsl(var(--lv2-amber))]" />
+            </div>
+            <div className="h-16 w-16 rounded-2xl bg-[hsl(var(--lv2-amber)/0.2)] border border-[hsl(var(--lv2-amber)/0.3)] flex items-center justify-center">
+              <Flame className="h-8 w-8 text-[hsl(var(--lv2-amber))]" />
+            </div>
+            <div className="h-12 w-12 rounded-2xl bg-[hsl(var(--lv2-amber)/0.15)] border border-[hsl(var(--lv2-amber)/0.25)] flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-[hsl(var(--lv2-amber))]" />
+            </div>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">
-            A temporada de IR não espera.
+
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1]">
+            A temporada de IR<br />
+            <span className="text-[hsl(var(--lv2-amber))]">não espera.</span>
           </h2>
-          <p className="text-lg text-white/50 leading-relaxed max-w-lg mx-auto">
-            Quem se organiza antes, <span className="font-semibold text-white">lucra mais</span>.
+          <p className="text-xl text-white/50 leading-relaxed max-w-lg mx-auto">
+            Quem se organiza antes, <span className="font-bold text-white">lucra mais</span>.
             <br />
             Quem deixa pra depois… entra em modo sobrevivência.
           </p>
           <Link to="/cadastro">
             <Button
               size="lg"
-              className="mt-2 text-base px-10 h-13 font-bold bg-[hsl(var(--lv2-amber))] hover:bg-[hsl(var(--lv2-amber)/0.9)] text-[hsl(var(--lv2-slate-950))] rounded-full"
+              className="mt-4 text-lg px-12 h-16 font-bold bg-[hsl(var(--lv2-amber))] hover:bg-[hsl(var(--lv2-amber)/0.9)] text-[hsl(var(--lv2-slate-950))] rounded-full shadow-2xl shadow-[hsl(var(--lv2-amber)/0.3)]"
             >
-              Começar agora <ArrowRight className="h-4 w-4 ml-2" />
+              Começar agora — é grátis <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </Link>
         </div>

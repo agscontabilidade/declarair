@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import { Star, Quote } from 'lucide-react';
 import avatarCarlos from '@/assets/avatar-carlos.jpg';
 import avatarAna from '@/assets/avatar-ana.jpg';
 import avatarRoberto from '@/assets/avatar-roberto.jpg';
@@ -35,53 +35,57 @@ function AnimatedNumber({ end, suffix = '' }: { end: number; suffix?: string }) 
     return () => obs.disconnect();
   }, [end]);
 
-  return <span ref={ref} className="font-mono text-4xl sm:text-5xl font-bold text-white">{val.toLocaleString('pt-BR')}{suffix}</span>;
+  return <span ref={ref} className="font-mono text-5xl sm:text-6xl font-bold text-white">{val.toLocaleString('pt-BR')}{suffix}</span>;
 }
 
 export default function TestimonialsSection() {
   const ref = useScrollReveal();
 
   return (
-    <section ref={ref} className="v2-reveal py-24 lg:py-32 bg-[hsl(var(--lv2-slate-50))]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide mb-6">
-            Quem já usa, não volta
+    <section ref={ref} className="v2-reveal relative overflow-hidden">
+      {/* Dark dramatic bg */}
+      <div className="absolute inset-0 hero-mesh" />
+      <div className="absolute inset-0 grain" />
+      
+      <div className="relative py-28 lg:py-36">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-emerald)/0.3)] bg-[hsl(var(--lv2-emerald)/0.08)] text-[hsl(var(--lv2-emerald))] text-xs font-semibold uppercase tracking-wide mb-6">
+              Quem já usa, não volta
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
+              Resultados reais de contadores reais
+            </h2>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[hsl(var(--lv2-slate-950))]">
-            Resultados reais de contadores reais
-          </h2>
-        </div>
 
-        <div className="grid md:grid-cols-3 gap-5">
-          {testimonials.map((t) => (
-            <div key={t.name} className="bento-card relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-[hsl(var(--lv2-emerald)/0.04)] rounded-full blur-2xl" />
-              <div className="relative">
-                <div className="flex gap-0.5 mb-5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-[hsl(var(--lv2-amber))] text-[hsl(var(--lv2-amber))]" />
+          <div className="grid md:grid-cols-3 gap-6">
+            {testimonials.map((t, i) => (
+              <div
+                key={t.name}
+                className={`relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 transition-all duration-300 hover:border-[hsl(var(--lv2-emerald)/0.3)] hover:bg-white/[0.08] hover:-translate-y-2 ${i === 1 ? 'md:-translate-y-4' : ''}`}
+              >
+                <Quote className="absolute top-6 right-6 h-8 w-8 text-[hsl(var(--lv2-emerald)/0.15)]" />
+                <div className="flex gap-0.5 mb-6">
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <Star key={j} className="h-5 w-5 fill-[hsl(var(--lv2-amber))] text-[hsl(var(--lv2-amber))]" />
                   ))}
                 </div>
-                <p className="text-[15px] text-[hsl(var(--lv2-slate-800))] leading-relaxed mb-6 font-medium">
+                <p className="text-base text-white/80 leading-relaxed mb-8 font-medium">
                   "{t.text}"
                 </p>
-                <div className="flex items-center gap-3 pt-4 border-t border-[hsl(var(--lv2-slate-100))]">
-                  <img src={t.avatar} alt={t.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-[hsl(var(--lv2-slate-100))]" loading="lazy" width={48} height={48} />
+                <div className="flex items-center gap-4 pt-5 border-t border-white/10">
+                  <img src={t.avatar} alt={t.name} className="h-12 w-12 rounded-full object-cover ring-2 ring-white/10" loading="lazy" width={48} height={48} />
                   <div>
-                    <p className="font-semibold text-[hsl(var(--lv2-slate-950))] text-sm">{t.name}</p>
-                    <p className="text-xs text-[hsl(var(--lv2-slate-400))]">{t.role}</p>
+                    <p className="font-bold text-white text-sm">{t.name}</p>
+                    <p className="text-xs text-white/40 mt-0.5">{t.role}</p>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {/* Metrics */}
-        <div className="mt-16 rounded-2xl bg-[hsl(var(--lv2-slate-950))] p-10 sm:p-14 relative overflow-hidden grain">
-          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--lv2-emerald)/0.08)] to-transparent" />
-          <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-10">
+          {/* Giant metrics */}
+          <div className="mt-24 grid grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
             {[
               { end: 500, suffix: '+', label: 'Escritórios ativos' },
               { end: 1200, suffix: '+', label: 'Declarações processadas' },
@@ -90,7 +94,8 @@ export default function TestimonialsSection() {
             ].map((m) => (
               <div key={m.label} className="text-center">
                 <AnimatedNumber end={m.end} suffix={m.suffix} />
-                <p className="mt-2 text-sm text-white/40">{m.label}</p>
+                <div className="h-1 w-12 mx-auto mt-4 mb-3 rounded-full bg-gradient-to-r from-[hsl(var(--lv2-emerald))] to-[hsl(var(--lv2-emerald)/0.2)]" />
+                <p className="text-sm text-white/40 font-medium">{m.label}</p>
               </div>
             ))}
           </div>

@@ -34,48 +34,48 @@ export default function HowItWorks() {
   const ref = useScrollReveal();
 
   return (
-    <section ref={ref} className="v2-reveal py-24 lg:py-32 bg-white relative">
-      <div className="section-divider absolute top-0 left-0 right-0" />
+    <section ref={ref} className="v2-reveal relative overflow-hidden bg-[hsl(var(--lv2-slate-950))] grain">
+      <div className="absolute top-0 left-1/3 w-[500px] h-[400px] bg-[hsl(var(--lv2-emerald)/0.06)] rounded-full blur-[120px]" />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide mb-6">
-            Como funciona
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[hsl(var(--lv2-slate-950))]">
-            4 passos para sair do caos
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
-          {steps.map((step, i) => (
-            <div key={step.num} className="relative group">
-              {/* Connector line (desktop) */}
-              {i < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-10 left-[calc(50%+32px)] w-[calc(100%-32px)] h-px bg-gradient-to-r from-[hsl(var(--lv2-emerald)/0.3)] to-[hsl(var(--lv2-emerald)/0.05)]" />
-              )}
-
-              <div className="text-center space-y-4">
-                <span className="step-number">{step.num}</span>
-                <div className="h-14 w-14 rounded-2xl bg-[hsl(var(--lv2-emerald)/0.08)] border border-[hsl(var(--lv2-emerald)/0.15)] flex items-center justify-center mx-auto group-hover:bg-[hsl(var(--lv2-emerald)/0.15)] transition-colors">
-                  <step.icon className="h-6 w-6 text-[hsl(var(--lv2-emerald))]" />
-                </div>
-                <h3 className="font-bold text-lg text-[hsl(var(--lv2-slate-950))]">{step.title}</h3>
-                <p className="text-sm text-[hsl(var(--lv2-slate-500))] leading-relaxed">{step.desc}</p>
-              </div>
+      <div className="relative py-28 lg:py-36">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-emerald)/0.3)] bg-[hsl(var(--lv2-emerald)/0.08)] text-[hsl(var(--lv2-emerald))] text-xs font-semibold uppercase tracking-wide mb-6">
+              Como funciona
             </div>
-          ))}
-        </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
+              4 passos para sair do caos
+            </h2>
+          </div>
 
-        <div className="text-center mt-14">
-          <Link to="/cadastro">
-            <Button
-              size="lg"
-              className="glow-btn text-base px-8 h-13 font-bold bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full"
-            >
-              Começar agora — leva 2 minutos <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {steps.map((step, i) => (
+              <div key={step.num} className="relative group text-center">
+                {/* Connector line (desktop) */}
+                {i < steps.length - 1 && (
+                  <div className="hidden lg:block absolute top-12 left-[calc(50%+40px)] w-[calc(100%-48px)] h-px bg-gradient-to-r from-[hsl(var(--lv2-emerald)/0.4)] to-[hsl(var(--lv2-emerald)/0.05)]" />
+                )}
+
+                <span className="step-number block mb-4">{step.num}</span>
+                <div className="h-16 w-16 rounded-2xl bg-[hsl(var(--lv2-emerald)/0.1)] border border-[hsl(var(--lv2-emerald)/0.2)] flex items-center justify-center mx-auto mb-5 group-hover:bg-[hsl(var(--lv2-emerald)/0.2)] group-hover:border-[hsl(var(--lv2-emerald)/0.4)] transition-all duration-300">
+                  <step.icon className="h-7 w-7 text-[hsl(var(--lv2-emerald))]" />
+                </div>
+                <h3 className="font-bold text-lg text-white mb-2">{step.title}</h3>
+                <p className="text-sm text-white/40 leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-16">
+            <Link to="/cadastro">
+              <Button
+                size="lg"
+                className="text-base px-10 h-14 font-bold bg-white text-[hsl(var(--lv2-slate-950))] hover:bg-white/90 rounded-full"
+              >
+                Começar agora — leva 2 minutos <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </section>
