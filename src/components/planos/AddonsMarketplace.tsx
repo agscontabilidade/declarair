@@ -1,13 +1,18 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { MessageCircle, UserCircle, Code, Palette, UserPlus } from 'lucide-react';
+import { MessageCircle, Code, Palette, UserPlus } from 'lucide-react';
 import { useBilling } from '@/hooks/useBilling';
-import { useAddons, useToggleAddon } from '@/hooks/useAddons';
+import { useAddons } from '@/hooks/useAddons';
+import { useStripeActivateAddon, useStripeDeactivateAddon } from '@/hooks/useStripe';
+import { AddonConfirmModal } from './AddonConfirmModal';
+import { toast } from 'sonner';
 
 const ADDONS_CONFIG = [
   {
     keyword: 'whatsapp',
+    slug: 'whatsapp',
     nome: 'WhatsApp',
     descricao: 'Envie mensagens automáticas e templates personalizados para seus clientes',
     preco: 19.90,
@@ -21,6 +26,7 @@ const ADDONS_CONFIG = [
   },
   {
     keyword: 'api',
+    slug: 'api_publica',
     nome: 'API Pública',
     descricao: 'Integre o DeclaraIR com seus sistemas e ferramentas externas',
     preco: 29.90,
@@ -34,6 +40,7 @@ const ADDONS_CONFIG = [
   },
   {
     keyword: 'whitelabel',
+    slug: 'whitelabel',
     nome: 'Whitelabel',
     descricao: 'Personalize com sua marca: logo, cores e domínio próprio',
     preco: 49.90,
@@ -47,6 +54,7 @@ const ADDONS_CONFIG = [
   },
   {
     keyword: 'usuário extra',
+    slug: 'usuario_extra',
     nome: 'Usuário Extra',
     descricao: 'Adicione usuários simultâneos além do limite do seu plano',
     preco: 9.90,
@@ -60,10 +68,62 @@ const ADDONS_CONFIG = [
   },
 ];
 
+interface PendingAction {
+  addon: typeof ADDONS_CONFIG[number];
+  action: 'ativar' | 'desativar';
+  addonSlug: string;
+}
+
 export function AddonsMarketplace() {
   const { hasAddon } = useBilling();
   const { myAddons, catalog } = useAddons();
-  const toggleAddon = useToggleAddon();
+  const activateAddon = useStripeActivateAddon();
+  const deactivateAddon = useStripeDeactivateAddon();
+
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+
+  const isProcessing = activateAddon.isPending || deactivateAddon.isPending;
+
+  function handleToggle(addon: typeof ADDONS_CONFIG[number]) {
+    const isActive = hasAddon(addon.keyword);
+    setPendingAction({
+      addon,
+      action: isActive ? 'desativar' : 'ativar',
+      addonSlug: addon.slug,
+    });
+  }
+
+  async function handleConfirm() {
+    if (!pendingAction) return;
+
+    if (pendingAction.action === 'ativar') {
+      activateAddon.mutate(
+        { addonSlug: pendingAction.addonSlug },
+        {
+          onSuccess: () => {
+            setPendingAction(null);
+            toast.success(`${pendingAction.addon.nome} ativado com sucesso!`, {
+              description: 'O valor foi adicionado à sua mensalidade.',
+            });
+          },
+          onError: () => setPendingAction(null),
+        }
+      );
+    } else {
+      deactivateAddon.mutate(
+        { addonSlug: pendingAction.addonSlug },
+        {
+          onSuccess: () => {
+            setPendingAction(null);
+            toast.success(`${pendingAction.addon.nome} desativado.`, {
+              description: 'O valor será removido da próxima fatura.',
+            });
+          },
+          onError: () => setPendingAction(null),
+        }
+      );
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -78,14 +138,6 @@ export function AddonsMarketplace() {
         {ADDONS_CONFIG.map((addon) => {
           const Icon = addon.icon;
           const isActive = hasAddon(addon.keyword);
-
-          // Find matching addon from DB catalog
-          const catalogItem = catalog.find(
-            (c) => c.nome.toLowerCase().includes(addon.keyword.toLowerCase())
-          );
-          const myAddon = myAddons.find(
-            (a) => a.addons?.nome?.toLowerCase().includes(addon.keyword.toLowerCase())
-          );
 
           return (
             <Card key={addon.keyword} className="relative flex flex-col">
@@ -123,15 +175,8 @@ export function AddonsMarketplace() {
                   </span>
                   <Switch
                     checked={isActive}
-                    onCheckedChange={() => {
-                      if (catalogItem) {
-                        toggleAddon.mutate({
-                          addonId: catalogItem.id,
-                          currentStatus: myAddon?.status ?? null,
-                        });
-                      }
-                    }}
-                    disabled={toggleAddon.isPending}
+                    onCheckedChange={() => handleToggle(addon)}
+                    disabled={isProcessing}
                   />
                 </div>
               </CardContent>
@@ -139,6 +184,18 @@ export function AddonsMarketplace() {
           );
         })}
       </div>
+
+      {pendingAction && (
+        <AddonConfirmModal
+          open={!!pendingAction}
+          onClose={() => setPendingAction(null)}
+          onConfirm={handleConfirm}
+          isLoading={isProcessing}
+          addonNome={pendingAction.addon.nome}
+          addonPreco={pendingAction.addon.preco}
+          action={pendingAction.action}
+        />
+      )}
     </div>
   );
 }
