@@ -56,6 +56,38 @@ export default function MalhaFina() {
   const processadas = items.filter(c => c.status_rfb === 'processada').length;
   const pendentes = items.filter(c => c.status_rfb === 'nao_consultado').length;
 
+  if (billingLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!features.malha_fina) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-lg mx-auto py-16">
+          <Alert>
+            <Lock className="h-4 w-4" />
+            <AlertDescription>
+              <p className="font-medium mb-2">Feature Premium</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                O monitoramento de Malha Fina está disponível apenas no plano Pro.
+                Faça upgrade para desbloquear esta funcionalidade.
+              </p>
+              <Button onClick={() => navigate('/planos')} size="sm">
+                Ver Planos
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
