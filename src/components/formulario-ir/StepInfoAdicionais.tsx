@@ -1,6 +1,8 @@
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { QrCode } from 'lucide-react';
 import type { FormularioData } from '@/hooks/useFormularioIR';
 
 interface Props {
@@ -14,11 +16,28 @@ export function StepInfoAdicionais({ data, onChange, confirmado, onConfirmChange
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-display text-lg font-semibold">Informações Adicionais</h2>
-        <p className="text-sm text-muted-foreground">Adicione qualquer informação relevante para o contador</p>
+        <h2 className="font-display text-lg font-semibold">Revisão e Envio</h2>
+        <p className="text-sm text-muted-foreground">Informe seus dados finais e confirme o envio</p>
       </div>
 
-      {/* Informative checkboxes (not saved, just reminders) */}
+      {/* Chave PIX */}
+      <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <QrCode className="h-5 w-5 text-accent" />
+          <p className="text-sm font-medium text-foreground">Chave PIX para Restituição</p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Caso tenha direito à restituição, informe sua chave PIX para que o contador registre na declaração.
+        </p>
+        <Input
+          value={data.chave_pix_cliente || ''}
+          onChange={(e) => onChange('chave_pix_cliente', e.target.value)}
+          placeholder="CPF, e-mail, telefone ou chave aleatória"
+          maxLength={200}
+        />
+      </div>
+
+      {/* Informative checkboxes */}
       <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
         <p className="text-sm font-medium text-foreground">Marque as situações que se aplicam a você (informativo para o contador):</p>
         <div className="space-y-2">

@@ -30,6 +30,7 @@ export interface FormularioData {
   despesas_educacao: DespesaEducacao[];
   previdencia_privada: Record<string, unknown>;
   informacoes_adicionais: string;
+  chave_pix_cliente: string;
 }
 
 const INITIAL_DATA: FormularioData = {
