@@ -3,15 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Upload, CheckCircle2, Clock, XCircle, Briefcase, Heart,
-  GraduationCap, Home, User, PiggyBank, Landmark, FileWarning, AlertCircle
+  GraduationCap, Home, User, PiggyBank, Landmark, FileWarning, AlertCircle, HelpCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { CategoriaRF } from '@/lib/checklistPorPerfil';
-import { CATEGORIAS_RF } from '@/lib/checklistPorPerfil';
+import { CATEGORIAS_RF, DOCUMENTO_TOOLTIPS } from '@/lib/checklistPorPerfil';
 
 const CATEGORIA_META: Record<CategoriaRF, { label: string; icon: React.ElementType; color: string }> = {
   documentos_pessoais: { label: 'Documentos Pessoais', icon: User, color: 'text-primary' },
@@ -47,6 +48,11 @@ interface Props {
   clienteId: string;
 }
 
+const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+const MAX_SIZE = 20 * 1024 * 1024;
+
 export function StepDocumentos({ checklist, declaracaoId, escritorioId, clienteId }: Props) {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState<string | null>(null);
@@ -54,9 +60,21 @@ export function StepDocumentos({ checklist, declaracaoId, escritorioId, clienteI
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
 
   const handleUpload = async (docId: string, file: File) => {
+    if (file.size > MAX_SIZE) {
+      toast.error('Arquivo deve ter no máximo 20MB');
+      return;
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error('Formato não aceito. Use PDF, JPG, PNG, WebP, DOC ou XLS.');
+      return;
+    }
+
     setUploading(docId);
     try {
-      const path = `${escritorioId}/${clienteId}/${docId}/${file.name}`;
+      const ext = file.name.split('.').pop() || 'pdf';
+      const safeName = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const path = `${escritorioId}/${clienteId}/${declaracaoId}/${safeName}`;
+      
       const { error: uploadError } = await supabase.storage
         .from('documentos-clientes')
         .upload(path, file, { upsert: true });
@@ -73,10 +91,22 @@ export function StepDocumentos({ checklist, declaracaoId, escritorioId, clienteI
         .eq('id', docId);
       if (updateError) throw updateError;
 
-      toast.success('Documento enviado!');
+      // Notify accountant about new document
+      try {
+        await supabase.from('notificacoes').insert({
+          escritorio_id: escritorioId,
+          titulo: '📄 Novo documento recebido',
+          mensagem: `Cliente enviou: ${file.name}`,
+          link_destino: `/declaracoes/${declaracaoId}`,
+        });
+      } catch { /* best-effort */ }
+
+      toast.success('Documento enviado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['formulario-checklist'] });
-    } catch {
-      toast.error('Erro ao enviar documento');
+      queryClient.invalidateQueries({ queryKey: ['checklist-documentos'] });
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      toast.error(`Erro ao enviar documento: ${err?.message || 'Tente novamente'}`);
     } finally {
       setUploading(null);
     }
@@ -107,109 +137,122 @@ export function StepDocumentos({ checklist, declaracaoId, escritorioId, clienteI
   const progressPct = totalDocs > 0 ? Math.round((recebidos / totalDocs) * 100) : 0;
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h3 className="font-display text-lg font-bold">Envio de Documentos</h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          Com base no seu perfil fiscal, estes são os documentos necessários. Envie o que puder agora — os pendentes serão cobrados automaticamente.
-        </p>
-      </div>
-
-      {/* Progress */}
-      <div className="p-4 rounded-lg border bg-muted/30">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-medium">Progresso</p>
-          <span className="text-sm font-bold text-accent tabular-nums">{recebidos}/{totalDocs}</span>
-        </div>
-        <Progress value={progressPct} className="h-2" />
-        {pendentes > 0 && (
-          <p className="text-xs text-warning mt-2 flex items-center gap-1">
-            <AlertCircle className="h-3.5 w-3.5" />
-            {pendentes} documento{pendentes > 1 ? 's' : ''} pendente{pendentes > 1 ? 's' : ''} — você pode enviar depois, mas seu contador será notificado.
+    <TooltipProvider delayDuration={300}>
+      <div className="space-y-5">
+        <div>
+          <h3 className="font-display text-lg font-bold">Envio de Documentos</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Com base no seu perfil fiscal, estes são os documentos necessários. Envie o que puder agora — os pendentes serão cobrados automaticamente.
           </p>
-        )}
-      </div>
+        </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        className="hidden"
-        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.webp"
-        onChange={handleFileChange}
-      />
+        {/* Progress */}
+        <div className="p-4 rounded-lg border bg-muted/30">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium">Progresso</p>
+            <span className="text-sm font-bold text-accent tabular-nums">{recebidos}/{totalDocs}</span>
+          </div>
+          <Progress value={progressPct} className="h-2" />
+          {pendentes > 0 && (
+            <p className="text-xs text-warning mt-2 flex items-center gap-1">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {pendentes} documento{pendentes > 1 ? 's' : ''} pendente{pendentes > 1 ? 's' : ''} — você pode enviar depois, mas seu contador será notificado.
+            </p>
+          )}
+        </div>
 
-      {/* By category */}
-      {CATEGORIAS_RF.map((catKey) => {
-        const docs = grouped[catKey];
-        if (!docs || docs.length === 0) return null;
-        const meta = CATEGORIA_META[catKey];
-        const catRecebidos = docs.filter(d => d.status === 'recebido').length;
-        const Icon = meta.icon;
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.webp"
+          onChange={handleFileChange}
+        />
 
-        return (
-          <Card key={catKey} className="shadow-sm">
-            <CardHeader className="pb-2 pt-4 px-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Icon className={`h-4 w-4 ${meta.color}`} />
-                  {meta.label}
-                </CardTitle>
-                <Badge variant="outline" className="text-[10px] tabular-nums">
-                  {catRecebidos}/{docs.length}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-1.5 px-4 pb-4">
-              {docs.map((doc) => {
-                const statusMeta = STATUS_META[doc.status] || STATUS_META.pendente;
-                const StatusIcon = statusMeta.icon;
-                const isUploading = uploading === doc.id;
+        {/* By category */}
+        {CATEGORIAS_RF.map((catKey) => {
+          const docs = grouped[catKey];
+          if (!docs || docs.length === 0) return null;
+          const meta = CATEGORIA_META[catKey];
+          const catRecebidos = docs.filter(d => d.status === 'recebido').length;
+          const Icon = meta.icon;
 
-                return (
-                  <div
-                    key={doc.id}
-                    className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <StatusIcon className={`h-4 w-4 shrink-0 ${statusMeta.color.split(' ')[1]}`} />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{doc.nome_documento}</p>
-                        {doc.arquivo_nome && (
-                          <p className="text-xs text-muted-foreground truncate">{doc.arquivo_nome}</p>
+          return (
+            <Card key={catKey} className="shadow-sm">
+              <CardHeader className="pb-2 pt-4 px-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Icon className={`h-4 w-4 ${meta.color}`} />
+                    {meta.label}
+                  </CardTitle>
+                  <Badge variant="outline" className="text-[10px] tabular-nums">
+                    {catRecebidos}/{docs.length}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-1.5 px-4 pb-4">
+                {docs.map((doc) => {
+                  const statusMeta = STATUS_META[doc.status] || STATUS_META.pendente;
+                  const StatusIcon = statusMeta.icon;
+                  const isUploading = uploading === doc.id;
+                  const tooltipText = DOCUMENTO_TOOLTIPS[doc.nome_documento] || 'Envie este documento no formato PDF, JPG ou PNG.';
+
+                  return (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <StatusIcon className={`h-4 w-4 shrink-0 ${statusMeta.color.split(' ')[1]}`} />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium truncate">{doc.nome_documento}</p>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs text-xs">
+                                {tooltipText}
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          {doc.arquivo_nome && (
+                            <p className="text-xs text-muted-foreground truncate">{doc.arquivo_nome}</p>
+                          )}
+                        </div>
+                        {doc.obrigatorio && (
+                          <Badge variant="outline" className="text-[10px] py-0 shrink-0">Obrigatório</Badge>
                         )}
                       </div>
-                      {doc.obrigatorio && (
-                        <Badge variant="outline" className="text-[10px] py-0 shrink-0">Obrigatório</Badge>
-                      )}
+                      <div className="shrink-0 ml-2">
+                        {doc.status === 'pendente' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => triggerUpload(doc.id)}
+                            disabled={isUploading}
+                            className="gap-1 text-xs h-8"
+                          >
+                            <Upload className="h-3 w-3" />
+                            {isUploading ? 'Enviando...' : 'Enviar'}
+                          </Button>
+                        ) : doc.status === 'recebido' ? (
+                          <Badge className={statusMeta.color}>
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Enviado
+                          </Badge>
+                        ) : (
+                          <Badge className={statusMeta.color}>{statusMeta.label}</Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="shrink-0 ml-2">
-                      {doc.status === 'pendente' ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => triggerUpload(doc.id)}
-                          disabled={isUploading}
-                          className="gap-1 text-xs h-8"
-                        >
-                          <Upload className="h-3 w-3" />
-                          {isUploading ? 'Enviando...' : 'Enviar'}
-                        </Button>
-                      ) : doc.status === 'recebido' ? (
-                        <Badge className={statusMeta.color}>
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Enviado
-                        </Badge>
-                      ) : (
-                        <Badge className={statusMeta.color}>{statusMeta.label}</Badge>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </TooltipProvider>
   );
 }
