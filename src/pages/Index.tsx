@@ -64,13 +64,12 @@ const objections = [
 ];
 
 const faqs = [
-  { q: 'Como funciona o plano gratuito?', a: 'O plano Free libera 1 declaração completa, chat, kanban e 500 MB de armazenamento. Perfeito para testar o sistema.' },
-  { q: 'Meus dados estão seguros?', a: 'Sim. Utilizamos criptografia de ponta a ponta, banco de dados isolado por escritório (multi-tenancy) e autenticação segura. Seus dados e os dos seus clientes ficam protegidos conforme a LGPD.' },
-  { q: 'Qual a diferença entre Free e Pro?', a: 'Free: 1 declaração, 1 usuário, 500 MB, chat e kanban. Pro (R$ 29,90/mês): 3 declarações inclusas + extras por R$ 9,90, até 5 usuários, storage ilimitado, malha fina, calculadora IR e suporte prioritário.' },
-  { q: 'O que são Recursos Extras?', a: 'Módulos opcionais: WhatsApp (R$ 19,90/mês), API Pública (R$ 29,90/mês), Whitelabel (R$ 49,90/mês).' },
-  { q: 'Meus clientes precisam instalar algo?', a: 'Não. Portal 100% web. Funciona no celular e computador. Basta enviar o link.' },
-  { q: 'Os dados estão seguros?', a: 'Criptografia de ponta a ponta, isolamento por escritório e políticas de acesso em nível de linha em todas as tabelas.' },
-  { q: 'Existe contrato de fidelidade?', a: 'Zero. Mensal. Cancele quando quiser. Sem multa, sem burocracia.' },
+  { q: 'Como funciona o plano gratuito?', a: 'O plano Free libera 1 declaração completa com chat, kanban e 500 MB de armazenamento — ideal para conhecer a plataforma sem compromisso.' },
+  { q: 'Qual a diferença entre Free e Pro?', a: 'O Pro (R$ 29,90/mês) inclui 3 declarações, até 5 usuários, armazenamento ilimitado, monitoramento de malha fina, calculadora de IR e suporte prioritário. Declarações extras saem por R$ 9,90 cada.' },
+  { q: 'Meus dados e os dos meus clientes estão seguros?', a: 'Sim. Utilizamos criptografia, banco de dados isolado por escritório e controle de acesso em nível de linha (RLS) em todas as tabelas, em conformidade com a LGPD.' },
+  { q: 'Meus clientes precisam instalar algo?', a: 'Não. O portal do cliente é 100% web — funciona em qualquer celular ou computador. Basta enviar o link de convite.' },
+  { q: 'O que são os Recursos Extras?', a: 'Módulos opcionais que ampliam a plataforma: integração com WhatsApp (R$ 19,90/mês), API Pública (R$ 29,90/mês) e Whitelabel com sua marca (R$ 49,90/mês).' },
+  { q: 'Existe contrato de fidelidade?', a: 'Não. A cobrança é mensal e você pode cancelar a qualquer momento, sem multa e sem burocracia.' },
 ];
 
 /* ── Scroll Section Wrapper ── */
