@@ -118,7 +118,7 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <DeclaracoesLimitBanner />
+        
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
           <div className="flex items-center gap-3">
