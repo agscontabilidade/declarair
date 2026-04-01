@@ -125,6 +125,7 @@ export function useFormularioIR() {
         despesas_educacao: (formulario.despesas_educacao as unknown as DespesaEducacao[]) || [],
         previdencia_privada: (formulario.previdencia_privada as unknown as Record<string, unknown>) || {},
         informacoes_adicionais: formulario.informacoes_adicionais || '',
+        chave_pix_cliente: (formulario as any).chave_pix_cliente || '',
       });
     }
   }, [formulario]);
