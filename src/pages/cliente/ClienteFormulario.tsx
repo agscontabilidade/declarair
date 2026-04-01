@@ -113,7 +113,7 @@ export default function ClienteFormulario() {
           declaracao_id: declaracao.id,
         }));
         await supabase.from('checklist_documentos').insert(items);
-        toast.success(`Checklist personalizado gerado com ${checklistItems.length} documentos!`);
+        toast.success('Perfil fiscal salvo! Seu contador será notificado sobre os documentos necessários.');
       }
     }
     setStep(1);
