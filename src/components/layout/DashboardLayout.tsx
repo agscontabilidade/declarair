@@ -27,7 +27,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             {isContador && <NotificacoesBell />}
           </header>
           {isContador && <BillingBanner />}
-          {isContador && <UsageBanner />}
+          {isContador && (
+            <div className="px-3 sm:px-4 md:px-6 pt-4">
+              <UsageBanner />
+            </div>
+          )}
           <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-auto">
             {children}
           </main>
