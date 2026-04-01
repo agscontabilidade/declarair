@@ -82,7 +82,7 @@ export default function Checkout() {
   const fromCadastro = searchParams.get('from') === 'cadastro';
   const plano = PLANOS[planoId] || PLANOS.pro;
 
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix'>('card');
+  const [paymentMethod] = useState<'card'>('card');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [success, setSuccess] = useState(false);
