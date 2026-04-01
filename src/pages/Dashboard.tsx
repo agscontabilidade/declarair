@@ -177,12 +177,24 @@ export default function Dashboard() {
         ) : (
           <KpiCards data={kpis.data} isLoading={kpis.isLoading} />
         )}
+
+        <DashboardFilters
+          filters={filters}
+          onSearchChange={setSearch}
+          onContadorChange={setContadorId}
+          onUrgenciaChange={setUrgencia}
+          onStatusChange={setStatus}
+          onClear={clearFilters}
+          stats={stats}
+          hasActiveFilters={hasActiveFilters}
+        />
+
         {declaracoes.isError ? (
           <QueryError message={declaracoes.error?.message} onRetry={() => declaracoes.refetch()} />
         ) : viewMode === 'kanban' ? (
-          <KanbanBoard items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} anoBase={anoBase} />
+          <KanbanBoard items={declaracoesFiltradas} isLoading={declaracoes.isLoading} anoBase={anoBase} />
         ) : (
-          <DeclaracoesListView items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} />
+          <DeclaracoesListView items={declaracoesFiltradas} isLoading={declaracoes.isLoading} />
         )}
       </div>
 
