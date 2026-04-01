@@ -51,6 +51,7 @@ import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 import PoliticaLGPD from "./pages/PoliticaLGPD";
 import Unsubscribe from "./pages/Unsubscribe";
 import SobreNos from "./pages/SobreNos";
+import LandingV2 from "./pages/LandingV2";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +98,7 @@ const App = () => (
               <Route path="/cadastro-cliente/:token" element={<CadastroCliente />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/sobre" element={<SobreNos />} />
+              <Route path="/landing-v2" element={<LandingV2 />} />
 
               {/* Admin routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
