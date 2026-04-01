@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, ArrowRight, MessageCircle } from 'lucide-react';
 
-const WHATSAPP_URL = 'https://wa.me/5511998755782?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20DeclaraIR';
+const WHATSAPP_URL = 'https://api.whatsapp.com/send/?phone=5511998755782&text=Ol%C3%A1%2C+quero+saber+mais+sobre+o+DeclaraIR&type=phone_number&app_absent=0';
 
 interface GarantiaCTAProps {
   onNavigate: () => void;
