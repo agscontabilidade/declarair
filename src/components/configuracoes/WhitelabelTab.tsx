@@ -56,22 +56,35 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Formato não suportado. Use PNG, JPG, SVG ou WebP.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 2MB.');
+      return;
+    }
+
     setUploadingLogo(true);
     try {
-      const path = `logos/${escritorioId}/${Date.now()}_${file.name}`;
+      const ext = file.name.split('.').pop() || 'png';
+      const path = `${escritorioId}/logo_${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
-        .from('documentos-clientes')
+        .from('logos-escritorios')
         .upload(path, file, { upsert: true });
       if (upErr) throw upErr;
 
       const { data: urlData } = supabase.storage
-        .from('documentos-clientes')
+        .from('logos-escritorios')
         .getPublicUrl(path);
 
-      await supabase
+      const { error: updateErr } = await supabase
         .from('escritorios')
         .update({ logo_url: urlData.publicUrl })
         .eq('id', escritorioId);
+      if (updateErr) throw updateErr;
 
       toast.success('Logo atualizado!');
       queryClient.invalidateQueries({ queryKey: ['escritorio-brand'] });
@@ -121,7 +134,7 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
           {/* Logo */}
           <div className="space-y-2">
             <Label>Logo do Escritório</Label>
-            <p className="text-xs text-muted-foreground">Recomendado: 400×120px, PNG com fundo transparente</p>
+            <p className="text-xs text-muted-foreground">Recomendado: 400×120px · PNG, JPG, SVG ou WebP · Máx. 2MB</p>
             <div className="flex items-center gap-4">
               {escritorio?.logo_url ? (
                 <img src={escritorio.logo_url} alt="Logo" className="h-12 max-w-[200px] object-contain border rounded-lg p-2" />
@@ -131,7 +144,7 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
                 </div>
               )}
               <label className="cursor-pointer">
-                <input type="file" accept=".png,.svg,.jpg,.jpeg" className="hidden" onChange={handleLogoUpload} disabled={!isDono} />
+                <input type="file" accept=".png,.jpg,.jpeg,.svg,.webp" className="hidden" onChange={handleLogoUpload} disabled={!isDono} />
                 <Button variant="outline" size="sm" asChild disabled={uploadingLogo || !isDono}>
                   <span><Upload className="h-4 w-4 mr-1" /> {uploadingLogo ? 'Enviando...' : 'Upload'}</span>
                 </Button>
