@@ -1,5 +1,3 @@
-import { Badge } from '@/components/ui/badge';
-import lionBrave from '@/assets/lion-brave.jpg';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 const objections = [
@@ -13,34 +11,30 @@ export default function ObjectionsSection() {
   const ref = useScrollReveal();
 
   return (
-    <section ref={ref} className="v2-reveal relative overflow-hidden">
-      <div className="absolute inset-0">
-        <img src={lionBrave} alt="" className="w-full h-full object-cover" loading="lazy" width={1920} height={800} style={{ filter: 'grayscale(0.3) brightness(0.25)' }} />
-        <div className="absolute inset-0 bg-[hsl(var(--lv2-slate-950)/0.88)]" />
-      </div>
+    <section ref={ref} className="v2-reveal py-24 lg:py-32 bg-white relative">
+      <div className="section-divider absolute top-0 left-0 right-0" />
 
-      <div className="relative py-20 lg:py-28">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <Badge className="mb-4 border-white/20 bg-white/5 text-white text-xs px-3 py-1 font-medium">
-              Sem desculpa
-            </Badge>
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white">
-              "Mas eu já…" — Calma. Lê isso aqui.
-            </h2>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide mb-6">
+            Sem desculpa
           </div>
-          <div className="space-y-3">
-            {objections.map((obj) => (
-              <div key={obj.objection} className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/10 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-                  <span className="inline-block shrink-0 px-3 py-1 rounded-lg bg-[hsl(var(--lv2-red)/0.15)] text-white text-sm font-bold border border-[hsl(var(--lv2-red)/0.2)]">
-                    {obj.objection}
-                  </span>
-                  <p className="text-sm text-white/70 leading-relaxed">{obj.answer}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold text-[hsl(var(--lv2-slate-950))]">
+            "Mas eu já…" — Calma. Lê isso aqui.
+          </h2>
+        </div>
+        <div className="space-y-4">
+          {objections.map((obj) => (
+            <div
+              key={obj.objection}
+              className="bento-card flex flex-col sm:flex-row sm:items-start gap-4"
+            >
+              <span className="inline-block shrink-0 px-4 py-1.5 rounded-full bg-[hsl(var(--lv2-red)/0.06)] text-[hsl(var(--lv2-red))] text-sm font-bold border border-[hsl(var(--lv2-red)/0.15)]">
+                {obj.objection}
+              </span>
+              <p className="text-sm text-[hsl(var(--lv2-slate-500))] leading-relaxed">{obj.answer}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
