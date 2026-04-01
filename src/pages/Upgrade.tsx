@@ -169,7 +169,7 @@ export default function Upgrade() {
                     <div>
                       <CardTitle>Faça Upgrade para Pro</CardTitle>
                        <p className="text-sm text-muted-foreground">
-                        Sistema completo com 3 declarações inclusas
+                        Sistema completo com declarações sob demanda
                        </p>
                     </div>
                   </div>
