@@ -28,7 +28,7 @@ export function TabelaAvulso() {
             <div className="text-center p-8 rounded-xl border-2 border-accent bg-accent/5 shadow-md shadow-accent/10 max-w-xs w-full">
               <p className="text-sm font-semibold text-muted-foreground">Por declaração</p>
               <p className="text-4xl font-bold text-foreground mt-3">
-                R$ {PRECOS.DECLARACAO_EXTRA.toFixed(2).replace('.', ',')}
+                R$ {PRECOS.DECLARACAO_EXTRA.preco.toFixed(2).replace('.', ',')}
               </p>
               <p className="text-sm text-muted-foreground mt-2">
                 cada declaração extra

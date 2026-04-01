@@ -7,8 +7,10 @@ export type UsageLevel = 'normal' | 'warning' | 'critical' | 'blocked';
 interface UsageState {
   usadas: number;
   limite: number;
+  extras: number;
   percentual: number;
   level: UsageLevel;
+  plano: 'free' | 'pro';
   loading: boolean;
 }
 
@@ -20,12 +22,25 @@ export function useUsageStatus(): UsageState {
     queryFn: async () => {
       const { data: escritorio } = await supabase
         .from('escritorios')
-        .select('declaracoes_utilizadas, limite_declaracoes')
+        .select('plano, declaracoes_utilizadas, limite_declaracoes')
         .eq('id', profile.escritorioId!)
         .single();
+
+      const planoNome = escritorio?.plano || 'gratuito';
+      const normalized = planoNome.toLowerCase();
+      const isPro = normalized === 'pro' || normalized === 'profissional';
+
+      const usadas = escritorio?.declaracoes_utilizadas ?? 0;
+      const limite = escritorio?.limite_declaracoes ?? (isPro ? 0 : 1);
+
+      // Para Pro, extras = limite - usadas (limite cresce ao comprar)
+      const extras = isPro ? Math.max(0, limite - usadas) : 0;
+
       return {
-        usadas: escritorio?.declaracoes_utilizadas ?? 0,
-        limite: escritorio?.limite_declaracoes ?? 1,
+        usadas,
+        limite,
+        extras,
+        plano: isPro ? 'pro' as const : 'free' as const,
       };
     },
     enabled: !!profile.escritorioId,
@@ -34,12 +49,21 @@ export function useUsageStatus(): UsageState {
 
   const usadas = data?.usadas ?? 0;
   const limite = data?.limite ?? 1;
+  const extras = data?.extras ?? 0;
+  const plano = data?.plano ?? 'free';
+
   const percentual = limite > 0 ? Math.min((usadas / limite) * 100, 100) : 0;
 
   let level: UsageLevel = 'normal';
-  if (percentual >= 100) level = 'blocked';
-  else if (percentual >= 90) level = 'critical';
-  else if (percentual >= 70) level = 'warning';
+  if (plano === 'free') {
+    if (usadas >= limite) level = 'blocked';
+    else if (percentual >= 90) level = 'critical';
+    else if (percentual >= 70) level = 'warning';
+  } else {
+    // Pro: blocked when no extras left
+    if (extras <= 0 && usadas > 0) level = 'blocked';
+    else if (extras <= 1) level = 'warning';
+  }
 
-  return { usadas, limite, percentual, level, loading: isLoading };
+  return { usadas, limite, extras, percentual, level, plano, loading: isLoading };
 }

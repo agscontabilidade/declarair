@@ -1,86 +1,115 @@
-import { ReactNode, useState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, ArrowRight, ShoppingCart } from 'lucide-react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBilling } from '@/hooks/useBilling';
-import { useDeclaracoesExtras } from '@/hooks/useDeclaracoesExtras';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getPlanoConfig, PRECOS, formatarPreco } from '@/lib/constants/planos';
+import { AlertCircle, ShoppingCart } from 'lucide-react';
 
 interface CreateDeclaracaoGateProps {
   children: ReactNode;
+  onCanCreate?: (canCreate: boolean) => void;
 }
 
-export function CreateDeclaracaoGate({ children }: CreateDeclaracaoGateProps) {
+export function CreateDeclaracaoGate({ children, onCanCreate }: CreateDeclaracaoGateProps) {
+  const { profile } = useAuth();
   const navigate = useNavigate();
-  const { atingiuLimiteDeclaracoes, planoAtual } = useBilling();
-  const { comprarDeclaracao } = useDeclaracoesExtras();
-  const [showOptions, setShowOptions] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [canCreate, setCanCreate] = useState(false);
+  const [planoAtual, setPlanoAtual] = useState<'free' | 'pro'>('free');
+  const [declaracoesUsadas, setDeclaracoesUsadas] = useState(0);
 
-  const isFree = ['free', 'gratuito'].includes(planoAtual?.toLowerCase() ?? '');
-  const isPro = ['pro', 'profissional'].includes(planoAtual?.toLowerCase() ?? '');
+  useEffect(() => {
+    async function checkLimits() {
+      try {
+        const escritorioId = profile.escritorioId;
+        if (!escritorioId) return;
 
-  // Pro users can always buy extras; Free users are blocked
-  if (isPro && !atingiuLimiteDeclaracoes) {
-    return <>{children}</>;
+        // Buscar dados do escritório
+        const { data: escritorio } = await supabase
+          .from('escritorios')
+          .select('plano, declaracoes_utilizadas, limite_declaracoes')
+          .eq('id', escritorioId)
+          .single();
+
+        const planoNome = escritorio?.plano || 'gratuito';
+        const normalized = planoNome.toLowerCase();
+        const isPro = normalized === 'pro' || normalized === 'profissional';
+        setPlanoAtual(isPro ? 'pro' : 'free');
+
+        const usadas = escritorio?.declaracoes_utilizadas ?? 0;
+        setDeclaracoesUsadas(usadas);
+
+        if (!isPro) {
+          // Free: máximo 1 declaração, SEM extras
+          const planoConfig = getPlanoConfig(planoNome);
+          const podeCrear = usadas < planoConfig.limites.declaracoes;
+          setCanCreate(podeCrear);
+          onCanCreate?.(podeCrear);
+        } else {
+          // PRO: 0 inclusas no plano base, precisa de extras compradas
+          // O limite real vem do campo limite_declaracoes do escritório
+          // que é incrementado ao comprar extras
+          const limite = escritorio?.limite_declaracoes ?? 0;
+          const podeCrear = usadas < limite;
+          setCanCreate(podeCrear);
+          onCanCreate?.(podeCrear);
+        }
+      } catch (error) {
+        console.error('[Gate] Erro ao verificar limites:', error);
+        setCanCreate(false);
+        onCanCreate?.(false);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (profile.escritorioId) {
+      checkLimits();
+    }
+  }, [profile.escritorioId, onCanCreate]);
+
+  if (loading) {
+    return <div className="text-center py-4 text-muted-foreground text-sm">Verificando limites...</div>;
   }
 
-  if (!atingiuLimiteDeclaracoes) {
+  if (canCreate) {
     return <>{children}</>;
   }
 
   return (
     <Alert variant="destructive">
-      <AlertTriangle className="h-4 w-4" />
+      <AlertCircle className="h-4 w-4" />
       <AlertDescription>
-        <div className="space-y-4">
-          <div>
-            <p className="font-semibold mb-1">Limite de declarações atingido</p>
+        {planoAtual === 'free' ? (
+          <div className="space-y-3">
+            <p className="font-medium">Limite do plano Free atingido</p>
             <p className="text-sm">
-              {isFree
-                ? 'Faça upgrade para o Pro para desbloquear o sistema completo'
-                : 'Compre declarações extras para continuar (R$ 9,90/cada)'}
+              Você já usou sua declaração de teste ({declaracoesUsadas}/1).
+              Faça upgrade para o plano Pro para criar declarações.
             </p>
+            <Button onClick={() => navigate('/planos')} size="sm">
+              Ver Planos
+            </Button>
           </div>
-
-          {showOptions ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {isPro && (
-                <div className="p-4 bg-card rounded-lg border">
-                  <p className="font-medium mb-2">Comprar 1 Extra</p>
-                  <p className="text-2xl font-bold text-accent mb-2">R$ 9,90</p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => comprarDeclaracao.mutate(1)}
-                    disabled={comprarDeclaracao.isPending}
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Comprar Agora
-                  </Button>
-                </div>
-              )}
-
-              {isFree && (
-                <div className="p-4 bg-accent/5 rounded-lg border border-accent">
-                  <p className="font-medium mb-2">Upgrade para Pro</p>
-                  <p className="text-2xl font-bold text-accent mb-2">R$ 29,90/mês</p>
-                  <p className="text-xs text-muted-foreground mb-2">3 declarações inclusas + extras por R$ 9,90</p>
-                  <Button
-                    size="sm"
-                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                    onClick={() => navigate('/meus-planos')}
-                  >
-                    Fazer Upgrade
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Button onClick={() => setShowOptions(true)}>Ver Opções</Button>
-          )}
-        </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="font-medium">Sem declarações extras disponíveis</p>
+            <p className="text-sm">
+              Você precisa comprar declarações extras para continuar.
+              Cada declaração custa {formatarPreco(PRECOS.DECLARACAO_EXTRA.preco)}.
+            </p>
+            <Button
+              onClick={() => navigate('/addons?tab=declaracoes')}
+              size="sm"
+              className="gap-2"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Comprar Declarações
+            </Button>
+          </div>
+        )}
       </AlertDescription>
     </Alert>
   );
