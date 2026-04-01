@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Shield, Search, RefreshCw, AlertTriangle, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Shield, Search, RefreshCw, AlertTriangle, CheckCircle2, Clock, XCircle, Lock } from 'lucide-react';
 import { useMalhaFina } from '@/hooks/useMalhaFina';
+import { useBillingStatus } from '@/hooks/useBillingStatus';
 import { formatCPF } from '@/lib/formatters';
 import { QueryError } from '@/components/ui/QueryError';
 
