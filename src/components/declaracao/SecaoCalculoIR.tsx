@@ -105,6 +105,9 @@ function ResultadoPanel({ titulo, resultado, isMelhor, desconto }: {
 }
 
 export function SecaoCalculoIR({ formulario, declaracao, onSaveForma, savingForma }: Props) {
+  const navigate = useNavigate();
+  const { features, loading: billingLoading } = useBillingStatus();
+
   // Pre-fill from formulario data
   const rendimentosEmprego = useMemo(() => {
     const arr = Array.isArray(formulario?.rendimentos_emprego) ? formulario.rendimentos_emprego : [];
