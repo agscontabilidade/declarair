@@ -114,7 +114,7 @@ async function createSubscription(
   }
 
   // Payment method handling
-  const paymentMethodTypes = body.paymentMethod === "pix" ? ["pix"] : ["card"];
+  const paymentMethodTypes = body.paymentMethod === "boleto" ? ["boleto"] : ["card"];
 
   // Create subscription with Payment Intent (transparent checkout)
   const subscription = await stripe.subscriptions.create({
