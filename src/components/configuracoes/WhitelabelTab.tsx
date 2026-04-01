@@ -56,22 +56,35 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Formato não suportado. Use PNG, JPG, SVG ou WebP.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 2MB.');
+      return;
+    }
+
     setUploadingLogo(true);
     try {
-      const path = `logos/${escritorioId}/${Date.now()}_${file.name}`;
+      const ext = file.name.split('.').pop() || 'png';
+      const path = `${escritorioId}/logo_${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
-        .from('documentos-clientes')
+        .from('logos-escritorios')
         .upload(path, file, { upsert: true });
       if (upErr) throw upErr;
 
       const { data: urlData } = supabase.storage
-        .from('documentos-clientes')
+        .from('logos-escritorios')
         .getPublicUrl(path);
 
-      await supabase
+      const { error: updateErr } = await supabase
         .from('escritorios')
         .update({ logo_url: urlData.publicUrl })
         .eq('id', escritorioId);
+      if (updateErr) throw updateErr;
 
       toast.success('Logo atualizado!');
       queryClient.invalidateQueries({ queryKey: ['escritorio-brand'] });
