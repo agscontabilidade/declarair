@@ -373,7 +373,7 @@ async function buyExtraDeclaracoes(
     amount: totalAmount,
     currency: "brl",
     customer: customerId,
-    payment_method_types: ["card", "pix"],
+    payment_method_types: ["card"],
     metadata: {
       escritorio_id: escritorio.id,
       type: "declaracao_extra",

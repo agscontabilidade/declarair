@@ -220,9 +220,9 @@ export default function Upgrade() {
                   </div>
 
                   <div className="pt-4 border-t">
-                     <p className="text-sm text-muted-foreground text-center">
-                       💡 <strong>Economia:</strong> Com 4+ declarações, as extras já se pagam!
-                     </p>
+                       <p className="text-sm text-muted-foreground text-center">
+                           💡 <strong>Economia:</strong> Pacotes de 10 (10% off) ou 20 declarações (15% off)!
+                         </p>
                   </div>
                 </CardContent>
               </Card>
