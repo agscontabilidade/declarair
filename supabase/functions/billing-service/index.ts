@@ -1,11 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { asaasRequest, getAsaasConfig, isProduction } from "../_shared/asaas-config.ts";
+import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
+  apiVersion: "2024-12-18.acacia",
+  httpClient: Stripe.createFetchHttpClient(),
+});
 
 function getSupabaseAdmin() {
   return createClient(
@@ -27,213 +32,145 @@ async function authenticateUser(req: Request) {
   if (!authHeader?.startsWith("Bearer ")) {
     throw new Error("Unauthorized");
   }
-
   const supabase = getSupabaseUser(authHeader);
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) throw new Error("Unauthorized");
 
-  const userId = user.id;
-
-  // Get escritorio info
   const admin = getSupabaseAdmin();
   const { data: usuario } = await admin
     .from("usuarios")
     .select("escritorio_id, nome, email, papel")
-    .eq("id", userId)
+    .eq("id", user.id)
     .single();
-
   if (!usuario) throw new Error("User not found");
 
   const { data: escritorio } = await admin
     .from("escritorios")
-    .select("id, nome, cnpj, email, telefone, asaas_customer_id, plano")
+    .select("id, nome, cnpj, email, telefone, stripe_customer_id, plano")
     .eq("id", usuario.escritorio_id)
     .single();
-
   if (!escritorio) throw new Error("Office not found");
 
-  return { userId, usuario, escritorio, admin };
+  return { userId: user.id, usuario, escritorio, admin };
 }
 
-// --- Handlers ---
-
-async function createCustomer(escritorio: any, admin: any) {
-  if (escritorio.asaas_customer_id) {
-    return { customerId: escritorio.asaas_customer_id };
+// ── Ensure Stripe customer ──
+async function ensureStripeCustomer(escritorio: any, admin: any) {
+  if (escritorio.stripe_customer_id) {
+    return escritorio.stripe_customer_id;
   }
-
-  const customer = await asaasRequest("/customers", {
-    method: "POST",
-    body: JSON.stringify({
-      name: escritorio.nome,
-      cpfCnpj: (escritorio.cnpj || "").replace(/\D/g, ""),
-      email: escritorio.email,
-      phone: escritorio.telefone,
-      externalReference: escritorio.id,
-    }),
+  const customer = await stripe.customers.create({
+    name: escritorio.nome,
+    email: escritorio.email || undefined,
+    phone: escritorio.telefone || undefined,
+    metadata: { escritorio_id: escritorio.id, cnpj: escritorio.cnpj || "" },
   });
-
   await admin
     .from("escritorios")
-    .update({ asaas_customer_id: customer.id })
+    .update({ stripe_customer_id: customer.id })
     .eq("id", escritorio.id);
-
-  return { customerId: customer.id };
+  return customer.id;
 }
 
-const PLANOS_CONFIG: Record<string, { valor: number; nome: string; limite: number; storage: number; usuarios: number }> = {
-  pro: { valor: 29.9, nome: "Pro", limite: 3, storage: 102400, usuarios: 5 },
-  profissional: { valor: 29.9, nome: "Pro", limite: 3, storage: 102400, usuarios: 5 },
+// ── Price config ──
+const PRICES: Record<string, { amount: number; name: string; limite: number; storage: number; usuarios: number }> = {
+  pro: { amount: 2990, name: "Pro", limite: 0, storage: 102400, usuarios: 5 },
 };
 
+const ADDON_PRICES: Record<string, { amount: number; name: string }> = {
+  whatsapp: { amount: 1990, name: "WhatsApp Integrado" },
+  portal_cliente: { amount: 1490, name: "Portal do Cliente Completo" },
+  api_publica: { amount: 2990, name: "API Pública" },
+  whitelabel: { amount: 990, name: "White-label Avançado" },
+  usuario_extra: { amount: 990, name: "Usuário Extra" },
+};
+
+// ── Create subscription ──
 async function createSubscription(
   escritorio: any,
   admin: any,
-  body: { plano: string; billingType: string; creditCard?: any; creditCardHolderInfo?: any }
+  body: { plano: string; paymentMethod: string }
 ) {
-  const planoConfig = PLANOS_CONFIG[body.plano];
+  const planoConfig = PRICES[body.plano];
   if (!planoConfig) throw new Error("Plano inválido");
 
-  // Ensure customer exists
-  let customerId = escritorio.asaas_customer_id;
-  if (!customerId) {
-    const result = await createCustomer(escritorio, admin);
-    customerId = result.customerId;
+  const customerId = await ensureStripeCustomer(escritorio, admin);
+
+  // Find or create product+price
+  const productName = `DeclaraIR ${planoConfig.name}`;
+  let products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
+  let product = products.data[0];
+  if (!product) {
+    product = await stripe.products.create({ name: productName, metadata: { plano: body.plano } });
   }
 
-  const nextDueDate = new Date();
-  nextDueDate.setDate(nextDueDate.getDate() + 1);
-  const dueDateStr = nextDueDate.toISOString().split("T")[0];
+  let prices = await stripe.prices.list({ product: product.id, active: true, type: "recurring", limit: 5 });
+  let price = prices.data.find(p => p.unit_amount === planoConfig.amount && p.currency === "brl" && p.recurring?.interval === "month");
+  if (!price) {
+    price = await stripe.prices.create({
+      product: product.id,
+      unit_amount: planoConfig.amount,
+      currency: "brl",
+      recurring: { interval: "month" },
+    });
+  }
 
-  const subscriptionPayload: any = {
+  const paymentMethodTypes = body.paymentMethod === "pix" ? ["pix"] : ["card"];
+
+  const subscription = await stripe.subscriptions.create({
     customer: customerId,
-    billingType: body.billingType,
-    value: planoConfig.valor,
-    nextDueDate: dueDateStr,
-    cycle: "MONTHLY",
-    description: `Plano ${planoConfig.nome} - DeclaraIR`,
-    externalReference: escritorio.id,
-  };
-
-  if (body.billingType === "CREDIT_CARD" && body.creditCard) {
-    subscriptionPayload.creditCard = body.creditCard;
-    subscriptionPayload.creditCardHolderInfo = body.creditCardHolderInfo;
-  }
-
-  const subscription = await asaasRequest("/subscriptions", {
-    method: "POST",
-    body: JSON.stringify(subscriptionPayload),
+    items: [{ price: price.id }],
+    payment_behavior: "default_incomplete",
+    payment_settings: {
+      payment_method_types: paymentMethodTypes as any,
+      save_default_payment_method: "on_subscription",
+    },
+    expand: ["latest_invoice.payment_intent"],
+    metadata: { escritorio_id: escritorio.id, plano: body.plano },
   });
 
-  // Save subscription internally
+  const invoice = subscription.latest_invoice as Stripe.Invoice;
+  const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+
+  // Save subscription in DB
   await admin.from("assinaturas").upsert(
     {
       escritorio_id: escritorio.id,
-      asaas_subscription_id: subscription.id,
+      stripe_subscription_id: subscription.id,
+      stripe_price_id: price.id,
       plano: body.plano,
-      status: "active",
-      valor: planoConfig.valor,
+      status: "pending",
+      valor: planoConfig.amount / 100,
       ciclo: "MONTHLY",
-      proxima_cobranca: dueDateStr,
+      provider: "stripe",
+      proxima_cobranca: new Date(subscription.current_period_end * 1000).toISOString().split("T")[0],
     },
     { onConflict: "escritorio_id" }
   );
 
-  // Update escritorio plan
-  await admin
-    .from("escritorios")
-    .update({
-      plano: body.plano,
-      limite_declaracoes: planoConfig.limite,
-      storage_limite_mb: planoConfig.storage,
-      usuarios_limite: planoConfig.usuarios,
-    })
-    .eq("id", escritorio.id);
-
-  // Get first payment info
-  let paymentInfo = null;
-  if (body.billingType === "PIX" || body.billingType === "BOLETO") {
-    // Wait a bit for payment creation
-    await new Promise((r) => setTimeout(r, 2000));
-    const payments = await asaasRequest(`/subscriptions/${subscription.id}/payments`);
-    if (payments.data?.length > 0) {
-      const payment = payments.data[0];
-      
-      if (body.billingType === "PIX") {
-        try {
-          const pix = await asaasRequest(`/payments/${payment.id}/pixQrCode`);
-          paymentInfo = {
-            paymentId: payment.id,
-            pixQrCode: pix.payload,
-            pixQrCodeUrl: pix.encodedImage,
-          };
-
-          await admin.from("pagamentos_assinatura").insert({
-            escritorio_id: escritorio.id,
-            assinatura_id: null,
-            asaas_payment_id: payment.id,
-            status: "pending",
-            valor: planoConfig.valor,
-            data_vencimento: dueDateStr,
-            forma_pagamento: "PIX",
-            pix_qrcode: pix.payload,
-            pix_qrcode_url: pix.encodedImage,
-          });
-        } catch (e) {
-          console.error("PIX QR error:", e);
-        }
-      } else if (body.billingType === "BOLETO") {
-        paymentInfo = {
-          paymentId: payment.id,
-          boletoUrl: payment.bankSlipUrl,
-          boletoLinhaDigitavel: payment.nossoNumero,
-        };
-
-        await admin.from("pagamentos_assinatura").insert({
-          escritorio_id: escritorio.id,
-          assinatura_id: null,
-          asaas_payment_id: payment.id,
-          status: "pending",
-          valor: planoConfig.valor,
-          data_vencimento: dueDateStr,
-          forma_pagamento: "BOLETO",
-          boleto_url: payment.bankSlipUrl,
-          boleto_linha_digitavel: payment.nossoNumero,
-        });
-      }
-    }
-  }
-
-  // Auto-register webhook if not already done
-  try {
-    await registerWebhook(escritorio);
-    console.log("Webhook auto-registered for escritorio:", escritorio.id);
-  } catch (webhookErr) {
-    console.error("Failed to auto-register webhook (non-blocking):", webhookErr);
-  }
-
   return {
     subscriptionId: subscription.id,
+    clientSecret: paymentIntent.client_secret,
+    paymentIntentId: paymentIntent.id,
+    status: paymentIntent.status,
     plano: body.plano,
-    status: "active",
-    paymentInfo,
   };
 }
 
+// ── Cancel subscription ──
 async function cancelSubscription(escritorio: any, admin: any) {
   const { data: assinatura } = await admin
     .from("assinaturas")
     .select("*")
     .eq("escritorio_id", escritorio.id)
-    .single();
+    .in("status", ["active", "pending"])
+    .maybeSingle();
 
-  if (!assinatura?.asaas_subscription_id) {
+  if (!assinatura?.stripe_subscription_id) {
     throw new Error("Nenhuma assinatura ativa encontrada");
   }
 
-  await asaasRequest(`/subscriptions/${assinatura.asaas_subscription_id}`, {
-    method: "DELETE",
-  });
+  await stripe.subscriptions.cancel(assinatura.stripe_subscription_id);
 
   await admin
     .from("assinaturas")
@@ -242,12 +179,24 @@ async function cancelSubscription(escritorio: any, admin: any) {
 
   await admin
     .from("escritorios")
-    .update({ plano: "gratuito", limite_declaracoes: 5, storage_limite_mb: 500, usuarios_limite: 1 })
+    .update({ plano: "gratuito", limite_declaracoes: 1, storage_limite_mb: 500, usuarios_limite: 1 })
     .eq("id", escritorio.id);
 
   return { success: true };
 }
 
+// ── Get subscription ──
+async function getSubscription(escritorio: any, admin: any) {
+  const { data: assinatura } = await admin
+    .from("assinaturas")
+    .select("*")
+    .eq("escritorio_id", escritorio.id)
+    .maybeSingle();
+
+  return { assinatura, planoAtual: escritorio.plano };
+}
+
+// ── Get payments ──
 async function getPayments(escritorio: any, admin: any) {
   const { data: pagamentos } = await admin
     .from("pagamentos_assinatura")
@@ -259,69 +208,188 @@ async function getPayments(escritorio: any, admin: any) {
   return { pagamentos: pagamentos || [] };
 }
 
-const WEBHOOK_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/billing-webhook`;
+// ── Activate addon ──
+async function activateAddon(
+  escritorio: any,
+  admin: any,
+  body: { addonSlug: string }
+) {
+  const addonConfig = ADDON_PRICES[body.addonSlug];
+  if (!addonConfig) throw new Error("Addon inválido");
 
-const WEBHOOK_EVENTS = [
-  "PAYMENT_CREATED",
-  "PAYMENT_RECEIVED",
-  "PAYMENT_CONFIRMED",
-  "PAYMENT_OVERDUE",
-  "PAYMENT_REFUNDED",
-  "PAYMENT_CHARGEBACK",
-  "PAYMENT_DELETED",
-  "SUBSCRIPTION_DELETED",
-  "SUBSCRIPTION_INACTIVATED",
-];
+  const customerId = await ensureStripeCustomer(escritorio, admin);
 
-async function listWebhooks() {
-  const data = await asaasRequest("/webhooks");
-  return { webhooks: data?.data || [] };
-}
-
-async function registerWebhook(escritorio: any) {
-  // Check for existing webhook with same URL
-  const existing = await asaasRequest("/webhooks");
-  const alreadyRegistered = (existing?.data || []).find(
-    (w: any) => w.url === WEBHOOK_URL && w.enabled
-  );
-  if (alreadyRegistered) {
-    return { success: true, message: "Webhook já registrado", webhook: alreadyRegistered };
+  const productName = `DeclaraIR Addon - ${addonConfig.name}`;
+  let products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
+  let product = products.data[0];
+  if (!product) {
+    product = await stripe.products.create({ name: productName, metadata: { addon: body.addonSlug } });
   }
 
-  const webhookPayload: any = {
-    name: "DeclaraIR Billing Webhook",
-    url: WEBHOOK_URL,
-    email: escritorio.email || "",
-    enabled: true,
-    interrupted: false,
-    sendType: "SEQUENTIALLY",
-    events: WEBHOOK_EVENTS,
-  };
-
-  // Include auth token for webhook validation
-  const webhookToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
-  if (webhookToken) {
-    webhookPayload.authToken = webhookToken;
+  let prices = await stripe.prices.list({ product: product.id, active: true, type: "recurring", limit: 5 });
+  let price = prices.data.find(p => p.unit_amount === addonConfig.amount && p.currency === "brl" && p.recurring?.interval === "month");
+  if (!price) {
+    price = await stripe.prices.create({
+      product: product.id,
+      unit_amount: addonConfig.amount,
+      currency: "brl",
+      recurring: { interval: "month" },
+    });
   }
 
-  const webhook = await asaasRequest("/webhooks", {
-    method: "POST",
-    body: JSON.stringify(webhookPayload),
-  });
-
-  return { success: true, message: "Webhook registrado com sucesso", webhook };
-}
-
-async function getSubscription(escritorio: any, admin: any) {
+  // Check if there's an active subscription to add the addon to
   const { data: assinatura } = await admin
     .from("assinaturas")
-    .select("*")
+    .select("stripe_subscription_id")
     .eq("escritorio_id", escritorio.id)
+    .eq("status", "active")
     .maybeSingle();
 
-  return { assinatura, planoAtual: escritorio.plano };
+  let subscriptionItemId: string;
+
+  if (assinatura?.stripe_subscription_id) {
+    const item = await stripe.subscriptionItems.create({
+      subscription: assinatura.stripe_subscription_id,
+      price: price.id,
+      metadata: { addon: body.addonSlug, escritorio_id: escritorio.id },
+    });
+    subscriptionItemId = item.id;
+  } else {
+    const sub = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: price.id }],
+      payment_settings: {
+        payment_method_types: ["card"],
+        save_default_payment_method: "on_subscription",
+      },
+      metadata: { escritorio_id: escritorio.id, addon: body.addonSlug },
+    });
+    subscriptionItemId = sub.items.data[0].id;
+  }
+
+  // Get the addon from DB
+  const { data: addon } = await admin
+    .from("addons")
+    .select("id")
+    .ilike("nome", `%${body.addonSlug}%`)
+    .single();
+
+  if (addon) {
+    await admin.from("escritorio_addons").upsert(
+      {
+        escritorio_id: escritorio.id,
+        addon_id: addon.id,
+        status: "ativo",
+        ativado_em: new Date().toISOString(),
+        stripe_subscription_item_id: subscriptionItemId,
+      },
+      { onConflict: "escritorio_id,addon_id", ignoreDuplicates: false }
+    );
+  }
+
+  return { success: true, subscriptionItemId };
 }
 
+// ── Deactivate addon ──
+async function deactivateAddon(
+  escritorio: any,
+  admin: any,
+  body: { addonSlug: string }
+) {
+  const { data: addon } = await admin
+    .from("addons")
+    .select("id")
+    .ilike("nome", `%${body.addonSlug}%`)
+    .single();
+
+  if (!addon) throw new Error("Addon não encontrado");
+
+  const { data: escritorioAddon } = await admin
+    .from("escritorio_addons")
+    .select("id, stripe_subscription_item_id")
+    .eq("escritorio_id", escritorio.id)
+    .eq("addon_id", addon.id)
+    .eq("status", "ativo")
+    .single();
+
+  if (!escritorioAddon) throw new Error("Addon não está ativo");
+
+  if (escritorioAddon.stripe_subscription_item_id) {
+    try {
+      await stripe.subscriptionItems.del(escritorioAddon.stripe_subscription_item_id, {
+        proration_behavior: "create_prorations",
+      });
+    } catch (e) {
+      console.error("Failed to remove Stripe subscription item:", e);
+    }
+  }
+
+  await admin
+    .from("escritorio_addons")
+    .update({ status: "inativo", desativado_em: new Date().toISOString() })
+    .eq("id", escritorioAddon.id);
+
+  return { success: true };
+}
+
+// ── Create customer portal session ──
+async function createPortalSession(escritorio: any) {
+  const customerId = escritorio.stripe_customer_id;
+  if (!customerId) throw new Error("Customer não encontrado");
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: `${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app')}/meus-planos`,
+  });
+
+  return { url: session.url };
+}
+
+// ── Buy extra declarations ──
+async function buyExtraDeclaracoes(
+  escritorio: any,
+  admin: any,
+  body: { quantidade: number }
+) {
+  const customerId = await ensureStripeCustomer(escritorio, admin);
+  const quantidade = body.quantidade;
+
+  // Apply volume discounts
+  let unitAmount = 990; // R$ 9,90 base
+  if (quantidade >= 20) unitAmount = Math.round(990 * 0.85); // 15% off
+  else if (quantidade >= 10) unitAmount = Math.round(990 * 0.90); // 10% off
+
+  const totalAmount = unitAmount * quantidade;
+
+  const productName = "DeclaraIR - Declaração Extra";
+  let products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
+  let product = products.data[0];
+  if (!product) {
+    product = await stripe.products.create({ name: productName, metadata: { type: "declaracao_extra" } });
+  }
+
+  // Create a payment intent for the extras
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: totalAmount,
+    currency: "brl",
+    customer: customerId,
+    payment_method_types: ["card", "pix"],
+    metadata: {
+      escritorio_id: escritorio.id,
+      type: "declaracao_extra",
+      quantidade: String(quantidade),
+    },
+  });
+
+  return {
+    clientSecret: paymentIntent.client_secret,
+    paymentIntentId: paymentIntent.id,
+    amount: totalAmount,
+    quantidade,
+  };
+}
+
+// ── Router ──
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -336,9 +404,6 @@ Deno.serve(async (req) => {
     let result;
 
     switch (action) {
-      case "create-customer":
-        result = await createCustomer(escritorio, admin);
-        break;
       case "create-subscription": {
         const body = await req.json();
         result = await createSubscription(escritorio, admin, body);
@@ -347,18 +412,30 @@ Deno.serve(async (req) => {
       case "cancel-subscription":
         result = await cancelSubscription(escritorio, admin);
         break;
-      case "get-payments":
-        result = await getPayments(escritorio, admin);
-        break;
       case "get-subscription":
         result = await getSubscription(escritorio, admin);
         break;
-      case "register-webhook":
-        result = await registerWebhook(escritorio);
+      case "get-payments":
+        result = await getPayments(escritorio, admin);
         break;
-      case "list-webhooks":
-        result = await listWebhooks();
+      case "activate-addon": {
+        const body = await req.json();
+        result = await activateAddon(escritorio, admin, body);
         break;
+      }
+      case "deactivate-addon": {
+        const body = await req.json();
+        result = await deactivateAddon(escritorio, admin, body);
+        break;
+      }
+      case "create-portal-session":
+        result = await createPortalSession(escritorio);
+        break;
+      case "buy-extra-declaracoes": {
+        const body = await req.json();
+        result = await buyExtraDeclaracoes(escritorio, admin, body);
+        break;
+      }
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -368,7 +445,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
-    console.error("Billing error:", error);
+    console.error("Billing service error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     const status = message === "Unauthorized" ? 401 : 400;
     return new Response(JSON.stringify({ error: message }), {

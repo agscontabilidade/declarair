@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { PRECOS } from '@/lib/constants/planos';
+import { supabase } from '@/integrations/supabase/client';
 
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 
@@ -14,35 +13,33 @@ export function useDeclaracoesExtras() {
     mutationFn: async (quantidade: number = 1) => {
       if (!profile.escritorioId) throw new Error('Sem escritório');
 
-      const valorTotal = quantidade * PRECOS.DECLARACAO_EXTRA.preco;
-
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Não autenticado');
 
-      const url = `https://${PROJECT_ID}.supabase.co/functions/v1/billing-service?action=create-payment`;
+      const url = `https://${PROJECT_ID}.supabase.co/functions/v1/billing-service?action=buy-extra-declaracoes`;
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          descricao: `${quantidade} declaração(ões) extra(s)`,
-          valor: valorTotal,
-          tipo: 'declaracao_extra',
-          quantidade,
-        }),
+        body: JSON.stringify({ quantidade }),
       });
 
-      const cobranca = await res.json();
-      if (!res.ok) throw new Error(cobranca.error || 'Erro ao gerar cobrança');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao gerar cobrança');
 
-      return { cobranca, quantidade };
+      return { ...data, quantidade };
     },
-    onSuccess: (_data, quantidade) => {
-      toast.success(`${quantidade} declaração(ões) extra(s) solicitada(s)!`, {
-        description: 'O pagamento foi gerado. Verifique suas cobranças.',
-      });
+    onSuccess: (data, quantidade) => {
+      if (data.clientSecret) {
+        // Redirect to checkout with client secret for payment
+        toast.success(`Pagamento de ${quantidade} declaração(ões) preparado!`, {
+          description: 'Complete o pagamento para ativar.',
+        });
+      } else {
+        toast.success(`${quantidade} declaração(ões) extra(s) adicionadas!`);
+      }
       queryClient.invalidateQueries({ queryKey: ['escritorio-billing'] });
       queryClient.invalidateQueries({ queryKey: ['usage-status'] });
     },
