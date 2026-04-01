@@ -11,7 +11,7 @@ import { StepDadosPessoais } from '@/components/formulario-ir/StepDadosPessoais'
 import { StepDependentes } from '@/components/formulario-ir/StepDependentes';
 
 
-import { StepDividasOnus } from '@/components/formulario-ir/StepDividasOnus';
+
 
 import { StepInfoAdicionais } from '@/components/formulario-ir/StepInfoAdicionais';
 import { toast } from 'sonner';
