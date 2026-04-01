@@ -54,19 +54,17 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
       <header className="h-16 flex items-center justify-between border-b bg-card px-6 shrink-0">
         <div className="flex items-center gap-3">
           {whitelabelAtivo && logoUrl ? (
-            <img src={logoUrl} alt={nomePortal} className="h-10 w-10 rounded-lg object-contain" />
+            <img src={logoUrl} alt={nomePortal} className="h-10 w-auto rounded-lg object-contain" />
           ) : (
-            <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10" />
+            <img src={logoFull} alt="DeclaraIR" className="h-10 w-auto object-contain" />
           )}
-          {whitelabelAtivo ? (
+          {whitelabelAtivo && (
             <span
               className="font-display text-lg font-bold"
               style={{ color: corPrimaria }}
             >
               {nomePortal}
             </span>
-          ) : (
-            <img src={logoFull} alt="DeclaraIR" className="h-10 w-auto object-contain" />
           )}
         </div>
         <nav className="flex items-center gap-1">
