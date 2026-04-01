@@ -229,3 +229,78 @@ button, a, [role="button"] {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* ═══ Landing V2 Scoped Styles ═══ */
+.landing-v2 {
+  --lv2-slate-950: 222 47% 11%;
+  --lv2-slate-900: 217 33% 17%;
+  --lv2-slate-800: 217 19% 27%;
+  --lv2-slate-500: 215 16% 47%;
+  --lv2-slate-400: 215 14% 60%;
+  --lv2-slate-200: 214 32% 91%;
+  --lv2-slate-100: 210 40% 96%;
+  --lv2-slate-50: 60 9% 98%;
+  --lv2-emerald: 160 84% 39%;
+  --lv2-emerald-light: 160 84% 45%;
+  --lv2-amber: 38 92% 50%;
+  --lv2-red: 0 72% 51%;
+  font-family: 'DM Sans', sans-serif;
+  color: hsl(var(--lv2-slate-950));
+  background: hsl(var(--lv2-slate-50));
+}
+.landing-v2 .font-heading {
+  font-family: 'Bricolage Grotesque', sans-serif;
+}
+.landing-v2 .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Grain overlay */
+.landing-v2 .grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+}
+
+/* Scroll reveal for v2 */
+.landing-v2 .v2-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.landing-v2 .v2-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Glow on hover for CTA */
+.landing-v2 .glow-btn {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.3s;
+}
+.landing-v2 .glow-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 24px hsl(var(--lv2-emerald) / 0.35);
+}
+
+/* Nav scroll state */
+.landing-v2 .nav-scrolled {
+  background: hsla(var(--lv2-slate-50), 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid hsl(var(--lv2-slate-200));
+}
+
+/* Card lift */
+.landing-v2 .card-lift {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
+}
+.landing-v2 .card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px -8px hsl(var(--lv2-slate-950) / 0.12);
+}
