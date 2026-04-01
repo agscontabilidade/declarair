@@ -38,7 +38,7 @@ const CARDS = [
     periodo: '/mês',
     beneficios: [
       { texto: '3 declarações inclusas', disponivel: true },
-      { texto: `Declarações extras por R$ ${PRECOS.DECLARACAO_EXTRA.toFixed(2).replace('.', ',')}/cada`, disponivel: true },
+      { texto: `Declarações extras por R$ ${PRECOS.DECLARACAO_EXTRA.preco.toFixed(2).replace('.', ',')}/cada`, disponivel: true },
       { texto: 'Até 5 usuários simultâneos', disponivel: true },
       { texto: 'Armazenamento ilimitado', disponivel: true },
       { texto: 'Verificador de malha fina', disponivel: true },
