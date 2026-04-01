@@ -82,7 +82,7 @@ export default function Checkout() {
   const fromCadastro = searchParams.get('from') === 'cadastro';
   const plano = PLANOS[planoId] || PLANOS.pro;
 
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix'>('card');
+  const [paymentMethod] = useState<'card'>('card');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -167,31 +167,10 @@ export default function Checkout() {
               {!clientSecret ? (
                 <div className="space-y-6">
                   {/* Payment method selection */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => setPaymentMethod('card')}
-                      className={`p-4 rounded-lg border-2 transition-all text-center ${
-                        paymentMethod === 'card'
-                          ? 'border-accent bg-accent/5'
-                          : 'border-border hover:border-accent/50'
-                      }`}
-                    >
-                      <CreditCard className="h-6 w-6 mx-auto mb-2 text-accent" />
-                      <p className="font-medium text-sm">Cartão de Crédito</p>
-                      <p className="text-xs text-muted-foreground">Ativação imediata</p>
-                    </button>
-                    <button
-                      onClick={() => setPaymentMethod('pix')}
-                      className={`p-4 rounded-lg border-2 transition-all text-center ${
-                        paymentMethod === 'pix'
-                          ? 'border-accent bg-accent/5'
-                          : 'border-border hover:border-accent/50'
-                      }`}
-                    >
-                      <QrCode className="h-6 w-6 mx-auto mb-2 text-accent" />
-                      <p className="font-medium text-sm">PIX</p>
-                      <p className="text-xs text-muted-foreground">Confirmação em segundos</p>
-                    </button>
+                  <div className="p-4 rounded-lg border-2 border-accent bg-accent/5 text-center">
+                    <CreditCard className="h-6 w-6 mx-auto mb-2 text-accent" />
+                    <p className="font-medium text-sm">Cartão de Crédito</p>
+                    <p className="text-xs text-muted-foreground">Ativação imediata • Cobrança recorrente mensal</p>
                   </div>
 
                   <Button
