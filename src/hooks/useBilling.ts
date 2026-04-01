@@ -46,7 +46,7 @@ export function usePayments() {
 export function useCreateSubscription() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: { plano: string; billingType: string; creditCard?: any; creditCardHolderInfo?: any }) =>
+    mutationFn: (body: { plano: string; paymentMethod: string }) =>
       billingAction('create-subscription', body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription'] });
@@ -71,27 +71,6 @@ export function useCancelSubscription() {
     onError: (err: Error) => {
       toast.error(err.message || 'Erro ao cancelar');
     },
-  });
-}
-
-export function useRegisterWebhook() {
-  return useMutation({
-    mutationFn: () => billingAction('register-webhook'),
-    onSuccess: (data) => {
-      toast.success(data.message || 'Webhook registrado!');
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Erro ao registrar webhook');
-    },
-  });
-}
-
-export function useListWebhooks() {
-  const { profile } = useAuth();
-  return useQuery({
-    queryKey: ['asaas-webhooks', profile.escritorioId],
-    queryFn: () => billingAction('list-webhooks'),
-    enabled: !!profile.escritorioId,
   });
 }
 
@@ -130,9 +109,9 @@ export function useBilling() {
   const planoConfig = getPlanoConfig(planoNome);
 
   const usadas = escritorio?.declaracoes_utilizadas ?? 0;
-  const limite = planoConfig.limites.declaracoes;
-  const declaracoesRestantes = limite ? Math.max(0, limite - usadas) : Infinity;
-  const atingiuLimiteDeclaracoes = limite !== null && usadas >= limite;
+  const limite = escritorio?.limite_declaracoes ?? planoConfig.limites.declaracoes;
+  const declaracoesRestantes = Math.max(0, limite - usadas);
+  const atingiuLimiteDeclaracoes = usadas >= limite;
 
   const hasAddon = (addonNome: string) => {
     return addons.some((a: any) => a.addons?.nome?.toLowerCase().includes(addonNome.toLowerCase()));
