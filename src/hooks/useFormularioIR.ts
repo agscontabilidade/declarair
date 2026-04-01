@@ -48,6 +48,7 @@ const INITIAL_DATA: FormularioData = {
   despesas_educacao: [],
   previdencia_privada: {},
   informacoes_adicionais: '',
+  chave_pix_cliente: '',
 };
 
 export function useFormularioIR() {
