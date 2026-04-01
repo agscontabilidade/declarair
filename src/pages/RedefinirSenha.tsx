@@ -52,11 +52,26 @@ export default function RedefinirSenha() {
     }
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.auth.updateUser({ password: novaSenha });
       if (error) throw error;
+
+      // Determine redirect before signing out
+      let redirectTo = '/login';
+      if (user) {
+        const { data: cliente } = await supabase
+          .from('clientes')
+          .select('id')
+          .eq('auth_user_id', user.id)
+          .maybeSingle();
+        if (cliente) {
+          redirectTo = '/cliente/login';
+        }
+      }
+
       await supabase.auth.signOut();
       toast({ title: 'Senha redefinida com sucesso!' });
-      navigate('/login');
+      navigate(redirectTo);
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message, variant: 'destructive' });
     } finally {
