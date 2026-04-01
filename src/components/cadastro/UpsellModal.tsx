@@ -12,7 +12,7 @@ interface UpsellModalProps {
 }
 
 const BENEFITS = [
-  '3 declarações inclusas + extras por R$ 9,90',
+  'Declarações sob demanda por R$ 9,90/cada',
   'Até 5 usuários simultâneos',
   'Storage ilimitado',
   'Malha Fina + Calculadora IR',
