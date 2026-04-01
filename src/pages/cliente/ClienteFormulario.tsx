@@ -155,8 +155,7 @@ export default function ClienteFormulario() {
             {step === 1 && <StepDadosPessoais data={formData} onChange={updateField} />}
             {step === 2 && <StepDependentes data={formData} onChange={updateField} />}
             {step === 3 && <StepDividasOnus data={formData} onChange={updateField} />}
-            {step === 4 && <StepDeducoes data={formData} onChange={updateField} />}
-            {step === 5 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
+            {step === 4 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
           </CardContent>
         </Card>
 
