@@ -68,9 +68,17 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
         .single();
       if (error) throw error;
 
-      // If sender is contador, fire-and-forget WhatsApp send
+      // If sender is contador, fire-and-forget WhatsApp send with retry
       if (senderType === 'contador' && mensagem) {
-        sendViaWhatsApp(mensagem.id, clienteId, escritorioId, conteudo).catch((err) => {
+        sendViaWhatsApp(mensagem.id, clienteId, escritorioId, conteudo).then((result) => {
+          if (result && !result.success) {
+            toast({
+              title: 'Mensagem salva, mas não enviada no WhatsApp',
+              description: 'Verifique sua configuração de WhatsApp',
+              variant: 'destructive',
+            });
+          }
+        }).catch((err) => {
           console.error('[Chat] WhatsApp fire-and-forget error:', err);
         });
       }
