@@ -180,8 +180,8 @@ export default function Upgrade() {
                     <div className="space-y-3">
                       <p className="font-semibold text-sm">O que você ganha:</p>
                       <div className="space-y-2">
-                        {[
-                          { bold: '3 declarações inclusas', text: ' + extras por R$ 9,90/cada' },
+                         {[
+                          { bold: 'Declarações sob demanda', text: ' por R$ 9,90/cada' },
                           { bold: 'Até 5 usuários simultâneos', text: '' },
                           { bold: 'Storage ilimitado', text: '' },
                           { bold: 'Malha Fina + Calculadora IR', text: '' },
