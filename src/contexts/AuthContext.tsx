@@ -106,6 +106,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           clienteId: null,
           onboardingCompleto,
         });
+        setUserContext({
+          id: currentUser.id,
+          email: currentUser.email,
+          nome: usuario.nome,
+          escritorioId: usuario.escritorio_id,
+        });
         return;
       }
 
