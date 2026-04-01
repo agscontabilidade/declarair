@@ -1164,6 +1164,9 @@ export type Database = {
           lida: boolean | null
           remetente_id: string | null
           remetente_tipo: string
+          whatsapp_enviado_em: string | null
+          whatsapp_erro: string | null
+          whatsapp_tentativas: number | null
         }
         Insert: {
           cliente_id: string
@@ -1176,6 +1179,9 @@ export type Database = {
           lida?: boolean | null
           remetente_id?: string | null
           remetente_tipo?: string
+          whatsapp_enviado_em?: string | null
+          whatsapp_erro?: string | null
+          whatsapp_tentativas?: number | null
         }
         Update: {
           cliente_id?: string
@@ -1188,6 +1194,9 @@ export type Database = {
           lida?: boolean | null
           remetente_id?: string | null
           remetente_tipo?: string
+          whatsapp_enviado_em?: string | null
+          whatsapp_erro?: string | null
+          whatsapp_tentativas?: number | null
         }
         Relationships: [
           {
