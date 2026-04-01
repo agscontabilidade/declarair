@@ -207,11 +207,11 @@ export function useClientePerfil(clienteId: string | undefined) {
       if (declError) throw declError;
 
       const checklistItems = [
-        { nome_documento: 'Informe de Rendimentos', categoria: 'Rendimentos' },
-        { nome_documento: 'Comprovante de CPF', categoria: 'Outros' },
-        { nome_documento: 'Comprovante de Residência', categoria: 'Outros' },
-        { nome_documento: 'Documentos de Dependentes', categoria: 'Outros' },
-        { nome_documento: 'Comprovantes de Despesas Médicas', categoria: 'Deduções' },
+        { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
+        { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true },
+        { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true },
+        { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false },
+        { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false },
       ].map(item => ({ ...item, declaracao_id: decl.id }));
 
       const { error: checkError } = await supabase
