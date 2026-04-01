@@ -6,8 +6,9 @@ import { MessageCircle, Code, Palette, UserPlus } from 'lucide-react';
 import { useBilling } from '@/hooks/useBilling';
 import { useAddons } from '@/hooks/useAddons';
 import { useStripeActivateAddon, useStripeDeactivateAddon } from '@/hooks/useStripe';
-import { AddonConfirmModal } from './AddonConfirmModal';
+import { AddonConfirmModal, AddonPaymentModal } from './AddonConfirmModal';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 const ADDONS_CONFIG = [
   {
@@ -17,12 +18,7 @@ const ADDONS_CONFIG = [
     descricao: 'Envie mensagens automáticas e templates personalizados para seus clientes',
     preco: 19.90,
     icon: MessageCircle,
-    beneficios: [
-      'Templates customizáveis',
-      'Envio em massa',
-      'Automações inteligentes',
-      'Integração nativa',
-    ],
+    beneficios: ['Templates customizáveis', 'Envio em massa', 'Automações inteligentes', 'Integração nativa'],
   },
   {
     keyword: 'api',
@@ -31,12 +27,7 @@ const ADDONS_CONFIG = [
     descricao: 'Integre o DeclaraIR com seus sistemas e ferramentas externas',
     preco: 29.90,
     icon: Code,
-    beneficios: [
-      'Endpoints REST completos',
-      'Documentação técnica',
-      'Rate limiting personalizado',
-      'Webhooks inclusos',
-    ],
+    beneficios: ['Endpoints REST completos', 'Documentação técnica', 'Rate limiting personalizado', 'Webhooks inclusos'],
   },
   {
     keyword: 'whitelabel',
@@ -45,12 +36,7 @@ const ADDONS_CONFIG = [
     descricao: 'Personalize com sua marca: logo, cores e domínio próprio',
     preco: 49.90,
     icon: Palette,
-    beneficios: [
-      'Logo personalizada',
-      'Cores customizadas',
-      'Domínio próprio',
-      'Sem marca DeclaraIR',
-    ],
+    beneficios: ['Logo personalizada', 'Cores customizadas', 'Domínio próprio', 'Sem marca DeclaraIR'],
   },
   {
     keyword: 'usuário extra',
@@ -59,38 +45,34 @@ const ADDONS_CONFIG = [
     descricao: 'Adicione usuários simultâneos além do limite do seu plano',
     preco: 9.90,
     icon: UserPlus,
-    beneficios: [
-      'A partir do 6º usuário',
-      'Acesso simultâneo',
-      'Permissões granulares',
-      'Sem limite de addons',
-    ],
+    beneficios: ['A partir do 6º usuário', 'Acesso simultâneo', 'Permissões granulares', 'Sem limite de addons'],
   },
 ];
 
 interface PendingAction {
   addon: typeof ADDONS_CONFIG[number];
   action: 'ativar' | 'desativar';
-  addonSlug: string;
 }
 
 export function AddonsMarketplace() {
   const { hasAddon } = useBilling();
-  const { myAddons, catalog } = useAddons();
+  const { myAddons } = useAddons();
   const activateAddon = useStripeActivateAddon();
   const deactivateAddon = useStripeDeactivateAddon();
+  const queryClient = useQueryClient();
 
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [paymentState, setPaymentState] = useState<{
+    clientSecret: string;
+    addonNome: string;
+    addonPreco: number;
+  } | null>(null);
 
   const isProcessing = activateAddon.isPending || deactivateAddon.isPending;
 
   function handleToggle(addon: typeof ADDONS_CONFIG[number]) {
     const isActive = hasAddon(addon.keyword);
-    setPendingAction({
-      addon,
-      action: isActive ? 'desativar' : 'ativar',
-      addonSlug: addon.slug,
-    });
+    setPendingAction({ addon, action: isActive ? 'desativar' : 'ativar' });
   }
 
   async function handleConfirm() {
@@ -98,20 +80,29 @@ export function AddonsMarketplace() {
 
     if (pendingAction.action === 'ativar') {
       activateAddon.mutate(
-        { addonSlug: pendingAction.addonSlug },
+        { addonSlug: pendingAction.addon.slug },
         {
-          onSuccess: () => {
+          onSuccess: (data: any) => {
             setPendingAction(null);
-            toast.success(`${pendingAction.addon.nome} ativado com sucesso!`, {
-              description: 'O valor foi adicionado à sua mensalidade.',
-            });
+            if (data.requiresPayment && data.clientSecret) {
+              // Open payment modal
+              setPaymentState({
+                clientSecret: data.clientSecret,
+                addonNome: pendingAction.addon.nome,
+                addonPreco: pendingAction.addon.preco,
+              });
+            } else {
+              toast.success(`${pendingAction.addon.nome} ativado com sucesso!`, {
+                description: 'O valor foi adicionado à sua mensalidade.',
+              });
+            }
           },
           onError: () => setPendingAction(null),
         }
       );
     } else {
       deactivateAddon.mutate(
-        { addonSlug: pendingAction.addonSlug },
+        { addonSlug: pendingAction.addon.slug },
         {
           onSuccess: () => {
             setPendingAction(null);
@@ -123,6 +114,14 @@ export function AddonsMarketplace() {
         }
       );
     }
+  }
+
+  function handlePaymentSuccess() {
+    setPaymentState(null);
+    queryClient.invalidateQueries({ queryKey: ['my-addons'] });
+    queryClient.invalidateQueries({ queryKey: ['active-addons'] });
+    queryClient.invalidateQueries({ queryKey: ['escritorio-billing'] });
+    toast.success('Recurso ativado com sucesso!');
   }
 
   return (
@@ -194,6 +193,17 @@ export function AddonsMarketplace() {
           addonNome={pendingAction.addon.nome}
           addonPreco={pendingAction.addon.preco}
           action={pendingAction.action}
+        />
+      )}
+
+      {paymentState && (
+        <AddonPaymentModal
+          open={!!paymentState}
+          onClose={() => setPaymentState(null)}
+          onSuccess={handlePaymentSuccess}
+          clientSecret={paymentState.clientSecret}
+          addonNome={paymentState.addonNome}
+          addonPreco={paymentState.addonPreco}
         />
       )}
     </div>
