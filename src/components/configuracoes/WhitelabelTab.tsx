@@ -134,7 +134,7 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
           {/* Logo */}
           <div className="space-y-2">
             <Label>Logo do Escritório</Label>
-            <p className="text-xs text-muted-foreground">Recomendado: 400×120px, PNG com fundo transparente</p>
+            <p className="text-xs text-muted-foreground">Recomendado: 400×120px · PNG, JPG, SVG ou WebP · Máx. 2MB</p>
             <div className="flex items-center gap-4">
               {escritorio?.logo_url ? (
                 <img src={escritorio.logo_url} alt="Logo" className="h-12 max-w-[200px] object-contain border rounded-lg p-2" />
