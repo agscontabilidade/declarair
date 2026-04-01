@@ -23,16 +23,11 @@ import { DeclaracoesLimitBanner } from '@/components/billing/DeclaracoesLimitBan
 const years = [2023, 2024, 2025, 2026];
 
 const checklistPadrao = [
-  { nome_documento: 'Informe de Rendimentos (empresa)', categoria: 'rendimentos', obrigatorio: true },
-  { nome_documento: 'Informe de Rendimentos Bancários', categoria: 'rendimentos', obrigatorio: true },
-  { nome_documento: 'Informe de Rendimentos de Investimentos', categoria: 'rendimentos', obrigatorio: false },
-  { nome_documento: 'Recibos de Despesas Médicas', categoria: 'deducoes', obrigatorio: true },
-  { nome_documento: 'Comprovantes de Despesas com Educação', categoria: 'deducoes', obrigatorio: true },
-  { nome_documento: 'Comprovante de Previdência Privada (PGBL)', categoria: 'deducoes', obrigatorio: false },
-  { nome_documento: 'Escritura/Contrato de Imóveis', categoria: 'bens_direitos', obrigatorio: true },
-  { nome_documento: 'CRLV de Veículos', categoria: 'bens_direitos', obrigatorio: true },
-  { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'outros', obrigatorio: true },
-  { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'outros', obrigatorio: true },
+  { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
+  { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true },
+  { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true },
+  { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false },
+  { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false },
 ];
 
 export default function Dashboard() {
