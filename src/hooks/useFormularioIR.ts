@@ -30,6 +30,7 @@ export interface FormularioData {
   despesas_educacao: DespesaEducacao[];
   previdencia_privada: Record<string, unknown>;
   informacoes_adicionais: string;
+  chave_pix_cliente: string;
 }
 
 const INITIAL_DATA: FormularioData = {
@@ -47,6 +48,7 @@ const INITIAL_DATA: FormularioData = {
   despesas_educacao: [],
   previdencia_privada: {},
   informacoes_adicionais: '',
+  chave_pix_cliente: '',
 };
 
 export function useFormularioIR() {
@@ -123,6 +125,7 @@ export function useFormularioIR() {
         despesas_educacao: (formulario.despesas_educacao as unknown as DespesaEducacao[]) || [],
         previdencia_privada: (formulario.previdencia_privada as unknown as Record<string, unknown>) || {},
         informacoes_adicionais: formulario.informacoes_adicionais || '',
+        chave_pix_cliente: (formulario as any).chave_pix_cliente || '',
       });
     }
   }, [formulario]);
