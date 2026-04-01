@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { setUserContext, clearUserContext, logError } from '@/lib/sentry';
 
 type UserType = 'contador' | 'cliente' | 'admin' | null;
 
@@ -105,6 +106,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           clienteId: null,
           onboardingCompleto,
         });
+        setUserContext({
+          id: currentUser.id,
+          email: currentUser.email,
+          nome: usuario.nome,
+          escritorioId: usuario.escritorio_id,
+        });
         return;
       }
 
@@ -129,8 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUserType(null);
       setProfile(emptyProfile);
+      clearUserContext();
     } catch (error) {
-      console.error('[AuthContext] Load profile error:', error);
+      logError(error as Error, { context: 'loadProfile', userId: currentUser.id });
       setUserType(null);
       setProfile(emptyProfile);
     }
@@ -197,6 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearInvalidSession, loadProfile, resetAuthState]);
 
   const signOut = async () => {
+    clearUserContext();
     await supabase.auth.signOut();
   };
 
