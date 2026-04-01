@@ -144,7 +144,7 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
                 </div>
               )}
               <label className="cursor-pointer">
-                <input type="file" accept=".png,.svg,.jpg,.jpeg" className="hidden" onChange={handleLogoUpload} disabled={!isDono} />
+                <input type="file" accept=".png,.jpg,.jpeg,.svg,.webp" className="hidden" onChange={handleLogoUpload} disabled={!isDono} />
                 <Button variant="outline" size="sm" asChild disabled={uploadingLogo || !isDono}>
                   <span><Upload className="h-4 w-4 mr-1" /> {uploadingLogo ? 'Enviando...' : 'Upload'}</span>
                 </Button>
