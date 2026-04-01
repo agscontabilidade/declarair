@@ -49,8 +49,8 @@ export default function Mensagens() {
 
         {!isWhatsAppConnected && (
           <Alert className="border-warning/40 bg-warning/10">
-            <AlertCircle className="h-4 w-4 text-[hsl(var(--warning-dark))]" />
-            <AlertDescription className="text-[hsl(var(--warning-dark))]">
+            <AlertCircle className="h-4 w-4 text-warning-dark" />
+            <AlertDescription className="text-warning-dark">
               Para enviar mensagens via WhatsApp, conecte seu número primeiro.{' '}
               <Link to="/whatsapp" className="font-semibold underline hover:opacity-80">Conectar WhatsApp →</Link>
             </AlertDescription>
