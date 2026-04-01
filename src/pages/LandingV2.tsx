@@ -6,6 +6,7 @@ import TurningPoint from '@/components/landing-v2/TurningPoint';
 import ProductShowcase from '@/components/landing-v2/ProductShowcase';
 import BeforeAfter from '@/components/landing-v2/BeforeAfter';
 import FeaturesGrid from '@/components/landing-v2/FeaturesGrid';
+import HowItWorks from '@/components/landing-v2/HowItWorks';
 import FeatureShowcases from '@/components/landing-v2/FeatureShowcases';
 import TestimonialsSection from '@/components/landing-v2/TestimonialsSection';
 import ObjectionsSection from '@/components/landing-v2/ObjectionsSection';
@@ -19,7 +20,6 @@ export default function LandingV2() {
   return (
     <div className="landing-v2 min-h-screen overflow-x-hidden">
       <NavBar />
-      <div className="h-16" />
       <HeroSection />
       <StorytellingBand />
       <PainSection />
@@ -27,6 +27,7 @@ export default function LandingV2() {
       <ProductShowcase />
       <BeforeAfter />
       <FeaturesGrid />
+      <HowItWorks />
       <FeatureShowcases />
       <TestimonialsSection />
       <ObjectionsSection />
