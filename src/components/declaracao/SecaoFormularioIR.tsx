@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { formatCPF, formatCurrency } from '@/lib/formatters';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { PERFIL_LABELS, type PerfilFiscal } from '@/lib/checklistPorPerfil';
 
 interface Props {
   formulario: any;
@@ -100,19 +101,33 @@ export function SecaoFormularioIR({ formulario, isLoading }: Props) {
 
   const sections = [
     { key: 'dados_pessoais', title: 'Dados Pessoais', data: { estado_civil: formulario.estado_civil, conjuge_nome: formulario.conjuge_nome, conjuge_cpf: formulario.conjuge_cpf ? formatCPF(formulario.conjuge_cpf) : null } },
-    { key: 'perfil_fiscal', title: 'Perfil Fiscal', data: formulario.perfil_fiscal },
+    { key: 'perfil_fiscal', title: 'Perfil Fiscal', data: formulario.perfil_fiscal, customRender: true },
     { key: 'dependentes', title: 'Dependentes', data: formulario.dependentes },
-    { key: 'rendimentos_emprego', title: 'Rendimentos de Emprego', data: formulario.rendimentos_emprego },
-    { key: 'rendimentos_autonomo', title: 'Rendimentos de Autônomo', data: formulario.rendimentos_autonomo },
-    { key: 'rendimentos_aluguel', title: 'Rendimentos de Aluguel', data: formulario.rendimentos_aluguel },
-    { key: 'outros_rendimentos', title: 'Outros Rendimentos', data: formulario.outros_rendimentos },
-    { key: 'bens', title: 'Bens e Direitos', data: formulario.bens_direitos },
-    { key: 'dividas', title: 'Dívidas e Ônus', data: formulario.dividas_onus },
-    { key: 'despesas_medicas', title: 'Despesas Médicas', data: formulario.despesas_medicas },
-    { key: 'despesas_educacao', title: 'Despesas com Educação', data: formulario.despesas_educacao },
-    { key: 'previdencia', title: 'Previdência Privada', data: formulario.previdencia_privada },
     { key: 'adicionais', title: 'Informações Adicionais', data: formulario.informacoes_adicionais },
   ];
+
+  const renderPerfilFiscal = (data: any) => {
+    if (isEmpty(data)) return <p className="text-sm text-muted-foreground italic">{NAO_ENVIADA}</p>;
+    const perfil = data as Partial<PerfilFiscal>;
+    return (
+      <div className="space-y-2">
+        {(Object.keys(PERFIL_LABELS) as (keyof PerfilFiscal)[]).map((key) => {
+          const value = perfil[key];
+          if (value === undefined) return null;
+          return (
+            <div key={key} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+              <span className="text-muted-foreground">{PERFIL_LABELS[key].replace('?', '')}</span>
+              {value ? (
+                <span className="flex items-center gap-1 text-success font-medium"><CheckCircle2 className="h-4 w-4" /> Sim</span>
+              ) : (
+                <span className="flex items-center gap-1 text-muted-foreground font-medium"><XCircle className="h-4 w-4" /> Não</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <Card>
@@ -133,7 +148,7 @@ export function SecaoFormularioIR({ formulario, isLoading }: Props) {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                {renderJsonList(s.data)}
+                {s.customRender ? renderPerfilFiscal(s.data) : renderJsonList(s.data)}
               </AccordionContent>
             </AccordionItem>
           ))}
