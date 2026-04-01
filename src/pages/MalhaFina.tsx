@@ -37,6 +37,8 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 };
 
 export default function MalhaFina() {
+  const navigate = useNavigate();
+  const { features, loading: billingLoading } = useBillingStatus();
   const { consultas, isLoading, isError, error, refetch, anoBase, setAnoBase, filtroStatus, setFiltroStatus, consultarIndividual, consultarTodos, consultando } = useMalhaFina();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedConsulta, setSelectedConsulta] = useState<any>(null);
