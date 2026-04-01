@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Shield, Search, RefreshCw, AlertTriangle, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Shield, Search, RefreshCw, AlertTriangle, CheckCircle2, Clock, XCircle, Lock } from 'lucide-react';
 import { useMalhaFina } from '@/hooks/useMalhaFina';
+import { useBillingStatus } from '@/hooks/useBillingStatus';
 import { formatCPF } from '@/lib/formatters';
 import { QueryError } from '@/components/ui/QueryError';
 
@@ -34,6 +37,8 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 };
 
 export default function MalhaFina() {
+  const navigate = useNavigate();
+  const { features, loading: billingLoading } = useBillingStatus();
   const { consultas, isLoading, isError, error, refetch, anoBase, setAnoBase, filtroStatus, setFiltroStatus, consultarIndividual, consultarTodos, consultando } = useMalhaFina();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedConsulta, setSelectedConsulta] = useState<any>(null);
@@ -50,6 +55,38 @@ export default function MalhaFina() {
   const emMalha = items.filter(c => c.status_rfb === 'em_malha').length;
   const processadas = items.filter(c => c.status_rfb === 'processada').length;
   const pendentes = items.filter(c => c.status_rfb === 'nao_consultado').length;
+
+  if (billingLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!features.malha_fina) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-lg mx-auto py-16">
+          <Alert>
+            <Lock className="h-4 w-4" />
+            <AlertDescription>
+              <p className="font-medium mb-2">Feature Premium</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                O monitoramento de Malha Fina está disponível apenas no plano Pro.
+                Faça upgrade para desbloquear esta funcionalidade.
+              </p>
+              <Button onClick={() => navigate('/planos')} size="sm">
+                Ver Planos
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
