@@ -120,7 +120,7 @@ export default function Upgrade() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">Declarações Ativas</span>
                   <span className="text-muted-foreground">
-                    {declaracoesCount} de {limiteDeclaracoes} inclusas
+                    {declaracoesCount} ativas
                   </span>
                 </div>
                 <Progress value={limiteDeclaracoes ? Math.min((declaracoesCount / limiteDeclaracoes) * 100, 100) : 0} className="h-2" />
