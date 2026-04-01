@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Configuracoes() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const { isDono } = usePermissoes();
   const escritorioId = profile.escritorioId;
   const { toast } = useToast();
@@ -164,7 +166,7 @@ export default function Configuracoes() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Plano Atual</CardTitle>
-                  {isDono && <Button size="sm" disabled>Upgrade</Button>}
+                  {isDono && <Button size="sm" onClick={() => navigate('/meus-planos')}>Upgrade</Button>}
                 </div>
               </CardHeader>
               <CardContent>
