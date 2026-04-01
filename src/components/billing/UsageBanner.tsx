@@ -33,7 +33,7 @@ export function UsageBanner() {
           </div>
 
           {isAtLimit && (
-            <Button size="sm" onClick={() => navigate('/planos')}>
+            <Button size="sm" onClick={() => navigate('/meus-planos')}>
               <Zap className="h-4 w-4 mr-2" />
               Fazer Upgrade
             </Button>
