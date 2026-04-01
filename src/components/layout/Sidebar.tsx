@@ -107,7 +107,7 @@ export function AppSidebar() {
           onClick={() => navigate('/perfil')}
           className="flex items-center gap-3 px-1 mb-2 w-full rounded-lg hover:bg-sidebar-accent/50 transition-colors py-1"
         >
-          <div className="h-8 w-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold shrink-0">
+          <div className="h-8 w-8 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
             {initials}
           </div>
           {!collapsed && (
