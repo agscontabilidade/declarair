@@ -14,9 +14,8 @@ export function useDeclaracoesExtras() {
     mutationFn: async (quantidade: number = 1) => {
       if (!profile.escritorioId) throw new Error('Sem escritório');
 
-      const valorTotal = quantidade * PRECOS.DECLARACAO_EXTRA;
+      const valorTotal = quantidade * PRECOS.DECLARACAO_EXTRA.preco;
 
-      // Criar cobrança via billing-service
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Não autenticado');
 
@@ -31,6 +30,7 @@ export function useDeclaracoesExtras() {
           descricao: `${quantidade} declaração(ões) extra(s)`,
           valor: valorTotal,
           tipo: 'declaracao_extra',
+          quantidade,
         }),
       });
 
@@ -41,7 +41,7 @@ export function useDeclaracoesExtras() {
     },
     onSuccess: (_data, quantidade) => {
       toast.success(`${quantidade} declaração(ões) extra(s) solicitada(s)!`, {
-        description: 'O boleto/pix foi gerado. Verifique suas cobranças.',
+        description: 'O pagamento foi gerado. Verifique suas cobranças.',
       });
       queryClient.invalidateQueries({ queryKey: ['escritorio-billing'] });
       queryClient.invalidateQueries({ queryKey: ['usage-status'] });
