@@ -10,7 +10,7 @@ import { StepPerfilFiscal } from '@/components/formulario-ir/StepPerfilFiscal';
 import { StepDadosPessoais } from '@/components/formulario-ir/StepDadosPessoais';
 import { StepDependentes } from '@/components/formulario-ir/StepDependentes';
 
-import { StepBensDireitos } from '@/components/formulario-ir/StepBensDireitos';
+
 import { StepDividasOnus } from '@/components/formulario-ir/StepDividasOnus';
 import { StepDeducoes } from '@/components/formulario-ir/StepDeducoes';
 import { StepInfoAdicionais } from '@/components/formulario-ir/StepInfoAdicionais';
