@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { setUserContext, clearUserContext, logError } from '@/lib/sentry';
 
 type UserType = 'contador' | 'cliente' | 'admin' | null;
 
