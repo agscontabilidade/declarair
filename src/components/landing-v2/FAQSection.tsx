@@ -1,6 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { HelpCircle } from 'lucide-react';
-import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { motion } from 'framer-motion';
 
 const faqs = [
   { q: 'Como funciona o plano gratuito?', a: 'O plano Free libera 1 declaração completa com chat, kanban e 500 MB de armazenamento — ideal para conhecer a plataforma sem compromisso.' },
@@ -12,16 +12,20 @@ const faqs = [
 ];
 
 export default function FAQSection() {
-  const ref = useScrollReveal();
-
   return (
-    <section ref={ref} id="faq" className="v2-reveal py-28 lg:py-36 bg-white relative">
+    <section id="faq" className="py-28 lg:py-36 bg-white relative">
       <div className="section-divider absolute top-0 left-0 right-0" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-[1fr,1.5fr] gap-16 lg:gap-20">
           {/* Left sticky header */}
-          <div className="lg:sticky lg:top-32 lg:self-start space-y-6">
+          <motion.div
+            className="lg:sticky lg:top-32 lg:self-start space-y-6"
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.6 }}
+          >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide">
               <HelpCircle className="h-3.5 w-3.5" /> FAQ
             </div>
@@ -32,23 +36,30 @@ export default function FAQSection() {
             <p className="text-[hsl(var(--lv2-slate-500))] leading-relaxed">
               Sem enrolação. Se sua dúvida não estiver aqui, fale com a gente no chat.
             </p>
-          </div>
+          </motion.div>
 
           {/* Right accordion */}
           <Accordion type="single" collapsible className="space-y-4">
             {faqs.map((f, i) => (
-              <AccordionItem
+              <motion.div
                 key={i}
-                value={`faq-${i}`}
-                className="rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-[hsl(var(--lv2-slate-50))] px-7 data-[state=open]:border-[hsl(var(--lv2-emerald)/0.3)] data-[state=open]:bg-white data-[state=open]:shadow-lg data-[state=open]:shadow-[hsl(var(--lv2-emerald)/0.06)] transition-all duration-300"
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ delay: i * 0.08, duration: 0.4 }}
               >
-                <AccordionTrigger className="text-left text-base font-semibold text-[hsl(var(--lv2-slate-950))] hover:no-underline py-6">
-                  {f.q}
-                </AccordionTrigger>
-                <AccordionContent className="text-[15px] text-[hsl(var(--lv2-slate-500))] pb-6 leading-relaxed">
-                  {f.a}
-                </AccordionContent>
-              </AccordionItem>
+                <AccordionItem
+                  value={`faq-${i}`}
+                  className="rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-[hsl(var(--lv2-slate-50))] px-7 data-[state=open]:border-[hsl(var(--lv2-emerald)/0.3)] data-[state=open]:bg-white data-[state=open]:shadow-lg data-[state=open]:shadow-[hsl(var(--lv2-emerald)/0.06)] transition-all duration-300"
+                >
+                  <AccordionTrigger className="text-left text-base font-semibold text-[hsl(var(--lv2-slate-950))] hover:no-underline py-6">
+                    {f.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-[15px] text-[hsl(var(--lv2-slate-500))] pb-6 leading-relaxed">
+                    {f.a}
+                  </AccordionContent>
+                </AccordionItem>
+              </motion.div>
             ))}
           </Accordion>
         </div>

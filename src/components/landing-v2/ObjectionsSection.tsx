@@ -1,5 +1,5 @@
-import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { ArrowRight, MessageCircleQuestion } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const objections = [
   { objection: '"Já uso planilha"', answer: 'Planilha organiza dados. Não organiza processo. E muito menos cliente. Quando o WhatsApp toca pela 30ª vez pedindo a mesma coisa, a planilha não te salva.' },
@@ -9,14 +9,18 @@ const objections = [
 ];
 
 export default function ObjectionsSection() {
-  const ref = useScrollReveal();
-
   return (
-    <section ref={ref} className="v2-reveal py-28 lg:py-36 bg-[hsl(var(--lv2-slate-50))] relative">
+    <section className="py-28 lg:py-36 bg-[hsl(var(--lv2-slate-50))] relative">
       <div className="section-divider absolute top-0 left-0 right-0" />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6 }}
+        >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-amber)/0.3)] bg-[hsl(var(--lv2-amber)/0.08)] text-[hsl(var(--lv2-amber))] text-xs font-semibold uppercase tracking-wide mb-6">
             <MessageCircleQuestion className="h-3.5 w-3.5" />
             Sem desculpa
@@ -24,15 +28,19 @@ export default function ObjectionsSection() {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[hsl(var(--lv2-slate-950))]">
             "Mas eu já…" — Calma. Lê isso aqui.
           </h2>
-        </div>
+        </motion.div>
 
         <div className="grid md:grid-cols-2 gap-6">
           {objections.map((obj, i) => (
-            <div
+            <motion.div
               key={obj.objection}
-              className="group relative rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-white p-8 transition-all duration-300 hover:border-[hsl(var(--lv2-emerald)/0.3)] hover:-translate-y-1 hover:shadow-xl hover:shadow-[hsl(var(--lv2-emerald)/0.06)] overflow-hidden"
+              className="group relative rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-white p-8 transition-colors duration-300 hover:border-[hsl(var(--lv2-emerald)/0.3)] hover:shadow-xl hover:shadow-[hsl(var(--lv2-emerald)/0.06)] overflow-hidden"
+              initial={{ opacity: 0, y: 30, scale: 0.97 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ delay: i * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
             >
-              {/* Decorative number */}
               <span className="absolute -top-4 -right-2 font-mono text-[120px] font-bold leading-none text-[hsl(var(--lv2-slate-100))] select-none group-hover:text-[hsl(var(--lv2-emerald)/0.06)] transition-colors">
                 {String(i + 1).padStart(2, '0')}
               </span>
@@ -46,7 +54,7 @@ export default function ObjectionsSection() {
                   <p className="text-[15px] text-[hsl(var(--lv2-slate-600))] leading-relaxed">{obj.answer}</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
