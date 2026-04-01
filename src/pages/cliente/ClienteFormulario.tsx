@@ -39,13 +39,17 @@ export default function ClienteFormulario() {
     }
   }, [formulario]);
 
-  // Dynamic steps based on perfil
+  // Dynamic steps based on perfil - SMART LOGIC:
+  // - Dados Pessoais only shown if dependentes is true (needs conjugal info)
+  // - Dependentes step only if dependentes is true
+  // - If no dependentes, system assumes solteiro, no conjugal data needed
   const steps = useMemo<StepDef[]>(() => {
     const s: StepDef[] = [
       { key: 'perfil', label: 'Perfil Fiscal' },
-      { key: 'dados', label: 'Dados Pessoais' },
     ];
+    // Only show dados pessoais if has dependentes (need to know marital status for cônjuge)
     if (perfilFiscal.dependentes) {
+      s.push({ key: 'dados', label: 'Dados Pessoais' });
       s.push({ key: 'dependentes', label: 'Dependentes' });
     }
     s.push({ key: 'documentos', label: 'Envio de Documentos' });
@@ -70,6 +74,13 @@ export default function ClienteFormulario() {
     },
     enabled: !!declaracao?.id,
   });
+
+  // Ensure step index stays within bounds when steps change
+  useEffect(() => {
+    if (step >= steps.length) {
+      setStep(Math.max(0, steps.length - 1));
+    }
+  }, [steps.length, step]);
 
   if (isLoading) {
     return (
@@ -128,24 +139,35 @@ export default function ClienteFormulario() {
     
     const checklistItems = gerarChecklistPorPerfil(perfilFiscal);
 
-    // Delete existing checklist and regenerate based on new perfil
-    const { data: existing } = await supabase
+    // Always regenerate checklist when advancing from perfil step
+    // Delete existing items first, then insert new ones
+    await supabase
       .from('checklist_documentos')
-      .select('id')
-      .eq('declaracao_id', declaracao.id)
-      .limit(1);
+      .delete()
+      .eq('declaracao_id', declaracao.id);
 
-    if (!existing || existing.length === 0) {
-      const items = checklistItems.map(item => ({
-        ...item,
-        declaracao_id: declaracao.id,
-      }));
+    const items = checklistItems.map(item => ({
+      nome_documento: item.nome_documento,
+      categoria: item.categoria,
+      obrigatorio: item.obrigatorio,
+      declaracao_id: declaracao.id,
+    }));
+    
+    if (items.length > 0) {
       await supabase.from('checklist_documentos').insert(items);
+    }
+
+    // If no dependentes, auto-set solteiro and clear conjugal data
+    if (!perfilFiscal.dependentes) {
+      updateField('estado_civil', 'solteiro');
+      updateField('conjuge_nome', '');
+      updateField('conjuge_cpf', '');
+      updateField('dependentes', []);
     }
 
     // Refresh checklist query
     queryClient.invalidateQueries({ queryKey: ['formulario-checklist'] });
-    toast.success('Perfil fiscal salvo! Checklist de documentos gerado.');
+    toast.success('Perfil fiscal salvo! Checklist de documentos atualizado.');
     setStep(1);
   };
 
@@ -173,7 +195,6 @@ export default function ClienteFormulario() {
           link_destino: `/clientes/${declaracao.cliente_id}`,
         });
 
-        // Register activity
         await supabase.from('declaracao_atividades').insert({
           declaracao_id: declaracao.id,
           tipo: 'documento',
@@ -185,7 +206,6 @@ export default function ClienteFormulario() {
 
     const ok = await finalizar();
     if (ok) {
-      // Also notify about formulário completion
       if (pendingDocs.length > 0) {
         toast.info(`Formulário enviado! ${pendingDocs.length} documento(s) ainda pendente(s) — seu contador será notificado.`);
       }
