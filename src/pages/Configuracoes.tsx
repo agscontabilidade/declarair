@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Configuracoes() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const { isDono } = usePermissoes();
   const escritorioId = profile.escritorioId;
   const { toast } = useToast();
