@@ -12,7 +12,7 @@ import { StepDependentes } from '@/components/formulario-ir/StepDependentes';
 
 
 import { StepDividasOnus } from '@/components/formulario-ir/StepDividasOnus';
-import { StepDeducoes } from '@/components/formulario-ir/StepDeducoes';
+
 import { StepInfoAdicionais } from '@/components/formulario-ir/StepInfoAdicionais';
 import { toast } from 'sonner';
 import { DEFAULT_PERFIL, gerarChecklistPorPerfil, type PerfilFiscal } from '@/lib/checklistPorPerfil';
