@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
 
 type MensagemChat = Tables<'mensagens_chat'> & { enviado_whatsapp?: boolean };
@@ -66,9 +68,17 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
         .single();
       if (error) throw error;
 
-      // If sender is contador, fire-and-forget WhatsApp send
+      // If sender is contador, fire-and-forget WhatsApp send with retry
       if (senderType === 'contador' && mensagem) {
-        sendViaWhatsApp(mensagem.id, clienteId, escritorioId, conteudo).catch((err) => {
+        sendViaWhatsApp(mensagem.id, clienteId, escritorioId, conteudo).then((result) => {
+          if (result && !result.success) {
+            toast({
+              title: 'Mensagem salva, mas não enviada no WhatsApp',
+              description: 'Verifique sua configuração de WhatsApp',
+              variant: 'destructive',
+            });
+          }
+        }).catch((err) => {
           console.error('[Chat] WhatsApp fire-and-forget error:', err);
         });
       }
@@ -101,7 +111,7 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
 }
 
 /** Fire-and-forget: send message via WhatsApp if addon is active and client has phone */
-async function sendViaWhatsApp(messageId: string, clienteId: string, escritorioId: string, conteudo: string) {
+async function sendViaWhatsApp(messageId: string, clienteId: string, escritorioId: string, conteudo: string): Promise<{ success: boolean; error?: unknown }> {
   // Check if WhatsApp addon is active
   const { data: addons } = await supabase
     .from('escritorio_addons')
@@ -110,7 +120,7 @@ async function sendViaWhatsApp(messageId: string, clienteId: string, escritorioI
     .eq('status', 'ativo');
 
   const hasWhatsApp = addons?.some((a: any) => a.addons?.nome?.toLowerCase().includes('whatsapp'));
-  if (!hasWhatsApp) return;
+  if (!hasWhatsApp) return { success: true }; // Not applicable, not a failure
 
   // Get client phone
   const { data: cliente } = await supabase
@@ -119,23 +129,54 @@ async function sendViaWhatsApp(messageId: string, clienteId: string, escritorioI
     .eq('id', clienteId)
     .single();
 
-  if (!cliente?.telefone) return;
+  if (!cliente?.telefone) return { success: true }; // No phone, not a failure
 
-  // Send via edge function (fire-and-forget, don't block UI)
-  const { error } = await supabase.functions.invoke('whatsapp-service', {
-    body: {
-      action: 'send_message',
-      to: cliente.telefone,
-      message: conteudo,
-      escritorio_id: escritorioId,
-    },
-  });
+  const MAX_RETRIES = 3;
+  let attempt = 0;
 
-  if (!error) {
-    // Mark as sent via WhatsApp — best effort
-    await supabase
-      .from('mensagens_chat')
-      .update({ enviado_whatsapp: true } as any)
-      .eq('id', messageId);
+  while (attempt < MAX_RETRIES) {
+    try {
+      const { error } = await supabase.functions.invoke('whatsapp-service', {
+        body: {
+          action: 'send_message',
+          to: cliente.telefone,
+          message: conteudo,
+          escritorio_id: escritorioId,
+        },
+      });
+
+      if (!error) {
+        await supabase
+          .from('mensagens_chat')
+          .update({
+            enviado_whatsapp: true,
+            whatsapp_enviado_em: new Date().toISOString(),
+            whatsapp_tentativas: attempt + 1,
+          } as any)
+          .eq('id', messageId);
+        return { success: true };
+      }
+
+      throw error;
+    } catch (err: any) {
+      attempt++;
+      console.error(`[WhatsApp] Tentativa ${attempt}/${MAX_RETRIES} falhou:`, err);
+
+      if (attempt < MAX_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      } else {
+        await supabase
+          .from('mensagens_chat')
+          .update({
+            enviado_whatsapp: false,
+            whatsapp_erro: err?.message || 'Erro desconhecido',
+            whatsapp_tentativas: MAX_RETRIES,
+          } as any)
+          .eq('id', messageId);
+        return { success: false, error: err };
+      }
+    }
   }
+
+  return { success: false };
 }
