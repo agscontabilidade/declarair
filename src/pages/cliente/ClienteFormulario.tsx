@@ -153,8 +153,7 @@ export default function ClienteFormulario() {
             {step === 0 && <StepPerfilFiscal perfil={perfilFiscal} onChange={handlePerfilChange} />}
             {step === 1 && <StepDadosPessoais data={formData} onChange={updateField} />}
             {step === 2 && <StepDependentes data={formData} onChange={updateField} />}
-            {step === 3 && <StepDividasOnus data={formData} onChange={updateField} />}
-            {step === 4 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
+            {step === 3 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
           </CardContent>
         </Card>
 
