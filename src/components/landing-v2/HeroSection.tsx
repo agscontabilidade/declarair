@@ -16,7 +16,7 @@ export default function HeroSection() {
       <div className="absolute top-20 left-[10%] w-[500px] h-[500px] rounded-full bg-[hsl(var(--lv2-emerald)/0.06)] blur-[100px]" />
       <div className="absolute bottom-10 right-[5%] w-[400px] h-[400px] rounded-full bg-[hsl(var(--lv2-amber)/0.04)] blur-[80px]" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 lg:pt-16 lg:pb-24 w-full">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-20 lg:pt-40 lg:pb-28 w-full">
         <div className="flex flex-col lg:flex-row items-center gap-20 lg:gap-16">
           {/* Text — 55% */}
           <div className="flex-[1.2] text-center lg:text-left space-y-8 max-w-2xl">
