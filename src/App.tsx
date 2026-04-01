@@ -51,6 +51,7 @@ import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 import PoliticaLGPD from "./pages/PoliticaLGPD";
 import Unsubscribe from "./pages/Unsubscribe";
 import SobreNos from "./pages/SobreNos";
+import LandingV2 from "./pages/LandingV2";
 
 const queryClient = new QueryClient();
 
