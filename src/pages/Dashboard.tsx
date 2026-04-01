@@ -39,6 +39,17 @@ export default function Dashboard() {
   const currentYear = new Date().getFullYear();
   const [anoBase, setAnoBase] = useState(currentYear);
   const { kpis, declaracoes } = useDashboardData(anoBase);
+  const {
+    filters,
+    setSearch,
+    setContadorId,
+    setUrgencia,
+    setStatus,
+    clearFilters,
+    declaracoesFiltradas,
+    stats,
+    hasActiveFilters,
+  } = useDashboardFilters(declaracoes.data ?? []);
   const { profile, signOut } = useAuth();
   const { clientes, contadores } = useClientes();
   const queryClient = useQueryClient();
