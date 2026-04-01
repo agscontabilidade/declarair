@@ -19,7 +19,7 @@ import { DEFAULT_PERFIL, gerarChecklistPorPerfil, type PerfilFiscal } from '@/li
 import { supabase } from '@/integrations/supabase/client';
 
 const STEP_LABELS = [
-  'Perfil Fiscal', 'Dados Pessoais', 'Dependentes', 'Bens e Direitos',
+  'Perfil Fiscal', 'Dados Pessoais', 'Dependentes',
   'Dívidas e Ônus', 'Deduções', 'Informações Adicionais',
 ];
 
