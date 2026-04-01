@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import logoFull from '@/assets/logo-full.png';
 
 const NAV_LINKS = [
-  { label: 'A Dor', href: '#dor' },
+  { label: 'Problema', href: '#dor' },
   { label: 'Solução', href: '#solucao' },
   { label: 'Recursos', href: '#features' },
   { label: 'Preços', href: '#pricing' },
@@ -25,66 +25,72 @@ export default function NavBar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'nav-scrolled shadow-sm' : 'bg-transparent'
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        scrolled ? 'nav-scrolled' : 'bg-transparent'
       }`}
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link to="/landing-v2" className="flex items-center">
-          <img src={logoFull} alt="DeclaraIR" className="h-10 sm:h-12 w-auto object-contain" />
+          <img
+            src={logoFull}
+            alt="DeclaraIR"
+            className="h-9 sm:h-10 w-auto object-contain brightness-0 invert"
+          />
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-1">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-[hsl(var(--lv2-slate-500))] hover:text-[hsl(var(--lv2-slate-950))] transition-colors"
+              className="px-3 py-2 text-[13px] font-medium text-white/60 hover:text-white transition-colors rounded-md hover:bg-white/5"
             >
               {link.label}
             </a>
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-3">
           <Link to="/login">
-            <Button variant="ghost" size="sm" className="text-sm font-medium text-[hsl(var(--lv2-slate-500))] hover:text-[hsl(var(--lv2-slate-950))]">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-[13px] font-medium text-white/60 hover:text-white hover:bg-white/5"
+            >
               Entrar
             </Button>
           </Link>
           <Link to="/cadastro">
             <Button
               size="sm"
-              className="glow-btn text-sm px-5 font-semibold bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-lg"
+              className="glow-btn text-[13px] px-5 font-semibold bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full"
             >
-              Começar Grátis
+              Começar Grátis →
             </Button>
           </Link>
         </div>
 
-        {/* Mobile */}
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
+          <SheetTrigger asChild className="lg:hidden">
+            <Button variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/10">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-72 bg-[hsl(var(--lv2-slate-50))]">
-            <div className="flex flex-col gap-6 mt-8">
+          <SheetContent side="right" className="w-72 bg-[hsl(var(--lv2-slate-950))] border-[hsl(var(--lv2-slate-800))]">
+            <div className="flex flex-col gap-4 mt-8">
               {NAV_LINKS.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className="text-base font-medium text-[hsl(var(--lv2-slate-800))] hover:text-[hsl(var(--lv2-emerald))]"
+                  className="text-base font-medium text-white/70 hover:text-[hsl(var(--lv2-emerald))] transition-colors px-2 py-2"
                 >
                   {link.label}
                 </a>
               ))}
-              <hr className="border-[hsl(var(--lv2-slate-200))]" />
+              <div className="h-px bg-[hsl(var(--lv2-slate-800))] my-2" />
               <Link to="/login" onClick={() => setOpen(false)}>
-                <Button variant="outline" className="w-full">Entrar</Button>
+                <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10">Entrar</Button>
               </Link>
               <Link to="/cadastro" onClick={() => setOpen(false)}>
                 <Button className="w-full bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white">

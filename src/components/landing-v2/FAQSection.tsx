@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
@@ -15,27 +14,29 @@ export default function FAQSection() {
   const ref = useScrollReveal();
 
   return (
-    <section ref={ref} id="faq" className="v2-reveal py-20 lg:py-28 bg-[hsl(var(--lv2-slate-50))]">
+    <section ref={ref} id="faq" className="v2-reveal py-24 lg:py-32 bg-white relative">
+      <div className="section-divider absolute top-0 left-0 right-0" />
+
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
-          <Badge variant="outline" className="mb-4 text-xs px-3 py-1 font-medium border-[hsl(var(--lv2-slate-200))]">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide mb-6">
             FAQ
-          </Badge>
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-[hsl(var(--lv2-slate-950))]">
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold text-[hsl(var(--lv2-slate-950))]">
             Perguntas diretas, respostas diretas
           </h2>
         </div>
-        <Accordion type="single" collapsible className="space-y-2">
+        <Accordion type="single" collapsible className="space-y-3">
           {faqs.map((f, i) => (
             <AccordionItem
               key={i}
               value={`faq-${i}`}
-              className="rounded-xl border border-[hsl(var(--lv2-slate-200))] bg-white px-5"
+              className="rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-[hsl(var(--lv2-slate-50))] px-6 data-[state=open]:border-[hsl(var(--lv2-emerald)/0.3)] transition-colors"
             >
-              <AccordionTrigger className="text-left text-sm font-medium text-[hsl(var(--lv2-slate-950))] hover:no-underline py-4 font-heading">
+              <AccordionTrigger className="text-left text-[15px] font-semibold text-[hsl(var(--lv2-slate-950))] hover:no-underline py-5">
                 {f.q}
               </AccordionTrigger>
-              <AccordionContent className="text-sm text-[hsl(var(--lv2-slate-500))] pb-4">
+              <AccordionContent className="text-sm text-[hsl(var(--lv2-slate-500))] pb-5 leading-relaxed">
                 {f.a}
               </AccordionContent>
             </AccordionItem>

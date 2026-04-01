@@ -7,27 +7,32 @@ export default function UrgencyBand() {
   const ref = useScrollReveal();
 
   return (
-    <section ref={ref} className="v2-reveal py-16 lg:py-20 border-y border-[hsl(var(--lv2-slate-200))] bg-white">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
-        <div className="h-12 w-12 rounded-2xl border border-[hsl(var(--lv2-amber)/0.2)] bg-[hsl(var(--lv2-amber)/0.06)] flex items-center justify-center mx-auto">
-          <Flame className="h-5 w-5 text-[hsl(var(--lv2-amber))]" />
+    <section ref={ref} className="v2-reveal relative overflow-hidden bg-[hsl(var(--lv2-slate-950))] grain">
+      {/* Gradient accent */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--lv2-amber)/0.08)] via-transparent to-[hsl(var(--lv2-emerald)/0.06)]" />
+
+      <div className="relative py-20 lg:py-24">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+          <div className="h-14 w-14 rounded-2xl bg-[hsl(var(--lv2-amber)/0.1)] border border-[hsl(var(--lv2-amber)/0.2)] flex items-center justify-center mx-auto">
+            <Flame className="h-6 w-6 text-[hsl(var(--lv2-amber))]" />
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white">
+            A temporada de IR não espera.
+          </h2>
+          <p className="text-lg text-white/50 leading-relaxed max-w-lg mx-auto">
+            Quem se organiza antes, <span className="font-semibold text-white">lucra mais</span>.
+            <br />
+            Quem deixa pra depois… entra em modo sobrevivência.
+          </p>
+          <Link to="/cadastro">
+            <Button
+              size="lg"
+              className="mt-2 text-base px-10 h-13 font-bold bg-[hsl(var(--lv2-amber))] hover:bg-[hsl(var(--lv2-amber)/0.9)] text-[hsl(var(--lv2-slate-950))] rounded-full"
+            >
+              Começar agora <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </Link>
         </div>
-        <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[hsl(var(--lv2-slate-950))]">
-          A temporada de IR não espera.
-        </h2>
-        <p className="text-base text-[hsl(var(--lv2-slate-500))] leading-relaxed max-w-lg mx-auto">
-          Quem se organiza antes, <span className="font-semibold text-[hsl(var(--lv2-slate-950))]">lucra mais</span>.
-          <br />
-          Quem deixa pra depois… entra em modo sobrevivência.
-        </p>
-        <Link to="/cadastro">
-          <Button
-            size="lg"
-            className="glow-btn text-base px-10 h-12 font-bold uppercase tracking-wide mt-2 bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-lg"
-          >
-            Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
-          </Button>
-        </Link>
       </div>
     </section>
   );
