@@ -153,8 +153,32 @@ export function SecaoCalculoIR({ formulario, declaracao, onSaveForma, savingForm
     setCalculado(calcularComparativo(dados));
   };
 
+  if (billingLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin h-6 w-6 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!features.calculadora_ir) {
+    return (
+      <Alert>
+        <Lock className="h-4 w-4" />
+        <AlertDescription>
+          <p className="font-medium mb-2">Calculadora Premium</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            A calculadora de IR automática está disponível apenas no plano Pro.
+          </p>
+          <Button size="sm" onClick={() => navigate('/planos')}>
+            Fazer Upgrade
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
