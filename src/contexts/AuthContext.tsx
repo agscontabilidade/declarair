@@ -136,8 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUserType(null);
       setProfile(emptyProfile);
+      clearUserContext();
     } catch (error) {
-      console.error('[AuthContext] Load profile error:', error);
+      logError(error as Error, { context: 'loadProfile', userId: currentUser.id });
       setUserType(null);
       setProfile(emptyProfile);
     }
