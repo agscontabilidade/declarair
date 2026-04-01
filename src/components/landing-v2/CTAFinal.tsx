@@ -2,15 +2,19 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import logoFull from '@/assets/logo-full.png';
-import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { motion } from 'framer-motion';
 
 export default function CTAFinal() {
-  const ref = useScrollReveal();
-
   return (
-    <section ref={ref} className="v2-reveal py-24 lg:py-28 bg-[hsl(var(--lv2-slate-50))]">
+    <section className="py-24 lg:py-28 bg-[hsl(var(--lv2-slate-50))]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-[2rem] overflow-hidden">
+        <motion.div
+          className="relative rounded-[2rem] overflow-hidden"
+          initial={{ opacity: 0, y: 40, scale: 0.97 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        >
           {/* Background */}
           <div className="absolute inset-0 hero-mesh" />
           <div className="absolute inset-0 grain" />
@@ -26,7 +30,15 @@ export default function CTAFinal() {
           }} />
 
           <div className="relative p-14 sm:p-24 text-center">
-            <img src={logoFull} alt="DeclaraIR" className="h-12 sm:h-14 mx-auto mb-10 brightness-0 invert" />
+            <motion.img
+              src={logoFull}
+              alt="DeclaraIR"
+              className="h-12 sm:h-14 mx-auto mb-10 brightness-0 invert"
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, type: 'spring' }}
+            />
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] max-w-3xl mx-auto">
               Pare de operar no caos.
             </h2>
@@ -53,7 +65,7 @@ export default function CTAFinal() {
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

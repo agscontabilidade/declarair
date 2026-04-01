@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import {
   ArrowRight, Layout, Smartphone, Shield, Zap, Palette, Receipt,
 } from 'lucide-react';
-import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { motion } from 'framer-motion';
 
 const features = [
   { icon: Layout, title: 'Veja quem está pendente agora', desc: 'Pare de correr atrás no último dia. O dashboard mostra exatamente quem falta, quem travou e onde está o gargalo — em tempo real.', span: 'lg:col-span-2', accent: 'emerald' },
@@ -14,13 +14,25 @@ const features = [
   { icon: Receipt, title: 'Cobranças integradas', desc: 'Gere cobranças, acompanhe pagamentos e pare de perseguir cliente inadimplente.', span: 'lg:col-span-3', accent: 'emerald' },
 ];
 
-export default function FeaturesGrid() {
-  const ref = useScrollReveal();
+const cardVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.97 },
+  show: (i: number) => ({
+    opacity: 1, y: 0, scale: 1,
+    transition: { delay: i * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+  }),
+};
 
+export default function FeaturesGrid() {
   return (
-    <section ref={ref} id="features" className="v2-reveal py-28 lg:py-36 bg-[hsl(var(--lv2-slate-50))]">
+    <section id="features" className="py-28 lg:py-36 bg-[hsl(var(--lv2-slate-50))]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6 }}
+        >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide mb-6">
             Na prática
           </div>
@@ -31,15 +43,23 @@ export default function FeaturesGrid() {
           <p className="mt-6 text-lg text-[hsl(var(--lv2-slate-500))] max-w-lg mx-auto">
             Nada de feature bonita que não resolve. Aqui cada botão economiza tempo ou gera dinheiro.
           </p>
-        </div>
+        </motion.div>
 
         {/* Bento Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {features.map((f) => {
+          {features.map((f, i) => {
             const accentVar = f.accent === 'amber' ? '--lv2-amber' : '--lv2-emerald';
             return (
-              <div key={f.title} className={`group relative rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-white p-8 transition-all duration-300 hover:border-[hsl(var(${accentVar})/0.3)] hover:-translate-y-2 hover:shadow-xl hover:shadow-[hsl(var(${accentVar})/0.08)] overflow-hidden ${f.span}`}>
-                {/* Decorative glow */}
+              <motion.div
+                key={f.title}
+                custom={i}
+                variants={cardVariants}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: '-60px' }}
+                whileHover={{ y: -8, transition: { duration: 0.25 } }}
+                className={`group relative rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-white p-8 transition-colors duration-300 hover:border-[hsl(var(${accentVar})/0.3)] hover:shadow-xl hover:shadow-[hsl(var(${accentVar})/0.08)] overflow-hidden ${f.span}`}
+              >
                 <div className={`absolute -top-12 -right-12 w-32 h-32 bg-[hsl(var(${accentVar})/0.06)] rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity`} />
                 <div className="relative">
                   <div className={`h-13 w-13 rounded-2xl bg-[hsl(var(${accentVar})/0.08)] flex items-center justify-center mb-6 group-hover:bg-[hsl(var(${accentVar})/0.15)] transition-colors`}>
@@ -48,12 +68,18 @@ export default function FeaturesGrid() {
                   <h3 className="font-bold text-xl text-[hsl(var(--lv2-slate-950))] mb-3">{f.title}</h3>
                   <p className="text-[15px] text-[hsl(var(--lv2-slate-500))] leading-relaxed">{f.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
 
-        <div className="text-center mt-16">
+        <motion.div
+          className="text-center mt-16"
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
           <Link to="/cadastro">
             <Button
               size="lg"
@@ -62,7 +88,7 @@ export default function FeaturesGrid() {
               Começar grátis agora <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -2,8 +2,8 @@ import { Star, Quote } from 'lucide-react';
 import avatarCarlos from '@/assets/avatar-carlos.jpg';
 import avatarAna from '@/assets/avatar-ana.jpg';
 import avatarRoberto from '@/assets/avatar-roberto.jpg';
-import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 
 const testimonials = [
   { name: 'Carlos Silva', role: 'Contador — SP', text: 'Reduzi pela metade o tempo por cliente. Antes eu perdia 3 dias organizando documento. Agora chega tudo pronto.', avatar: avatarCarlos },
@@ -39,30 +39,38 @@ function AnimatedNumber({ end, suffix = '' }: { end: number; suffix?: string }) 
 }
 
 export default function TestimonialsSection() {
-  const ref = useScrollReveal();
-
   return (
-    <section ref={ref} className="v2-reveal relative overflow-hidden">
-      {/* Dark dramatic bg */}
+    <section className="relative overflow-hidden">
       <div className="absolute inset-0 hero-mesh" />
       <div className="absolute inset-0 grain" />
       
       <div className="relative py-28 lg:py-36">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
+          <motion.div
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.6 }}
+          >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-emerald)/0.3)] bg-[hsl(var(--lv2-emerald)/0.08)] text-[hsl(var(--lv2-emerald))] text-xs font-semibold uppercase tracking-wide mb-6">
               Quem já usa, não volta
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
               Resultados reais de contadores reais
             </h2>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((t, i) => (
-              <div
+              <motion.div
                 key={t.name}
-                className={`relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 transition-all duration-300 hover:border-[hsl(var(--lv2-emerald)/0.3)] hover:bg-white/[0.08] hover:-translate-y-2 ${i === 1 ? 'md:-translate-y-4' : ''}`}
+                className={`relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 transition-all duration-300 hover:border-[hsl(var(--lv2-emerald)/0.3)] hover:bg-white/[0.08] ${i === 1 ? 'md:-translate-y-4' : ''}`}
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: i === 1 ? -16 : 0, scale: 1 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ delay: i * 0.12, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ y: i === 1 ? -24 : -8, transition: { duration: 0.25 } }}
               >
                 <Quote className="absolute top-6 right-6 h-8 w-8 text-[hsl(var(--lv2-emerald)/0.15)]" />
                 <div className="flex gap-0.5 mb-6">
@@ -80,7 +88,7 @@ export default function TestimonialsSection() {
                     <p className="text-xs text-white/40 mt-0.5">{t.role}</p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -91,12 +99,19 @@ export default function TestimonialsSection() {
               { end: 1200, suffix: '+', label: 'Declarações processadas' },
               { end: 85, suffix: '%', label: 'Menos tempo de coleta' },
               { end: 98, suffix: '%', label: 'Satisfação dos contadores' },
-            ].map((m) => (
-              <div key={m.label} className="text-center">
+            ].map((m, i) => (
+              <motion.div
+                key={m.label}
+                className="text-center"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+              >
                 <AnimatedNumber end={m.end} suffix={m.suffix} />
                 <div className="h-1 w-12 mx-auto mt-4 mb-3 rounded-full bg-gradient-to-r from-[hsl(var(--lv2-emerald))] to-[hsl(var(--lv2-emerald)/0.2)]" />
                 <p className="text-sm text-white/40 font-medium">{m.label}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
