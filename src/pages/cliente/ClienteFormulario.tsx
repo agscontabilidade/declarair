@@ -12,7 +12,7 @@ import { StepDependentes } from '@/components/formulario-ir/StepDependentes';
 
 
 import { StepDividasOnus } from '@/components/formulario-ir/StepDividasOnus';
-import { StepDeducoes } from '@/components/formulario-ir/StepDeducoes';
+
 import { StepInfoAdicionais } from '@/components/formulario-ir/StepInfoAdicionais';
 import { toast } from 'sonner';
 import { DEFAULT_PERFIL, gerarChecklistPorPerfil, type PerfilFiscal } from '@/lib/checklistPorPerfil';
@@ -20,7 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const STEP_LABELS = [
   'Perfil Fiscal', 'Dados Pessoais', 'Dependentes',
-  'Dívidas e Ônus', 'Deduções', 'Informações Adicionais',
+  'Dívidas e Ônus', 'Informações Adicionais',
 ];
 
 const TOTAL_STEPS = STEP_LABELS.length;
@@ -155,8 +155,7 @@ export default function ClienteFormulario() {
             {step === 1 && <StepDadosPessoais data={formData} onChange={updateField} />}
             {step === 2 && <StepDependentes data={formData} onChange={updateField} />}
             {step === 3 && <StepDividasOnus data={formData} onChange={updateField} />}
-            {step === 4 && <StepDeducoes data={formData} onChange={updateField} />}
-            {step === 5 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
+            {step === 4 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
           </CardContent>
         </Card>
 
