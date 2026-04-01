@@ -61,12 +61,42 @@ export function useClientes() {
   const createCliente = useMutation({
     mutationFn: async (input: Omit<TablesInsert<'clientes'>, 'escritorio_id'>) => {
       if (!escritorioId) throw new Error('Sem escritório');
-      const { error } = await supabase.from('clientes').insert({ ...input, escritorio_id: escritorioId });
+      const { data: cliente, error } = await supabase
+        .from('clientes')
+        .insert({ ...input, escritorio_id: escritorioId })
+        .select('id')
+        .single();
       if (error) throw error;
+
+      // Auto-create declaration for current year
+      const anoBase = new Date().getFullYear() - 1;
+      const { data: newDecl } = await supabase
+        .from('declaracoes')
+        .insert({
+          cliente_id: cliente.id,
+          escritorio_id: escritorioId,
+          ano_base: anoBase,
+          status: 'aguardando_documentos',
+        })
+        .select('id')
+        .single();
+
+      // Create base checklist
+      if (newDecl) {
+        await supabase.from('checklist_documentos').insert([
+          { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true, declaracao_id: newDecl.id },
+          { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true, declaracao_id: newDecl.id },
+          { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true, declaracao_id: newDecl.id },
+          { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false, declaracao_id: newDecl.id },
+          { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false, declaracao_id: newDecl.id },
+        ]);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clientes', escritorioId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracoes'] });
     },
   });
 
