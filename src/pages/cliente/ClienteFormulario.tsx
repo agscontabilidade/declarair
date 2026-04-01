@@ -9,7 +9,7 @@ import { useFormularioIR } from '@/hooks/useFormularioIR';
 import { StepPerfilFiscal } from '@/components/formulario-ir/StepPerfilFiscal';
 import { StepDadosPessoais } from '@/components/formulario-ir/StepDadosPessoais';
 import { StepDependentes } from '@/components/formulario-ir/StepDependentes';
-import { StepRendimentos } from '@/components/formulario-ir/StepRendimentos';
+
 import { StepBensDireitos } from '@/components/formulario-ir/StepBensDireitos';
 import { StepDividasOnus } from '@/components/formulario-ir/StepDividasOnus';
 import { StepDeducoes } from '@/components/formulario-ir/StepDeducoes';
@@ -19,7 +19,7 @@ import { DEFAULT_PERFIL, gerarChecklistPorPerfil, type PerfilFiscal } from '@/li
 import { supabase } from '@/integrations/supabase/client';
 
 const STEP_LABELS = [
-  'Perfil Fiscal', 'Dados Pessoais', 'Dependentes', 'Rendimentos', 'Bens e Direitos',
+  'Perfil Fiscal', 'Dados Pessoais', 'Dependentes', 'Bens e Direitos',
   'Dívidas e Ônus', 'Deduções', 'Informações Adicionais',
 ];
 
@@ -154,11 +154,10 @@ export default function ClienteFormulario() {
             {step === 0 && <StepPerfilFiscal perfil={perfilFiscal} onChange={handlePerfilChange} />}
             {step === 1 && <StepDadosPessoais data={formData} onChange={updateField} />}
             {step === 2 && <StepDependentes data={formData} onChange={updateField} />}
-            {step === 3 && <StepRendimentos data={formData} onChange={updateField} />}
-            {step === 4 && <StepBensDireitos data={formData} onChange={updateField} />}
-            {step === 5 && <StepDividasOnus data={formData} onChange={updateField} />}
-            {step === 6 && <StepDeducoes data={formData} onChange={updateField} />}
-            {step === 7 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
+            {step === 3 && <StepBensDireitos data={formData} onChange={updateField} />}
+            {step === 4 && <StepDividasOnus data={formData} onChange={updateField} />}
+            {step === 5 && <StepDeducoes data={formData} onChange={updateField} />}
+            {step === 6 && <StepInfoAdicionais data={formData} onChange={updateField} confirmado={confirmado} onConfirmChange={setConfirmado} />}
           </CardContent>
         </Card>
 
