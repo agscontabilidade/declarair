@@ -240,7 +240,7 @@ async function activateAddon(
     });
   }
 
-  // Check if there's an active subscription to add the addon to
+  // Check if there's an active subscription with a default payment method
   const { data: assinatura } = await admin
     .from("assinaturas")
     .select("stripe_subscription_id")
@@ -249,41 +249,64 @@ async function activateAddon(
     .eq("provider", "stripe")
     .maybeSingle();
 
-  let subscriptionItemId: string;
-
   if (assinatura?.stripe_subscription_id) {
-    // Add as a new subscription item to existing subscription
-    const item = await stripe.subscriptionItems.create({
-      subscription: assinatura.stripe_subscription_id,
-      price: price.id,
-      metadata: { addon: body.addonSlug, escritorio_id: escritorio.id },
-    });
-    subscriptionItemId = item.id;
-  } else {
-    // Create a separate subscription for the addon
-    const sub = await stripe.subscriptions.create({
-      customer: customerId,
-      items: [{ price: price.id }],
-      payment_settings: {
-        payment_method_types: ["card"],
-        save_default_payment_method: "on_subscription",
-      },
-      metadata: { escritorio_id: escritorio.id, addon: body.addonSlug },
-    });
-    subscriptionItemId = sub.items.data[0].id;
+    // Try to add to existing subscription (customer already has payment method)
+    try {
+      const item = await stripe.subscriptionItems.create({
+        subscription: assinatura.stripe_subscription_id,
+        price: price.id,
+        metadata: { addon: body.addonSlug, escritorio_id: escritorio.id },
+      });
+
+      // Save addon in DB
+      await saveAddonInDb(admin, escritorio.id, body.addonSlug, item.id);
+
+      return { success: true, subscriptionItemId: item.id };
+    } catch (e: any) {
+      console.error("Failed to add to existing subscription, creating new one:", e.message);
+    }
   }
 
-  // Get the addon from DB
+  // No active subscription or failed to add — create a new incomplete subscription
+  // so the frontend can collect payment via Stripe Elements
+  const subscription = await stripe.subscriptions.create({
+    customer: customerId,
+    items: [{ price: price.id }],
+    payment_behavior: "default_incomplete",
+    payment_settings: {
+      payment_method_types: ["card"],
+      save_default_payment_method: "on_subscription",
+    },
+    expand: ["latest_invoice.payment_intent"],
+    metadata: { escritorio_id: escritorio.id, addon: body.addonSlug },
+  });
+
+  const invoice = subscription.latest_invoice as any;
+  const paymentIntent = invoice?.payment_intent as any;
+
+  // Save addon as pending
+  await saveAddonInDb(admin, escritorio.id, body.addonSlug, subscription.items.data[0].id);
+
+  return {
+    success: false,
+    requiresPayment: true,
+    clientSecret: paymentIntent?.client_secret,
+    subscriptionId: subscription.id,
+    subscriptionItemId: subscription.items.data[0].id,
+  };
+}
+
+async function saveAddonInDb(admin: any, escritorioId: string, addonSlug: string, subscriptionItemId: string) {
   const { data: addon } = await admin
     .from("addons")
     .select("id")
-    .ilike("nome", `%${body.addonSlug}%`)
+    .ilike("nome", `%${addonSlug}%`)
     .single();
 
   if (addon) {
     await admin.from("escritorio_addons").upsert(
       {
-        escritorio_id: escritorio.id,
+        escritorio_id: escritorioId,
         addon_id: addon.id,
         status: "ativo",
         ativado_em: new Date().toISOString(),
@@ -292,8 +315,7 @@ async function activateAddon(
       { onConflict: "escritorio_id,addon_id", ignoreDuplicates: false }
     );
   }
-
-  return { success: true, subscriptionItemId };
+}
 }
 
 // ── Deactivate addon ──
