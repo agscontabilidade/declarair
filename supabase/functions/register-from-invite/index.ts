@@ -85,14 +85,29 @@ Deno.serve(async (req) => {
 
     // 5. Create declaration for current year
     const anoAtual = new Date().getFullYear();
-    await supabaseAdmin
+    const { data: newDecl } = await supabaseAdmin
       .from('declaracoes')
       .insert({
         escritorio_id: convite.escritorio_id,
         cliente_id: cliente.id,
         ano_base: anoAtual - 1,
         status: 'aguardando_documentos',
-      });
+      })
+      .select('id')
+      .single();
+
+    // 5b. Create base checklist
+    if (newDecl) {
+      const baseChecklist = [
+        { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
+        { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true },
+        { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true },
+        { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false },
+        { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false },
+      ].map(item => ({ ...item, declaracao_id: newDecl.id }));
+
+      await supabaseAdmin.from('checklist_documentos').insert(baseChecklist);
+    }
 
     // 6. Mark invite as used
     await supabaseAdmin

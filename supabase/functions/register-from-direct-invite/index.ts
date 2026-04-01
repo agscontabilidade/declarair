@@ -79,7 +79,33 @@ Deno.serve(async (req) => {
       throw new Error('Erro ao vincular conta: ' + updateError.message);
     }
 
-    // 4. Notify office
+    // 4. Create declaration for current year
+    const anoAtual = new Date().getFullYear();
+    const { data: newDecl } = await supabaseAdmin
+      .from('declaracoes')
+      .insert({
+        escritorio_id: cliente.escritorio_id,
+        cliente_id: cliente.id,
+        ano_base: anoAtual - 1,
+        status: 'aguardando_documentos',
+      })
+      .select('id')
+      .single();
+
+    // 5. Create base checklist
+    if (newDecl) {
+      const baseChecklist = [
+        { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
+        { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true },
+        { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true },
+        { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false },
+        { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false },
+      ].map(item => ({ ...item, declaracao_id: newDecl.id }));
+
+      await supabaseAdmin.from('checklist_documentos').insert(baseChecklist);
+    }
+
+    // 6. Notify office
     await supabaseAdmin
       .from('notificacoes')
       .insert({
