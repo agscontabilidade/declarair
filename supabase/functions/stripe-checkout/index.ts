@@ -316,7 +316,6 @@ async function saveAddonInDb(admin: any, escritorioId: string, addonSlug: string
     );
   }
 }
-}
 
 // ── Deactivate addon ──
 async function deactivateAddon(
