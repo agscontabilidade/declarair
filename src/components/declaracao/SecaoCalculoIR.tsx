@@ -179,6 +179,7 @@ export function SecaoCalculoIR({ formulario, declaracao, onSaveForma, savingForm
   }
 
   return (
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
