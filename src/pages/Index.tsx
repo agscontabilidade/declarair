@@ -590,7 +590,7 @@ export default function Index() {
                 </Button>
               </Link>
               <p className="mt-3 text-primary-foreground/35 text-xs">
-                Teste grátis • 3 declarações no Pro • Cancele quando quiser
+                Teste grátis • Declarações por R$ 9,90 no Pro • Cancele quando quiser
               </p>
             </div>
           </div>
