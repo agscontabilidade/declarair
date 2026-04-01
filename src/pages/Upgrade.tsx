@@ -298,8 +298,7 @@ export default function Upgrade() {
                       <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription className="text-xs">
-                          Declarações extras são válidas por 30 dias e não acumulam. Será gerado um
-                          boleto/pix para pagamento.
+                          Declarações extras são válidas por 30 dias e não acumulam. O pagamento será processado via cartão de crédito.
                         </AlertDescription>
                       </Alert>
 
