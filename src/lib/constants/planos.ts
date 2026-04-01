@@ -123,9 +123,9 @@ export const ADDONS = {
     id: 'whitelabel',
     nome: 'White-label Avançado',
     descricao: 'Sua marca no portal do cliente',
-    preco: 9.90,
+    preco: 49.90,
     periodo: 'mensal',
-    stripe_price_id: 'price_addon_whitelabel_990',
+    stripe_price_id: 'price_addon_whitelabel_4990',
     icone: 'Palette',
     features: [
       'Logo personalizada',
