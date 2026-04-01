@@ -66,11 +66,11 @@ function RootRedirect() {
     );
   }
 
-  if (!session) return <Index />;
+  if (!session) return <LandingV2 />;
   if (userType === 'admin') return <Navigate to="/admin" replace />;
   if (userType === 'contador') return <Navigate to="/dashboard" replace />;
   if (userType === 'cliente') return <Navigate to="/cliente/dashboard" replace />;
-  return <Index />;
+  return <LandingV2 />;
 }
 
 const App = () => (
