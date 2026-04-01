@@ -77,9 +77,10 @@ export function useStripeActivateAddon() {
   return useMutation({
     mutationFn: (body: { addonSlug: string }) =>
       stripeAction('activate-addon', body),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['active-addons'] });
-      toast.success('Recurso ativado com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['my-addons'] });
+      // Don't toast here — component handles success/payment flow
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Erro ao ativar recurso');
