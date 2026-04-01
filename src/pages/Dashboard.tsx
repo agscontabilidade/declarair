@@ -3,7 +3,9 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { KpiCards } from '@/components/dashboard/KpiCards';
 import { KanbanBoard } from '@/components/dashboard/KanbanBoard';
 import { DeclaracoesListView } from '@/components/dashboard/DeclaracoesListView';
+import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { useDashboardFilters } from '@/hooks/useDashboardFilters';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Bell, Plus, LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,6 +39,17 @@ export default function Dashboard() {
   const currentYear = new Date().getFullYear();
   const [anoBase, setAnoBase] = useState(currentYear);
   const { kpis, declaracoes } = useDashboardData(anoBase);
+  const {
+    filters,
+    setSearch,
+    setContadorId,
+    setUrgencia,
+    setStatus,
+    clearFilters,
+    declaracoesFiltradas,
+    stats,
+    hasActiveFilters,
+  } = useDashboardFilters(declaracoes.data ?? []);
   const { profile, signOut } = useAuth();
   const { clientes, contadores } = useClientes();
   const queryClient = useQueryClient();
@@ -164,12 +177,24 @@ export default function Dashboard() {
         ) : (
           <KpiCards data={kpis.data} isLoading={kpis.isLoading} />
         )}
+
+        <DashboardFilters
+          filters={filters}
+          onSearchChange={setSearch}
+          onContadorChange={setContadorId}
+          onUrgenciaChange={setUrgencia}
+          onStatusChange={setStatus}
+          onClear={clearFilters}
+          stats={stats}
+          hasActiveFilters={hasActiveFilters}
+        />
+
         {declaracoes.isError ? (
           <QueryError message={declaracoes.error?.message} onRetry={() => declaracoes.refetch()} />
         ) : viewMode === 'kanban' ? (
-          <KanbanBoard items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} anoBase={anoBase} />
+          <KanbanBoard items={declaracoesFiltradas} isLoading={declaracoes.isLoading} anoBase={anoBase} />
         ) : (
-          <DeclaracoesListView items={declaracoes.data ?? []} isLoading={declaracoes.isLoading} />
+          <DeclaracoesListView items={declaracoesFiltradas} isLoading={declaracoes.isLoading} />
         )}
       </div>
 
