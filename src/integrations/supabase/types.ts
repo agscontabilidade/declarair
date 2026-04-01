@@ -949,6 +949,7 @@ export type Database = {
         Row: {
           ano_base: number
           bens_direitos: Json
+          chave_pix_cliente: string | null
           cliente_id: string
           conjuge_cpf: string | null
           conjuge_nome: string | null
@@ -973,6 +974,7 @@ export type Database = {
         Insert: {
           ano_base: number
           bens_direitos?: Json
+          chave_pix_cliente?: string | null
           cliente_id: string
           conjuge_cpf?: string | null
           conjuge_nome?: string | null
@@ -997,6 +999,7 @@ export type Database = {
         Update: {
           ano_base?: number
           bens_direitos?: Json
+          chave_pix_cliente?: string | null
           cliente_id?: string
           conjuge_cpf?: string | null
           conjuge_nome?: string | null
