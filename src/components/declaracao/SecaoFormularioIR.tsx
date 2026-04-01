@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { formatCPF, formatCurrency } from '@/lib/formatters';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { PERFIL_LABELS, type PerfilFiscal } from '@/lib/checklistPorPerfil';
 
 interface Props {
   formulario: any;
