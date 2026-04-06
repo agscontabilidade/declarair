@@ -43,7 +43,7 @@ export function DeclaracoesLimitBanner() {
             )}
             {isFree && (
               <Button size="sm" onClick={() => navigate('/meus-planos')}>
-                Upgrade para Pro — R$ 29,90/mês
+                Upgrade para Pro — R$ 49,90/mês
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}

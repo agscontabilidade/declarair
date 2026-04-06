@@ -65,7 +65,7 @@ export function UpsellModal({ open, onContinueFree, onUpgrade }: UpsellModalProp
 
         <div className="space-y-2.5 pt-2">
           <Button className="w-full h-11" onClick={onUpgrade}>
-            Assinar o Pro — R$ 29,90/mês <ArrowRight className="h-4 w-4 ml-2" />
+            Assinar o Pro — R$ 49,90/mês <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
           <Button variant="ghost" className="w-full text-muted-foreground text-sm" onClick={onContinueFree}>
             Continuar com o plano gratuito
