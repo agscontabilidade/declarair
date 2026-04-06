@@ -275,7 +275,7 @@ export default function Upgrade() {
                         <div className="pt-2 border-t flex justify-between">
                           <span className="font-semibold">Total:</span>
                           <span className="text-xl font-bold text-accent">
-                            R$ {(quantidade * 9.9).toFixed(2)}
+                            R$ {(quantidade * 4.9).toFixed(2)}
                           </span>
                         </div>
                       </div>
