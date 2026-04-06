@@ -153,6 +153,15 @@ export default function DeclaracaoDetalhe() {
           onChangeStatus={handleChangeStatus}
         />
 
+        {isTransmitida && (
+          <div className="flex justify-end">
+            <Button onClick={() => setEnviarModalOpen(true)} className="gap-2">
+              <Send className="h-4 w-4" />
+              Enviar Declaração ao Cliente
+            </Button>
+          </div>
+        )}
+
         <Tabs defaultValue="documentos" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
