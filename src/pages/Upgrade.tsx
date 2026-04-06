@@ -69,7 +69,7 @@ export default function Upgrade() {
                     Plano {isPro ? 'Pro' : 'Free'}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    {isFree ? 'Gratuito' : 'R$ 29,90/mês'}
+                    {isFree ? 'Gratuito' : 'R$ 49,90/mês'}
                   </p>
                 </div>
               </div>
