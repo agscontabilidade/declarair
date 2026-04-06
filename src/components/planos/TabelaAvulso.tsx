@@ -46,7 +46,7 @@ export function TabelaAvulso() {
             <Link to="/cadastro">
               <Button
                 size="lg"
-                className="bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white px-10 h-13 text-base font-bold rounded-full shadow-lg shadow-[hsl(var(--lv2-emerald)/0.25)]"
+                className="bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white px-10 h-14 text-base font-bold rounded-full shadow-lg shadow-[hsl(var(--lv2-emerald)/0.25)]"
               >
                 Começar grátis agora <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
