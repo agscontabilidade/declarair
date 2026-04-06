@@ -5,24 +5,30 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DeclaracaoHeader } from '@/components/declaracao/DeclaracaoHeader';
 import { TransmitidaModal } from '@/components/declaracao/TransmitidaModal';
+import { EnviarDeclaracaoModal } from '@/components/declaracao/EnviarDeclaracaoModal';
 import { AbaDocumentos } from '@/components/cliente-perfil/AbaDocumentos';
 import { SecaoFormularioIR } from '@/components/declaracao/SecaoFormularioIR';
 import { SecaoResultado } from '@/components/declaracao/SecaoResultado';
 import { SecaoNotas } from '@/components/declaracao/SecaoNotas';
+import { Button } from '@/components/ui/button';
+import { Send } from 'lucide-react';
 
 import { SecaoChat } from '@/components/declaracao/SecaoChat';
 import { SecaoTimeline } from '@/components/declaracao/SecaoTimeline';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { QueryError } from '@/components/ui/QueryError';
 
 export default function DeclaracaoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const hook = useDeclaracao(id);
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const [transmitidaModalOpen, setTransmitidaModalOpen] = useState(false);
+  const [enviarModalOpen, setEnviarModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   
 
