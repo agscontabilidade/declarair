@@ -151,7 +151,11 @@ export default function Configuracoes() {
           </TabsContent>
 
           <TabsContent value="marca">
-            {escritorioId && <WhitelabelTab escritorioId={escritorioId} isDono={isDono} />}
+            <PlanGate requiredPlan="pro" featureName="Marca & Whitelabel">
+              <FeatureGate feature="whitelabel">
+                {escritorioId && <WhitelabelTab escritorioId={escritorioId} isDono={isDono} />}
+              </FeatureGate>
+            </PlanGate>
           </TabsContent>
 
           <TabsContent value="notificacoes">
