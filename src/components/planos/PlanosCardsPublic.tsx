@@ -35,7 +35,8 @@ const CARDS = [
     precoLabel: 'R$ 29,90',
     periodo: '/mês',
     beneficios: [
-      { texto: `Declarações extras por R$ ${PRECOS.DECLARACAO_EXTRA.preco.toFixed(2).replace('.', ',')}/cada`, disponivel: true },
+      { texto: '0 declarações inclusas — compre sob demanda', disponivel: true },
+      { texto: `R$ ${PRECOS.DECLARACAO_EXTRA.preco.toFixed(2).replace('.', ',')}/declaração avulsa`, disponivel: true },
       { texto: 'Até 5 usuários simultâneos', disponivel: true },
       { texto: 'Armazenamento ilimitado', disponivel: true },
       { texto: 'Verificador de malha fina', disponivel: true },

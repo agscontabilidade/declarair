@@ -20,7 +20,7 @@ const PLANOS_CONFIG = [
     destaque: false,
     cta: 'Seu plano atual',
     beneficios: [
-      { texto: '1 declaração ativa', disponivel: true, destaque: false, addon: false, preco: 0 },
+      { texto: '1 declaração inclusa (teste)', disponivel: true, destaque: true, addon: false, preco: 0 },
       { texto: '1 usuário', disponivel: true, destaque: false, addon: false, preco: 0 },
       { texto: '500 MB de armazenamento', disponivel: true, destaque: false, addon: false, preco: 0 },
       { texto: 'Chat com clientes', disponivel: true, destaque: false, addon: false, preco: 0 },
@@ -50,8 +50,8 @@ const PLANOS_CONFIG = [
     destaque: true,
     cta: 'Fazer upgrade',
     beneficios: [
-      { texto: 'Declarações sob demanda', disponivel: true, destaque: true, addon: false, preco: 0 },
-      { texto: 'R$ 9,90/declaração', disponivel: true, destaque: true, addon: false, preco: 0 },
+      { texto: '0 declarações inclusas (sob demanda)', disponivel: true, destaque: true, addon: false, preco: 0 },
+      { texto: 'R$ 9,90/declaração avulsa', disponivel: true, destaque: true, addon: false, preco: 0 },
       { texto: 'Até 5 usuários simultâneos', disponivel: true, destaque: false, addon: false, preco: 0 },
       { texto: 'Armazenamento ilimitado', disponivel: true, destaque: false, addon: false, preco: 0 },
       { texto: 'Verificador de malha fina', disponivel: true, destaque: false, addon: false, preco: 0 },
