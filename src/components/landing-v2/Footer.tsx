@@ -4,9 +4,9 @@ import logoFull from '@/assets/logo-full.png';
 
 const footerLinks = {
   Produto: [
-    { label: 'Funcionalidades', href: '#features' },
-    { label: 'Preços', href: '#pricing' },
-    { label: 'FAQ', href: '#faq' },
+    { label: 'Funcionalidades', href: '/#features', isRoute: true },
+    { label: 'Preços', href: '/planos', isRoute: true },
+    { label: 'FAQ', href: '/#faq', isRoute: true },
   ],
   Empresa: [
     { label: 'Sobre nós', href: '/sobre', isRoute: true },
