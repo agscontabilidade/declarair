@@ -117,6 +117,10 @@ export async function gerarCapaIR(data: CapaData, returnBytes?: boolean) {
   doc.setFontSize(7);
   doc.text('Documento gerado pelo DeclaraIR', w / 2, h - 10, { align: 'center' });
 
+  if (returnBytes) {
+    return new Uint8Array(doc.output('arraybuffer'));
+  }
+
   // Save
   const fileName = `Capa_IR_${(data.nomeCliente || 'Cliente').replace(/\s+/g, '_')}_${data.anoBase}.pdf`;
   doc.save(fileName);
