@@ -107,13 +107,13 @@ export default function Planos() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Link to="/cadastro">
-              <Button size="lg" className="text-lg px-8 glow-btn bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full h-13">
+              <Button size="lg" className="text-base px-8 glow-btn bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full h-14">
                 Começar Grátis
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/#como-funciona">
-              <Button size="lg" variant="outline" className="text-lg px-8 border-white/20 text-white hover:bg-white/10 rounded-full h-13">
+              <Button size="lg" variant="outline" className="text-base px-8 border-white/20 text-white hover:bg-white/10 rounded-full h-14">
                 Ver Demonstração
               </Button>
             </Link>
@@ -199,7 +199,7 @@ export default function Planos() {
                     <Link to="/cadastro" className="block">
                       <Button
                         size="lg"
-                        className={`w-full h-13 text-base font-bold rounded-full ${
+                        className={`w-full h-14 text-base font-bold rounded-full ${
                           plano.destaque
                             ? 'bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white shadow-lg shadow-[hsl(var(--lv2-emerald)/0.25)]'
                             : 'bg-[hsl(var(--lv2-slate-950))] hover:bg-[hsl(var(--lv2-slate-900))] text-white'
@@ -294,7 +294,7 @@ export default function Planos() {
             Comece grátis agora. Sem contrato, sem compromisso.
           </p>
           <Link to="/cadastro">
-            <Button size="lg" className="text-lg px-8 glow-btn bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full h-13 mt-4">
+            <Button size="lg" className="text-base px-8 glow-btn bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full h-14 mt-4">
               Começar Grátis Agora
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

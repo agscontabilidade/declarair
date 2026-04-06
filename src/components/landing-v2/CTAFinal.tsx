@@ -51,7 +51,7 @@ export default function CTAFinal() {
             <Link to="/cadastro">
               <Button
                 size="lg"
-                className="glow-btn mt-12 text-lg px-14 h-16 font-bold bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full"
+                className="glow-btn mt-12 text-base px-14 h-14 font-bold bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full"
               >
                 Começar agora <ArrowRight className="h-5 w-5 ml-2" />
               </Button>

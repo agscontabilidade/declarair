@@ -62,7 +62,7 @@ export default function UrgencyBand() {
             <Link to="/cadastro">
               <Button
                 size="lg"
-                className="mt-4 text-lg px-12 h-16 font-bold bg-[hsl(var(--lv2-amber))] hover:bg-[hsl(var(--lv2-amber)/0.9)] text-[hsl(var(--lv2-slate-950))] rounded-full shadow-2xl shadow-[hsl(var(--lv2-amber)/0.3)]"
+                className="mt-4 text-base px-12 h-14 font-bold bg-[hsl(var(--lv2-amber))] hover:bg-[hsl(var(--lv2-amber)/0.9)] text-[hsl(var(--lv2-slate-950))] rounded-full shadow-2xl shadow-[hsl(var(--lv2-amber)/0.3)]"
               >
                 Começar agora — é grátis <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
