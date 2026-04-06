@@ -266,7 +266,7 @@ export default function Upgrade() {
                       <div className="p-4 bg-muted rounded-lg space-y-2">
                         <div className="flex justify-between text-sm">
                           <span>Valor unitário:</span>
-                          <span className="font-medium">R$ 9,90</span>
+                          <span className="font-medium">R$ 4,90</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Quantidade:</span>
