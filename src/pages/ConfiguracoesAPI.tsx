@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PlanGate, FeatureGate } from '@/components/billing/BillingGate';
 
 export default function ConfiguracoesAPI() {
   const { profile, user } = useAuth();
