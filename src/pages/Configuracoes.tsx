@@ -16,6 +16,7 @@ import AbaEquipe from '@/components/configuracoes/AbaEquipe';
 import { WhitelabelTab } from '@/components/configuracoes/WhitelabelTab';
 import { NotificacoesTab } from '@/components/configuracoes/NotificacoesTab';
 import { AutomacoesWhatsAppTab } from '@/components/configuracoes/AutomacoesWhatsAppTab';
+import { FeatureGate, PlanGate } from '@/components/billing/BillingGate';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
