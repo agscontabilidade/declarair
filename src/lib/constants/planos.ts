@@ -37,11 +37,11 @@ export const PLANOS = {
     id: 'pro',
     nome: 'Pro',
     descricao: 'Plano completo para escritórios contábeis',
-    preco: 29.90,
+    preco: 49.90,
     periodo: 'mensal',
-    stripe_price_id: 'price_pro_monthly_2990',
+    stripe_price_id: 'price_1TJFRFP18NMeNQ6G1ftJ5I2h',
     limites: {
-      declaracoes: 0,
+      declaracoes: 3,
       usuarios: 5,
       storage_mb: null,
       declaracoes_extras: true,
@@ -154,8 +154,8 @@ export const ADDONS = {
 
 export const PRECOS = {
   DECLARACAO_EXTRA: {
-    preco: 9.90,
-    stripe_price_id: 'price_declaracao_extra_990',
+    preco: 4.90,
+    stripe_price_id: 'price_1TJFRGP18NMeNQ6GFhIDtbfz',
     descricao: 'Declaração adicional',
     tipo: 'unitario',
   },

@@ -36,14 +36,14 @@ const PLANOS_DATA = [
     id: 'pro',
     nome: 'Pro',
     subtitulo: 'Sistema completo para seu escritório',
-    preco: 'R$ 29,90',
+    preco: 'R$ 49,90',
     periodo: '/mês',
     icon: Crown,
     badge: 'Mais escolhido',
     destaque: true,
     cta: 'Começar Agora',
     beneficios: [
-      { texto: '0 declarações inclusas — compre sob demanda', disponivel: true, bold: true },
+      { texto: '3 declarações inclusas no plano', disponivel: true, bold: true },
       { texto: `R$ ${PRECOS.DECLARACAO_EXTRA.preco.toFixed(2).replace('.', ',')} por declaração avulsa`, disponivel: true, bold: true },
       { texto: 'Até 5 usuários simultâneos', disponivel: true },
       { texto: 'Armazenamento ilimitado', disponivel: true },
@@ -59,8 +59,8 @@ const PLANOS_DATA = [
 ];
 
 const COMPARISON = [
-  { recurso: 'Declarações inclusas', free: '1 (teste)', pro: '0 (sob demanda)' },
-  { recurso: 'Declarações avulsas', free: '—', pro: 'R$ 9,90/cada' },
+  { recurso: 'Declarações inclusas', free: '1 (teste)', pro: '3' },
+  { recurso: 'Declarações avulsas', free: '—', pro: 'R$ 4,90/cada' },
   { recurso: 'Usuários simultâneos', free: '1', pro: '5' },
   { recurso: 'Storage', free: '500 MB', pro: 'Ilimitado' },
   { recurso: 'Malha fina', free: '✗', pro: '✓' },

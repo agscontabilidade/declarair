@@ -31,7 +31,7 @@ export function useUsageStatus(): UsageState {
       const isPro = normalized === 'pro' || normalized === 'profissional';
 
       const usadas = escritorio?.declaracoes_utilizadas ?? 0;
-      const limite = escritorio?.limite_declaracoes ?? (isPro ? 0 : 1);
+      const limite = escritorio?.limite_declaracoes ?? (isPro ? 3 : 1);
 
       // Para Pro, extras = limite - usadas (limite cresce ao comprar)
       const extras = isPro ? Math.max(0, limite - usadas) : 0;

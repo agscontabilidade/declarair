@@ -69,7 +69,7 @@ export default function Upgrade() {
                     Plano {isPro ? 'Pro' : 'Free'}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    {isFree ? 'Gratuito' : 'R$ 29,90/mês'}
+                    {isFree ? 'Gratuito' : 'R$ 49,90/mês'}
                   </p>
                 </div>
               </div>
@@ -115,7 +115,7 @@ export default function Upgrade() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm">
                   <Sparkles className="h-4 w-4 text-accent" />
-                  <span className="text-accent font-medium">Declarações sob demanda por R$ 9,90/cada</span>
+                  <span className="text-accent font-medium">3 declarações inclusas + extras por R$ 4,90/cada</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">Declarações Ativas</span>
@@ -130,8 +130,8 @@ export default function Upgrade() {
             {/* Grid de Recursos */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
                <div className="text-center">
-                <p className="text-2xl font-bold">{isPro ? '∞' : '1'}</p>
-                <p className="text-xs text-muted-foreground">Declarações</p>
+                <p className="text-2xl font-bold">{isPro ? '3+' : '1'}</p>
+                 <p className="text-xs text-muted-foreground">Declarações</p>
                </div>
               <div className="text-center">
                 <p className="text-2xl font-bold">{isPro ? '5' : '1'}</p>
@@ -181,7 +181,7 @@ export default function Upgrade() {
                       <p className="font-semibold text-sm">O que você ganha:</p>
                       <div className="space-y-2">
                          {[
-                          { bold: 'Declarações sob demanda', text: ' por R$ 9,90/cada' },
+                          { bold: '3 declarações inclusas', text: ' + extras por R$ 4,90/cada' },
                           { bold: 'Até 5 usuários simultâneos', text: '' },
                           { bold: 'Storage ilimitado', text: '' },
                           { bold: 'Malha Fina + Calculadora IR', text: '' },
@@ -200,7 +200,7 @@ export default function Upgrade() {
                     <div className="space-y-4 flex flex-col justify-center">
                       <div className="text-center p-6 bg-accent/5 rounded-xl">
                         <p className="text-sm text-muted-foreground mb-2">Por apenas</p>
-                        <p className="text-4xl font-bold text-accent">R$ 29,90</p>
+                        <p className="text-4xl font-bold text-accent">R$ 49,90</p>
                         <p className="text-sm text-muted-foreground">/mês</p>
                       </div>
 
@@ -266,7 +266,7 @@ export default function Upgrade() {
                       <div className="p-4 bg-muted rounded-lg space-y-2">
                         <div className="flex justify-between text-sm">
                           <span>Valor unitário:</span>
-                          <span className="font-medium">R$ 9,90</span>
+                          <span className="font-medium">R$ 4,90</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Quantidade:</span>
@@ -275,7 +275,7 @@ export default function Upgrade() {
                         <div className="pt-2 border-t flex justify-between">
                           <span className="font-semibold">Total:</span>
                           <span className="text-xl font-bold text-accent">
-                            R$ {(quantidade * 9.9).toFixed(2)}
+                            R$ {(quantidade * 4.9).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -299,7 +299,7 @@ export default function Upgrade() {
 
                       <div className="pt-4 border-t">
                          <p className="text-sm text-muted-foreground text-center">
-                           💡 <strong>Dica:</strong> Cada declaração extra custa R$ 9,90 e é válida por 30 dias
+                           💡 <strong>Dica:</strong> Cada declaração extra custa R$ 4,90 e é válida por 30 dias
                          </p>
                       </div>
                     </div>

@@ -21,7 +21,7 @@ function getSupabaseAdmin() {
 }
 
 const PLAN_CONFIG: Record<string, { limite: number; storage: number; usuarios: number }> = {
-  pro: { limite: 0, storage: 102400, usuarios: 5 },
+  pro: { limite: 3, storage: 102400, usuarios: 5 },
 };
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
@@ -193,8 +193,8 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     await admin.from("declaracoes_extras").insert({
       escritorio_id: escritorioId,
       quantidade,
-      valor_unitario: 9.90,
-      valor_total: quantidade * 9.90,
+      valor_unitario: 4.90,
+      valor_total: quantidade * 4.90,
     });
 
     await admin.from("notificacoes").insert({

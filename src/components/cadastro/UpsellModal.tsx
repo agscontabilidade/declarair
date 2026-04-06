@@ -12,7 +12,7 @@ interface UpsellModalProps {
 }
 
 const BENEFITS = [
-  'Declarações sob demanda por R$ 9,90/cada',
+  '3 declarações inclusas + extras por R$ 4,90/cada',
   'Até 5 usuários simultâneos',
   'Storage ilimitado',
   'Malha Fina + Calculadora IR',
@@ -41,7 +41,7 @@ export function UpsellModal({ open, onContinueFree, onUpgrade }: UpsellModalProp
           </div>
           <DialogTitle className="font-display text-xl">Antes de continuar...</DialogTitle>
           <DialogDescription className="text-sm">
-            O plano <span className="font-semibold text-foreground">Pro</span> por apenas <span className="font-bold text-accent">R$ 29,90/mês</span> oferece muito mais para seu escritório:
+            O plano <span className="font-semibold text-foreground">Pro</span> por apenas <span className="font-bold text-accent">R$ 49,90/mês</span> oferece muito mais para seu escritório:
           </DialogDescription>
         </DialogHeader>
 
@@ -65,7 +65,7 @@ export function UpsellModal({ open, onContinueFree, onUpgrade }: UpsellModalProp
 
         <div className="space-y-2.5 pt-2">
           <Button className="w-full h-11" onClick={onUpgrade}>
-            Assinar o Pro — R$ 29,90/mês <ArrowRight className="h-4 w-4 ml-2" />
+            Assinar o Pro — R$ 49,90/mês <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
           <Button variant="ghost" className="w-full text-muted-foreground text-sm" onClick={onContinueFree}>
             Continuar com o plano gratuito

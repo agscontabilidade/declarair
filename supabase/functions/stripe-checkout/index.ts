@@ -56,7 +56,7 @@ async function authenticateUser(req: Request) {
 
 // ── Price config ──
 const PRICES: Record<string, { amount: number; name: string; limite: number; storage: number; usuarios: number }> = {
-  pro: { amount: 2990, name: "Pro", limite: 3, storage: 102400, usuarios: 5 },
+  pro: { amount: 4990, name: "Pro", limite: 3, storage: 102400, usuarios: 5 },
 };
 
 const ADDON_PRICES: Record<string, { amount: number; name: string }> = {
@@ -380,7 +380,9 @@ async function buyExtraDeclaracoes(
   body: { quantidade: number }
 ) {
   const customerId = await ensureStripeCustomer(escritorio, admin);
-  const amount = body.quantidade * 990; // R$ 9,90 each
+  const quantidade = body.quantidade;
+  const unitAmount = 490; // R$ 4,90 each
+  const totalAmount = unitAmount * quantidade;
 
   const productName = "DeclaraIR - Declaração Extra";
   let products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
@@ -389,45 +391,24 @@ async function buyExtraDeclaracoes(
     product = await stripe.products.create({ name: productName, metadata: { type: "declaracao_extra" } });
   }
 
-  // Create one-time price
-  const price = await stripe.prices.create({
-    product: product.id,
-    unit_amount: 990,
-    currency: "brl",
-  });
-
-  // Create a one-time invoice
-  await stripe.invoiceItems.create({
-    customer: customerId,
-    price: price.id,
-    quantity: body.quantidade,
-    description: `${body.quantidade} declaração(ões) extra(s)`,
-  });
-
-  const invoice = await stripe.invoices.create({
-    customer: customerId,
-    auto_advance: true,
-    collection_method: "send_invoice",
-    days_until_due: 3,
-    metadata: { escritorio_id: escritorio.id, type: "declaracao_extra", quantidade: String(body.quantidade) },
-  });
-
-  await stripe.invoices.finalizeInvoice(invoice.id);
-
-  // Create a payment intent for immediate payment
+  // Create a payment intent for the extras
   const paymentIntent = await stripe.paymentIntents.create({
-    amount,
+    amount: totalAmount,
     currency: "brl",
     customer: customerId,
-    payment_method_types: ["card", "pix"],
-    metadata: { escritorio_id: escritorio.id, type: "declaracao_extra", quantidade: String(body.quantidade) },
+    payment_method_types: ["card"],
+    metadata: {
+      escritorio_id: escritorio.id,
+      type: "declaracao_extra",
+      quantidade: String(quantidade),
+    },
   });
 
   return {
     clientSecret: paymentIntent.client_secret,
     paymentIntentId: paymentIntent.id,
-    amount,
-    quantidade: body.quantidade,
+    amount: totalAmount,
+    quantidade,
   };
 }
 
