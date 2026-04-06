@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PlanGate, FeatureGate } from '@/components/billing/BillingGate';
 
 export default function ConfiguracoesAPI() {
   const { profile, user } = useAuth();
@@ -92,6 +93,8 @@ export default function ConfiguracoesAPI() {
 
   return (
     <DashboardLayout>
+      <PlanGate requiredPlan="pro" featureName="API Pública">
+      <FeatureGate feature="api_publica">
       <div className="space-y-6 max-w-5xl">
         <div>
           <h1 className="text-2xl font-bold font-display text-foreground">API Keys</h1>
@@ -305,6 +308,8 @@ export default function ConfiguracoesAPI() {
           </CardContent>
         </Card>
       </div>
+      </FeatureGate>
+      </PlanGate>
     </DashboardLayout>
   );
 }

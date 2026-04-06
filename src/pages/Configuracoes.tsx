@@ -16,6 +16,7 @@ import AbaEquipe from '@/components/configuracoes/AbaEquipe';
 import { WhitelabelTab } from '@/components/configuracoes/WhitelabelTab';
 import { NotificacoesTab } from '@/components/configuracoes/NotificacoesTab';
 import { AutomacoesWhatsAppTab } from '@/components/configuracoes/AutomacoesWhatsAppTab';
+import { FeatureGate, PlanGate } from '@/components/billing/BillingGate';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -150,7 +151,11 @@ export default function Configuracoes() {
           </TabsContent>
 
           <TabsContent value="marca">
-            {escritorioId && <WhitelabelTab escritorioId={escritorioId} isDono={isDono} />}
+            <PlanGate requiredPlan="pro" featureName="Marca & Whitelabel">
+              <FeatureGate feature="whitelabel">
+                {escritorioId && <WhitelabelTab escritorioId={escritorioId} isDono={isDono} />}
+              </FeatureGate>
+            </PlanGate>
           </TabsContent>
 
           <TabsContent value="notificacoes">
@@ -158,7 +163,11 @@ export default function Configuracoes() {
           </TabsContent>
 
           <TabsContent value="automacoes">
-            <AutomacoesWhatsAppTab escritorioId={escritorioId} isDono={isDono} />
+            <PlanGate requiredPlan="pro" featureName="Automações WhatsApp">
+              <FeatureGate feature="whatsapp">
+                <AutomacoesWhatsAppTab escritorioId={escritorioId} isDono={isDono} />
+              </FeatureGate>
+            </PlanGate>
           </TabsContent>
 
           <TabsContent value="plano">

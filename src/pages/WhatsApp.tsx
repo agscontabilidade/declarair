@@ -1,3 +1,4 @@
+import { PlanGate, FeatureGate } from '@/components/billing/BillingGate';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,8 @@ export default function WhatsApp() {
 
   return (
     <DashboardLayout>
+      <PlanGate requiredPlan="pro" featureName="WhatsApp Integrado">
+        <FeatureGate feature="whatsapp">
       <div className="space-y-6 max-w-3xl mx-auto">
         <div className="flex items-center justify-between">
           <div>
@@ -279,6 +282,8 @@ export default function WhatsApp() {
         onConfirm={() => deleteInstance.mutate(undefined, { onSuccess: () => setConfirmDelete(false) })}
         loading={deleteInstance.isPending}
       />
+        </FeatureGate>
+      </PlanGate>
     </DashboardLayout>
   );
 }
