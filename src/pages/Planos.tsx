@@ -113,7 +113,7 @@ export default function Planos() {
               </Button>
             </Link>
             <Link to="/#como-funciona">
-              <Button size="lg" variant="outline" className="text-lg px-8 border-white/20 text-white hover:bg-white/10 rounded-full h-13">
+              <Button size="lg" variant="outline" className="text-base px-8 border-white/20 text-white hover:bg-white/10 rounded-full h-14">
                 Ver Demonstração
               </Button>
             </Link>
