@@ -294,7 +294,7 @@ export default function Planos() {
             Comece grátis agora. Sem contrato, sem compromisso.
           </p>
           <Link to="/cadastro">
-            <Button size="lg" className="text-lg px-8 glow-btn bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full h-13 mt-4">
+            <Button size="lg" className="text-base px-8 glow-btn bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white rounded-full h-14 mt-4">
               Começar Grátis Agora
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
