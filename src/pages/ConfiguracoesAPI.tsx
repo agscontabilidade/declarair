@@ -306,6 +306,8 @@ export default function ConfiguracoesAPI() {
           </CardContent>
         </Card>
       </div>
+      </FeatureGate>
+      </PlanGate>
     </DashboardLayout>
   );
 }
