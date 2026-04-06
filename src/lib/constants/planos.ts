@@ -154,8 +154,8 @@ export const ADDONS = {
 
 export const PRECOS = {
   DECLARACAO_EXTRA: {
-    preco: 9.90,
-    stripe_price_id: 'price_declaracao_extra_990',
+    preco: 4.90,
+    stripe_price_id: 'price_1TJFRGP18NMeNQ6GFhIDtbfz',
     descricao: 'Declaração adicional',
     tipo: 'unitario',
   },

@@ -11,8 +11,8 @@ import { stripePromise } from '@/lib/stripe';
 import { toast } from 'sonner';
 
 const PLANOS = {
-  pro: { nome: 'Pro', preco: 'R$ 29,90', valor: 29.9, features: ['Declarações sob demanda por R$ 9,90/cada', 'Até 5 usuários', 'Storage ilimitado', 'Malha Fina + Calculadora IR', 'Chat com clientes + Kanban', 'Suporte Prioritário'] },
-  profissional: { nome: 'Pro', preco: 'R$ 29,90', valor: 29.9, features: ['Declarações sob demanda por R$ 9,90/cada', 'Até 5 usuários', 'Storage ilimitado', 'Malha Fina + Calculadora IR', 'Chat com clientes + Kanban', 'Suporte Prioritário'] },
+  pro: { nome: 'Pro', preco: 'R$ 49,90', valor: 49.9, features: ['3 declarações inclusas no plano', 'Declarações extras por R$ 4,90/cada', 'Até 5 usuários', 'Storage ilimitado', 'Malha Fina + Calculadora IR', 'Chat com clientes + Kanban', 'Suporte Prioritário'] },
+  profissional: { nome: 'Pro', preco: 'R$ 49,90', valor: 49.9, features: ['3 declarações inclusas no plano', 'Declarações extras por R$ 4,90/cada', 'Até 5 usuários', 'Storage ilimitado', 'Malha Fina + Calculadora IR', 'Chat com clientes + Kanban', 'Suporte Prioritário'] },
 };
 
 type PlanoKey = keyof typeof PLANOS;
