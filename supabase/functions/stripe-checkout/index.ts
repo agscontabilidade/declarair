@@ -380,7 +380,9 @@ async function buyExtraDeclaracoes(
   body: { quantidade: number }
 ) {
   const customerId = await ensureStripeCustomer(escritorio, admin);
-  const amount = body.quantidade * 990; // R$ 9,90 each
+  const quantidade = body.quantidade;
+  const unitAmount = 490; // R$ 4,90 each
+  const totalAmount = unitAmount * quantidade;
 
   const productName = "DeclaraIR - Declaração Extra";
   let products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
@@ -388,13 +390,6 @@ async function buyExtraDeclaracoes(
   if (!product) {
     product = await stripe.products.create({ name: productName, metadata: { type: "declaracao_extra" } });
   }
-
-  // Create one-time price
-  const price = await stripe.prices.create({
-    product: product.id,
-    unit_amount: 990,
-    currency: "brl",
-  });
 
   // Create a one-time invoice
   await stripe.invoiceItems.create({
