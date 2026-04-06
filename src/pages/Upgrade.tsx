@@ -115,7 +115,7 @@ export default function Upgrade() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm">
                   <Sparkles className="h-4 w-4 text-accent" />
-                  <span className="text-accent font-medium">Declarações sob demanda por R$ 9,90/cada</span>
+                  <span className="text-accent font-medium">3 declarações inclusas + extras por R$ 4,90/cada</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">Declarações Ativas</span>
