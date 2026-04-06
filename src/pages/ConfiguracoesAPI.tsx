@@ -93,6 +93,8 @@ export default function ConfiguracoesAPI() {
 
   return (
     <DashboardLayout>
+      <PlanGate requiredPlan="pro" featureName="API Pública">
+      <FeatureGate feature="api_publica">
       <div className="space-y-6 max-w-5xl">
         <div>
           <h1 className="text-2xl font-bold font-display text-foreground">API Keys</h1>
