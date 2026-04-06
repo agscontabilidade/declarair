@@ -299,7 +299,7 @@ export default function Upgrade() {
 
                       <div className="pt-4 border-t">
                          <p className="text-sm text-muted-foreground text-center">
-                           💡 <strong>Dica:</strong> Cada declaração extra custa R$ 9,90 e é válida por 30 dias
+                           💡 <strong>Dica:</strong> Cada declaração extra custa R$ 4,90 e é válida por 30 dias
                          </p>
                       </div>
                     </div>
