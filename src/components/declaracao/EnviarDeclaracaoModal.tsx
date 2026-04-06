@@ -211,7 +211,7 @@ export function EnviarDeclaracaoModal({ open, onOpenChange, declaracao, escritor
 
         {step === 'preview' && (
           <div className="space-y-4 py-2">
-            <div className="flex items-center gap-2 p-3 bg-emerald-50 text-emerald-800 rounded-lg text-sm">
+            <div className="flex items-center gap-2 p-3 bg-accent/20 text-accent-foreground rounded-lg text-sm">
               <FileCheck className="h-4 w-4" />
               Documento gerado com sucesso! Capa + Declaração unificados.
             </div>
