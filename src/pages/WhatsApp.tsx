@@ -58,6 +58,8 @@ export default function WhatsApp() {
 
   return (
     <DashboardLayout>
+      <PlanGate requiredPlan="pro" featureName="WhatsApp Integrado">
+        <FeatureGate feature="whatsapp">
       <div className="space-y-6 max-w-3xl mx-auto">
         <div className="flex items-center justify-between">
           <div>
