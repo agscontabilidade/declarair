@@ -59,8 +59,8 @@ const PLANOS_DATA = [
 ];
 
 const COMPARISON = [
-  { recurso: 'Declarações inclusas', free: '1 (teste)', pro: '0 (sob demanda)' },
-  { recurso: 'Declarações avulsas', free: '—', pro: 'R$ 9,90/cada' },
+  { recurso: 'Declarações inclusas', free: '1 (teste)', pro: '3' },
+  { recurso: 'Declarações avulsas', free: '—', pro: 'R$ 4,90/cada' },
   { recurso: 'Usuários simultâneos', free: '1', pro: '5' },
   { recurso: 'Storage', free: '500 MB', pro: 'Ilimitado' },
   { recurso: 'Malha fina', free: '✗', pro: '✓' },
