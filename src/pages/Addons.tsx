@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PlanGate } from '@/components/billing/BillingGate';
 import { useAddons, useToggleAddon } from '@/hooks/useAddons';
 import { useDeclaracoesExtras } from '@/hooks/useDeclaracoesExtras';
 import { Button } from '@/components/ui/button';
