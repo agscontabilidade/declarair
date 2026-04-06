@@ -21,7 +21,7 @@ function getSupabaseAdmin() {
 }
 
 const PLAN_CONFIG: Record<string, { limite: number; storage: number; usuarios: number }> = {
-  pro: { limite: 0, storage: 102400, usuarios: 5 },
+  pro: { limite: 3, storage: 102400, usuarios: 5 },
 };
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
