@@ -282,6 +282,9 @@ export default function WhatsApp() {
         onConfirm={() => deleteInstance.mutate(undefined, { onSuccess: () => setConfirmDelete(false) })}
         loading={deleteInstance.isPending}
       />
+      </div>
+        </FeatureGate>
+      </PlanGate>
     </DashboardLayout>
   );
 }
