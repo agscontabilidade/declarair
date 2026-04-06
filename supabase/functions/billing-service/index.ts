@@ -74,7 +74,7 @@ async function ensureStripeCustomer(escritorio: any, admin: any) {
 
 // ── Price config ──
 const PRICES: Record<string, { amount: number; name: string; limite: number; storage: number; usuarios: number }> = {
-  pro: { amount: 2990, name: "Pro", limite: 0, storage: 102400, usuarios: 5 },
+  pro: { amount: 4990, name: "Pro", limite: 3, storage: 102400, usuarios: 5 },
 };
 
 const ADDON_PRICES: Record<string, { amount: number; name: string }> = {
