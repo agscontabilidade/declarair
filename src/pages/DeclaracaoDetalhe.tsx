@@ -219,6 +219,15 @@ export default function DeclaracaoDetalhe() {
           onSubmit={handleTransmitir}
           isPending={hook.updateStatus.isPending}
         />
+
+        <EnviarDeclaracaoModal
+          open={enviarModalOpen}
+          onOpenChange={setEnviarModalOpen}
+          declaracao={hook.declaracao}
+          escritorioData={escritorioData || null}
+          contadorNome={contadorNome}
+          onSendChat={handleSendChat}
+        />
       </div>
     </DashboardLayout>
   );
