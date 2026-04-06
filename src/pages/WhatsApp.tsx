@@ -1,3 +1,4 @@
+import { PlanGate, FeatureGate } from '@/components/billing/BillingGate';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
