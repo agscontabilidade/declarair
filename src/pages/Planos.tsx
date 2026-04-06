@@ -199,7 +199,7 @@ export default function Planos() {
                     <Link to="/cadastro" className="block">
                       <Button
                         size="lg"
-                        className={`w-full h-13 text-base font-bold rounded-full ${
+                        className={`w-full h-14 text-base font-bold rounded-full ${
                           plano.destaque
                             ? 'bg-[hsl(var(--lv2-emerald))] hover:bg-[hsl(var(--lv2-emerald-light))] text-white shadow-lg shadow-[hsl(var(--lv2-emerald)/0.25)]'
                             : 'bg-[hsl(var(--lv2-slate-950))] hover:bg-[hsl(var(--lv2-slate-900))] text-white'
