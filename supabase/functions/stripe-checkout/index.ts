@@ -391,38 +391,24 @@ async function buyExtraDeclaracoes(
     product = await stripe.products.create({ name: productName, metadata: { type: "declaracao_extra" } });
   }
 
-  // Create a one-time invoice
-  await stripe.invoiceItems.create({
-    customer: customerId,
-    price: price.id,
-    quantity: body.quantidade,
-    description: `${body.quantidade} declaração(ões) extra(s)`,
-  });
-
-  const invoice = await stripe.invoices.create({
-    customer: customerId,
-    auto_advance: true,
-    collection_method: "send_invoice",
-    days_until_due: 3,
-    metadata: { escritorio_id: escritorio.id, type: "declaracao_extra", quantidade: String(body.quantidade) },
-  });
-
-  await stripe.invoices.finalizeInvoice(invoice.id);
-
-  // Create a payment intent for immediate payment
+  // Create a payment intent for the extras
   const paymentIntent = await stripe.paymentIntents.create({
-    amount,
+    amount: totalAmount,
     currency: "brl",
     customer: customerId,
-    payment_method_types: ["card", "pix"],
-    metadata: { escritorio_id: escritorio.id, type: "declaracao_extra", quantidade: String(body.quantidade) },
+    payment_method_types: ["card"],
+    metadata: {
+      escritorio_id: escritorio.id,
+      type: "declaracao_extra",
+      quantidade: String(quantidade),
+    },
   });
 
   return {
     clientSecret: paymentIntent.client_secret,
     paymentIntentId: paymentIntent.id,
-    amount,
-    quantidade: body.quantidade,
+    amount: totalAmount,
+    quantidade,
   };
 }
 
