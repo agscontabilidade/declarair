@@ -82,7 +82,7 @@ export function EnviarDeclaracaoModal({ open, onOpenChange, declaracao, escritor
       declPages.forEach(page => mergedPdf.addPage(page));
 
       const mergedBytes = await mergedPdf.save();
-      const blob = new Blob([mergedBytes], { type: 'application/pdf' });
+      const blob = new Blob([mergedBytes.buffer], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       setMergedPdfUrl(url);
 
