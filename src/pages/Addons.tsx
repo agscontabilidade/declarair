@@ -93,6 +93,7 @@ export default function Addons() {
 
   return (
     <DashboardLayout>
+      <PlanGate requiredPlan="pro" featureName="Recursos Extras">
       <div className="space-y-8 max-w-5xl mx-auto">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Recursos Extras</h1>
