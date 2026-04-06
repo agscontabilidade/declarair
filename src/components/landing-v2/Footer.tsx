@@ -4,9 +4,9 @@ import logoFull from '@/assets/logo-full.png';
 
 const footerLinks = {
   Produto: [
-    { label: 'Funcionalidades', href: '#features' },
-    { label: 'Preços', href: '#pricing' },
-    { label: 'FAQ', href: '#faq' },
+    { label: 'Funcionalidades', href: '/#features', isRoute: true },
+    { label: 'Preços', href: '/planos', isRoute: true },
+    { label: 'FAQ', href: '/#faq', isRoute: true },
   ],
   Empresa: [
     { label: 'Sobre nós', href: '/sobre', isRoute: true },
@@ -41,16 +41,10 @@ export default function Footer() {
               <ul className="space-y-3.5">
                 {links.map((link) => (
                   <li key={link.label}>
-                    {link.isRoute ? (
-                      <Link to={link.href} className="text-sm text-white/30 hover:text-white/60 transition-colors flex items-center gap-1 group">
+                    <Link to={link.href} className="text-sm text-white/30 hover:text-white/60 transition-colors flex items-center gap-1 group">
                         {link.label}
                         <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </Link>
-                    ) : (
-                      <a href={link.href} className="text-sm text-white/30 hover:text-white/60 transition-colors">
-                        {link.label}
-                      </a>
-                    )}
                   </li>
                 ))}
               </ul>
