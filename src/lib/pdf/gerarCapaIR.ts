@@ -11,7 +11,9 @@ interface CapaData {
   logoUrl: string | null;
 }
 
-export async function gerarCapaIR(data: CapaData) {
+export async function gerarCapaIR(data: CapaData, returnBytes: true): Promise<Uint8Array>;
+export async function gerarCapaIR(data: CapaData, returnBytes?: false): Promise<void>;
+export async function gerarCapaIR(data: CapaData, returnBytes?: boolean): Promise<Uint8Array | void> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const w = 210;
   const h = 297;
@@ -114,6 +116,10 @@ export async function gerarCapaIR(data: CapaData) {
   doc.setTextColor(120, 130, 150);
   doc.setFontSize(7);
   doc.text('Documento gerado pelo DeclaraIR', w / 2, h - 10, { align: 'center' });
+
+  if (returnBytes) {
+    return new Uint8Array(doc.output('arraybuffer'));
+  }
 
   // Save
   const fileName = `Capa_IR_${(data.nomeCliente || 'Cliente').replace(/\s+/g, '_')}_${data.anoBase}.pdf`;

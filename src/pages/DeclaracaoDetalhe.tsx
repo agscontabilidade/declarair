@@ -5,24 +5,30 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DeclaracaoHeader } from '@/components/declaracao/DeclaracaoHeader';
 import { TransmitidaModal } from '@/components/declaracao/TransmitidaModal';
+import { EnviarDeclaracaoModal } from '@/components/declaracao/EnviarDeclaracaoModal';
 import { AbaDocumentos } from '@/components/cliente-perfil/AbaDocumentos';
 import { SecaoFormularioIR } from '@/components/declaracao/SecaoFormularioIR';
 import { SecaoResultado } from '@/components/declaracao/SecaoResultado';
 import { SecaoNotas } from '@/components/declaracao/SecaoNotas';
+import { Button } from '@/components/ui/button';
+import { Send } from 'lucide-react';
 
 import { SecaoChat } from '@/components/declaracao/SecaoChat';
 import { SecaoTimeline } from '@/components/declaracao/SecaoTimeline';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { QueryError } from '@/components/ui/QueryError';
 
 export default function DeclaracaoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const hook = useDeclaracao(id);
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const [transmitidaModalOpen, setTransmitidaModalOpen] = useState(false);
+  const [enviarModalOpen, setEnviarModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   
 
@@ -81,8 +87,39 @@ export default function DeclaracaoDetalhe() {
     });
   };
 
+  // Fetch escritorio data for the capa
+  const escritorioId = hook.declaracao?.escritorio_id;
+  const { data: escritorioData } = useQuery({
+    queryKey: ['escritorio-enviar', escritorioId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('escritorios')
+        .select('nome, email, telefone, logo_url')
+        .eq('id', escritorioId!)
+        .single();
+      if (error) throw error;
+      return { nome: data.nome, email: data.email, telefone: data.telefone, logoUrl: data.logo_url };
+    },
+    enabled: !!escritorioId,
+  });
 
+  const contadorNome = hook.declaracao?.usuarios?.nome || profile.nome || '';
 
+  const handleSendChat = async (message: string) => {
+    const clienteId = hook.declaracao?.clientes?.id;
+    if (!id || !escritorioId || !clienteId || !user?.id) throw new Error('Dados incompletos');
+    const { error } = await supabase
+      .from('mensagens_chat')
+      .insert({
+        declaracao_id: id,
+        escritorio_id: escritorioId,
+        cliente_id: clienteId,
+        remetente_tipo: 'contador',
+        remetente_id: user.id,
+        conteudo: message,
+      });
+    if (error) throw error;
+  };
 
   if (hook.isError) {
     return (
@@ -105,7 +142,7 @@ export default function DeclaracaoDetalhe() {
   }
 
   const clienteId = hook.declaracao?.clientes?.id;
-  const escritorioId = hook.declaracao?.escritorio_id;
+  const isTransmitida = hook.declaracao?.status === 'transmitida';
 
   return (
     <DashboardLayout>
@@ -115,6 +152,15 @@ export default function DeclaracaoDetalhe() {
           papel={hook.papel}
           onChangeStatus={handleChangeStatus}
         />
+
+        {isTransmitida && (
+          <div className="flex justify-end">
+            <Button onClick={() => setEnviarModalOpen(true)} className="gap-2">
+              <Send className="h-4 w-4" />
+              Enviar Declaração ao Cliente
+            </Button>
+          </div>
+        )}
 
         <Tabs defaultValue="documentos" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
@@ -181,6 +227,15 @@ export default function DeclaracaoDetalhe() {
           onOpenChange={setTransmitidaModalOpen}
           onSubmit={handleTransmitir}
           isPending={hook.updateStatus.isPending}
+        />
+
+        <EnviarDeclaracaoModal
+          open={enviarModalOpen}
+          onOpenChange={setEnviarModalOpen}
+          declaracao={hook.declaracao}
+          escritorioData={escritorioData || null}
+          contadorNome={contadorNome}
+          onSendChat={handleSendChat}
         />
       </div>
     </DashboardLayout>
