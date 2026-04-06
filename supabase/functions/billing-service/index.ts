@@ -353,12 +353,7 @@ async function buyExtraDeclaracoes(
 ) {
   const customerId = await ensureStripeCustomer(escritorio, admin);
   const quantidade = body.quantidade;
-
-  // Apply volume discounts
-  let unitAmount = 990; // R$ 9,90 base
-  if (quantidade >= 20) unitAmount = Math.round(990 * 0.85); // 15% off
-  else if (quantidade >= 10) unitAmount = Math.round(990 * 0.90); // 10% off
-
+  const unitAmount = 490; // R$ 4,90 each
   const totalAmount = unitAmount * quantidade;
 
   const productName = "DeclaraIR - Declaração Extra";
