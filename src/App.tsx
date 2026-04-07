@@ -40,7 +40,7 @@ import ConviteColaborador from "./pages/ConviteColaborador";
 import ConfiguracoesAPI from "./pages/ConfiguracoesAPI";
 import Relatorios from "./pages/Relatorios";
 import WebhooksPage from "./pages/Webhooks";
-import NotFound from "./pages/NotFound";
+import CadastroCliente from "./pages/cliente/CadastroCliente";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEscritorios from "./pages/admin/AdminEscritorios";
