@@ -1688,6 +1688,31 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_clientes_for_user: {
+        Args: never
+        Returns: {
+          auth_user_id: string | null
+          conta_azul_id: string | null
+          contador_responsavel_id: string | null
+          cpf: string
+          created_at: string
+          data_nascimento: string | null
+          email: string | null
+          escritorio_id: string
+          id: string
+          nome: string
+          status_onboarding: string
+          telefone: string | null
+          token_convite: string | null
+          token_convite_expira_em: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "clientes"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_user_cliente_id: { Args: never; Returns: string }
       get_user_escritorio_id: { Args: never; Returns: string }
       get_user_papel: { Args: never; Returns: string }
