@@ -22,7 +22,8 @@ import { QueryError } from '@/components/ui/QueryError';
 import { useUsageStatus } from '@/hooks/useUsageStatus';
 import { formatarPreco, PRECOS } from '@/lib/constants/planos';
 
-const years = [2023, 2024, 2025, 2026];
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 6 }, (_, i) => currentYear - i);
 
 const checklistPadrao = [
   { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
