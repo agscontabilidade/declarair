@@ -254,6 +254,49 @@ export default function Dashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Limite Atingido */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <DialogTitle className="text-center">
+              {usage.plano === 'free' ? 'Limite do Plano Free Atingido' : 'Sem Declarações Disponíveis'}
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              {usage.plano === 'free' ? (
+                <>
+                  Você já usou sua declaração de teste ({usage.usadas}/{usage.limite}).
+                  Faça upgrade para o plano Pro para criar mais declarações.
+                </>
+              ) : (
+                <>
+                  Você usou todas as suas declarações ({usage.usadas}/{usage.limite}).
+                  Compre declarações extras para continuar — cada uma custa {formatarPreco(PRECOS.DECLARACAO_EXTRA.preco)}.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            {usage.plano === 'free' ? (
+              <Button onClick={() => { setShowUpgradeModal(false); navigate('/meus-planos'); }} className="w-full gap-2">
+                <Zap className="h-4 w-4" />
+                Fazer Upgrade para o Pro
+              </Button>
+            ) : (
+              <Button onClick={() => { setShowUpgradeModal(false); navigate('/addons?tab=declaracoes'); }} className="w-full gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Comprar Declarações Extras
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setShowUpgradeModal(false)} className="w-full">
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
