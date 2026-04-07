@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { KpiCards } from '@/components/dashboard/KpiCards';
 import { KanbanBoard } from '@/components/dashboard/KanbanBoard';
@@ -7,10 +8,10 @@ import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useDashboardFilters } from '@/hooks/useDashboardFilters';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Plus, LayoutGrid, List } from 'lucide-react';
+import { Bell, Plus, LayoutGrid, List, Zap, ShoppingCart, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClientes } from '@/hooks/useClientes';
@@ -18,7 +19,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { QueryError } from '@/components/ui/QueryError';
-
+import { useUsageStatus } from '@/hooks/useUsageStatus';
+import { formatarPreco, PRECOS } from '@/lib/constants/planos';
 
 const years = [2023, 2024, 2025, 2026];
 
@@ -49,13 +51,24 @@ export default function Dashboard() {
   const { clientes, contadores } = useClientes();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const usage = useUsageStatus();
 
   const [showModal, setShowModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [viewMode, setViewMode] = useState<'kanban' | 'lista'>('kanban');
   const [novoClienteId, setNovoClienteId] = useState('');
   const [novoAno, setNovoAno] = useState(String(currentYear));
   const [novoContadorId, setNovoContadorId] = useState('');
   const [saving, setSaving] = useState(false);
+
+  function handleNovaDeclaracao() {
+    if (usage.level === 'blocked') {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setShowModal(true);
+  }
 
   const initials = profile.nome?.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?';
 
@@ -66,6 +79,24 @@ export default function Dashboard() {
     let createdDeclId: string | null = null;
 
     try {
+      // Double-check server-side limit before creating
+      const { data: esc } = await supabase
+        .from('escritorios')
+        .select('plano, declaracoes_utilizadas, limite_declaracoes')
+        .eq('id', profile.escritorioId)
+        .single();
+
+      if (esc) {
+        const isPro = esc.plano?.toLowerCase() === 'pro' || esc.plano?.toLowerCase() === 'profissional';
+        const usadas = esc.declaracoes_utilizadas ?? 0;
+        const limite = isPro ? (esc.limite_declaracoes ?? 3) : 1;
+        if (usadas >= limite) {
+          setShowModal(false);
+          setShowUpgradeModal(true);
+          setSaving(false);
+          return;
+        }
+      }
       const { data: newDecl, error: declErr } = await supabase
         .from('declaracoes')
         .insert({
@@ -122,7 +153,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
           <div className="flex items-center gap-3">
-            <Button onClick={() => setShowModal(true)} size="sm" className="gap-2">
+            <Button onClick={handleNovaDeclaracao} size="sm" className="gap-2">
               <Plus className="h-4 w-4" /> Nova Declaração
             </Button>
             <div className="flex items-center border border-border rounded-lg overflow-hidden">
@@ -237,6 +268,49 @@ export default function Dashboard() {
             <Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button>
             <Button onClick={handleCriarDeclaracao} disabled={!novoClienteId || saving}>
               {saving ? 'Criando...' : 'Criar Declaração'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Limite Atingido */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <DialogTitle className="text-center">
+              {usage.plano === 'free' ? 'Limite do Plano Free Atingido' : 'Sem Declarações Disponíveis'}
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              {usage.plano === 'free' ? (
+                <>
+                  Você já usou sua declaração de teste ({usage.usadas}/{usage.limite}).
+                  Faça upgrade para o plano Pro para criar mais declarações.
+                </>
+              ) : (
+                <>
+                  Você usou todas as suas declarações ({usage.usadas}/{usage.limite}).
+                  Compre declarações extras para continuar — cada uma custa {formatarPreco(PRECOS.DECLARACAO_EXTRA.preco)}.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            {usage.plano === 'free' ? (
+              <Button onClick={() => { setShowUpgradeModal(false); navigate('/meus-planos'); }} className="w-full gap-2">
+                <Zap className="h-4 w-4" />
+                Fazer Upgrade para o Pro
+              </Button>
+            ) : (
+              <Button onClick={() => { setShowUpgradeModal(false); navigate('/addons?tab=declaracoes'); }} className="w-full gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Comprar Declarações Extras
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setShowUpgradeModal(false)} className="w-full">
+              Cancelar
             </Button>
           </DialogFooter>
         </DialogContent>

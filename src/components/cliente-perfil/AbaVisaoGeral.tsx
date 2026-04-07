@@ -5,8 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { STATUS_LABELS, formatCurrency } from '@/lib/formatters';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, FileText } from 'lucide-react';
+import { Plus, Eye, FileText, AlertCircle, Zap, ShoppingCart } from 'lucide-react';
 import { NovaDeclaracaoModal } from './NovaDeclaracaoModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useUsageStatus } from '@/hooks/useUsageStatus';
+import { formatarPreco, PRECOS } from '@/lib/constants/planos';
 
 const statusColors: Record<string, string> = {
   aguardando_documentos: 'bg-amber-100 text-amber-800',
@@ -33,6 +36,16 @@ interface Props {
 export function AbaVisaoGeral({ declaracoes, isLoading, contadores, onCriarDeclaracao, criandoDeclaracao, formularioStatus }: Props) {
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const usage = useUsageStatus();
+
+  function handleNovaDeclaracao() {
+    if (usage.level === 'blocked') {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setModalOpen(true);
+  }
 
   if (isLoading) {
     return (
@@ -48,14 +61,12 @@ export function AbaVisaoGeral({ declaracoes, isLoading, contadores, onCriarDecla
       {/* Formulário IR Status */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Formulário IR
-          </CardTitle>
+          <CardTitle className="text-base">Formulário IR</CardTitle>
         </CardHeader>
         <CardContent>
-          <Badge className={formStatusColors[formularioStatus || 'nao_iniciado'] || 'bg-muted text-muted-foreground'}>
-            {STATUS_LABELS[formularioStatus || 'nao_iniciado']}
+          <Badge className={formStatusColors[formularioStatus || 'nao_iniciado']}>
+            {formularioStatus === 'concluido' ? 'Concluído' :
+             formularioStatus === 'em_andamento' ? 'Em andamento' : 'Não iniciado'}
           </Badge>
         </CardContent>
       </Card>
@@ -65,7 +76,7 @@ export function AbaVisaoGeral({ declaracoes, isLoading, contadores, onCriarDecla
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Declarações</CardTitle>
-            <Button size="sm" onClick={() => setModalOpen(true)}>
+            <Button size="sm" onClick={handleNovaDeclaracao}>
               <Plus className="h-4 w-4 mr-1" />
               Nova Declaração
             </Button>
@@ -76,36 +87,31 @@ export function AbaVisaoGeral({ declaracoes, isLoading, contadores, onCriarDecla
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
               <p>Nenhuma declaração cadastrada</p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={() => setModalOpen(true)}>
+              <Button variant="outline" size="sm" className="mt-3" onClick={handleNovaDeclaracao}>
                 Criar primeira declaração
               </Button>
             </div>
           ) : (
             <div className="space-y-3">
               {declaracoes.map((d, i) => (
-                <div key={d.id} className="flex items-center gap-4">
-                  {/* Timeline connector */}
-                  <div className="flex flex-col items-center">
-                    <div className={`h-3 w-3 rounded-full ${i === 0 ? 'bg-accent' : 'bg-muted-foreground/30'}`} />
-                    {i < declaracoes.length - 1 && <div className="w-0.5 h-full min-h-[40px] bg-muted-foreground/20" />}
-                  </div>
-                  <div className="flex-1 flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <span className="font-display font-bold text-lg">{d.ano_base}</span>
-                      <Badge className={statusColors[d.status] || 'bg-muted text-muted-foreground'}>
+                <div key={d.id || i} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/30 transition-colors">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">IR {d.ano_base}</span>
+                      <Badge variant="outline" className={statusColors[d.status] || ''}>
                         {STATUS_LABELS[d.status] || d.status}
                       </Badge>
-                      {d.status === 'transmitida' && d.tipo_resultado && (
-                        <span className={`text-sm font-medium ${d.tipo_resultado === 'restituicao' ? 'text-emerald-600' : d.tipo_resultado === 'pagamento' ? 'text-destructive' : 'text-muted-foreground'}`}>
-                          {STATUS_LABELS[d.tipo_resultado]}{d.valor_resultado ? `: ${formatCurrency(d.valor_resultado)}` : ''}
-                        </span>
-                      )}
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/declaracoes/${d.id}`)}>
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver
-                    </Button>
+                    {d.tipo_resultado && (
+                      <span className="text-xs text-muted-foreground">
+                        {STATUS_LABELS[d.tipo_resultado]}{d.valor_resultado ? `: ${formatCurrency(d.valor_resultado)}` : ''}
+                      </span>
+                    )}
                   </div>
+                  <Button variant="ghost" size="sm" onClick={() => navigate(`/declaracoes/${d.id}`)}>
+                    <Eye className="h-4 w-4 mr-1" />
+                    Ver
+                  </Button>
                 </div>
               ))}
             </div>
@@ -123,6 +129,49 @@ export function AbaVisaoGeral({ declaracoes, isLoading, contadores, onCriarDecla
         }}
         isPending={criandoDeclaracao}
       />
+
+      {/* Modal de Limite Atingido */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <DialogTitle className="text-center">
+              {usage.plano === 'free' ? 'Limite do Plano Free Atingido' : 'Sem Declarações Disponíveis'}
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              {usage.plano === 'free' ? (
+                <>
+                  Você já usou sua declaração de teste ({usage.usadas}/{usage.limite}).
+                  Faça upgrade para o plano Pro para criar mais declarações.
+                </>
+              ) : (
+                <>
+                  Você usou todas as suas declarações ({usage.usadas}/{usage.limite}).
+                  Compre declarações extras — cada uma custa {formatarPreco(PRECOS.DECLARACAO_EXTRA.preco)}.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            {usage.plano === 'free' ? (
+              <Button onClick={() => { setShowUpgradeModal(false); navigate('/meus-planos'); }} className="w-full gap-2">
+                <Zap className="h-4 w-4" />
+                Fazer Upgrade para o Pro
+              </Button>
+            ) : (
+              <Button onClick={() => { setShowUpgradeModal(false); navigate('/addons?tab=declaracoes'); }} className="w-full gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Comprar Declarações Extras
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setShowUpgradeModal(false)} className="w-full">
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
