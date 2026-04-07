@@ -246,7 +246,7 @@ export default function Dashboard() {
               <Select value={novoAno} onValueChange={setNovoAno}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {[2023, 2024, 2025].map(y => (
+                  {Array.from({ length: 5 }, (_, i) => currentYear - i).map(y => (
                     <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                   ))}
                 </SelectContent>
