@@ -79,6 +79,24 @@ export default function Dashboard() {
     let createdDeclId: string | null = null;
 
     try {
+      // Double-check server-side limit before creating
+      const { data: esc } = await supabase
+        .from('escritorios')
+        .select('plano, declaracoes_utilizadas, limite_declaracoes')
+        .eq('id', profile.escritorioId)
+        .single();
+
+      if (esc) {
+        const isPro = esc.plano?.toLowerCase() === 'pro' || esc.plano?.toLowerCase() === 'profissional';
+        const usadas = esc.declaracoes_utilizadas ?? 0;
+        const limite = isPro ? (esc.limite_declaracoes ?? 3) : 1;
+        if (usadas >= limite) {
+          setShowModal(false);
+          setShowUpgradeModal(true);
+          setSaving(false);
+          return;
+        }
+      }
       const { data: newDecl, error: declErr } = await supabase
         .from('declaracoes')
         .insert({
