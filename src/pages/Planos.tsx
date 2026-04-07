@@ -101,7 +101,7 @@ export default function Planos() {
           </h1>
 
           <p className="text-xl text-white/50 max-w-2xl mx-auto">
-            Comece grátis com 1 declaração. Desbloqueie o sistema completo por apenas R$ 29,90/mês.
+            Comece grátis com 1 declaração. Desbloqueie o sistema completo por apenas R$ 49,90/mês.
             Sem contrato. Sem pegadinhas.
           </p>
 
@@ -120,7 +120,7 @@ export default function Planos() {
           </div>
 
           <p className="text-sm text-white/30">
-            ✓ Teste grátis com 1 declaração  ✓ Pro por R$ 29,90/mês  ✓ Cancele quando quiser
+            ✓ Teste grátis com 1 declaração  ✓ Pro por R$ 49,90/mês  ✓ Cancele quando quiser
           </p>
         </div>
       </section>

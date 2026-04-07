@@ -62,7 +62,7 @@ const PRICES: Record<string, { amount: number; name: string; limite: number; sto
 const ADDON_PRICES: Record<string, { amount: number; name: string }> = {
   whatsapp: { amount: 1990, name: "WhatsApp Automático" },
   api_publica: { amount: 2990, name: "API Pública" },
-  whitelabel: { amount: 4990, name: "Whitelabel" },
+  whitelabel: { amount: 990, name: "Whitelabel" },
   usuario_extra: { amount: 990, name: "Usuário Extra" },
 };
 
