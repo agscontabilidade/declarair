@@ -1778,6 +1778,95 @@ export type Database = {
           },
         ]
       }
+      webhook_logs: {
+        Row: {
+          created_at: string
+          evento: string
+          id: string
+          payload: Json
+          resposta: string | null
+          status_code: number | null
+          tentativas: number
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          evento: string
+          id?: string
+          payload?: Json
+          resposta?: string | null
+          status_code?: number | null
+          tentativas?: number
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          evento?: string
+          id?: string
+          payload?: Json
+          resposta?: string | null
+          status_code?: number | null
+          tentativas?: number
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_logs_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhooks: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          escritorio_id: string
+          eventos: string[]
+          id: string
+          secret: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          escritorio_id: string
+          eventos?: string[]
+          id?: string
+          secret: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          escritorio_id?: string
+          eventos?: string[]
+          id?: string
+          secret?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhooks_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhooks_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_instances: {
         Row: {
           created_at: string
