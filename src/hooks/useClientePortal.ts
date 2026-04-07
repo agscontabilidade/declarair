@@ -12,7 +12,7 @@ export function useClientePortal() {
       if (!clienteId) return null;
       const { data, error } = await supabase
         .from('declaracoes')
-        .select('*')
+        .select('id, cliente_id, escritorio_id, contador_id, ano_base, status, tipo_resultado, valor_resultado, numero_recibo, data_transmissao, forma_tributacao, ultima_atualizacao_status, created_at, version')
         .eq('cliente_id', clienteId)
         .order('created_at', { ascending: false })
         .limit(1)
