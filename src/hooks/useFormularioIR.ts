@@ -148,12 +148,10 @@ export function useFormularioIR() {
         // Still save draft even with validation warnings
       }
 
-      const updatePayload: Record<string, unknown> = {
+      const updatePayload = {
+        ...data,
         ultima_atualizacao: new Date().toISOString(),
-      };
-      Object.entries(data).forEach(([key, value]) => {
-        updatePayload[key] = value;
-      });
+      } as TablesUpdate<'formulario_ir'>;
 
       const { error } = await supabase
         .from('formulario_ir')
