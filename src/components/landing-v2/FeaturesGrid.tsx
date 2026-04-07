@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
-  ArrowRight, Layout, Smartphone, Shield, Zap, Palette, Receipt,
+  ArrowRight, Layout, Smartphone, Shield, Zap, Palette, Receipt, Brain,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
