@@ -388,7 +388,7 @@ export default function Cadastro() {
                     </div>
                     <div>
                       <p className="font-display font-bold text-foreground">{planoInfo.nome}</p>
-                      <p className="text-sm text-muted-foreground">{planoInfo.preco}{planoInfo.periodo} · {planoInfo.id === 'gratuito' ? '1 declaração' : 'Declarações sob demanda (R$ 9,90/cada)'}</p>
+                      <p className="text-sm text-muted-foreground">{planoInfo.preco}{planoInfo.periodo} · {planoInfo.id === 'gratuito' ? '1 declaração de teste' : '3 declarações inclusas (extras R$ 4,90/cada)'}</p>
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground">
