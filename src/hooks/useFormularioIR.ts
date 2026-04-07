@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import type { TablesUpdate } from '@/integrations/supabase/types';
 import {
   validatePartial,
   validateComplete,
@@ -147,10 +148,10 @@ export function useFormularioIR() {
         // Still save draft even with validation warnings
       }
 
-      const updatePayload: Record<string, unknown> = {
+      const updatePayload = {
         ...data,
         ultima_atualizacao: new Date().toISOString(),
-      };
+      } as TablesUpdate<'formulario_ir'>;
 
       const { error } = await supabase
         .from('formulario_ir')
