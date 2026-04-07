@@ -252,6 +252,13 @@ export type Database = {
             referencedRelation: "declaracoes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "checklist_documentos_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: false
+            referencedRelation: "declaracoes_cliente_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       clientes: {
@@ -394,6 +401,13 @@ export type Database = {
             columns: ["declaracao_id"]
             isOneToOne: false
             referencedRelation: "declaracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: false
+            referencedRelation: "declaracoes_cliente_view"
             referencedColumns: ["id"]
           },
           {
@@ -581,6 +595,13 @@ export type Database = {
             columns: ["declaracao_id"]
             isOneToOne: false
             referencedRelation: "declaracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracao_atividades_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: false
+            referencedRelation: "declaracoes_cliente_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1036,6 +1057,13 @@ export type Database = {
             referencedRelation: "declaracoes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "formulario_ir_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: true
+            referencedRelation: "declaracoes_cliente_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       integracoes_contaazul: {
@@ -1147,6 +1175,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "malha_fina_consultas_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: false
+            referencedRelation: "declaracoes_cliente_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "malha_fina_consultas_escritorio_id_fkey"
             columns: ["escritorio_id"]
             isOneToOne: false
@@ -1214,6 +1249,13 @@ export type Database = {
             columns: ["declaracao_id"]
             isOneToOne: false
             referencedRelation: "declaracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensagens_chat_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: false
+            referencedRelation: "declaracoes_cliente_view"
             referencedColumns: ["id"]
           },
           {
@@ -1659,7 +1701,79 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      declaracoes_cliente_view: {
+        Row: {
+          ano_base: number | null
+          cliente_id: string | null
+          contador_id: string | null
+          created_at: string | null
+          data_transmissao: string | null
+          escritorio_id: string | null
+          forma_tributacao: string | null
+          id: string | null
+          numero_recibo: string | null
+          status: string | null
+          tipo_resultado: string | null
+          ultima_atualizacao_status: string | null
+          valor_resultado: number | null
+          version: number | null
+        }
+        Insert: {
+          ano_base?: number | null
+          cliente_id?: string | null
+          contador_id?: string | null
+          created_at?: string | null
+          data_transmissao?: string | null
+          escritorio_id?: string | null
+          forma_tributacao?: string | null
+          id?: string | null
+          numero_recibo?: string | null
+          status?: string | null
+          tipo_resultado?: string | null
+          ultima_atualizacao_status?: string | null
+          valor_resultado?: number | null
+          version?: number | null
+        }
+        Update: {
+          ano_base?: number | null
+          cliente_id?: string | null
+          contador_id?: string | null
+          created_at?: string | null
+          data_transmissao?: string | null
+          escritorio_id?: string | null
+          forma_tributacao?: string | null
+          id?: string | null
+          numero_recibo?: string | null
+          status?: string | null
+          tipo_resultado?: string | null
+          ultima_atualizacao_status?: string | null
+          valor_resultado?: number | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "declaracoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracoes_contador_id_fkey"
+            columns: ["contador_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracoes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       atualizar_cobrancas_vencidas: { Args: never; Returns: undefined }
