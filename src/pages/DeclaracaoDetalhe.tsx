@@ -207,6 +207,10 @@ export default function DeclaracaoDetalhe() {
             />
           </TabsContent>
 
+          <TabsContent value="ia-fiscal" className="mt-4">
+            {id && <SecaoIAFiscal declaracaoId={id} />}
+          </TabsContent>
+
           <TabsContent value="chat" className="mt-4">
             {clienteId && escritorioId && id ? (
               <SecaoChat
