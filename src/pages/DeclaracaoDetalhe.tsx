@@ -15,6 +15,7 @@ import { Send } from 'lucide-react';
 
 import { SecaoChat } from '@/components/declaracao/SecaoChat';
 import { SecaoTimeline } from '@/components/declaracao/SecaoTimeline';
+import { SecaoIAFiscal } from '@/components/declaracao/SecaoIAFiscal';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
