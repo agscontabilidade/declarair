@@ -123,6 +123,8 @@ const App = () => (
               <Route path="/drive" element={<ProtectedRoute allowedType="contador"><BillingGate><Drive /></BillingGate></ProtectedRoute>} />
               <Route path="/addons" element={<ProtectedRoute allowedType="contador"><BillingGate><Addons /></BillingGate></ProtectedRoute>} />
               <Route path="/whatsapp" element={<ProtectedRoute allowedType="contador"><BillingGate><WhatsApp /></BillingGate></ProtectedRoute>} />
+              <Route path="/relatorios" element={<ProtectedRoute allowedType="contador"><BillingGate><Relatorios /></BillingGate></ProtectedRoute>} />
+              <Route path="/webhooks" element={<ProtectedRoute allowedType="contador"><BillingGate><WebhooksPage /></BillingGate></ProtectedRoute>} />
 
               {/* Contador routes - always accessible */}
               <Route path="/configuracoes" element={<ProtectedRoute allowedType="contador"><Configuracoes /></ProtectedRoute>} />

@@ -30,6 +30,7 @@ const navItems = [
   { title: 'Capa', url: '/capa', icon: Newspaper },
   { title: 'WhatsApp', url: '/whatsapp', icon: Phone },
   { title: 'Recursos Extras', url: '/addons', icon: Puzzle },
+  { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
 
