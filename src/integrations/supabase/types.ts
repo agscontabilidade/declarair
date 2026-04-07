@@ -95,6 +95,13 @@ export type Database = {
             referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "api_keys_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       assinaturas: {
@@ -152,6 +159,13 @@ export type Database = {
             columns: ["escritorio_id"]
             isOneToOne: true
             referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: true
+            referencedRelation: "escritorios_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -325,6 +339,13 @@ export type Database = {
             referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "clientes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       cobrancas: {
@@ -417,6 +438,13 @@ export type Database = {
             referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cobrancas_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       colaborador_convites: {
@@ -467,6 +495,13 @@ export type Database = {
             referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "colaborador_convites_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       configuracoes_escritorio: {
@@ -497,6 +532,13 @@ export type Database = {
             columns: ["escritorio_id"]
             isOneToOne: false
             referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "configuracoes_escritorio_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -553,6 +595,13 @@ export type Database = {
             columns: ["escritorio_id"]
             isOneToOne: false
             referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_cliente_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
             referencedColumns: ["id"]
           },
           {
@@ -680,6 +729,13 @@ export type Database = {
             referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "declaracoes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       declaracoes_extras: {
@@ -726,6 +782,13 @@ export type Database = {
             columns: ["escritorio_id"]
             isOneToOne: false
             referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracoes_extras_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -1111,6 +1174,13 @@ export type Database = {
             referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "integracoes_contaazul_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: true
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       malha_fina_consultas: {
@@ -1186,6 +1256,13 @@ export type Database = {
             columns: ["escritorio_id"]
             isOneToOne: false
             referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "malha_fina_consultas_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -1265,6 +1342,13 @@ export type Database = {
             referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "mensagens_chat_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       mensagens_enviadas: {
@@ -1314,6 +1398,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "mensagens_enviadas_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "mensagens_enviadas_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -1356,6 +1447,13 @@ export type Database = {
             columns: ["escritorio_id"]
             isOneToOne: false
             referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificacoes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -1431,6 +1529,13 @@ export type Database = {
             columns: ["escritorio_id"]
             isOneToOne: false
             referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_assinatura_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -1546,6 +1651,13 @@ export type Database = {
             referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "templates_mensagem_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -1594,6 +1706,13 @@ export type Database = {
             columns: ["escritorio_id"]
             isOneToOne: false
             referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_permissoes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
             referencedColumns: ["id"]
           },
           {
@@ -1650,6 +1769,13 @@ export type Database = {
             referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "usuarios_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       whatsapp_instances: {
@@ -1695,6 +1821,13 @@ export type Database = {
             columns: ["escritorio_id"]
             isOneToOne: true
             referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_instances_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: true
+            referencedRelation: "escritorios_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -1772,7 +1905,122 @@ export type Database = {
             referencedRelation: "escritorios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "declaracoes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      escritorios_safe: {
+        Row: {
+          asaas_customer_id: string | null
+          chave_pix: string | null
+          cnpj: string | null
+          cor_fundo_portal: string | null
+          cor_primaria: string | null
+          created_at: string | null
+          declaracoes_utilizadas: number | null
+          email: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_complemento: string | null
+          endereco_logradouro: string | null
+          endereco_numero: string | null
+          endereco_uf: string | null
+          favicon_url: string | null
+          id: string | null
+          limite_declaracoes: number | null
+          logo_url: string | null
+          nome: string | null
+          nome_fantasia: string | null
+          nome_portal: string | null
+          onboarding_completo: boolean | null
+          plano: string | null
+          plano_expira_em: string | null
+          razao_social: string | null
+          storage_limite_mb: number | null
+          stripe_customer_id: string | null
+          telefone: string | null
+          texto_boas_vindas: string | null
+          usuarios_limite: number | null
+          whatsapp: string | null
+          whitelabel_ativo: boolean | null
+        }
+        Insert: {
+          asaas_customer_id?: never
+          chave_pix?: never
+          cnpj?: string | null
+          cor_fundo_portal?: string | null
+          cor_primaria?: string | null
+          created_at?: string | null
+          declaracoes_utilizadas?: number | null
+          email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_complemento?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
+          endereco_uf?: string | null
+          favicon_url?: string | null
+          id?: string | null
+          limite_declaracoes?: number | null
+          logo_url?: string | null
+          nome?: string | null
+          nome_fantasia?: string | null
+          nome_portal?: string | null
+          onboarding_completo?: boolean | null
+          plano?: string | null
+          plano_expira_em?: string | null
+          razao_social?: string | null
+          storage_limite_mb?: number | null
+          stripe_customer_id?: never
+          telefone?: string | null
+          texto_boas_vindas?: string | null
+          usuarios_limite?: number | null
+          whatsapp?: string | null
+          whitelabel_ativo?: boolean | null
+        }
+        Update: {
+          asaas_customer_id?: never
+          chave_pix?: never
+          cnpj?: string | null
+          cor_fundo_portal?: string | null
+          cor_primaria?: string | null
+          created_at?: string | null
+          declaracoes_utilizadas?: number | null
+          email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_complemento?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
+          endereco_uf?: string | null
+          favicon_url?: string | null
+          id?: string | null
+          limite_declaracoes?: number | null
+          logo_url?: string | null
+          nome?: string | null
+          nome_fantasia?: string | null
+          nome_portal?: string | null
+          onboarding_completo?: boolean | null
+          plano?: string | null
+          plano_expira_em?: string | null
+          razao_social?: string | null
+          storage_limite_mb?: number | null
+          stripe_customer_id?: never
+          telefone?: string | null
+          texto_boas_vindas?: string | null
+          usuarios_limite?: number | null
+          whatsapp?: string | null
+          whitelabel_ativo?: boolean | null
+        }
+        Relationships: []
       }
     }
     Functions: {
