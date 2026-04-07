@@ -15,6 +15,7 @@ import { Send } from 'lucide-react';
 
 import { SecaoChat } from '@/components/declaracao/SecaoChat';
 import { SecaoTimeline } from '@/components/declaracao/SecaoTimeline';
+import { SecaoIAFiscal } from '@/components/declaracao/SecaoIAFiscal';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -163,10 +164,11 @@ export default function DeclaracaoDetalhe() {
         )}
 
         <Tabs defaultValue="documentos" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
             <TabsTrigger value="formulario">Formulário</TabsTrigger>
             <TabsTrigger value="resultado">Resultado</TabsTrigger>
+            <TabsTrigger value="ia-fiscal">IA Fiscal</TabsTrigger>
             <TabsTrigger value="chat">Mensagens</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
@@ -203,6 +205,10 @@ export default function DeclaracaoDetalhe() {
               observacoes={hook.declaracao?.observacoes_internas ?? null}
               onSave={handleSaveNotas}
             />
+          </TabsContent>
+
+          <TabsContent value="ia-fiscal" className="mt-4">
+            {id && <SecaoIAFiscal declaracaoId={id} />}
           </TabsContent>
 
           <TabsContent value="chat" className="mt-4">

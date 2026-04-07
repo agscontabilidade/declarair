@@ -38,6 +38,8 @@ import ClientePerfil from "./pages/ClientePerfil";
 import DeclaracaoDetalhe from "./pages/DeclaracaoDetalhe";
 import ConviteColaborador from "./pages/ConviteColaborador";
 import ConfiguracoesAPI from "./pages/ConfiguracoesAPI";
+import Relatorios from "./pages/Relatorios";
+import WebhooksPage from "./pages/Webhooks";
 import CadastroCliente from "./pages/cliente/CadastroCliente";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -121,6 +123,8 @@ const App = () => (
               <Route path="/drive" element={<ProtectedRoute allowedType="contador"><BillingGate><Drive /></BillingGate></ProtectedRoute>} />
               <Route path="/addons" element={<ProtectedRoute allowedType="contador"><BillingGate><Addons /></BillingGate></ProtectedRoute>} />
               <Route path="/whatsapp" element={<ProtectedRoute allowedType="contador"><BillingGate><WhatsApp /></BillingGate></ProtectedRoute>} />
+              <Route path="/relatorios" element={<ProtectedRoute allowedType="contador"><BillingGate><Relatorios /></BillingGate></ProtectedRoute>} />
+              <Route path="/webhooks" element={<ProtectedRoute allowedType="contador"><BillingGate><WebhooksPage /></BillingGate></ProtectedRoute>} />
 
               {/* Contador routes - always accessible */}
               <Route path="/configuracoes" element={<ProtectedRoute allowedType="contador"><Configuracoes /></ProtectedRoute>} />

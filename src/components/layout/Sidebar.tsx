@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, FileText, DollarSign, MessageSquare, Settings, LogOut, Newspaper, Shield, FolderOpen, User, TrendingUp, Puzzle, Phone } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, DollarSign, MessageSquare, Settings, LogOut, Newspaper, Shield, FolderOpen, User, TrendingUp, Puzzle, Phone, BarChart3, Webhook } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +30,7 @@ const navItems = [
   { title: 'Capa', url: '/capa', icon: Newspaper },
   { title: 'WhatsApp', url: '/whatsapp', icon: Phone },
   { title: 'Recursos Extras', url: '/addons', icon: Puzzle },
+  { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
 
