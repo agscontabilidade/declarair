@@ -164,10 +164,11 @@ export default function DeclaracaoDetalhe() {
         )}
 
         <Tabs defaultValue="documentos" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
             <TabsTrigger value="formulario">Formulário</TabsTrigger>
             <TabsTrigger value="resultado">Resultado</TabsTrigger>
+            <TabsTrigger value="ia-fiscal">IA Fiscal</TabsTrigger>
             <TabsTrigger value="chat">Mensagens</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
