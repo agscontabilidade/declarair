@@ -51,13 +51,24 @@ export default function Dashboard() {
   const { clientes, contadores } = useClientes();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const usage = useUsageStatus();
 
   const [showModal, setShowModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [viewMode, setViewMode] = useState<'kanban' | 'lista'>('kanban');
   const [novoClienteId, setNovoClienteId] = useState('');
   const [novoAno, setNovoAno] = useState(String(currentYear));
   const [novoContadorId, setNovoContadorId] = useState('');
   const [saving, setSaving] = useState(false);
+
+  function handleNovaDeclaracao() {
+    if (usage.level === 'blocked') {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setShowModal(true);
+  }
 
   const initials = profile.nome?.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?';
 
