@@ -39,8 +39,11 @@ export function ReportBugModal() {
         const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
         const { error } = await supabase.storage.from('bug-screenshots').upload(path, file);
         if (error) throw error;
-        const { data: urlData } = supabase.storage.from('bug-screenshots').getPublicUrl(path);
-        newUrls.push(urlData.publicUrl);
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from('bug-screenshots')
+          .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year
+        if (signedUrlError) throw signedUrlError;
+        newUrls.push(signedUrlData.signedUrl);
       }
       setScreenshots(prev => [...prev, ...newUrls]);
     } catch (err: any) {
