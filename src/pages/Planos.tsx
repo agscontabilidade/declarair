@@ -120,7 +120,7 @@ export default function Planos() {
           </div>
 
           <p className="text-sm text-white/30">
-            ✓ Teste grátis com 1 declaração  ✓ Pro por R$ 29,90/mês  ✓ Cancele quando quiser
+            ✓ Teste grátis com 1 declaração  ✓ Pro por R$ 49,90/mês  ✓ Cancele quando quiser
           </p>
         </div>
       </section>
