@@ -15,7 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 export default function Clientes() {
   const { clientes, isLoading, isError, error, refetch, search, setSearch, page, setPage, totalPages, contadores, createCliente } = useClientes();
   const [modalOpen, setModalOpen] = useState(false);
-  const { podeVerClientes, podeCriarClientes } = usePermissoes();
+  const { podeVerClientes, podeCriarClientes, isDono } = usePermissoes();
 
   if (!podeVerClientes) {
     return (
@@ -49,7 +49,7 @@ export default function Clientes() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="font-display text-2xl font-bold text-foreground">Clientes</h1>
           <div className="flex gap-2">
-            <GerarLinkConvite />
+            {isDono && <GerarLinkConvite />}
             {podeCriarClientes && (
               <Button className="gap-2" onClick={() => setModalOpen(true)}>
                 <Plus className="h-4 w-4" />
