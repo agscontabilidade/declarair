@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { KpiCards } from '@/components/dashboard/KpiCards';
 import { KanbanBoard } from '@/components/dashboard/KanbanBoard';
@@ -7,10 +8,10 @@ import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useDashboardFilters } from '@/hooks/useDashboardFilters';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Plus, LayoutGrid, List } from 'lucide-react';
+import { Bell, Plus, LayoutGrid, List, Zap, ShoppingCart, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClientes } from '@/hooks/useClientes';
@@ -18,7 +19,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { QueryError } from '@/components/ui/QueryError';
-
+import { useUsageStatus } from '@/hooks/useUsageStatus';
+import { formatarPreco, PRECOS } from '@/lib/constants/planos';
 
 const years = [2023, 2024, 2025, 2026];
 
