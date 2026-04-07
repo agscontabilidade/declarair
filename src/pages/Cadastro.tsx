@@ -23,9 +23,9 @@ const PLANOS = [
     popular: false,
   },
   {
-    id: 'pro', nome: 'Pro', preco: 'R$ 29,90', periodo: '/mês', icon: Crown,
-    declaracoes: 'Sob demanda', usuarios: '5',
-    features: ['Tudo do Free', 'Declarações por R$ 9,90/cada', 'Storage Ilimitado', 'Malha Fina + Calculadora IR', 'Suporte Prioritário', 'Até 5 Usuários'],
+    id: 'pro', nome: 'Pro', preco: 'R$ 49,90', periodo: '/mês', icon: Crown,
+    declaracoes: '3', usuarios: '5',
+    features: ['Tudo do Free', '3 Declarações inclusas', 'Extras por R$ 4,90/cada', 'Storage Ilimitado', 'Malha Fina + Calculadora IR', 'Suporte Prioritário', 'Até 5 Usuários'],
     popular: true,
   },
 ];
@@ -388,7 +388,7 @@ export default function Cadastro() {
                     </div>
                     <div>
                       <p className="font-display font-bold text-foreground">{planoInfo.nome}</p>
-                      <p className="text-sm text-muted-foreground">{planoInfo.preco}{planoInfo.periodo} · {planoInfo.id === 'gratuito' ? '1 declaração' : 'Declarações sob demanda (R$ 9,90/cada)'}</p>
+                      <p className="text-sm text-muted-foreground">{planoInfo.preco}{planoInfo.periodo} · {planoInfo.id === 'gratuito' ? '1 declaração de teste' : '3 declarações inclusas (extras R$ 4,90/cada)'}</p>
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground">
