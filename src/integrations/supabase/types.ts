@@ -418,6 +418,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cobrancas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cobrancas_declaracao_id_fkey"
             columns: ["declaracao_id"]
             isOneToOne: false
@@ -611,6 +618,13 @@ export type Database = {
             referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "convites_cliente_usado_por_cliente_id_fkey"
+            columns: ["usado_por_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       declaracao_atividades: {
@@ -650,6 +664,48 @@ export type Database = {
             foreignKeyName: "declaracao_atividades_declaracao_id_fkey"
             columns: ["declaracao_id"]
             isOneToOne: false
+            referencedRelation: "declaracoes_cliente_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      declaracao_notas_internas: {
+        Row: {
+          conteudo: string | null
+          created_at: string
+          declaracao_id: string
+          escritorio_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          conteudo?: string | null
+          created_at?: string
+          declaracao_id: string
+          escritorio_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          conteudo?: string | null
+          created_at?: string
+          declaracao_id?: string
+          escritorio_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "declaracao_notas_internas_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: true
+            referencedRelation: "declaracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracao_notas_internas_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: true
             referencedRelation: "declaracoes_cliente_view"
             referencedColumns: ["id"]
           },
@@ -713,6 +769,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_safe"
             referencedColumns: ["id"]
           },
           {
@@ -1114,6 +1177,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "formulario_ir_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "formulario_ir_declaracao_id_fkey"
             columns: ["declaracao_id"]
             isOneToOne: true
@@ -1238,6 +1308,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "malha_fina_consultas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "malha_fina_consultas_declaracao_id_fkey"
             columns: ["declaracao_id"]
             isOneToOne: false
@@ -1322,6 +1399,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "mensagens_chat_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "mensagens_chat_declaracao_id_fkey"
             columns: ["declaracao_id"]
             isOneToOne: false
@@ -1388,6 +1472,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensagens_enviadas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_safe"
             referencedColumns: ["id"]
           },
           {
@@ -1923,6 +2014,73 @@ export type Database = {
       }
     }
     Views: {
+      clientes_safe: {
+        Row: {
+          auth_user_id: string | null
+          conta_azul_id: string | null
+          contador_responsavel_id: string | null
+          cpf: string | null
+          created_at: string | null
+          data_nascimento: string | null
+          email: string | null
+          escritorio_id: string | null
+          id: string | null
+          nome: string | null
+          status_onboarding: string | null
+          telefone: string | null
+        }
+        Insert: {
+          auth_user_id?: string | null
+          conta_azul_id?: string | null
+          contador_responsavel_id?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          escritorio_id?: string | null
+          id?: string | null
+          nome?: string | null
+          status_onboarding?: string | null
+          telefone?: string | null
+        }
+        Update: {
+          auth_user_id?: string | null
+          conta_azul_id?: string | null
+          contador_responsavel_id?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          escritorio_id?: string | null
+          id?: string | null
+          nome?: string | null
+          status_onboarding?: string | null
+          telefone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_contador_responsavel_id_fkey"
+            columns: ["contador_responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       declaracoes_cliente_view: {
         Row: {
           ano_base: number | null
@@ -1978,6 +2136,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_safe"
             referencedColumns: ["id"]
           },
           {
@@ -2163,6 +2328,18 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_colaborador_invite_public: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          escritorio_id: string
+          escritorio_nome: string
+          expira_em: string
+          id: string
+          nome: string
+          papel: string
+        }[]
       }
       get_declaracoes_for_cliente: {
         Args: never
