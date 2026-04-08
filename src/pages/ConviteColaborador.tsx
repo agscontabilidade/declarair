@@ -44,31 +44,33 @@ export default function ConviteColaborador() {
       // Sign out any existing session first
       await supabase.auth.signOut();
 
-      const { data, error } = await (supabase as any)
-        .from('colaborador_convites')
-        .select('*')
-        .eq('token', token)
-        .eq('usado', false)
-        .single();
+      const { data, error } = await supabase.rpc('get_colaborador_invite_public', {
+        _token: token,
+      });
 
-      if (error || !data) {
+      if (error || !data || (Array.isArray(data) && data.length === 0)) {
         setErro('Convite inválido ou já utilizado');
         return;
       }
 
-      if (new Date(data.expira_em) < new Date()) {
+      const invite = Array.isArray(data) ? data[0] : data;
+
+      if (new Date(invite.expira_em) < new Date()) {
         setErro('Este convite expirou. Solicite um novo convite ao Responsável Técnico.');
         return;
       }
 
-      // Fetch office name
-      const { data: esc } = await supabase
-        .from('escritorios')
-        .select('nome')
-        .eq('id', data.escritorio_id)
-        .maybeSingle();
-
-      setConvite({ ...data, escritorio_nome: esc?.nome });
+      setConvite({
+        id: invite.id,
+        email: invite.email,
+        nome: invite.nome,
+        papel: invite.papel,
+        escritorio_id: invite.escritorio_id,
+        token: token!,
+        usado: false,
+        expira_em: invite.expira_em,
+        escritorio_nome: invite.escritorio_nome,
+      });
     } catch (error) {
       console.error('Erro ao carregar convite:', error);
       setErro('Erro ao carregar convite');

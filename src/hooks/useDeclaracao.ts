@@ -91,13 +91,35 @@ export function useDeclaracao(declaracaoId: string | undefined) {
     },
   });
 
-  const saveNotas = useMutation({
-    mutationFn: async (observacoes_internas: string) => {
-      const { error } = await supabase
-        .from('declaracoes')
-        .update({ observacoes_internas })
-        .eq('id', declaracaoId!);
+  const notasInternas = useQuery({
+    queryKey: ['declaracao-notas', declaracaoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('declaracao_notas_internas')
+        .select('*')
+        .eq('declaracao_id', declaracaoId!)
+        .maybeSingle();
       if (error) throw error;
+      return data;
+    },
+    enabled: !!declaracaoId,
+  });
+
+  const saveNotas = useMutation({
+    mutationFn: async (conteudo: string) => {
+      if (!declaracaoId) throw new Error('Sem declaração');
+      const escritorioId = profile.escritorioId;
+      if (!escritorioId) throw new Error('Sem escritório');
+      const { error } = await supabase
+        .from('declaracao_notas_internas')
+        .upsert(
+          { declaracao_id: declaracaoId, escritorio_id: escritorioId, conteudo },
+          { onConflict: 'declaracao_id' }
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['declaracao-notas', declaracaoId] });
     },
   });
 
@@ -151,6 +173,8 @@ export function useDeclaracao(declaracaoId: string | undefined) {
     checklistLoading: checklist.isLoading,
     formularioIR: formularioIR.data,
     formularioLoading: formularioIR.isLoading,
+    notasInternas: notasInternas.data?.conteudo ?? null,
+    notasLoading: notasInternas.isLoading,
     updateStatus,
     saveResultado,
     saveNotas,

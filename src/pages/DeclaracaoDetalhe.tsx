@@ -202,7 +202,7 @@ export default function DeclaracaoDetalhe() {
               saving={hook.saveResultado.isPending}
             />
             <SecaoNotas
-              observacoes={hook.declaracao?.observacoes_internas ?? null}
+              observacoes={hook.notasInternas}
               onSave={handleSaveNotas}
             />
           </TabsContent>
