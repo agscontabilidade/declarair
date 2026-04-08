@@ -2164,6 +2164,32 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_declaracoes_for_cliente: {
+        Args: never
+        Returns: {
+          ano_base: number
+          cliente_id: string
+          contador_id: string | null
+          created_at: string
+          data_transmissao: string | null
+          escritorio_id: string
+          forma_tributacao: string | null
+          id: string
+          numero_recibo: string | null
+          observacoes_internas: string | null
+          status: string
+          tipo_resultado: string | null
+          ultima_atualizacao_status: string
+          valor_resultado: number | null
+          version: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "declaracoes"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_user_cliente_id: { Args: never; Returns: string }
       get_user_escritorio_id: { Args: never; Returns: string }
       get_user_papel: { Args: never; Returns: string }

@@ -26,7 +26,7 @@ export function useClientes() {
       if (!escritorioId) return { data: [], total: 0 };
       let q = supabase
         .from('clientes')
-        .select('*, usuarios!clientes_contador_responsavel_id_fkey(nome)', { count: 'exact' })
+        .select('id, escritorio_id, contador_responsavel_id, nome, cpf, email, telefone, data_nascimento, status_onboarding, created_at, auth_user_id, conta_azul_id, usuarios!clientes_contador_responsavel_id_fkey(nome)', { count: 'exact' })
         .eq('escritorio_id', escritorioId)
         .order('nome');
 
