@@ -2367,6 +2367,44 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_escritorio_safe_data: {
+        Args: { esc_id: string }
+        Returns: {
+          asaas_customer_id: string
+          chave_pix: string
+          cnpj: string
+          cor_fundo_portal: string
+          cor_primaria: string
+          created_at: string
+          declaracoes_utilizadas: number
+          email: string
+          endereco_bairro: string
+          endereco_cep: string
+          endereco_cidade: string
+          endereco_complemento: string
+          endereco_logradouro: string
+          endereco_numero: string
+          endereco_uf: string
+          favicon_url: string
+          id: string
+          limite_declaracoes: number
+          logo_url: string
+          nome: string
+          nome_fantasia: string
+          nome_portal: string
+          onboarding_completo: boolean
+          plano: string
+          plano_expira_em: string
+          razao_social: string
+          storage_limite_mb: number
+          stripe_customer_id: string
+          telefone: string
+          texto_boas_vindas: string
+          usuarios_limite: number
+          whatsapp: string
+          whitelabel_ativo: boolean
+        }[]
+      }
       get_user_cliente_id: { Args: never; Returns: string }
       get_user_escritorio_id: { Args: never; Returns: string }
       get_user_papel: { Args: never; Returns: string }
