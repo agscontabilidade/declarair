@@ -15,9 +15,14 @@ const PARENTESCOS = ['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Companheiro(a)', 'Pa
 
 export function StepDependentes({ data, onChange }: Props) {
   const deps = data.dependentes || [];
+  const alimentandos = data.alimentandos || [];
 
   const addDep = () => {
     onChange('dependentes', [...deps, { nome: '', cpf: '', data_nascimento: '', parentesco: '', tipo: 'dependente' }]);
+  };
+
+  const addAli = () => {
+    onChange('alimentandos', [...alimentandos, { nome: '', cpf: '', data_nascimento: '' }]);
   };
 
   const updateDep = (i: number, field: string, value: string) => {
@@ -25,8 +30,17 @@ export function StepDependentes({ data, onChange }: Props) {
     onChange('dependentes', updated);
   };
 
+  const updateAli = (i: number, field: string, value: string) => {
+    const updated = alimentandos.map((a: any, idx: number) => idx === i ? { ...a, [field]: value } : a);
+    onChange('alimentandos', updated);
+  };
+
   const removeDep = (i: number) => {
     onChange('dependentes', deps.filter((_: any, idx: number) => idx !== i));
+  };
+
+  const removeAli = (i: number) => {
+    onChange('alimentandos', alimentandos.filter((_: any, idx: number) => idx !== i));
   };
 
   const isValidCPF = (cpf: string) => validateCPF(cpf);
