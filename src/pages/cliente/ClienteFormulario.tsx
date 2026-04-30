@@ -6,16 +6,14 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClipboardList, ChevronLeft, ChevronRight, CheckCircle2, Save } from 'lucide-react';
 import { useFormularioIR } from '@/hooks/useFormularioIR';
-import { StepPerfilFiscal } from '@/components/formulario-ir/StepPerfilFiscal';
 import { StepDadosPessoais } from '@/components/formulario-ir/StepDadosPessoais';
 import { StepDependentes } from '@/components/formulario-ir/StepDependentes';
 import { StepDocumentos } from '@/components/formulario-ir/StepDocumentos';
 import { StepInfoAdicionais } from '@/components/formulario-ir/StepInfoAdicionais';
 import { toast } from 'sonner';
-import { DEFAULT_PERFIL, gerarChecklistPorPerfil, type PerfilFiscal } from '@/lib/checklistPorPerfil';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 interface StepDef {
   key: string;
@@ -23,33 +21,23 @@ interface StepDef {
 }
 
 export default function ClienteFormulario() {
-  const { formData, updateField, declaracao, formulario, isLoading, saving, lastSaved, finalizar } = useFormularioIR();
+  const { formData, updateField, declaracao, isLoading, saving, lastSaved, finalizar } = useFormularioIR();
   const { profile } = useAuth();
-  const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [confirmado, setConfirmado] = useState(false);
   const [concluido, setConcluido] = useState(false);
-  const [perfilFiscal, setPerfilFiscal] = useState<PerfilFiscal>(DEFAULT_PERFIL);
 
-  // Steps are now static: Informações Cadastrais -> Dependentes (if applicable) -> Envio de Documentos -> Revisão
-  const steps = useMemo<StepDef[]>(() => {
-    const s: StepDef[] = [
-      { key: 'dados', label: 'Informações Cadastrais' },
-    ];
-    
-    // Always show dependentes step since the logic for spouses and children is now consolidated there
-    s.push({ key: 'dependentes', label: 'Dependentes' });
-    
-    s.push({ key: 'documentos', label: 'Envio de Documentos' });
-    s.push({ key: 'final', label: 'Revisão e Envio' });
-    return s;
-  }, []);
+  const steps = useMemo<StepDef[]>(() => [
+    { key: 'dados', label: 'Informações Cadastrais' },
+    { key: 'dependentes', label: 'Dependentes' },
+    { key: 'documentos', label: 'Envio de Documentos' },
+    { key: 'final', label: 'Revisão e Envio' },
+  ], []);
 
   const totalSteps = steps.length;
   const currentStep = steps[step] || steps[0];
   const progress = Math.round(((step + 1) / totalSteps) * 100);
 
-  // Fetch checklist for the document step
   const { data: checklist = [] } = useQuery({
     queryKey: ['formulario-checklist', declaracao?.id],
     queryFn: async () => {
@@ -62,13 +50,6 @@ export default function ClienteFormulario() {
     },
     enabled: !!declaracao?.id,
   });
-
-  // Ensure step index stays within bounds when steps change
-  useEffect(() => {
-    if (step >= steps.length) {
-      setStep(Math.max(0, steps.length - 1));
-    }
-  }, [steps.length, step]);
 
   if (isLoading) {
     return (
@@ -112,10 +93,47 @@ export default function ClienteFormulario() {
     );
   }
 
-  const handleNext = () => {
-    setStep(s => Math.min(s + 1, totalSteps - 1));
+  const handleFinalizar = async () => {
+    if (!confirmado) {
+      toast.error('Confirme a veracidade das informações');
+      return;
+    }
+
+    const pendingDocs = checklist.filter(d => d.status === 'pendente');
+    
+    if (pendingDocs.length > 0) {
+      try {
+        const obrigatoriosPendentes = pendingDocs.filter(d => d.obrigatorio);
+        const msg = obrigatoriosPendentes.length > 0
+          ? `Cliente finalizou o formulário com ${pendingDocs.length} documento(s) pendente(s), sendo ${obrigatoriosPendentes.length} obrigatório(s).`
+          : `Cliente finalizou o formulário com ${pendingDocs.length} documento(s) opcional(is) pendente(s).`;
+
+        await supabase.from('notificacoes').insert({
+          escritorio_id: declaracao.escritorio_id,
+          titulo: '⚠️ Documentos pendentes',
+          mensagem: msg,
+          link_destino: `/clientes/${declaracao.cliente_id}`,
+        });
+
+        await supabase.from('declaracao_atividades').insert({
+          declaracao_id: declaracao.id,
+          tipo: 'documento',
+          descricao: `Cliente finalizou formulário com ${pendingDocs.length} documento(s) pendente(s)`,
+          usuario_nome: 'Cliente',
+        });
+      } catch { /* best-effort */ }
+    }
+
+    const ok = await finalizar();
+    if (ok) {
+      if (pendingDocs.length > 0) {
+        toast.info(`Formulário enviado! ${pendingDocs.length} documento(s) ainda pendente(s) — seu contador será notificado.`);
+      }
+      setConcluido(true);
+    }
   };
 
+  const handleNext = () => setStep(s => Math.min(s + 1, totalSteps - 1));
   const handlePrev = () => setStep(s => Math.max(0, s - 1));
 
   const isLastStep = step === totalSteps - 1;
@@ -123,12 +141,11 @@ export default function ClienteFormulario() {
   return (
     <ClienteLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Formulário IR {declaracao.ano_base}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Etapa {step + 1} de {totalSteps} — {currentStep.label === 'Dados Pessoais' ? 'Informações Cadastrais' : currentStep.label}
+              Etapa {step + 1} de {totalSteps} — {currentStep.label}
             </p>
           </div>
           {lastSaved && (
@@ -141,12 +158,8 @@ export default function ClienteFormulario() {
 
         <Progress value={progress} className="h-2" />
 
-        {/* Step Content */}
         <Card className="shadow-sm">
           <CardContent className="p-6">
-            {currentStep.key === 'perfil' && (
-              <StepPerfilFiscal perfil={perfilFiscal} onChange={handlePerfilChange} />
-            )}
             {currentStep.key === 'dados' && (
               <StepDadosPessoais data={formData} onChange={updateField} />
             )}
@@ -172,7 +185,6 @@ export default function ClienteFormulario() {
           </CardContent>
         </Card>
 
-        {/* Navigation */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
           <Button
             variant="outline"
