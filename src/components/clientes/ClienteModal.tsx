@@ -31,7 +31,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave }: Props) 
   });
 
   const cpfDigits = form.cpf.replace(/\D/g, '');
-  const cpfValid = cpfDigits.length === 11;
+  const cpfValid = validateCPF(form.cpf);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
