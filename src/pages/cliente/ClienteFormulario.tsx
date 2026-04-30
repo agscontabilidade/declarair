@@ -29,13 +29,10 @@ export default function ClienteFormulario() {
 
   const steps = useMemo<StepDef[]>(() => [
     { key: 'dados', label: 'Informações Cadastrais' },
-    { key: 'dependentes', label: 'Dependentes' },
-    { key: 'documentos', label: 'Envio de Documentos' },
-    { key: 'final', label: 'Revisão e Envio' },
   ], []);
 
   const totalSteps = steps.length;
-  const currentStep = steps[step] || steps[0];
+  const currentStep = steps[0];
   const progress = Math.round(((step + 1) / totalSteps) * 100);
 
   const { data: checklist = [] } = useQuery({
@@ -94,10 +91,13 @@ export default function ClienteFormulario() {
   }
 
   const handleFinalizar = async () => {
+    // Remoção da necessidade de checkbox de confirmação para simplificar
+    /* 
     if (!confirmado) {
       toast.error('Confirme a veracidade das informações');
       return;
     }
+    */
 
     const pendingDocs = checklist.filter(d => d.status === 'pendente');
     
@@ -143,9 +143,9 @@ export default function ClienteFormulario() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-display text-2xl font-bold text-foreground">Formulário IR {declaracao.ano_base}</h1>
+            <h1 className="font-display text-2xl font-bold text-foreground">Informações Cadastrais</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Etapa {step + 1} de {totalSteps} — {currentStep.label}
+              Preencha os dados básicos para sua declaração de {declaracao.ano_base}
             </p>
           </div>
           {lastSaved && (
@@ -156,61 +156,25 @@ export default function ClienteFormulario() {
           )}
         </div>
 
-        <Progress value={progress} className="h-2" />
+        <Progress value={concluido ? 100 : 50} className="h-2" />
 
         <Card className="shadow-sm">
           <CardContent className="p-6">
-            {currentStep.key === 'dados' && (
-              <StepDadosPessoais data={formData} onChange={updateField} />
-            )}
-            {currentStep.key === 'dependentes' && (
+            <StepDadosPessoais data={formData} onChange={updateField} />
+            <div className="mt-8 pt-8 border-t">
               <StepDependentes data={formData} onChange={updateField} />
-            )}
-            {currentStep.key === 'documentos' && (
-              <StepDocumentos
-                checklist={checklist}
-                declaracaoId={declaracao.id}
-                escritorioId={declaracao.escritorio_id}
-                clienteId={profile.clienteId || ''}
-              />
-            )}
-            {currentStep.key === 'final' && (
-              <StepInfoAdicionais
-                data={formData}
-                onChange={updateField}
-                confirmado={confirmado}
-                onConfirmChange={setConfirmado}
-              />
-            )}
+            </div>
           </CardContent>
         </Card>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
           <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={handlePrev}
-            disabled={step === 0}
+            onClick={handleFinalizar}
+            disabled={saving}
+            className="w-full sm:w-auto bg-success hover:bg-success/90 active:scale-[0.98]"
           >
-            <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+            <CheckCircle2 className="h-4 w-4 mr-2" /> Salvar e Finalizar
           </Button>
-
-          {isLastStep ? (
-            <Button
-              onClick={handleFinalizar}
-              disabled={saving}
-              className="w-full sm:w-auto bg-success hover:bg-success/90 active:scale-[0.98]"
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2" /> Finalizar
-            </Button>
-          ) : (
-            <Button
-              className="w-full sm:w-auto active:scale-[0.98]"
-              onClick={handleNext}
-            >
-              Próximo <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          )}
         </div>
       </div>
     </ClienteLayout>
