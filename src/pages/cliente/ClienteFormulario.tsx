@@ -6,16 +6,14 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClipboardList, ChevronLeft, ChevronRight, CheckCircle2, Save } from 'lucide-react';
 import { useFormularioIR } from '@/hooks/useFormularioIR';
-import { StepPerfilFiscal } from '@/components/formulario-ir/StepPerfilFiscal';
 import { StepDadosPessoais } from '@/components/formulario-ir/StepDadosPessoais';
 import { StepDependentes } from '@/components/formulario-ir/StepDependentes';
 import { StepDocumentos } from '@/components/formulario-ir/StepDocumentos';
 import { StepInfoAdicionais } from '@/components/formulario-ir/StepInfoAdicionais';
 import { toast } from 'sonner';
-import { DEFAULT_PERFIL, gerarChecklistPorPerfil, type PerfilFiscal } from '@/lib/checklistPorPerfil';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 interface StepDef {
   key: string;
@@ -23,46 +21,23 @@ interface StepDef {
 }
 
 export default function ClienteFormulario() {
-  const { formData, updateField, declaracao, formulario, isLoading, saving, lastSaved, finalizar } = useFormularioIR();
+  const { formData, updateField, declaracao, isLoading, saving, lastSaved, finalizar } = useFormularioIR();
   const { profile } = useAuth();
-  const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [confirmado, setConfirmado] = useState(false);
   const [concluido, setConcluido] = useState(false);
-  const [perfilFiscal, setPerfilFiscal] = useState<PerfilFiscal>(DEFAULT_PERFIL);
 
-  // Sync perfil when formulario loads
-  useEffect(() => {
-    const pf = formulario?.perfil_fiscal;
-    if (pf && typeof pf === 'object' && !Array.isArray(pf) && Object.keys(pf).length > 0) {
-      setPerfilFiscal(pf as unknown as PerfilFiscal);
-    }
-  }, [formulario]);
-
-  // Dynamic steps based on perfil - SMART LOGIC:
-  // - Dados Pessoais only shown if dependentes is true (needs conjugal info)
-  // - Dependentes step only if dependentes is true
-  // - If no dependentes, system assumes solteiro, no conjugal data needed
-  const steps = useMemo<StepDef[]>(() => {
-    const s: StepDef[] = [
-      { key: 'perfil', label: 'Perfil Fiscal' },
-      { key: 'dados', label: 'Informações Cadastrais' },
-    ];
-    
-    if (perfilFiscal.dependentes) {
-      s.push({ key: 'dependentes', label: 'Dependentes' });
-    }
-    
-    s.push({ key: 'documentos', label: 'Envio de Documentos' });
-    s.push({ key: 'final', label: 'Revisão e Envio' });
-    return s;
-  }, [perfilFiscal]);
+  const steps = useMemo<StepDef[]>(() => [
+    { key: 'dados', label: 'Informações Cadastrais' },
+    { key: 'dependentes', label: 'Dependentes' },
+    { key: 'documentos', label: 'Envio de Documentos' },
+    { key: 'final', label: 'Revisão e Envio' },
+  ], []);
 
   const totalSteps = steps.length;
   const currentStep = steps[step] || steps[0];
   const progress = Math.round(((step + 1) / totalSteps) * 100);
 
-  // Fetch checklist for the document step
   const { data: checklist = [] } = useQuery({
     queryKey: ['formulario-checklist', declaracao?.id],
     queryFn: async () => {
@@ -75,13 +50,6 @@ export default function ClienteFormulario() {
     },
     enabled: !!declaracao?.id,
   });
-
-  // Ensure step index stays within bounds when steps change
-  useEffect(() => {
-    if (step >= steps.length) {
-      setStep(Math.max(0, steps.length - 1));
-    }
-  }, [steps.length, step]);
 
   if (isLoading) {
     return (
@@ -125,63 +93,14 @@ export default function ClienteFormulario() {
     );
   }
 
-  const handlePerfilChange = async (newPerfil: PerfilFiscal) => {
-    setPerfilFiscal(newPerfil);
-    if (formulario?.id) {
-      await supabase
-        .from('formulario_ir')
-        .update({ perfil_fiscal: newPerfil as unknown as import('@/integrations/supabase/types').Json })
-        .eq('id', formulario.id);
-    }
-  };
-
-  const handleNextFromPerfil = async () => {
-    if (!declaracao?.id) return;
-    
-    const checklistItems = gerarChecklistPorPerfil(perfilFiscal);
-
-    // Always regenerate checklist when advancing from perfil step
-    // Delete existing items first, then insert new ones
-    await supabase
-      .from('checklist_documentos')
-      .delete()
-      .eq('declaracao_id', declaracao.id);
-
-    const items = checklistItems.map(item => ({
-      nome_documento: item.nome_documento,
-      categoria: item.categoria,
-      obrigatorio: item.obrigatorio,
-      declaracao_id: declaracao.id,
-    }));
-    
-    if (items.length > 0) {
-      await supabase.from('checklist_documentos').insert(items);
-    }
-
-    // If no dependentes, auto-set solteiro and clear conjugal data
-    if (!perfilFiscal.dependentes) {
-      updateField('estado_civil', 'solteiro');
-      updateField('conjuge_nome', '');
-      updateField('conjuge_cpf', '');
-      updateField('dependentes', []);
-    }
-
-    // Refresh checklist query
-    queryClient.invalidateQueries({ queryKey: ['formulario-checklist'] });
-    toast.success('Perfil fiscal salvo! Checklist de documentos atualizado.');
-    setStep(1);
-  };
-
   const handleFinalizar = async () => {
     if (!confirmado) {
       toast.error('Confirme a veracidade das informações');
       return;
     }
 
-    // Check pending documents
     const pendingDocs = checklist.filter(d => d.status === 'pendente');
     
-    // Notify accountant about pending docs
     if (pendingDocs.length > 0) {
       try {
         const obrigatoriosPendentes = pendingDocs.filter(d => d.obrigatorio);
@@ -214,14 +133,7 @@ export default function ClienteFormulario() {
     }
   };
 
-  const handleNext = () => {
-    if (currentStep.key === 'perfil') {
-      handleNextFromPerfil();
-    } else {
-      setStep(s => Math.min(s + 1, totalSteps - 1));
-    }
-  };
-
+  const handleNext = () => setStep(s => Math.min(s + 1, totalSteps - 1));
   const handlePrev = () => setStep(s => Math.max(0, s - 1));
 
   const isLastStep = step === totalSteps - 1;
@@ -229,12 +141,11 @@ export default function ClienteFormulario() {
   return (
     <ClienteLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Formulário IR {declaracao.ano_base}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Etapa {step + 1} de {totalSteps} — {currentStep.label === 'Dados Pessoais' ? 'Informações Cadastrais' : currentStep.label}
+              Etapa {step + 1} de {totalSteps} — {currentStep.label}
             </p>
           </div>
           {lastSaved && (
@@ -247,12 +158,8 @@ export default function ClienteFormulario() {
 
         <Progress value={progress} className="h-2" />
 
-        {/* Step Content */}
         <Card className="shadow-sm">
           <CardContent className="p-6">
-            {currentStep.key === 'perfil' && (
-              <StepPerfilFiscal perfil={perfilFiscal} onChange={handlePerfilChange} />
-            )}
             {currentStep.key === 'dados' && (
               <StepDadosPessoais data={formData} onChange={updateField} />
             )}
@@ -278,7 +185,6 @@ export default function ClienteFormulario() {
           </CardContent>
         </Card>
 
-        {/* Navigation */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
           <Button
             variant="outline"
