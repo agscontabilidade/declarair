@@ -1,0 +1,1 @@
+ALTER TABLE public.formulario_ir ADD COLUMN IF NOT EXISTS alimentandos JSONB DEFAULT '[]'::jsonb;
