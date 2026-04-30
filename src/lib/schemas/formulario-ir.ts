@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { validateCPF } from '../formatters';
 
 // --- Dependentes ---
 export const dependenteSchema = z.object({
