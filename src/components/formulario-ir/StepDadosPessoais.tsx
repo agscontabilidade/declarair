@@ -251,8 +251,9 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent 
-                className="p-0 w-[var(--radix-popover-trigger-width)]" 
+                className="p-0 w-[var(--radix-popover-trigger-width)] max-h-[500px] overflow-hidden flex flex-col" 
                 align="start"
+                sideOffset={4}
               >
                 <Command shouldFilter={true}>
                   <CommandInput 
@@ -309,8 +310,9 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent 
-                className="p-0 w-[var(--radix-popover-trigger-width)]" 
+                className="p-0 w-[var(--radix-popover-trigger-width)] max-h-[500px] overflow-hidden flex flex-col" 
                 align="start"
+                sideOffset={4}
               >
                 <Command shouldFilter={true}>
                   <CommandInput 
