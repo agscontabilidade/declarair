@@ -2,6 +2,7 @@ import { ClienteLayout } from '@/components/layout/ClienteLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClientePortal } from '@/hooks/useClientePortal';
 import { StatusStepper } from '@/components/cliente-portal/StatusStepper';
