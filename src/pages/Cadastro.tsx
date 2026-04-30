@@ -78,6 +78,7 @@ export default function Cadastro() {
   // Step 1
   const [nome, setNome] = useState(draft?.nome ?? '');
   const [email, setEmail] = useState(draft?.email ?? '');
+  const [cpf, setCpf] = useState(draft?.cpf ?? '');
   const [telefone, setTelefone] = useState(draft?.telefone ?? '');
   const [senha, setSenha] = useState('');
 
@@ -89,7 +90,7 @@ export default function Cadastro() {
   const saveDraft = useCallback(() => {
     try {
       sessionStorage.setItem(CADASTRO_STORAGE_KEY, JSON.stringify({
-        step, nome, email, telefone, planoSelecionado, nomeEscritorio,
+        step, nome, email, cpf, telefone, planoSelecionado, nomeEscritorio,
       }));
     } catch { /* quota exceeded - ignore */ }
   }, [step, nome, email, telefone, planoSelecionado, nomeEscritorio]);
@@ -97,8 +98,12 @@ export default function Cadastro() {
   useEffect(() => { saveDraft(); }, [saveDraft]);
 
   function handleStep1Next() {
-    if (!nome.trim() || !email.trim() || !senha.trim()) {
+    if (!nome.trim() || !email.trim() || !cpf.trim() || !senha.trim()) {
       toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
+      return;
+    }
+    if (cpf.replace(/\D/g, '').length !== 11) {
+      toast({ title: 'CPF inválido', variant: 'destructive' });
       return;
     }
     if (senha.length < 8) {
@@ -158,6 +163,7 @@ export default function Cadastro() {
       const { error: rpcError } = await supabase.rpc('handle_new_accountant_signup', {
         p_user_id: authData.user.id,
         p_nome: nome,
+        p_cpf: cpf.replace(/\D/g, ''),
         p_nome_escritorio: nomeEscritorio,
         p_email: email,
       });
@@ -271,8 +277,24 @@ export default function Cadastro() {
                 <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone / WhatsApp</Label>
-                <Input id="telefone" value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(11) 99999-9999" />
+                <Label htmlFor="cpf">CPF *</Label>
+                <Input 
+                  id="cpf" 
+                  value={cpf} 
+                  onChange={e => setCpf(maskCPF(e.target.value))} 
+                  placeholder="000.000.000-00"
+                  maxLength={14}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone / WhatsApp *</Label>
+                <Input 
+                  id="telefone" 
+                  value={telefone} 
+                  onChange={e => setTelefone(formatPhone(e.target.value))} 
+                  placeholder="(11) 99999-9999"
+                  maxLength={15}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="senha">Senha *</Label>
