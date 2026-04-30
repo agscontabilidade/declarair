@@ -260,7 +260,7 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                     placeholder="Busque por código ou nome..." 
                     className="h-11"
                   />
-                  <CommandList className="max-h-[350px]">
+                  <CommandList className="max-h-[400px] overflow-y-auto scrollbar-thin">
                     <CommandEmpty>Nenhuma natureza encontrada.</CommandEmpty>
                     <CommandGroup>
                       {NATUREZAS_OCUPACAO.map((n) => (
