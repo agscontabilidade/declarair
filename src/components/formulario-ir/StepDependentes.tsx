@@ -29,7 +29,7 @@ export function StepDependentes({ data, onChange }: Props) {
     onChange('dependentes', deps.filter((_: any, idx: number) => idx !== i));
   };
 
-  const isValidCPF = (cpf: string) => parseCPF(cpf).length === 11;
+  const isValidCPF = (cpf: string) => validateCPF(cpf);
 
   return (
     <div className="space-y-6">
