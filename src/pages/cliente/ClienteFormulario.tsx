@@ -112,41 +112,9 @@ export default function ClienteFormulario() {
     );
   }
 
-  const handlePerfilChange = async (newPerfil: PerfilFiscal) => {
-    setPerfilFiscal(newPerfil);
-    if (formulario?.id) {
-      await supabase
-        .from('formulario_ir')
-        .update({ perfil_fiscal: newPerfil as unknown as import('@/integrations/supabase/types').Json })
-        .eq('id', formulario.id);
-    }
+  const handleNext = () => {
+    setStep(s => Math.min(s + 1, totalSteps - 1));
   };
-
-  const handleNextFromPerfil = async () => {
-    if (!declaracao?.id) return;
-    
-    const checklistItems = gerarChecklistPorPerfil(perfilFiscal);
-
-    // Always regenerate checklist when advancing from perfil step
-    // Delete existing items first, then insert new ones
-    await supabase
-      .from('checklist_documentos')
-      .delete()
-      .eq('declaracao_id', declaracao.id);
-
-    const items = checklistItems.map(item => ({
-      nome_documento: item.nome_documento,
-      categoria: item.categoria,
-      obrigatorio: item.obrigatorio,
-      declaracao_id: declaracao.id,
-    }));
-    
-    if (items.length > 0) {
-      await supabase.from('checklist_documentos').insert(items);
-    }
-
-    // If no dependentes, auto-set solteiro and clear conjugal data
-    if (!perfilFiscal.dependentes) {
       updateField('estado_civil', 'solteiro');
       updateField('conjuge_nome', '');
       updateField('conjuge_cpf', '');
