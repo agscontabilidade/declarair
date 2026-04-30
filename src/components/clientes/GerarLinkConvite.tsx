@@ -32,6 +32,10 @@ export default function GerarLinkConvite() {
 
   const handleGerar = async () => {
     if (!profile?.escritorioId) return;
+    if (formData.cpf_sugerido && !validateCPF(formData.cpf_sugerido)) {
+      toast({ title: 'CPF inválido', variant: 'destructive' });
+      return;
+    }
     setLoading(true);
     try {
       const token = crypto.randomUUID() + '-' + Date.now().toString(36);
