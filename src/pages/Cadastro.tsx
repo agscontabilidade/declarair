@@ -103,7 +103,7 @@ export default function Cadastro() {
       toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
       return;
     }
-    if (cpf.replace(/\D/g, '').length !== 11) {
+    if (!validateCPF(cpf)) {
       toast({ title: 'CPF inválido', variant: 'destructive' });
       return;
     }
