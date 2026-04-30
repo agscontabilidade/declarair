@@ -115,15 +115,15 @@ export default function ClienteDashboard() {
                   <div className="w-full max-w-[140px] mt-3">
                     <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
                       <span>Documentos</span>
-                      <span>{pendentes.length > 0 ? `${pendentes.length} Pendentes` : 'OK'}</span>
+                      <span>{pendentes.length > 0 ? `${checklist.length - pendentes.length}/${checklist.length}` : 'OK'}</span>
                     </div>
-                    <Progress value={pendentes.length === 0 ? 100 : 50} className="h-1.5" />
+                    <Progress value={checklist.length > 0 ? ((checklist.length - pendentes.length) / checklist.length) * 100 : 0} className="h-1.5" />
                   </div>
 
                   <Badge className={`mt-3 ${
-                    pendentes.length === 0 ? 'bg-success/15 text-success hover:bg-success/20' : 'bg-destructive/15 text-destructive hover:bg-destructive/20'
+                    (declaracao as any)?.status_documentos === 'enviado' ? 'bg-success/15 text-success hover:bg-success/20' : pendentes.length === 0 ? 'bg-primary/15 text-primary hover:bg-primary/20' : 'bg-destructive/15 text-destructive hover:bg-destructive/20'
                   }`}>
-                    {pendentes.length === 0 ? 'Tudo Enviado' : `${pendentes.length} Pendentes`}
+                    {(declaracao as any)?.status_documentos === 'enviado' ? 'Enviado ao Contador' : pendentes.length === 0 ? 'Pronto para Enviar' : `${pendentes.length} Pendentes`}
                   </Badge>
                 </CardContent>
               </Card>
