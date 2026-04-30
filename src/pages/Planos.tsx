@@ -26,11 +26,10 @@ const PLANOS_DATA = [
       { texto: 'Portal do Contribuinte básico', disponivel: true },
       { texto: 'Suporte por chat', disponivel: true },
       { texto: 'Kanban e chat avançado', disponivel: false },
-      { texto: 'Verificador de malha fina', disponivel: false },
       { texto: 'Calculadora IR integrada', disponivel: false },
       { texto: 'Múltiplos usuários', disponivel: false },
     ],
-    nota: '💡 Faça upgrade para desbloquear malha fina, calculadora IR e mais',
+    nota: '💡 Faça upgrade para desbloquear calculadora IR e mais',
   },
   {
     id: 'pro',
@@ -47,7 +46,7 @@ const PLANOS_DATA = [
       { texto: `R$ ${PRECOS.DECLARACAO_EXTRA.preco.toFixed(2).replace('.', ',')} por declaração avulsa`, disponivel: true, bold: true },
       { texto: 'Até 5 usuários simultâneos', disponivel: true },
       { texto: 'Armazenamento ilimitado', disponivel: true },
-      { texto: 'Verificador de malha fina', disponivel: true },
+      // Malha Fina removed
       { texto: 'Calculadora IR integrada', disponivel: true },
       { texto: 'Chat com clientes', disponivel: true },
       { texto: 'Kanban de declarações', disponivel: true },
@@ -63,7 +62,7 @@ const COMPARISON = [
   { recurso: 'Declarações avulsas', free: '—', pro: 'R$ 4,90/cada' },
   { recurso: 'Usuários simultâneos', free: '1', pro: '5' },
   { recurso: 'Storage', free: '500 MB', pro: 'Ilimitado' },
-  { recurso: 'Malha fina', free: '✗', pro: '✓' },
+  // Malha Fina removed
   { recurso: 'Calculadora IR', free: '✗', pro: '✓' },
   { recurso: 'Chat clientes', free: '✓', pro: '✓' },
   { recurso: 'Kanban avançado', free: '✗', pro: '✓' },

@@ -25,7 +25,7 @@ import Checkout from "./pages/Checkout";
 import Upgrade from "./pages/Upgrade";
 import Cadastro from "./pages/Cadastro";
 import Onboarding from "./pages/Onboarding";
-import MalhaFina from "./pages/MalhaFina";
+// MalhaFina removed
 import Drive from "./pages/Drive";
 import Addons from "./pages/Addons";
 import WhatsApp from "./pages/WhatsApp";
@@ -119,7 +119,7 @@ const App = () => (
               <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><BillingGate><Cobrancas /></BillingGate></ProtectedRoute>} />
               <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><BillingGate><Mensagens /></BillingGate></ProtectedRoute>} />
               <Route path="/capa" element={<ProtectedRoute allowedType="contador"><BillingGate><Capa /></BillingGate></ProtectedRoute>} />
-              <Route path="/malha-fina" element={<ProtectedRoute allowedType="contador"><BillingGate><MalhaFina /></BillingGate></ProtectedRoute>} />
+              {/* MalhaFina route removed */}
               <Route path="/drive" element={<ProtectedRoute allowedType="contador"><BillingGate><Drive /></BillingGate></ProtectedRoute>} />
               <Route path="/addons" element={<ProtectedRoute allowedType="contador"><BillingGate><Addons /></BillingGate></ProtectedRoute>} />
               <Route path="/whatsapp" element={<ProtectedRoute allowedType="contador"><BillingGate><WhatsApp /></BillingGate></ProtectedRoute>} />
