@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { maskCPF, validateCPF, maskCEP } from '@/lib/formatters';
 import type { FormularioData } from '@/hooks/useFormularioIR';
 import { toast } from 'sonner';
-import { Loader2, Search, Check, ChevronsUpDown } from 'lucide-react';
+import { Loader2, Search, Check, ChevronsUpDown, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -24,6 +24,8 @@ import {
 import { cn } from "@/lib/utils"
 import { RACAS_CORES, ESTADOS_CIVIS, NATUREZAS_OCUPACAO, OCUPACOES_PRINCIPAIS } from '@/lib/constants-ir';
 
+const PARENTESCOS = ['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Companheiro(a)', 'Pai/Mãe', 'Avô/Avó', 'Outro'];
+
 interface Props {
   data: FormularioData;
   onChange: (field: keyof FormularioData, value: any) => void;
@@ -35,6 +37,10 @@ export function StepDadosPessoais({ data, onChange }: Props) {
   const [openOcupacao, setOpenOcupacao] = useState(false);
   
   const showConjuge = data.estado_civil === 'casado' || data.estado_civil === 'uniao_estavel';
+  const deps = data.dependentes || [];
+  const alimentandos = data.alimentandos || [];
+  const [showDeps, setShowDeps] = useState(deps.length > 0);
+  const [showAlimentandos, setShowAlimentandos] = useState(alimentandos.length > 0);
 
   const handleCepSearch = async () => {
     const cep = data.cep?.replace(/\D/g, '');
@@ -62,6 +68,36 @@ export function StepDadosPessoais({ data, onChange }: Props) {
     } finally {
       setLoadingCep(false);
     }
+  };
+
+  const addDep = () => {
+    onChange('dependentes', [...deps, { nome: '', cpf: '', data_nascimento: '', parentesco: '', tipo: 'dependente' }]);
+  };
+
+  const updateDep = (i: number, field: string, value: string) => {
+    const updated = deps.map((d: any, idx: number) => idx === i ? { ...d, [field]: value } : d);
+    onChange('dependentes', updated);
+  };
+
+  const removeDep = (i: number) => {
+    const nextDeps = deps.filter((_: any, idx: number) => idx !== i);
+    onChange('dependentes', nextDeps);
+    if (nextDeps.length === 0) setShowDeps(false);
+  };
+
+  const addAli = () => {
+    onChange('alimentandos', [...alimentandos, { nome: '', cpf: '', data_nascimento: '' }]);
+  };
+
+  const updateAli = (i: number, field: string, value: string) => {
+    const updated = alimentandos.map((a: any, idx: number) => idx === i ? { ...a, [field]: value } : a);
+    onChange('alimentandos', updated);
+  };
+
+  const removeAli = (i: number) => {
+    const nextAlis = alimentandos.filter((_: any, idx: number) => idx !== i);
+    onChange('alimentandos', nextAlis);
+    if (nextAlis.length === 0) setShowAlimentandos(false);
   };
 
   return (
@@ -223,6 +259,122 @@ export function StepDadosPessoais({ data, onChange }: Props) {
             />
           </div>
         </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center space-x-2 p-4 rounded-xl border bg-muted/20">
+          <Switch 
+            id="possui-dependentes" 
+            checked={showDeps}
+            onCheckedChange={(checked) => {
+              setShowDeps(checked);
+              if (checked && deps.length === 0) addDep();
+              if (!checked) onChange('dependentes', []);
+            }}
+          />
+          <Label htmlFor="possui-dependentes" className="cursor-pointer font-semibold">Possui dependentes?</Label>
+        </div>
+
+        {showDeps && (
+          <div className="space-y-6 animate-in zoom-in-95 duration-300">
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+              ⚠️ A Receita Federal exige CPF para todos os dependentes.
+            </div>
+            {deps.map((dep: any, i: number) => (
+              <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Dependente {i + 1}</span>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => removeDep(i)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label>Nome *</Label>
+                    <Input value={dep.nome} onChange={(e) => updateDep(i, 'nome', e.target.value)} placeholder="Nome completo" />
+                  </div>
+                  <div>
+                    <Label>CPF *</Label>
+                    <Input
+                      value={dep.cpf}
+                      onChange={(e) => updateDep(i, 'cpf', maskCPF(e.target.value))}
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                      className={dep.cpf && !validateCPF(dep.cpf) ? 'border-destructive' : ''}
+                    />
+                  </div>
+                  <div>
+                    <Label>Data de Nascimento</Label>
+                    <Input type="date" value={dep.data_nascimento} onChange={(e) => updateDep(i, 'data_nascimento', e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Parentesco</Label>
+                    <Select value={dep.parentesco} onValueChange={(v) => updateDep(i, 'parentesco', v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {PARENTESCOS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <Button variant="outline" onClick={addDep} className="w-full">
+              <Plus className="h-4 w-4 mr-2" /> Adicionar outro dependente
+            </Button>
+          </div>
+        )}
+
+        <div className="flex items-center space-x-2 p-4 rounded-xl border bg-muted/20">
+          <Switch 
+            id="paga-pensao" 
+            checked={showAlimentandos}
+            onCheckedChange={(checked) => {
+              setShowAlimentandos(checked);
+              if (checked && alimentandos.length === 0) addAli();
+              if (!checked) onChange('alimentandos', []);
+            }}
+          />
+          <Label htmlFor="paga-pensao" className="cursor-pointer font-semibold">Paga pensão alimentícia?</Label>
+        </div>
+
+        {showAlimentandos && (
+          <div className="space-y-6 animate-in zoom-in-95 duration-300">
+            {alimentandos.map((ali: any, i: number) => (
+              <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Alimentando {i + 1}</span>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => removeAli(i)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="md:col-span-2">
+                    <Label>Nome *</Label>
+                    <Input value={ali.nome} onChange={(e) => updateAli(i, 'nome', e.target.value)} placeholder="Nome completo" />
+                  </div>
+                  <div>
+                    <Label>CPF</Label>
+                    <Input
+                      value={ali.cpf}
+                      onChange={(e) => updateAli(i, 'cpf', maskCPF(e.target.value))}
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                      className={ali.cpf && !validateCPF(ali.cpf) ? 'border-destructive' : ''}
+                    />
+                  </div>
+                  <div>
+                    <Label>Data de Nascimento</Label>
+                    <Input type="date" value={ali.data_nascimento} onChange={(e) => updateAli(i, 'data_nascimento', e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <Button variant="outline" onClick={addAli} className="w-full">
+              <Plus className="h-4 w-4 mr-2" /> Adicionar outro alimentando
+            </Button>
+          </div>
+        )}
       </section>
 
       <section className="space-y-4">

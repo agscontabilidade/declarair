@@ -161,9 +161,6 @@ export default function ClienteFormulario() {
         <Card className="shadow-sm">
           <CardContent className="p-6">
             <StepDadosPessoais data={formData} onChange={updateField} />
-            <div className="mt-8 pt-8 border-t">
-              <StepDependentes data={formData} onChange={updateField} />
-            </div>
           </CardContent>
         </Card>
 
