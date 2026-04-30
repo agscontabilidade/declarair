@@ -757,6 +757,7 @@ export type Database = {
           numero_recibo: string | null
           observacoes_internas: string | null
           status: string
+          status_documentos: string | null
           tipo_resultado: string | null
           ultima_atualizacao_status: string
           valor_resultado: number | null
@@ -774,6 +775,7 @@ export type Database = {
           numero_recibo?: string | null
           observacoes_internas?: string | null
           status?: string
+          status_documentos?: string | null
           tipo_resultado?: string | null
           ultima_atualizacao_status?: string
           valor_resultado?: number | null
@@ -791,6 +793,7 @@ export type Database = {
           numero_recibo?: string | null
           observacoes_internas?: string | null
           status?: string
+          status_documentos?: string | null
           tipo_resultado?: string | null
           ultima_atualizacao_status?: string
           valor_resultado?: number | null
@@ -2424,6 +2427,7 @@ export type Database = {
           numero_recibo: string | null
           observacoes_internas: string | null
           status: string
+          status_documentos: string | null
           tipo_resultado: string | null
           ultima_atualizacao_status: string
           valor_resultado: number | null
