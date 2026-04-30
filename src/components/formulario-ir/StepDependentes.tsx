@@ -64,7 +64,7 @@ export function StepDependentes({ data, onChange }: Props) {
                 maxLength={14}
                 className={dep.cpf && !isValidCPF(dep.cpf) ? 'border-destructive' : ''}
               />
-              {dep.cpf && !isValidCPF(dep.cpf) && <p className="text-xs text-destructive mt-1">CPF inválido — deve conter 11 dígitos</p>}
+              {dep.cpf && !isValidCPF(dep.cpf) && <p className="text-xs text-destructive mt-1">CPF inválido</p>}
               {!dep.cpf && <p className="text-xs text-muted-foreground mt-1">Obrigatório pela Receita Federal</p>}
             </div>
             <div>
