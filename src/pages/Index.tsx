@@ -1,134 +1,37 @@
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import {
-  Shield, Zap, CheckCircle2,
-  ArrowRight, Layout, Smartphone, Lock,
-  Receipt, Palette,
-  DollarSign, Flame, Target, XCircle, AlertTriangle,
-  MessageSquareWarning, FileQuestion, Clock, RotateCcw, TrendingDown, Star
-} from 'lucide-react';
-import logoFull from '@/assets/logo-full.png';
-import ctaPerson from '@/assets/cta-person.jpg';
-import featureDashboard from '@/assets/feature-dashboard.jpg';
-import featureMobile from '@/assets/feature-mobile.jpg';
-import lionBrave from '@/assets/lion-brave.jpg';
-import mockupDashboard from '@/assets/mockup-dashboard.jpg';
-import heroStressed from '@/assets/hero-stressed-person.jpg';
-
-import MetricCounter from '@/components/landing/MetricCounter';
-import { PlanosCardsPublic } from '@/components/planos/PlanosCardsPublic';
-import { TabelaAvulso } from '@/components/planos/TabelaAvulso';
-import { painPoints, beforeAfter, featuresTranslated, testimonials, objections, faqs } from '@/components/landing/LandingData';
-import { Section } from '@/components/landing/LandingSection';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingHero } from '@/components/landing/LandingHero';
+import { LandingStorytelling } from '@/components/landing/LandingStorytelling';
+import { LandingPainPoints } from '@/components/landing/LandingPainPoints';
+import { LandingBridge } from '@/components/landing/LandingBridge';
+import { LandingFeatures } from '@/components/landing/LandingFeatures';
+import { LandingBeforeAfter } from '@/components/landing/LandingBeforeAfter';
+import { LandingTestimonials } from '@/components/landing/LandingTestimonials';
+import { LandingObjections } from '@/components/landing/LandingObjections';
+import { LandingPricing } from '@/components/landing/LandingPricing';
+import { LandingUrgency } from '@/components/landing/LandingUrgency';
+import { LandingFAQ } from '@/components/landing/LandingFAQ';
+import { LandingCTA } from '@/components/landing/LandingCTA';
+import { LandingFooter } from '@/components/landing/LandingFooter';
+import { Section } from '@/components/landing/LandingSection';
+import { Badge } from '@/components/ui/badge';
+import { Zap, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import mockupDashboard from '@/assets/mockup-dashboard.jpg';
+import featureDashboard from '@/assets/feature-dashboard.jpg';
+import featureMobile from '@/assets/feature-mobile.jpg';
 
-
-// Removido dados internos e componentes utilitários agora em componentes separados
-
-
-/* ── Page ── */
 export default function Index() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <LandingHeader />
       <div className="h-16" />
       <LandingHero />
-
-
-      {/* ══════════ 1.5 STORYTELLING ══════════ */}
-      <Section className="gradient-brand">
-        <div className="py-20 lg:py-28">
-          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
-            <p className="text-xl sm:text-2xl lg:text-3xl font-light text-white/50 leading-relaxed italic">
-              Todo ano começa igual.
-            </p>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-light text-white/60 leading-relaxed italic">
-              Cliente mandando documento no WhatsApp. Informação incompleta.
-            </p>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white leading-relaxed">
-              Prazo chegando. E você… tentando dar conta do caos.
-            </p>
-            <div className="pt-8">
-              <Link to="/cadastro">
-                <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide bg-white text-foreground hover:bg-white/90">
-                  Chega de caos <ArrowRight className="h-4 w-4 ml-1.5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ══════════ 2. DOR ══════════ */}
-      <Section id="dor" className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={lionBrave} alt="" className="w-full h-full object-cover" loading="lazy" width={1920} height={800} />
-          <div className="absolute inset-0 bg-foreground/90" />
-        </div>
-
-        <div className="relative py-20 lg:py-28">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <Badge variant="outline" className="mb-6 border-destructive/40 bg-destructive/10 text-destructive-foreground text-xs px-3 py-1 font-medium">
-              <AlertTriangle className="h-3 w-3 mr-1.5" /> Isso é familiar?
-            </Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight mb-12">
-              Se você não resolver isso,<br />
-              <span className="text-warning">todo ano será a mesma guerra.</span>
-            </h2>
-
-            <div className="grid sm:grid-cols-2 gap-3 max-w-3xl mx-auto text-left">
-              {painPoints.map((p) => (
-                <div key={p.text} className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors">
-                  <div className="h-9 w-9 shrink-0 rounded-lg bg-destructive/15 flex items-center justify-center">
-                    <p.icon className="h-4 w-4 text-destructive" />
-                  </div>
-                  <p className="text-sm text-primary-foreground/80 font-medium leading-relaxed">{p.text}</p>
-                </div>
-              ))}
-            </div>
-
-            <p className="mt-12 text-primary-foreground/50 text-lg italic max-w-xl mx-auto">
-              "Enquanto você organiza documento, outro contador está faturando."
-            </p>
-
-            <div className="mt-8">
-              <Link to="/cadastro">
-                <Button size="lg" className="text-base px-8 h-12 font-bold uppercase tracking-wide bg-accent hover:bg-accent/90 text-accent-foreground">
-                  Resolver isso agora <ArrowRight className="h-4 w-4 ml-1.5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ══════════ 3. VIRADA ══════════ */}
-      <Section className="py-20 lg:py-28 dot-grid">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
-          <div className="h-14 w-14 rounded-2xl border border-border bg-background flex items-center justify-center mx-auto">
-            <Target className="h-6 w-6 text-accent" />
-          </div>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-tight">
-            O problema nunca foi o volume de declarações.
-          </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            É a falta de um sistema que <span className="text-accent font-semibold">organize o jogo pra você</span>.
-          </p>
-          <p className="text-foreground font-bold text-lg">
-            IR não é difícil. Difícil é trabalhar no caos.
-          </p>
-          <Link to="/cadastro">
-            <Button size="lg" variant="gradient" className="mt-4 text-base px-8 h-12 font-bold uppercase tracking-wide">
-              Testar grátis agora <ArrowRight className="h-4 w-4 ml-1.5" />
-            </Button>
-          </Link>
-        </div>
-      </Section>
-
-      {/* ══════════ 4. PRODUTO ══════════ */}
+      <LandingStorytelling />
+      <LandingPainPoints />
+      <LandingBridge />
+      
+      {/* Seção de Solução (Manteve aqui por ser central) */}
       <Section id="solucao" className="gradient-brand">
         <div className="py-20 lg:py-28">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -161,99 +64,13 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════ 5. ANTES vs DEPOIS ══════════ */}
-      <Section className="py-20 lg:py-28">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <Badge variant="outline" className="mb-4 text-xs px-3 py-1 font-medium">Transformação</Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-              Veja a diferença com os próprios olhos
-            </h2>
-          </div>
+      <LandingBeforeAfter />
+      <LandingFeatures />
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6 space-y-3">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
-                  <XCircle className="h-4 w-4 text-destructive" />
-                </div>
-                <h3 className="font-display font-bold text-destructive">ANTES</h3>
-              </div>
-              {beforeAfter.map((item) => (
-                <div key={item.before} className="flex items-center gap-2.5 text-sm">
-                  <XCircle className="h-3.5 w-3.5 text-destructive/50 shrink-0" />
-                  <span className="text-muted-foreground">{item.before}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-2xl border border-success/20 bg-success/5 p-6 space-y-3">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                </div>
-                <h3 className="font-display font-bold text-success">DEPOIS</h3>
-              </div>
-              {beforeAfter.map((item) => (
-                <div key={item.after} className="flex items-center gap-2.5 text-sm">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-success/60 shrink-0" />
-                  <span className="text-foreground font-medium">{item.after}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <p className="text-center mt-10 text-lg font-bold text-foreground">
-            "Você não trabalha mais. Você trabalha melhor — e <span className="text-accent">fatura mais</span>."
-          </p>
-          <div className="text-center mt-6">
-            <Link to="/cadastro">
-              <Button size="lg" variant="gradient" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
-                Quero essa transformação <ArrowRight className="h-4 w-4 ml-1.5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </Section>
-
-      {/* ══════════ 6. FUNCIONALIDADES ══════════ */}
-      <Section id="features" className="py-20 lg:py-28 bg-secondary/50 dot-grid">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 text-xs px-3 py-1 font-medium">Na prática</Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-              Cada funcionalidade é um problema a menos
-            </h2>
-            <p className="mt-4 text-base text-muted-foreground max-w-lg mx-auto">
-              Nada de feature bonita que não resolve. Aqui cada botão economiza tempo ou gera dinheiro.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {featuresTranslated.map((f) => (
-              <div key={f.title} className="rounded-2xl border border-border bg-card p-6 hover:border-accent/30 hover:shadow-md transition-all duration-200 group">
-                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/15 transition-colors">
-                  <f.icon className="h-5 w-5 text-accent" />
-                </div>
-                <h3 className="font-display font-bold text-foreground">{f.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-12">
-            <Link to="/cadastro">
-              <Button size="lg" variant="gradient" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
-                Começar grátis agora <ArrowRight className="h-4 w-4 ml-1.5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </Section>
-
-      {/* ══════════ FEATURE SHOWCASES ══════════ */}
+      {/* Feature Showcases */}
       <Section className="gradient-brand">
         <div className="py-20 lg:py-28">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
-            {/* Feature 1 */}
             <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
               <div className="flex-1 relative w-full max-w-lg lg:max-w-none">
                 <div className="rounded-2xl overflow-hidden border border-white/10">
@@ -278,7 +95,6 @@ export default function Index() {
               </div>
             </div>
 
-            {/* Feature 2 */}
             <div className="flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-20">
               <div className="flex-1 relative w-full max-w-lg lg:max-w-none">
                 <div className="rounded-2xl overflow-hidden border border-white/10">
@@ -306,213 +122,13 @@ export default function Index() {
         </div>
       </Section>
 
-      {/* ══════════ 7. PROVA SOCIAL ══════════ */}
-      <Section className="py-20 lg:py-28">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <Badge variant="outline" className="mb-4 text-xs px-3 py-1 font-medium">Quem já usa, não volta</Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-              Resultados reais de contadores reais
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-4">
-            {testimonials.map((t) => (
-              <div key={t.name} className="rounded-2xl border border-border bg-card p-6 hover:border-accent/20 transition-colors">
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: t.stars }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-warning text-warning" />
-                  ))}
-                </div>
-                <p className="text-sm text-foreground leading-relaxed mb-5 font-medium">"{t.text}"</p>
-                <div className="flex items-center gap-3">
-                  <img src={t.avatar} alt={t.name} className="h-10 w-10 rounded-full object-cover border-2 border-border" loading="lazy" width={48} height={48} />
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-14 rounded-2xl gradient-brand p-8 sm:p-10">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-              <MetricCounter end="500" suffix="+" label="Escritórios ativos" />
-              <MetricCounter end="1200" suffix="+" label="Declarações processadas" />
-              <MetricCounter end="85" suffix="%" label="Menos tempo de coleta" />
-              <MetricCounter end="98" suffix="%" label="Satisfação dos contadores" />
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ══════════ 8. OBJEÇÕES ══════════ */}
-      <Section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={lionBrave} alt="" className="w-full h-full object-cover" loading="lazy" width={1920} height={800} style={{ filter: 'grayscale(0.3) brightness(0.25)' }} />
-          <div className="absolute inset-0 bg-foreground/85" />
-        </div>
-
-        <div className="relative py-20 lg:py-28">
-          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-14">
-              <Badge variant="outline" className="mb-4 border-white/20 text-primary-foreground text-xs px-3 py-1 font-medium">Sem desculpa</Badge>
-              <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground">
-                "Mas eu já…" — Calma. Lê isso aqui.
-              </h2>
-            </div>
-            <div className="space-y-3">
-              {objections.map((obj) => (
-                <div key={obj.objection} className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/10 transition-colors">
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-                    <span className="inline-block shrink-0 px-3 py-1 rounded-lg bg-destructive/15 text-destructive-foreground text-sm font-bold border border-destructive/20">
-                      {obj.objection}
-                    </span>
-                    <p className="text-sm text-primary-foreground/70 leading-relaxed">{obj.answer}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ══════════ 9. PRICING ══════════ */}
-      <Section id="pricing" className="py-20 lg:py-28 dot-grid">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="text-center space-y-4">
-            <Badge variant="outline" className="mb-2 text-xs px-3 py-1 font-medium">
-              <DollarSign className="h-3 w-3 mr-1.5" /> Preços
-            </Badge>
-            <p className="text-muted-foreground text-sm max-w-lg mx-auto italic">
-              "Um único erro no IR pode custar mais que um ano inteiro do sistema."
-            </p>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-              Comece grátis. Escale quando quiser.
-            </h2>
-            <p className="text-base text-muted-foreground max-w-xl mx-auto">
-              Dois planos. Sem contrato. Sem surpresas. Sem letras miúdas.
-            </p>
-          </div>
-          <PlanosCardsPublic />
-          <TabelaAvulso />
-        </div>
-      </Section>
-
-      {/* ══════════ 10. URGÊNCIA ══════════ */}
-      <Section className="py-16 lg:py-20 border-y border-border">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
-          <div className="h-12 w-12 rounded-2xl border border-warning/20 bg-warning/5 flex items-center justify-center mx-auto">
-            <Flame className="h-5 w-5 text-warning" />
-          </div>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
-            A temporada de IR não espera.
-          </h2>
-          <p className="text-base text-muted-foreground leading-relaxed max-w-lg mx-auto">
-            Quem se organiza antes, <span className="font-semibold text-foreground">lucra mais</span>.
-            <br />
-            Quem deixa pra depois… entra em modo sobrevivência.
-          </p>
-          <Link to="/cadastro">
-            <Button size="lg" variant="gradient" className="text-base px-10 h-12 font-bold uppercase tracking-wide mt-2">
-              Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
-            </Button>
-          </Link>
-        </div>
-      </Section>
-
-      {/* ── FAQ ── */}
-      <Section id="faq" className="py-20 lg:py-28">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <Badge variant="outline" className="mb-4 text-xs px-3 py-1 font-medium">FAQ</Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">Perguntas diretas, respostas diretas</h2>
-          </div>
-          <Accordion type="single" collapsible className="space-y-2">
-            {faqs.map((f, i) => (
-              <AccordionItem key={i} value={`faq-${i}`} className="rounded-xl border border-border bg-card px-5">
-                <AccordionTrigger className="text-left text-sm font-medium text-foreground hover:no-underline py-4">{f.q}</AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground pb-4">{f.a}</AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      </Section>
-
-      {/* ══════════ 11. CTA FINAL ══════════ */}
-      <Section className="py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-2xl overflow-hidden border border-white/10">
-            <div className="absolute inset-0 gradient-brand" />
-            <div className="absolute inset-0">
-              <img src={ctaPerson} alt="" className="w-full h-full object-cover opacity-20 mix-blend-overlay" loading="lazy" width={1280} height={640} />
-            </div>
-
-            <div className="relative p-10 sm:p-16 text-center">
-              <img src={logoFull} alt="DeclaraIR" className="h-12 sm:h-14 mx-auto mb-6 brightness-0 invert" />
-              <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
-                Pare de operar no caos.
-              </h2>
-              <p className="mt-3 text-primary-foreground/80 max-w-xl mx-auto text-xl font-medium">
-                Transforme seu IR em um processo simples, previsível e lucrativo.
-              </p>
-              <p className="mt-5 text-primary-foreground/40 text-sm italic">
-                "Você não precisa trabalhar mais. Precisa trabalhar organizado."
-              </p>
-              <Link to="/cadastro">
-                <Button size="lg" variant="secondary" className="mt-8 text-base px-10 h-12 font-bold uppercase tracking-wide">
-                  Começar agora <ArrowRight className="h-4 w-4 ml-1.5" />
-                </Button>
-              </Link>
-              <p className="mt-3 text-primary-foreground/35 text-xs">
-                Teste grátis • Declarações extras por R$ 4,90 no Pro • Cancele quando quiser
-              </p>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ── FOOTER ── */}
-      <footer className="border-t border-border py-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-            <div>
-              <img src={logoFull} alt="DeclaraIR" className="h-8 mb-3" />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                O sistema que organiza o IR do seu escritório.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-display font-semibold text-foreground text-sm mb-3">Produto</h4>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li><a href="#features" className="hover:text-foreground transition-colors">Funcionalidades</a></li>
-                <li><a href="#pricing" className="hover:text-foreground transition-colors">Preços</a></li>
-                <li><a href="#faq" className="hover:text-foreground transition-colors">FAQ</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-display font-semibold text-foreground text-sm mb-3">Empresa</h4>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li><Link to="/sobre" className="hover:text-foreground transition-colors">Sobre nós</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-display font-semibold text-foreground text-sm mb-3">Legal</h4>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li><Link to="/termos-de-uso" className="hover:text-foreground transition-colors">Termos de Uso</Link></li>
-                <li><Link to="/politica-de-privacidade" className="hover:text-foreground transition-colors">Privacidade</Link></li>
-                <li><Link to="/politica-lgpd" className="hover:text-foreground transition-colors">LGPD</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} DeclaraIR. Todos os direitos reservados.</p>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Lock className="h-3 w-3" /> Dados protegidos com criptografia
-            </div>
-          </div>
-        </div>
-      </footer>
+      <LandingTestimonials />
+      <LandingObjections />
+      <LandingPricing />
+      <LandingUrgency />
+      <LandingFAQ />
+      <LandingCTA />
+      <LandingFooter />
     </div>
   );
 }

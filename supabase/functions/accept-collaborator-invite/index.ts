@@ -88,6 +88,15 @@ Deno.serve(async (req) => {
       })
       .eq('id', convite_id);
 
+    // Audit log
+    await supabaseAdmin.rpc('registrar_log_auditoria', {
+      p_tipo: 'convite_aceito',
+      p_evento: 'colaborador_registrado',
+      p_dados: { user_id, escritorio_id, convite_id, email },
+      p_status: 'sucesso',
+      p_mensagem: `${nome} aceitou o convite de colaborador.`
+    });
+
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

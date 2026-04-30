@@ -129,6 +129,15 @@ Deno.serve(async (req) => {
         link_destino: `/clientes/${cliente.id}`,
       });
 
+    // 8. Audit log
+    await supabaseAdmin.rpc('registrar_log_auditoria', {
+      p_tipo: 'convite_aceito',
+      p_evento: 'cliente_registrado',
+      p_dados: { cliente_id: cliente.id, escritorio_id: convite.escritorio_id, convite_id: convite.id },
+      p_status: 'sucesso',
+      p_mensagem: `${nome} aceitou o convite.`
+    });
+
     return new Response(
       JSON.stringify({ success: true, cliente_id: cliente.id }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
