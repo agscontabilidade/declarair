@@ -46,12 +46,13 @@ export default function ClienteFormulario() {
   const steps = useMemo<StepDef[]>(() => {
     const s: StepDef[] = [
       { key: 'perfil', label: 'Perfil Fiscal' },
+      { key: 'dados', label: 'Informações Cadastrais' },
     ];
-    // Only show dados pessoais if has dependentes (need to know marital status for cônjuge)
+    
     if (perfilFiscal.dependentes) {
-      s.push({ key: 'dados', label: 'Informações Cadastrais' });
       s.push({ key: 'dependentes', label: 'Dependentes' });
     }
+    
     s.push({ key: 'documentos', label: 'Envio de Documentos' });
     s.push({ key: 'final', label: 'Revisão e Envio' });
     return s;
