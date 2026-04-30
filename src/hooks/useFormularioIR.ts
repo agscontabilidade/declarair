@@ -20,6 +20,17 @@ export interface FormularioData {
   estado_civil: string;
   conjuge_nome: string;
   conjuge_cpf: string;
+  data_nascimento: string;
+  raca_cor: string;
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  natureza_ocupacao: string;
+  ocupacao_principal: string;
   dependentes: Dependente[];
   rendimentos_emprego: RendimentoEmprego[];
   rendimentos_autonomo: Record<string, unknown>;
@@ -38,6 +49,17 @@ const INITIAL_DATA: FormularioData = {
   estado_civil: '',
   conjuge_nome: '',
   conjuge_cpf: '',
+  data_nascimento: '',
+  raca_cor: '',
+  cep: '',
+  logradouro: '',
+  numero: '',
+  complemento: '',
+  bairro: '',
+  cidade: '',
+  uf: '',
+  natureza_ocupacao: '',
+  ocupacao_principal: '',
   dependentes: [],
   rendimentos_emprego: [],
   rendimentos_autonomo: {},
