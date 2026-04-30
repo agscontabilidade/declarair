@@ -9,6 +9,13 @@ export const dependenteSchema = z.object({
   parentesco: z.string().optional(),
 });
 export type Dependente = z.infer<typeof dependenteSchema>;
+// --- Alimentandos ---
+export const alimentandoSchema = z.object({
+  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(120),
+  cpf: z.string().refine((val) => !val || validateCPF(val), 'CPF inválido').or(z.literal('')).optional(),
+  data_nascimento: z.string().optional(),
+});
+export type Alimentando = z.infer<typeof alimentandoSchema>;
 
 // --- Rendimentos ---
 export const rendimentoEmpregoSchema = z.object({
@@ -102,6 +109,7 @@ export const formularioIRSchema = z.object({
   ocupacao_principal: z.string().optional(),
   chave_pix_cliente: z.string().optional(),
   dependentes: z.array(dependenteSchema).default([]),
+  alimentandos: z.array(alimentandoSchema).default([]),
   rendimentos_emprego: z.array(rendimentoEmpregoSchema).default([]),
   rendimentos_autonomo: rendimentoAutonomoSchema.or(z.record(z.unknown())).default({}),
   rendimentos_aluguel: z.array(rendimentoAluguelSchema).default([]),

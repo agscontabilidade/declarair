@@ -8,6 +8,7 @@ import {
   validatePartial,
   validateComplete,
   type Dependente,
+  type Alimentando,
   type RendimentoEmprego,
   type RendimentoAluguel,
   type DespesaMedica,
@@ -32,6 +33,7 @@ export interface FormularioData {
   natureza_ocupacao: string;
   ocupacao_principal: string;
   dependentes: Dependente[];
+  alimentandos: Alimentando[];
   rendimentos_emprego: RendimentoEmprego[];
   rendimentos_autonomo: Record<string, unknown>;
   rendimentos_aluguel: RendimentoAluguel[];
@@ -61,6 +63,7 @@ const INITIAL_DATA: FormularioData = {
   natureza_ocupacao: '',
   ocupacao_principal: '',
   dependentes: [],
+  alimentandos: [],
   rendimentos_emprego: [],
   rendimentos_autonomo: {},
   rendimentos_aluguel: [],
@@ -149,6 +152,7 @@ export function useFormularioIR() {
         natureza_ocupacao: (formulario as any).natureza_ocupacao || '',
         ocupacao_principal: (formulario as any).ocupacao_principal || '',
         dependentes: (formulario.dependentes as unknown as Dependente[]) || [],
+        alimentandos: (formulario as any).alimentandos || [],
         rendimentos_emprego: (formulario.rendimentos_emprego as unknown as RendimentoEmprego[]) || [],
         rendimentos_autonomo: (formulario.rendimentos_autonomo as unknown as Record<string, unknown>) || {},
         rendimentos_aluguel: (formulario.rendimentos_aluguel as unknown as RendimentoAluguel[]) || [],
