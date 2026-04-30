@@ -1127,6 +1127,7 @@ export type Database = {
       }
       formulario_ir: {
         Row: {
+          alimentandos: Json | null
           ano_base: number
           bairro: string | null
           bens_direitos: Json
@@ -1163,6 +1164,7 @@ export type Database = {
           ultima_atualizacao: string
         }
         Insert: {
+          alimentandos?: Json | null
           ano_base: number
           bairro?: string | null
           bens_direitos?: Json
@@ -1199,6 +1201,7 @@ export type Database = {
           ultima_atualizacao?: string
         }
         Update: {
+          alimentandos?: Json | null
           ano_base?: number
           bairro?: string | null
           bens_direitos?: Json
