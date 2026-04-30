@@ -170,6 +170,39 @@ export type Database = {
           },
         ]
       }
+      auditoria_atividades: {
+        Row: {
+          created_at: string | null
+          dados: Json | null
+          evento: string
+          id: string
+          mensagem: string | null
+          status: string | null
+          tipo: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dados?: Json | null
+          evento: string
+          id?: string
+          mensagem?: string | null
+          status?: string | null
+          tipo: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dados?: Json | null
+          evento?: string
+          id?: string
+          mensagem?: string | null
+          status?: string | null
+          tipo?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bug_reports: {
         Row: {
           created_at: string
@@ -2453,6 +2486,16 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      registrar_log_auditoria: {
+        Args: {
+          p_dados?: Json
+          p_evento: string
+          p_mensagem?: string
+          p_status?: string
+          p_tipo: string
+        }
+        Returns: undefined
       }
       user_tem_permissao: { Args: { permissao_nome: string }; Returns: boolean }
     }
