@@ -21,7 +21,7 @@ const CARDS = [
       { texto: 'Portal do cliente básico', disponivel: true },
       { texto: 'Suporte por chat', disponivel: true },
       { texto: 'Kanban e chat avançado', disponivel: false },
-      { texto: 'Verificador de malha fina', disponivel: false },
+      // Malha Fina removed
       { texto: 'Calculadora IR integrada', disponivel: false },
       { texto: 'Múltiplos usuários', disponivel: false },
     ],
@@ -39,7 +39,7 @@ const CARDS = [
       { texto: `R$ ${PRECOS.DECLARACAO_EXTRA.preco.toFixed(2).replace('.', ',')}/declaração avulsa`, disponivel: true },
       { texto: 'Até 5 usuários simultâneos', disponivel: true },
       { texto: 'Armazenamento ilimitado', disponivel: true },
-      { texto: 'Verificador de malha fina', disponivel: true },
+      // Malha Fina removed
       { texto: 'Calculadora IR integrada', disponivel: true },
       { texto: 'Chat com clientes', disponivel: true },
       { texto: 'Kanban de declarações', disponivel: true },

@@ -26,7 +26,7 @@ const PLANOS_CONFIG = [
       { texto: 'Chat com clientes', disponivel: true, destaque: false, addon: false, preco: 0 },
       { texto: 'Kanban de declarações', disponivel: true, destaque: false, addon: false, preco: 0 },
       { texto: 'Suporte por chat', disponivel: true, destaque: false, addon: false, preco: 0 },
-      { texto: 'Verificador de malha fina', disponivel: false, destaque: false, addon: false, preco: 0 },
+      // Malha Fina removed
       { texto: 'Calculadora IR', disponivel: false, destaque: false, addon: false, preco: 0 },
       { texto: 'Notificações por email', disponivel: false, destaque: false, addon: false, preco: 0 },
       { texto: 'WhatsApp integrado', disponivel: false, destaque: false, addon: true, preco: 19.90 },
@@ -54,7 +54,7 @@ const PLANOS_CONFIG = [
       { texto: 'R$ 4,90/declaração avulsa', disponivel: true, destaque: true, addon: false, preco: 0 },
       { texto: 'Até 5 usuários simultâneos', disponivel: true, destaque: false, addon: false, preco: 0 },
       { texto: 'Armazenamento ilimitado', disponivel: true, destaque: false, addon: false, preco: 0 },
-      { texto: 'Verificador de malha fina', disponivel: true, destaque: false, addon: false, preco: 0 },
+      // Malha Fina removed
       { texto: 'Calculadora IR integrada', disponivel: true, destaque: false, addon: false, preco: 0 },
       { texto: 'Chat com clientes', disponivel: true, destaque: false, addon: false, preco: 0 },
       { texto: 'Kanban de declarações', disponivel: true, destaque: false, addon: false, preco: 0 },

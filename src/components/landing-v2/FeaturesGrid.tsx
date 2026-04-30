@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 const features = [
   { icon: Layout, title: 'Veja quem está pendente agora', desc: 'Pare de correr atrás no último dia. O dashboard mostra exatamente quem falta, quem travou e onde está o gargalo — em tempo real.', span: 'lg:col-span-2', accent: 'emerald' },
   { icon: Smartphone, title: 'Cliente envia tudo certo, no lugar certo', desc: 'Sem te travar no WhatsApp. O portal guia o cliente a enviar cada documento no formato correto, automaticamente.', span: '', accent: 'amber' },
-  { icon: Shield, title: 'Evite malha fina antes de transmitir', desc: 'O verificador cruza dados automaticamente e avisa antes de dar problema. Disponível no plano Pro.', span: '', accent: 'emerald' },
+  // Malha Fina removed
   { icon: Brain, title: 'IA Fiscal que analisa por você', desc: 'A inteligência artificial revisa rendimentos, sugere deduções esquecidas e aponta riscos fiscais — tudo antes de transmitir. Menos retrabalho, mais segurança.', span: 'lg:col-span-2', accent: 'amber' },
   { icon: Zap, title: 'Simule o resultado do IR em segundos', desc: 'Compare Simplificada vs Completa instantaneamente. Mostre pro cliente o cenário ideal e feche o serviço mais rápido.', span: '', accent: 'emerald' },
   { icon: Palette, title: 'Whitelabel com sua marca', desc: 'Seu cliente vê o seu nome, não o nosso. Isso é percepção de valor — e valor se cobra.', span: '', accent: 'amber' },
