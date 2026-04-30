@@ -1,7 +1,7 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { maskCPF } from '@/lib/formatters';
+import { maskCPF, validateCPF } from '@/lib/formatters';
 import type { FormularioData } from '@/hooks/useFormularioIR';
 
 interface Props {
