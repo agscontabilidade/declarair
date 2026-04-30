@@ -2,6 +2,7 @@ import { ClienteLayout } from '@/components/layout/ClienteLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClientePortal } from '@/hooks/useClientePortal';
 import { StatusStepper } from '@/components/cliente-portal/StatusStepper';
@@ -77,30 +78,24 @@ export default function ClienteDashboard() {
 
             {/* Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Documentos Pendentes */}
-              <Card className="shadow-sm cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all duration-200" onClick={() => navigate('/cliente/documentos')}>
-                <CardContent className="flex flex-col items-center py-8 text-center">
-                  <Upload className="h-10 w-10 text-accent mb-3" />
-                  <p className="font-medium">Documentos</p>
-                  {pendentes.length > 0 ? (
-                    <Badge className="mt-2 bg-warning/15 text-warning">{pendentes.length} pendente(s)</Badge>
-                  ) : (
-                    <div className="flex items-center gap-1 mt-2 text-success text-sm">
-                      <CheckCircle2 className="h-4 w-4" /> Tudo em dia
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Formulário IR */}
-              <Card
+              {/* Informações Cadastrais (Consolidated Flow) */}
+              <Card 
                 className={`shadow-sm transition-all duration-200 ${formulario?.status_preenchimento === 'concluido' ? 'opacity-80' : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md'}`}
                 onClick={() => formulario?.status_preenchimento !== 'concluido' && navigate('/cliente/formulario')}
               >
                 <CardContent className="flex flex-col items-center py-8 text-center">
                   <ClipboardList className="h-10 w-10 text-primary mb-3" />
                   <p className="font-medium">{formulario?.status_preenchimento === 'concluido' ? 'Informações Enviadas ✓' : 'Informações Cadastrais'}</p>
-                  <Badge className={`mt-2 ${
+                  
+                  <div className="w-full max-w-[140px] mt-3">
+                    <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
+                      <span>Progresso</span>
+                      <span>{formulario?.status_preenchimento === 'concluido' ? '100%' : formulario?.status_preenchimento === 'em_andamento' ? '50%' : '0%'}</span>
+                    </div>
+                    <Progress value={formulario?.status_preenchimento === 'concluido' ? 100 : formulario?.status_preenchimento === 'em_andamento' ? 50 : 0} className="h-1.5" />
+                  </div>
+
+                  <Badge className={`mt-3 ${
                     formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success' :
                     formulario?.status_preenchimento === 'em_andamento' ? 'bg-warning/15 text-warning' :
                     'bg-muted text-muted-foreground'

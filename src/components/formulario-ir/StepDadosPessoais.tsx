@@ -5,70 +5,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { maskCPF, validateCPF, maskCEP } from '@/lib/formatters';
 import type { FormularioData } from '@/hooks/useFormularioIR';
 import { toast } from 'sonner';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { RACAS_CORES, ESTADOS_CIVIS, NATUREZAS_OCUPACAO, OCUPACOES_PRINCIPAIS } from '@/lib/constants-ir';
 
 interface Props {
   data: FormularioData;
   onChange: (field: keyof FormularioData, value: any) => void;
 }
 
-const ESTADOS_CIVIS = [
-  { value: 'solteiro', label: 'Solteiro(a)' },
-  { value: 'casado', label: 'Casado(a)' },
-  { value: 'divorciado', label: 'Divorciado(a)' },
-  { value: 'viuvo', label: 'Viúvo(a)' },
-  { value: 'uniao_estavel', label: 'União Estável' },
-];
-
-const RACAS_CORES = [
-  { value: 'branca', label: 'Branca' },
-  { value: 'preta', label: 'Preta' },
-  { value: 'parda', label: 'Parda' },
-  { value: 'amarela', label: 'Amarela' },
-  { value: 'indigena', label: 'Indígena' },
-];
-
-const NATUREZAS_OCUPACAO = [
-  { value: '01', label: '01 - Empregado de empresa privada, exceto de instituições financeiras' },
-  { value: '02', label: '02 - Empregado de instituições financeiras privadas' },
-  { value: '11', label: '11 - Servidor público da administração direta, autárquica e fundacional e empregado de empresa pública ou de sociedade de economia mista' },
-  { value: '12', label: '12 - Militar' },
-  { value: '21', label: '21 - Profissional liberal ou autônomo sem vínculo de emprego' },
-  { value: '22', label: '22 - Proprietário de empresa ou de firma individual ou sócio-gerente' },
-  { value: '31', label: '31 - Capitalista, que auferiu rendimentos de capital' },
-  { value: '41', label: '41 - Aposentado, militar reformado ou reserva remunerada e pensionista de previdência' },
-  { value: '51', label: '51 - Espólio' },
-  { value: '61', label: '61 - Natureza de ocupação não especificada anteriormente' },
-];
-
-const OCUPACOES_PRINCIPAIS = [
-  { value: '101', label: '101 - Membro das Forças Armadas' },
-  { value: '102', label: '102 - Membro da Polícia Militar' },
-  { value: '103', label: '103 - Membro do Corpo de Bombeiros Militar' },
-  { value: '211', label: '211 - Membro do Poder Judiciário' },
-  { value: '212', label: '212 - Membro do Ministério Público' },
-  { value: '214', label: '214 - Membro do Poder Legislativo' },
-  { value: '290', label: '290 - Dirigente superior da administração pública (inclusive autárquica e fundacional), ocupante de cargo eletivo e outros' },
-  { value: '310', label: '310 - Agrônomo, engenheiro, arquiteto e afins' },
-  { value: '320', label: '320 - Profissional de ensino' },
-  { value: '330', label: '330 - Médico, odontólogo, veterinário e afins' },
-  { value: '340', label: '340 - Enfermeiro, fisioterapeuta, fonoaudiólogo, nutricionista e afins' },
-  { value: '350', label: '350 - Advogado e afins' },
-  { value: '360', label: '360 - Contador, auditor, economista, administrador e afins' },
-  { value: '370', label: '370 - Arquiteto e urbanista' },
-  { value: '380', label: '380 - Ator, diretor de espetáculos e afins' },
-  { value: '390', label: '390 - Assistente social, psicólogo e afins' },
-  { value: '410', label: '410 - Biólogo, biomédico e afins' },
-  { value: '510', label: '510 - Técnico em eletrônica, eletrotécnica e afins' },
-  { value: '610', label: '610 - Vendedor e prestador de serviços do comércio' },
-  { value: '710', label: '710 - Motorista de veículos a motor e afins' },
-  { value: '810', label: '810 - Operador de máquinas e afins' },
-  { value: '999', label: '999 - Outros' },
-];
-
 export function StepDadosPessoais({ data, onChange }: Props) {
   const [loadingCep, setLoadingCep] = useState(false);
+  const [openNatureza, setOpenNatureza] = useState(false);
+  const [openOcupacao, setOpenOcupacao] = useState(false);
+  
   const showConjuge = data.estado_civil === 'casado' || data.estado_civil === 'uniao_estavel';
 
   const handleCepSearch = async () => {
@@ -103,8 +68,8 @@ export function StepDadosPessoais({ data, onChange }: Props) {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <section className="space-y-4">
         <div>
-          <h2 className="font-display text-lg font-semibold">Informações Cadastrais</h2>
-          <p className="text-sm text-muted-foreground">Informações básicas essenciais para sua declaração</p>
+          <h2 className="font-display text-lg font-semibold">Informações Pessoais</h2>
+          <p className="text-sm text-muted-foreground">Dados básicos para identificação na Receita Federal</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -134,6 +99,23 @@ export function StepDadosPessoais({ data, onChange }: Props) {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="flex items-center space-x-2 p-4 rounded-xl border bg-muted/20">
+          <Switch 
+            id="possui-conjuge" 
+            checked={showConjuge}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                onChange('estado_civil', 'casado');
+              } else {
+                onChange('estado_civil', 'solteiro');
+                onChange('conjuge_nome', '');
+                onChange('conjuge_cpf', '');
+              }
+            }}
+          />
+          <Label htmlFor="possui-conjuge" className="cursor-pointer">Possui cônjuge / companheiro(a)?</Label>
         </div>
 
         {showConjuge && (
@@ -166,8 +148,8 @@ export function StepDadosPessoais({ data, onChange }: Props) {
 
       <section className="space-y-4">
         <div>
-          <h2 className="font-display text-lg font-semibold">Endereço Completo</h2>
-          <p className="text-sm text-muted-foreground">Informe seu endereço residencial atualizado</p>
+          <h2 className="font-display text-lg font-semibold">Endereço Atualizado</h2>
+          <p className="text-sm text-muted-foreground">Informe onde você reside atualmente</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -246,35 +228,106 @@ export function StepDadosPessoais({ data, onChange }: Props) {
       <section className="space-y-4">
         <div>
           <h2 className="font-display text-lg font-semibold">Ocupação Profissional</h2>
-          <p className="text-sm text-muted-foreground">Sua atividade principal no ano-base</p>
+          <p className="text-sm text-muted-foreground">Informe sua atividade principal (padrão Receita Federal)</p>
         </div>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-6">
           <div className="space-y-2">
             <Label>Natureza da Ocupação</Label>
-            <Select value={data.natureza_ocupacao} onValueChange={(v) => onChange('natureza_ocupacao', v)}>
-              <SelectTrigger className="h-auto py-2"><SelectValue placeholder="Selecione a natureza" /></SelectTrigger>
-              <SelectContent>
-                {NATUREZAS_OCUPACAO.map((n) => (
-                  <SelectItem key={n.value} value={n.value}>
-                    <span className="whitespace-normal text-left">{n.label}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={openNatureza} onOpenChange={setOpenNatureza}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openNatureza}
+                  className="w-full justify-between h-auto py-2 text-left font-normal"
+                >
+                  <span className="truncate">
+                    {data.natureza_ocupacao
+                      ? NATUREZAS_OCUPACAO.find((n) => n.value === data.natureza_ocupacao)?.label
+                      : "Selecione a natureza..."}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                <Command>
+                  <CommandInput placeholder="Buscar natureza..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhuma natureza encontrada.</CommandEmpty>
+                    <CommandGroup>
+                      {NATUREZAS_OCUPACAO.map((n) => (
+                        <CommandItem
+                          key={n.value}
+                          value={n.label}
+                          onSelect={() => {
+                            onChange('natureza_ocupacao', n.value);
+                            setOpenNatureza(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              data.natureza_ocupacao === n.value ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {n.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
+
           <div className="space-y-2">
             <Label>Ocupação Principal</Label>
-            <Select value={data.ocupacao_principal} onValueChange={(v) => onChange('ocupacao_principal', v)}>
-              <SelectTrigger className="h-auto py-2"><SelectValue placeholder="Selecione sua ocupação" /></SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {OCUPACOES_PRINCIPAIS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    <span className="whitespace-normal text-left">{o.label}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={openOcupacao} onOpenChange={setOpenOcupacao}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openOcupacao}
+                  className="w-full justify-between h-auto py-2 text-left font-normal"
+                >
+                  <span className="truncate">
+                    {data.ocupacao_principal
+                      ? OCUPACOES_PRINCIPAIS.find((o) => o.value === data.ocupacao_principal)?.label
+                      : "Selecione a ocupação..."}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                <Command>
+                  <CommandInput placeholder="Buscar ocupação..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhuma ocupação encontrada.</CommandEmpty>
+                    <CommandGroup className="max-h-[300px] overflow-auto">
+                      {OCUPACOES_PRINCIPAIS.map((o) => (
+                        <CommandItem
+                          key={o.value}
+                          value={o.label}
+                          onSelect={() => {
+                            onChange('ocupacao_principal', o.value);
+                            setOpenOcupacao(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              data.ocupacao_principal === o.value ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {o.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </section>
