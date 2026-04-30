@@ -115,67 +115,6 @@ export default function ClienteFormulario() {
   const handleNext = () => {
     setStep(s => Math.min(s + 1, totalSteps - 1));
   };
-      updateField('estado_civil', 'solteiro');
-      updateField('conjuge_nome', '');
-      updateField('conjuge_cpf', '');
-      updateField('dependentes', []);
-    }
-
-    // Refresh checklist query
-    queryClient.invalidateQueries({ queryKey: ['formulario-checklist'] });
-    toast.success('Perfil fiscal salvo! Checklist de documentos atualizado.');
-    setStep(1);
-  };
-
-  const handleFinalizar = async () => {
-    if (!confirmado) {
-      toast.error('Confirme a veracidade das informações');
-      return;
-    }
-
-    // Check pending documents
-    const pendingDocs = checklist.filter(d => d.status === 'pendente');
-    
-    // Notify accountant about pending docs
-    if (pendingDocs.length > 0) {
-      try {
-        const obrigatoriosPendentes = pendingDocs.filter(d => d.obrigatorio);
-        const msg = obrigatoriosPendentes.length > 0
-          ? `Cliente finalizou o formulário com ${pendingDocs.length} documento(s) pendente(s), sendo ${obrigatoriosPendentes.length} obrigatório(s).`
-          : `Cliente finalizou o formulário com ${pendingDocs.length} documento(s) opcional(is) pendente(s).`;
-
-        await supabase.from('notificacoes').insert({
-          escritorio_id: declaracao.escritorio_id,
-          titulo: '⚠️ Documentos pendentes',
-          mensagem: msg,
-          link_destino: `/clientes/${declaracao.cliente_id}`,
-        });
-
-        await supabase.from('declaracao_atividades').insert({
-          declaracao_id: declaracao.id,
-          tipo: 'documento',
-          descricao: `Cliente finalizou formulário com ${pendingDocs.length} documento(s) pendente(s)`,
-          usuario_nome: 'Cliente',
-        });
-      } catch { /* best-effort */ }
-    }
-
-    const ok = await finalizar();
-    if (ok) {
-      if (pendingDocs.length > 0) {
-        toast.info(`Formulário enviado! ${pendingDocs.length} documento(s) ainda pendente(s) — seu contador será notificado.`);
-      }
-      setConcluido(true);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentStep.key === 'perfil') {
-      handleNextFromPerfil();
-    } else {
-      setStep(s => Math.min(s + 1, totalSteps - 1));
-    }
-  };
 
   const handlePrev = () => setStep(s => Math.max(0, s - 1));
 
