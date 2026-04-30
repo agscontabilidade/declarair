@@ -312,18 +312,18 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                 className="p-0 w-[var(--radix-popover-trigger-width)]" 
                 align="start"
               >
-                <Command>
+                <Command shouldFilter={true}>
                   <CommandInput 
                     placeholder="Ex: Médico, Engenheiro, 221..." 
                     className="h-11"
                   />
-                  <CommandList className="max-h-[350px]">
+                  <CommandList className="max-h-[400px]">
                     <CommandEmpty>Nenhuma ocupação encontrada.</CommandEmpty>
                     <CommandGroup>
                       {OCUPACOES_PRINCIPAIS.map((o) => (
                         <CommandItem
                           key={o.value}
-                          value={o.label}
+                          value={`${o.value} ${o.label}`}
                           onSelect={() => {
                             onChange('ocupacao_principal', o.value);
                             setOpenOcupacao(false);
