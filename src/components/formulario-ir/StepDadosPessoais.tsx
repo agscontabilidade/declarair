@@ -251,15 +251,16 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent 
-                className="p-0 w-[var(--radix-popover-trigger-width)]" 
+                className="p-0 w-[var(--radix-popover-trigger-width)] max-h-[500px] overflow-hidden flex flex-col" 
                 align="start"
+                sideOffset={4}
               >
                 <Command shouldFilter={true}>
                   <CommandInput 
                     placeholder="Busque por código ou nome..." 
                     className="h-11"
                   />
-                  <CommandList className="max-h-[350px]">
+                  <CommandList className="max-h-[400px] overflow-y-auto scrollbar-thin">
                     <CommandEmpty>Nenhuma natureza encontrada.</CommandEmpty>
                     <CommandGroup>
                       {NATUREZAS_OCUPACAO.map((n) => (
@@ -309,8 +310,9 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent 
-                className="p-0 w-[var(--radix-popover-trigger-width)]" 
+                className="p-0 w-[var(--radix-popover-trigger-width)] max-h-[500px] overflow-hidden flex flex-col" 
                 align="start"
+                sideOffset={4}
               >
                 <Command shouldFilter={true}>
                   <CommandInput 
