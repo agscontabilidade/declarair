@@ -31,32 +31,19 @@ export default function ClienteFormulario() {
   const [concluido, setConcluido] = useState(false);
   const [perfilFiscal, setPerfilFiscal] = useState<PerfilFiscal>(DEFAULT_PERFIL);
 
-  // Sync perfil when formulario loads
-  useEffect(() => {
-    const pf = formulario?.perfil_fiscal;
-    if (pf && typeof pf === 'object' && !Array.isArray(pf) && Object.keys(pf).length > 0) {
-      setPerfilFiscal(pf as unknown as PerfilFiscal);
-    }
-  }, [formulario]);
-
-  // Dynamic steps based on perfil - SMART LOGIC:
-  // - Dados Pessoais only shown if dependentes is true (needs conjugal info)
-  // - Dependentes step only if dependentes is true
-  // - If no dependentes, system assumes solteiro, no conjugal data needed
+  // Steps are now static: Informações Cadastrais -> Dependentes (if applicable) -> Envio de Documentos -> Revisão
   const steps = useMemo<StepDef[]>(() => {
     const s: StepDef[] = [
-      { key: 'perfil', label: 'Perfil Fiscal' },
       { key: 'dados', label: 'Informações Cadastrais' },
     ];
     
-    if (perfilFiscal.dependentes) {
-      s.push({ key: 'dependentes', label: 'Dependentes' });
-    }
+    // Always show dependentes step since the logic for spouses and children is now consolidated there
+    s.push({ key: 'dependentes', label: 'Dependentes' });
     
     s.push({ key: 'documentos', label: 'Envio de Documentos' });
     s.push({ key: 'final', label: 'Revisão e Envio' });
     return s;
-  }, [perfilFiscal]);
+  }, []);
 
   const totalSteps = steps.length;
   const currentStep = steps[step] || steps[0];
