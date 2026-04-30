@@ -231,7 +231,10 @@ export function useFormularioIR() {
         fieldErrors[path].push(err.message);
       });
       setValidationErrors(fieldErrors);
-      toast.error('Corrija os erros antes de finalizar');
+      
+      // Mostrar o primeiro erro para o usuário
+      const firstError = validation.error.errors[0];
+      toast.error(`Erro: ${firstError.message} (${firstError.path.join('.')})`);
       return false;
     }
 
@@ -240,6 +243,7 @@ export function useFormularioIR() {
         .from('formulario_ir')
         .update({ status_preenchimento: 'concluido', ultima_atualizacao: new Date().toISOString() })
         .eq('id', formulario.id);
+      
       await supabase
         .from('clientes')
         .update({ status_onboarding: 'concluido' })
@@ -248,20 +252,34 @@ export function useFormularioIR() {
       // Create notification for the accountant
       if (declaracao) {
         try {
+          // Buscar se existem documentos pendentes
+          const { data: docs } = await supabase
+            .from('checklist_documentos')
+            .select('status, obrigatorio')
+            .eq('declaracao_id', declaracao.id);
+
+          const pendingDocsCount = docs?.filter(d => d.status === 'pendente' && d.obrigatorio).length || 0;
+          const msg = pendingDocsCount > 0 
+            ? `O cliente preencheu as informações, mas ainda possui ${pendingDocsCount} documentos obrigatórios pendentes.`
+            : `O cliente preencheu as informações cadastrais com sucesso.`;
+
           await supabase.from('notificacoes').insert({
             escritorio_id: declaracao.escritorio_id,
-            titulo: 'Formulário IR concluído',
-            mensagem: 'O cliente finalizou o preenchimento do formulário IRPF.',
-            link_destino: `/declaracoes/${declaracao.id}`,
+            titulo: '✅ Informações Cadastrais Preenchidas',
+            mensagem: msg,
+            link_destino: `/clientes/${clienteId}`,
           });
-        } catch { /* notification is best-effort */ }
+        } catch (err) {
+          console.error('Erro ao enviar notificação:', err);
+        }
       }
 
       setValidationErrors({});
       queryClient.invalidateQueries({ queryKey: ['formulario-ir'] });
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
       return true;
-    } catch {
+    } catch (err) {
+      console.error('Erro ao finalizar:', err);
       toast.error('Erro ao finalizar formulário');
       return false;
     }
