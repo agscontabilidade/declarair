@@ -20,6 +20,17 @@ export interface FormularioData {
   estado_civil: string;
   conjuge_nome: string;
   conjuge_cpf: string;
+  data_nascimento: string;
+  raca_cor: string;
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  natureza_ocupacao: string;
+  ocupacao_principal: string;
   dependentes: Dependente[];
   rendimentos_emprego: RendimentoEmprego[];
   rendimentos_autonomo: Record<string, unknown>;
@@ -38,6 +49,17 @@ const INITIAL_DATA: FormularioData = {
   estado_civil: '',
   conjuge_nome: '',
   conjuge_cpf: '',
+  data_nascimento: '',
+  raca_cor: '',
+  cep: '',
+  logradouro: '',
+  numero: '',
+  complemento: '',
+  bairro: '',
+  cidade: '',
+  uf: '',
+  natureza_ocupacao: '',
+  ocupacao_principal: '',
   dependentes: [],
   rendimentos_emprego: [],
   rendimentos_autonomo: {},
@@ -115,6 +137,17 @@ export function useFormularioIR() {
         estado_civil: formulario.estado_civil || '',
         conjuge_nome: formulario.conjuge_nome || '',
         conjuge_cpf: formulario.conjuge_cpf || '',
+        data_nascimento: (formulario as any).data_nascimento || '',
+        raca_cor: (formulario as any).raca_cor || '',
+        cep: (formulario as any).cep || '',
+        logradouro: (formulario as any).logradouro || '',
+        numero: (formulario as any).numero || '',
+        complemento: (formulario as any).complemento || '',
+        bairro: (formulario as any).bairro || '',
+        cidade: (formulario as any).cidade || '',
+        uf: (formulario as any).uf || '',
+        natureza_ocupacao: (formulario as any).natureza_ocupacao || '',
+        ocupacao_principal: (formulario as any).ocupacao_principal || '',
         dependentes: (formulario.dependentes as unknown as Dependente[]) || [],
         rendimentos_emprego: (formulario.rendimentos_emprego as unknown as RendimentoEmprego[]) || [],
         rendimentos_autonomo: (formulario.rendimentos_autonomo as unknown as Record<string, unknown>) || {},

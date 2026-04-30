@@ -1128,12 +1128,17 @@ export type Database = {
       formulario_ir: {
         Row: {
           ano_base: number
+          bairro: string | null
           bens_direitos: Json
+          cep: string | null
           chave_pix_cliente: string | null
+          cidade: string | null
           cliente_id: string
+          complemento: string | null
           conjuge_cpf: string | null
           conjuge_nome: string | null
           created_at: string
+          data_nascimento: string | null
           declaracao_id: string
           dependentes: Json
           despesas_educacao: Json
@@ -1142,23 +1147,34 @@ export type Database = {
           estado_civil: string | null
           id: string
           informacoes_adicionais: string | null
+          logradouro: string | null
+          natureza_ocupacao: string | null
+          numero: string | null
+          ocupacao_principal: string | null
           outros_rendimentos: Json
           perfil_fiscal: Json
           previdencia_privada: Json
+          raca_cor: string | null
           rendimentos_aluguel: Json
           rendimentos_autonomo: Json
           rendimentos_emprego: Json
           status_preenchimento: string
+          uf: string | null
           ultima_atualizacao: string
         }
         Insert: {
           ano_base: number
+          bairro?: string | null
           bens_direitos?: Json
+          cep?: string | null
           chave_pix_cliente?: string | null
+          cidade?: string | null
           cliente_id: string
+          complemento?: string | null
           conjuge_cpf?: string | null
           conjuge_nome?: string | null
           created_at?: string
+          data_nascimento?: string | null
           declaracao_id: string
           dependentes?: Json
           despesas_educacao?: Json
@@ -1167,23 +1183,34 @@ export type Database = {
           estado_civil?: string | null
           id?: string
           informacoes_adicionais?: string | null
+          logradouro?: string | null
+          natureza_ocupacao?: string | null
+          numero?: string | null
+          ocupacao_principal?: string | null
           outros_rendimentos?: Json
           perfil_fiscal?: Json
           previdencia_privada?: Json
+          raca_cor?: string | null
           rendimentos_aluguel?: Json
           rendimentos_autonomo?: Json
           rendimentos_emprego?: Json
           status_preenchimento?: string
+          uf?: string | null
           ultima_atualizacao?: string
         }
         Update: {
           ano_base?: number
+          bairro?: string | null
           bens_direitos?: Json
+          cep?: string | null
           chave_pix_cliente?: string | null
+          cidade?: string | null
           cliente_id?: string
+          complemento?: string | null
           conjuge_cpf?: string | null
           conjuge_nome?: string | null
           created_at?: string
+          data_nascimento?: string | null
           declaracao_id?: string
           dependentes?: Json
           despesas_educacao?: Json
@@ -1192,13 +1219,19 @@ export type Database = {
           estado_civil?: string | null
           id?: string
           informacoes_adicionais?: string | null
+          logradouro?: string | null
+          natureza_ocupacao?: string | null
+          numero?: string | null
+          ocupacao_principal?: string | null
           outros_rendimentos?: Json
           perfil_fiscal?: Json
           previdencia_privada?: Json
+          raca_cor?: string | null
           rendimentos_aluguel?: Json
           rendimentos_autonomo?: Json
           rendimentos_emprego?: Json
           status_preenchimento?: string
+          uf?: string | null
           ultima_atualizacao?: string
         }
         Relationships: [

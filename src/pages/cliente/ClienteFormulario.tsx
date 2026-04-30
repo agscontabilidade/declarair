@@ -49,7 +49,7 @@ export default function ClienteFormulario() {
     ];
     // Only show dados pessoais if has dependentes (need to know marital status for cônjuge)
     if (perfilFiscal.dependentes) {
-      s.push({ key: 'dados', label: 'Dados Pessoais' });
+      s.push({ key: 'dados', label: 'Informações Cadastrais' });
       s.push({ key: 'dependentes', label: 'Dependentes' });
     }
     s.push({ key: 'documentos', label: 'Envio de Documentos' });
@@ -233,7 +233,7 @@ export default function ClienteFormulario() {
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Formulário IR {declaracao.ano_base}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Etapa {step + 1} de {totalSteps} — {currentStep.label}
+              Etapa {step + 1} de {totalSteps} — {currentStep.label === 'Dados Pessoais' ? 'Informações Cadastrais' : currentStep.label}
             </p>
           </div>
           {lastSaved && (

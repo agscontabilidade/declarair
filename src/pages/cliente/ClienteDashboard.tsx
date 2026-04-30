@@ -99,7 +99,7 @@ export default function ClienteDashboard() {
               >
                 <CardContent className="flex flex-col items-center py-8 text-center">
                   <ClipboardList className="h-10 w-10 text-primary mb-3" />
-                  <p className="font-medium">{formulario?.status_preenchimento === 'concluido' ? 'Formulário Enviado ✓' : 'Formulário IR'}</p>
+                  <p className="font-medium">{formulario?.status_preenchimento === 'concluido' ? 'Informações Enviadas ✓' : 'Informações Cadastrais'}</p>
                   <Badge className={`mt-2 ${
                     formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success' :
                     formulario?.status_preenchimento === 'em_andamento' ? 'bg-warning/15 text-warning' :
