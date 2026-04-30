@@ -129,10 +129,14 @@ export default function GerarLinkConvite() {
             <div className="space-y-2">
               <Label>CPF (opcional)</Label>
               <Input
-                value={formData.cpf_sugerido}
+                value={maskCPF(formData.cpf_sugerido)}
                 onChange={(e) => setFormData({ ...formData, cpf_sugerido: e.target.value })}
                 placeholder="000.000.000-00"
+                maxLength={14}
               />
+              {formData.cpf_sugerido && !validateCPF(formData.cpf_sugerido) && (
+                <p className="text-xs text-destructive mt-1">CPF inválido</p>
+              )}
             </div>
 
             <div className="space-y-2">
