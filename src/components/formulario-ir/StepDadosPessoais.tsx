@@ -240,20 +240,29 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                   variant="outline"
                   role="combobox"
                   aria-expanded={openNatureza}
-                  className="w-full justify-between h-auto py-2 text-left font-normal"
+                  className="w-full justify-between h-auto min-h-[44px] py-2 text-left font-normal bg-background"
                 >
-                  <span className="truncate">
+                  <span className="whitespace-normal leading-tight pr-4">
                     {data.natureza_ocupacao
                       ? NATUREZAS_OCUPACAO.find((n) => n.value === data.natureza_ocupacao)?.label
                       : "Selecione a natureza..."}
                   </span>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                <Command>
-                  <CommandInput placeholder="Buscar natureza..." />
-                  <CommandList>
+              <PopoverContent 
+                className="p-0 w-[var(--radix-popover-trigger-width)]" 
+                align="start"
+              >
+                <Command shouldFilter={false}>
+                  <CommandInput 
+                    placeholder="Busque por código ou nome..." 
+                    className="h-11"
+                    onValueChange={(search) => {
+                      // Custom filtering logic could go here if needed
+                    }}
+                  />
+                  <CommandList className="max-h-[350px]">
                     <CommandEmpty>Nenhuma natureza encontrada.</CommandEmpty>
                     <CommandGroup>
                       {NATUREZAS_OCUPACAO.map((n) => (
@@ -264,14 +273,17 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                             onChange('natureza_ocupacao', n.value);
                             setOpenNatureza(false);
                           }}
+                          className="py-3 px-4 aria-selected:bg-accent cursor-pointer border-b last:border-0 border-muted/20"
                         >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              data.natureza_ocupacao === n.value ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {n.label}
+                          <div className="flex items-start w-full">
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4 mt-0.5 shrink-0",
+                                data.natureza_ocupacao === n.value ? "opacity-100 text-primary" : "opacity-0"
+                              )}
+                            />
+                            <span className="leading-tight">{n.label}</span>
+                          </div>
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -289,22 +301,28 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                   variant="outline"
                   role="combobox"
                   aria-expanded={openOcupacao}
-                  className="w-full justify-between h-auto py-2 text-left font-normal"
+                  className="w-full justify-between h-auto min-h-[44px] py-2 text-left font-normal bg-background"
                 >
-                  <span className="truncate">
+                  <span className="whitespace-normal leading-tight pr-4">
                     {data.ocupacao_principal
                       ? OCUPACOES_PRINCIPAIS.find((o) => o.value === data.ocupacao_principal)?.label
                       : "Selecione a ocupação..."}
                   </span>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+              <PopoverContent 
+                className="p-0 w-[var(--radix-popover-trigger-width)]" 
+                align="start"
+              >
                 <Command>
-                  <CommandInput placeholder="Buscar ocupação..." />
-                  <CommandList>
+                  <CommandInput 
+                    placeholder="Ex: Médico, Engenheiro, 221..." 
+                    className="h-11"
+                  />
+                  <CommandList className="max-h-[350px]">
                     <CommandEmpty>Nenhuma ocupação encontrada.</CommandEmpty>
-                    <CommandGroup className="max-h-[300px] overflow-auto">
+                    <CommandGroup>
                       {OCUPACOES_PRINCIPAIS.map((o) => (
                         <CommandItem
                           key={o.value}
@@ -313,14 +331,17 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                             onChange('ocupacao_principal', o.value);
                             setOpenOcupacao(false);
                           }}
+                          className="py-3 px-4 aria-selected:bg-accent cursor-pointer border-b last:border-0 border-muted/20"
                         >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              data.ocupacao_principal === o.value ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {o.label}
+                          <div className="flex items-start w-full">
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4 mt-0.5 shrink-0",
+                                data.ocupacao_principal === o.value ? "opacity-100 text-primary" : "opacity-0"
+                              )}
+                            />
+                            <span className="leading-tight">{o.label}</span>
+                          </div>
                         </CommandItem>
                       ))}
                     </CommandGroup>
