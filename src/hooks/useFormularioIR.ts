@@ -8,6 +8,7 @@ import {
   validatePartial,
   validateComplete,
   type Dependente,
+  type Alimentando,
   type RendimentoEmprego,
   type RendimentoAluguel,
   type DespesaMedica,
