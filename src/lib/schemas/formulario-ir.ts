@@ -4,7 +4,7 @@ import { validateCPF } from '../formatters';
 // --- Dependentes ---
 export const dependenteSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(120),
-  cpf: z.string().regex(/^\d{11}$/, 'CPF deve ter 11 dígitos').or(z.literal('')).optional(),
+  cpf: z.string().refine((val) => !val || validateCPF(val), 'CPF inválido').or(z.literal('')).optional(),
   data_nascimento: z.string().optional(),
   parentesco: z.string().optional(),
 });
