@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
-import { maskCPF, parseCPF } from '@/lib/formatters';
+import { maskCPF, parseCPF, validateCPF } from '@/lib/formatters';
 import type { FormularioData } from '@/hooks/useFormularioIR';
 
 interface Props {
