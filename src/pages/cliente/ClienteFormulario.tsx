@@ -233,7 +233,7 @@ export default function ClienteFormulario() {
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Formulário IR {declaracao.ano_base}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Etapa {step + 1} de {totalSteps} — {currentStep.label}
+              Etapa {step + 1} de {totalSteps} — {currentStep.label === 'Dados Pessoais' ? 'Informações Cadastrais' : currentStep.label}
             </p>
           </div>
           {lastSaved && (
