@@ -254,13 +254,10 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                 className="p-0 w-[var(--radix-popover-trigger-width)]" 
                 align="start"
               >
-                <Command shouldFilter={false}>
+                <Command shouldFilter={true}>
                   <CommandInput 
                     placeholder="Busque por código ou nome..." 
                     className="h-11"
-                    onValueChange={(search) => {
-                      // Custom filtering logic could go here if needed
-                    }}
                   />
                   <CommandList className="max-h-[350px]">
                     <CommandEmpty>Nenhuma natureza encontrada.</CommandEmpty>
@@ -268,7 +265,7 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                       {NATUREZAS_OCUPACAO.map((n) => (
                         <CommandItem
                           key={n.value}
-                          value={n.label}
+                          value={`${n.value} ${n.label}`}
                           onSelect={() => {
                             onChange('natureza_ocupacao', n.value);
                             setOpenNatureza(false);
