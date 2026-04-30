@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Copy, Link2, Mail, MessageCircle } from 'lucide-react';
+import { maskCPF, validateCPF } from '@/lib/formatters';
 
 export default function GerarLinkConvite() {
   const { profile } = useAuth();
