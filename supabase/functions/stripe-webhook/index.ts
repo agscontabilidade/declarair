@@ -25,13 +25,17 @@ const PLAN_CONFIG: Record<string, { limite: number; storage: number; usuarios: n
 };
 
 async function logActivity(admin: any, event: any, status: string = 'sucesso', message: string = '') {
-  await admin.rpc('registrar_log_auditoria', {
-    p_tipo: 'webhook_stripe',
-    p_evento: event.type,
-    p_dados: event,
-    p_status: status,
-    p_mensagem: message
-  });
+  try {
+    await admin.rpc('registrar_log_auditoria', {
+      p_tipo: 'webhook_stripe',
+      p_evento: event.type || 'system_error',
+      p_dados: event,
+      p_status: status,
+      p_mensagem: message
+    });
+  } catch (err) {
+    console.error('Failed to log activity to database:', err);
+  }
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice, admin: any) {
@@ -78,8 +82,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, admin: any) {
   });
 }
 
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  const admin = getSupabaseAdmin();
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, admin: any) {
   const subscription = invoice.subscription as string;
   if (!subscription) return;
 
@@ -87,13 +90,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const escritorioId = sub.metadata?.escritorio_id;
   if (!escritorioId) return;
 
-  // Update assinatura as overdue
   await admin
     .from("assinaturas")
     .update({ status: "overdue" })
     .eq("stripe_subscription_id", subscription);
 
-  // Record failed payment
   await admin.from("pagamentos_assinatura").insert({
     escritorio_id: escritorioId,
     stripe_invoice_id: invoice.id,
@@ -105,7 +106,6 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     provider: "stripe",
   });
 
-  // Create notification
   await admin.from("notificacoes").insert({
     escritorio_id: escritorioId,
     titulo: "⚠️ Pagamento falhou",
@@ -114,8 +114,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   });
 }
 
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  const admin = getSupabaseAdmin();
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription, admin: any) {
   const escritorioId = subscription.metadata?.escritorio_id;
   if (!escritorioId) return;
 
@@ -137,8 +136,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   });
 }
 
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  const admin = getSupabaseAdmin();
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription, admin: any) {
   const escritorioId = subscription.metadata?.escritorio_id;
   if (!escritorioId) return;
 
@@ -164,15 +162,13 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     .eq("stripe_subscription_id", subscription.id);
 }
 
-async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-  const admin = getSupabaseAdmin();
+async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent, admin: any) {
   const escritorioId = paymentIntent.metadata?.escritorio_id;
   const type = paymentIntent.metadata?.type;
   
   if (type === "declaracao_extra" && escritorioId) {
     const quantidade = parseInt(paymentIntent.metadata?.quantidade || "1");
     
-    // Increment limit
     const { data: escritorio } = await admin
       .from("escritorios")
       .select("limite_declaracoes")
@@ -186,7 +182,6 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
         .eq("id", escritorioId);
     }
 
-    // Record extra purchase
     await admin.from("declaracoes_extras").insert({
       escritorio_id: escritorioId,
       quantidade,
@@ -237,19 +232,17 @@ Deno.serve(async (req) => {
         await handleInvoicePaid(event.data.object as Stripe.Invoice, admin);
         break;
       case "invoice.payment_failed":
-        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice, admin);
         break;
       case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription, admin);
         break;
       case "customer.subscription.updated":
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription, admin);
         break;
       case "payment_intent.succeeded":
-        await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+        await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent, admin);
         break;
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
     }
 
     await logActivity(admin, event);
