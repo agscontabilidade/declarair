@@ -49,7 +49,7 @@ export default function ClienteFormulario() {
     ];
     // Only show dados pessoais if has dependentes (need to know marital status for cônjuge)
     if (perfilFiscal.dependentes) {
-      s.push({ key: 'dados', label: 'Dados Pessoais' });
+      s.push({ key: 'dados', label: 'Informações Cadastrais' });
       s.push({ key: 'dependentes', label: 'Dependentes' });
     }
     s.push({ key: 'documentos', label: 'Envio de Documentos' });
