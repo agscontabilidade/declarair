@@ -809,7 +809,7 @@ export type Database = {
           id: string
           mes_referencia: string
           quantidade: number
-          valor_total: number | null
+          valor_total: number
           valor_unitario: number
         }
         Insert: {
@@ -819,7 +819,7 @@ export type Database = {
           id?: string
           mes_referencia?: string
           quantidade: number
-          valor_total?: number | null
+          valor_total?: number
           valor_unitario?: number
         }
         Update: {
@@ -829,7 +829,7 @@ export type Database = {
           id?: string
           mes_referencia?: string
           quantidade?: number
-          valor_total?: number | null
+          valor_total?: number
           valor_unitario?: number
         }
         Relationships: [
