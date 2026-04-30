@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { maskCPF, validateCPF, maskCEP } from '@/lib/formatters';
 import type { FormularioData } from '@/hooks/useFormularioIR';
 import { toast } from 'sonner';
-import { Loader2, Search, Check, ChevronsUpDown } from 'lucide-react';
+import { Loader2, Search, Check, ChevronsUpDown, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { RACAS_CORES, ESTADOS_CIVIS, NATUREZAS_OCUPACAO, OCUPACOES_PRINCIPAIS } from '@/lib/constants-ir';
+
+const PARENTESCOS = ['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Companheiro(a)', 'Pai/Mãe', 'Avô/Avó', 'Outro'];
 
 interface Props {
   data: FormularioData;
