@@ -77,30 +77,53 @@ export default function ClienteDashboard() {
             </Card>
 
             {/* Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Informações Cadastrais (Consolidated Flow) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Informações Cadastrais */}
               <Card 
-                className={`shadow-sm transition-all duration-200 ${formulario?.status_preenchimento === 'concluido' ? 'opacity-80' : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md'}`}
-                onClick={() => formulario?.status_preenchimento !== 'concluido' && navigate('/cliente/formulario')}
+                className={`shadow-sm transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${formulario?.status_preenchimento === 'concluido' ? 'border-success/30 bg-success/5' : ''}`}
+                onClick={() => navigate('/cliente/formulario')}
               >
                 <CardContent className="flex flex-col items-center py-8 text-center">
-                  <ClipboardList className="h-10 w-10 text-primary mb-3" />
-                  <p className="font-medium">{formulario?.status_preenchimento === 'concluido' ? 'Informações Enviadas ✓' : 'Informações Cadastrais'}</p>
+                  <ClipboardList className={`h-10 w-10 mb-3 ${formulario?.status_preenchimento === 'concluido' ? 'text-success' : 'text-primary'}`} />
+                  <p className="font-medium">Informações Cadastrais</p>
                   
                   <div className="w-full max-w-[140px] mt-3">
                     <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
-                      <span>Progresso</span>
-                      <span>{formulario?.status_preenchimento === 'concluido' ? '100%' : formulario?.status_preenchimento === 'em_andamento' ? '50%' : '0%'}</span>
+                      <span>Status</span>
+                      <span>{formulario?.status_preenchimento === 'concluido' ? '100%' : '50%'}</span>
                     </div>
-                    <Progress value={formulario?.status_preenchimento === 'concluido' ? 100 : formulario?.status_preenchimento === 'em_andamento' ? 50 : 0} className="h-1.5" />
+                    <Progress value={formulario?.status_preenchimento === 'concluido' ? 100 : 50} className="h-1.5" />
                   </div>
 
                   <Badge className={`mt-3 ${
-                    formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success' :
-                    formulario?.status_preenchimento === 'em_andamento' ? 'bg-warning/15 text-warning' :
-                    'bg-muted text-muted-foreground'
+                    formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success hover:bg-success/20' : 'bg-warning/15 text-warning hover:bg-warning/20'
                   }`}>
-                    {STATUS_LABELS[formulario?.status_preenchimento || 'nao_iniciado']}
+                    {formulario?.status_preenchimento === 'concluido' ? 'Preenchido' : 'Pendente'}
+                  </Badge>
+                </CardContent>
+              </Card>
+
+              {/* Envio de Documentos (Originalmente pendentes) */}
+              <Card 
+                className={`shadow-sm transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${pendentes.length === 0 ? 'border-success/30 bg-success/5' : ''}`}
+                onClick={() => navigate('/cliente/documentos')}
+              >
+                <CardContent className="flex flex-col items-center py-8 text-center">
+                  <Upload className={`h-10 w-10 mb-3 ${pendentes.length === 0 ? 'text-success' : 'text-primary'}`} />
+                  <p className="font-medium">Envio de Documentos</p>
+                  
+                  <div className="w-full max-w-[140px] mt-3">
+                    <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
+                      <span>Documentos</span>
+                      <span>{pendentes.length > 0 ? `${pendentes.length} Pendentes` : 'OK'}</span>
+                    </div>
+                    <Progress value={pendentes.length === 0 ? 100 : 50} className="h-1.5" />
+                  </div>
+
+                  <Badge className={`mt-3 ${
+                    pendentes.length === 0 ? 'bg-success/15 text-success hover:bg-success/20' : 'bg-destructive/15 text-destructive hover:bg-destructive/20'
+                  }`}>
+                    {pendentes.length === 0 ? 'Tudo Enviado' : `${pendentes.length} Pendentes`}
                   </Badge>
                 </CardContent>
               </Card>
@@ -108,8 +131,8 @@ export default function ClienteDashboard() {
               {/* Resultado */}
               <Card className="shadow-sm">
                 <CardContent className="flex flex-col items-center py-8 text-center">
-                  <FileText className="h-10 w-10 text-success mb-3" />
-                  <p className="font-medium">Resultado</p>
+                  <CheckCircle2 className={`h-10 w-10 mb-3 ${declaracao.status === 'transmitida' ? 'text-success' : 'text-muted-foreground/40'}`} />
+                  <p className="font-medium">Resultado Final</p>
                   {declaracao.status === 'transmitida' && declaracao.tipo_resultado ? (
                     <p className={`text-lg font-bold mt-1 ${declaracao.tipo_resultado === 'restituicao' ? 'text-success' : declaracao.tipo_resultado === 'pagamento' ? 'text-destructive' : 'text-muted-foreground'}`}>
                       {STATUS_LABELS[declaracao.tipo_resultado]}: {declaracao.valor_resultado ? formatCurrency(Number(declaracao.valor_resultado)) : '—'}
