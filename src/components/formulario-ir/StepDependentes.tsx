@@ -86,6 +86,49 @@ export function StepDependentes({ data, onChange }: Props) {
       <Button variant="outline" onClick={addDep} className="w-full">
         <Plus className="h-4 w-4 mr-2" /> Adicionar Dependente
       </Button>
+
+      <div className="mt-8 pt-8 border-t space-y-6">
+        <div>
+          <h2 className="font-display text-lg font-semibold">Pensão Alimentícia</h2>
+          <p className="text-sm text-muted-foreground">Adicione os beneficiários de pensão alimentícia (alimentandos).</p>
+        </div>
+
+        {alimentandos.map((ali: any, i: number) => (
+          <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Beneficiário {i + 1}</span>
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => removeAli(i)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="md:col-span-2">
+                <Label>Nome *</Label>
+                <Input value={ali.nome} onChange={(e) => updateAli(i, 'nome', e.target.value)} placeholder="Nome completo" maxLength={200} />
+              </div>
+              <div>
+                <Label>CPF</Label>
+                <Input
+                  value={ali.cpf}
+                  onChange={(e) => updateAli(i, 'cpf', maskCPF(e.target.value))}
+                  placeholder="000.000.000-00"
+                  maxLength={14}
+                  className={ali.cpf && !validateCPF(ali.cpf) ? 'border-destructive' : ''}
+                />
+                {ali.cpf && !validateCPF(ali.cpf) && <p className="text-xs text-destructive mt-1">CPF inválido</p>}
+              </div>
+              <div>
+                <Label>Data de Nascimento</Label>
+                <Input type="date" value={ali.data_nascimento} onChange={(e) => updateAli(i, 'data_nascimento', e.target.value)} />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <Button variant="outline" onClick={addAli} className="w-full">
+          <Plus className="h-4 w-4 mr-2" /> Adicionar Alimentando
+        </Button>
+      </div>
     </div>
   );
 }
