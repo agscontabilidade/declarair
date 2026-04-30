@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { validateCPF } from '@/lib/formatters';
 
 interface ConviteData {
   id: string;
