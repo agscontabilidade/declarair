@@ -24,13 +24,20 @@ const PLAN_CONFIG: Record<string, { limite: number; storage: number; usuarios: n
   pro: { limite: 3, storage: 102400, usuarios: 5 },
 };
 
-async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const admin = getSupabaseAdmin();
+async function logActivity(admin: any, event: any, status: string = 'sucesso', message: string = '') {
+  await admin.rpc('registrar_log_auditoria', {
+    p_tipo: 'webhook_stripe',
+    p_evento: event.type,
+    p_dados: event,
+    p_status: status,
+    p_mensagem: message
+  });
+}
+
+async function handleInvoicePaid(invoice: Stripe.Invoice, admin: any) {
   const subscription = invoice.subscription as string;
-  
   if (!subscription) return;
 
-  // Get subscription details
   const sub = await stripe.subscriptions.retrieve(subscription);
   const escritorioId = sub.metadata?.escritorio_id;
   const plano = sub.metadata?.plano;
@@ -40,13 +47,11 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     return;
   }
 
-  // Update assinatura status
   await admin
     .from("assinaturas")
     .update({ status: "active" })
     .eq("stripe_subscription_id", subscription);
 
-  // Update escritorio plan
   if (plano && PLAN_CONFIG[plano]) {
     const config = PLAN_CONFIG[plano];
     await admin
@@ -60,7 +65,6 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       .eq("id", escritorioId);
   }
 
-  // Record payment
   await admin.from("pagamentos_assinatura").insert({
     escritorio_id: escritorioId,
     stripe_invoice_id: invoice.id,
@@ -71,13 +75,6 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     data_pagamento: new Date().toISOString().split("T")[0],
     forma_pagamento: "STRIPE",
     provider: "stripe",
-  });
-
-  // Log
-  await admin.from("system_logs").insert({
-    tipo: "stripe_payment_received",
-    mensagem: `Pagamento recebido: ${(invoice.amount_paid || 0) / 100} BRL`,
-    metadata: { invoice_id: invoice.id, escritorio_id: escritorioId, plano },
   });
 }
 
@@ -207,33 +204,37 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const admin = getSupabaseAdmin();
   try {
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
 
     let event: Stripe.Event;
-
     if (WEBHOOK_SECRET && signature) {
-      event = await stripe.webhooks.constructEventAsync(
-        body,
-        signature,
-        WEBHOOK_SECRET
-      );
+      event = await stripe.webhooks.constructEventAsync(body, signature, WEBHOOK_SECRET);
     } else {
-      // Fallback: parse the event without signature verification (dev/sandbox)
       event = JSON.parse(body) as Stripe.Event;
-      console.warn("⚠️ Webhook signature not verified - no STRIPE_WEBHOOK_SECRET set");
     }
 
-    console.log(`Stripe event received: ${event.type}`);
+    // Check for idempotency
+    const { data: existingEvent } = await admin
+      .from('auditoria_atividades')
+      .select('id')
+      .eq('tipo', 'webhook_stripe')
+      .filter('dados->>id', 'eq', event.id)
+      .maybeSingle();
+
+    if (existingEvent) {
+      return new Response(JSON.stringify({ received: true, duplicated: true }), { status: 200 });
+    }
+
+    console.log(`Stripe event received: ${event.type} (${event.id})`);
 
     switch (event.type) {
       case "invoice.paid":
-        await handleInvoicePaid(event.data.object as Stripe.Invoice);
+        await handleInvoicePaid(event.data.object as Stripe.Invoice, admin);
         break;
       case "invoice.payment_failed":
         await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
@@ -251,16 +252,12 @@ Deno.serve(async (req) => {
         console.log(`Unhandled event type: ${event.type}`);
     }
 
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error: unknown) {
+    await logActivity(admin, event);
+
+    return new Response(JSON.stringify({ received: true }), { status: 200 });
+  } catch (error: any) {
     console.error("Stripe webhook error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    await logActivity(admin, { type: 'error' }, 'erro', error.message);
+    return new Response(JSON.stringify({ error: error.message }), { status: 400 });
   }
 });
