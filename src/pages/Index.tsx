@@ -4,164 +4,39 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   Shield, Zap, CheckCircle2,
-  ArrowRight, Star, Layout, Smartphone, Lock,
+  ArrowRight, Layout, Smartphone, Lock,
   Receipt, Palette,
   DollarSign, Flame, Target, XCircle, AlertTriangle,
-  MessageSquareWarning, FileQuestion, Clock, RotateCcw, TrendingDown,
+  MessageSquareWarning, FileQuestion, Clock, RotateCcw, TrendingDown, Star
 } from 'lucide-react';
 import logoFull from '@/assets/logo-full.png';
 import ctaPerson from '@/assets/cta-person.jpg';
-import heroStressed from '@/assets/hero-stressed-person.jpg';
 import featureDashboard from '@/assets/feature-dashboard.jpg';
 import featureMobile from '@/assets/feature-mobile.jpg';
 import lionBrave from '@/assets/lion-brave.jpg';
 import mockupDashboard from '@/assets/mockup-dashboard.jpg';
-import avatarCarlos from '@/assets/avatar-carlos.jpg';
-import avatarAna from '@/assets/avatar-ana.jpg';
-import avatarRoberto from '@/assets/avatar-roberto.jpg';
+import heroStressed from '@/assets/hero-stressed-person.jpg';
+
 import MetricCounter from '@/components/landing/MetricCounter';
-import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { PlanosCardsPublic } from '@/components/planos/PlanosCardsPublic';
 import { TabelaAvulso } from '@/components/planos/TabelaAvulso';
+import { painPoints, beforeAfter, featuresTranslated, testimonials, objections, faqs } from '@/components/landing/LandingData';
+import { Section } from '@/components/landing/LandingSection';
+import { LandingHeader } from '@/components/landing/LandingHeader';
+import { LandingHero } from '@/components/landing/LandingHero';
 
-/* ── Data ── */
-const painPoints = [
-  { icon: MessageSquareWarning, text: 'Cliente mandando documento solto no WhatsApp' },
-  { icon: FileQuestion, text: 'Informações incompletas toda vez' },
-  { icon: Clock, text: 'Você perdendo horas organizando o que o cliente deveria ter mandado certo' },
-  { icon: RotateCcw, text: 'Retrabalho constante — e na reta final, o caos dobra' },
-  { icon: TrendingDown, text: 'Baixa lucratividade pelo esforço absurdo' },
-];
 
-const beforeAfter = [
-  { before: 'Caos no WhatsApp', after: 'Fluxo organizado e automático' },
-  { before: 'Cliente perdido sem saber o que enviar', after: 'Cliente guiado com checklist inteligente' },
-  { before: 'Retrabalho a cada declaração', after: 'Processo previsível e escalável' },
-  { before: 'Correria desesperada no prazo', after: 'Controle total — sem surpresas' },
-  { before: 'Trabalhar mais, faturar igual', after: 'Trabalhar menos, faturar mais' },
-];
+// Removido dados internos e componentes utilitários agora em componentes separados
 
-const featuresTranslated = [
-  { icon: Layout, title: 'Veja quem está pendente agora', desc: 'Pare de correr atrás no último dia. O dashboard mostra exatamente quem falta, quem travou e onde está o gargalo — em tempo real.' },
-  { icon: Smartphone, title: 'Cliente envia tudo certo, no lugar certo', desc: 'Sem te travar no WhatsApp. O portal guia o cliente a enviar cada documento no formato correto, automaticamente.' },
-  { icon: Shield, title: 'Evite malha fina antes de transmitir', desc: 'O verificador cruza dados automaticamente e avisa antes de dar problema. Disponível no plano Pro.' },
-  { icon: Zap, title: 'Simule o resultado do IR em segundos', desc: 'Compare Simplificada vs Completa instantaneamente. Mostre pro cliente o cenário ideal e feche o serviço mais rápido.' },
-  { icon: Palette, title: 'Cobre mais com uma experiência profissional', desc: 'Whitelabel com sua marca no portal. Seu cliente vê o seu nome, não o nosso. Isso é percepção de valor — e valor se cobra.' },
-  { icon: Receipt, title: 'Cobre via Pix e cartão sem sair da plataforma', desc: 'Gere cobranças, acompanhe pagamentos e pare de perseguir cliente inadimplente. Tudo integrado.' },
-];
-
-const testimonials = [
-  { name: 'Carlos Silva', role: 'Contador — SP', text: 'Reduzi pela metade o tempo por cliente. Antes eu perdia 3 dias organizando documento. Agora chega tudo pronto.', stars: 5, avatar: avatarCarlos },
-  { name: 'Ana Beatriz', role: 'Escritório ContaFácil — MG', text: 'Consegui atender 40% mais clientes sem contratar ninguém. O sistema faz o trabalho pesado.', stars: 5, avatar: avatarAna },
-  { name: 'Roberto Mendes', role: 'Contador autônomo — RJ', text: 'Minha vida mudou. Menos estresse, mais controle, mais faturamento. Não volto pra planilha nunca mais.', stars: 5, avatar: avatarRoberto },
-];
-
-const objections = [
-  { objection: '"Já uso planilha"', answer: 'Planilha organiza dados. Não organiza processo. E muito menos cliente. Quando o WhatsApp toca pela 30ª vez pedindo a mesma coisa, a planilha não te salva.' },
-  { objection: '"Não tenho tempo de aprender sistema novo"', answer: 'Se você tem tempo de reorganizar documento que o cliente mandou errado, tem tempo de apertar 3 botões. Sério: são 2 minutos pra configurar.' },
-  { objection: '"É caro demais"', answer: 'Um único erro no IR pode custar mais que um ano inteiro do sistema. R$ 29,90 por mês é menos que o valor de UMA declaração. A matemática é simples.' },
-  { objection: '"Meu escritório é pequeno demais"', answer: 'Comece grátis com 1 declaração. Sem contrato. Se não servir, você não gastou nada. Se servir, desbloqueie tudo por R$ 29,90/mês.' },
-];
-
-const faqs = [
-  { q: 'Como funciona o plano gratuito?', a: 'O plano Free libera 1 declaração completa com chat, kanban e 500 MB de armazenamento — ideal para conhecer a plataforma sem compromisso.' },
-  { q: 'Qual a diferença entre Free e Pro?', a: 'O Pro (R$ 49,90/mês) inclui 3 declarações, até 5 usuários, armazenamento ilimitado, monitoramento de malha fina, calculadora de IR e suporte prioritário. Declarações adicionais custam R$ 4,90 cada.' },
-  { q: 'Meus dados e os dos meus clientes estão seguros?', a: 'Sim. Utilizamos criptografia, banco de dados isolado por escritório e controle de acesso em nível de linha (RLS) em todas as tabelas, em conformidade com a LGPD.' },
-  { q: 'Meus clientes precisam instalar algo?', a: 'Não. O portal do cliente é 100% web — funciona em qualquer celular ou computador. Basta enviar o link de convite.' },
-  { q: 'O que são os Recursos Extras?', a: 'Módulos opcionais que ampliam a plataforma: integração com WhatsApp (R$ 19,90/mês), API Pública (R$ 29,90/mês) e Whitelabel com sua marca (R$ 49,90/mês).' },
-  { q: 'Existe contrato de fidelidade?', a: 'Não. A cobrança é mensal e você pode cancelar a qualquer momento, sem multa e sem burocracia.' },
-];
-
-/* ── Scroll Section Wrapper ── */
-function Section({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) {
-  const ref = useScrollReveal();
-  return (
-    <section ref={ref} id={id} className={`scroll-reveal ${className}`}>
-      {children}
-    </section>
-  );
-}
 
 /* ── Page ── */
 export default function Index() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* ── HEADER ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass-navbar">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center">
-            <img src={logoFull} alt="DeclaraIR" className="h-12 sm:h-14 w-auto object-contain" />
-          </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground font-medium">
-            <a href="#dor" className="hover:text-foreground transition-colors">A Dor</a>
-            <a href="#solucao" className="hover:text-foreground transition-colors">Solução</a>
-            <a href="#pricing" className="hover:text-foreground transition-colors">Preços</a>
-            <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
-          </nav>
-          <div className="flex items-center gap-3">
-            <Link to="/login"><Button variant="ghost" size="sm" className="text-sm font-medium">Entrar</Button></Link>
-            <Link to="/cadastro"><Button size="sm" variant="gradient" className="text-sm px-5 font-semibold">Começar Grátis</Button></Link>
-          </div>
-        </div>
-      </header>
-
+      <LandingHeader />
       <div className="h-16" />
+      <LandingHero />
 
-      {/* ══════════ 1. HERO ══════════ */}
-      <section className="relative dot-grid bg-gradient-to-b from-background to-secondary/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 lg:pt-28 lg:pb-28">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-            <div className="flex-1 text-center lg:text-left space-y-6">
-              <Badge variant="outline" className="mb-2 text-xs px-4 py-1.5 font-medium border-destructive/30 text-destructive bg-destructive/5 rounded-full animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                <Flame className="h-3.5 w-3.5 mr-1.5" /> A temporada de IR não espera
-              </Badge>
-
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.12] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                O problema não é IRPF.
-                <br />
-                <span className="bg-gradient-to-r from-accent to-[hsl(170,60%,50%)] bg-clip-text text-transparent">É o seu processo desorganizado!</span>
-              </h1>
-
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-md animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
-                Organize tudo, elimine retrabalho e entregue declarações em <span className="text-foreground font-semibold">metade do tempo</span>.
-              </p>
-
-              <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start gap-3 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
-                <Link to="/cadastro">
-                  <Button size="lg" variant="gradient" className="text-base px-8 h-12 font-bold uppercase tracking-wide">
-                    Quero organizar meu IR agora <ArrowRight className="h-4 w-4 ml-1.5" />
-                  </Button>
-                </Link>
-                <a href="#solucao">
-                  <Button size="lg" variant="outline" className="text-base px-6 h-12 font-semibold">
-                    Ver como funciona
-                  </Button>
-                </a>
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center lg:justify-start justify-center gap-x-5 gap-y-2 text-muted-foreground animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
-                {['Plano Free disponível', 'Começa em 2 minutos', 'Cancele quando quiser'].map(t => (
-                  <div key={t} className="flex items-center gap-1.5 text-xs">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-success" /> {t}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex-1 w-full max-w-lg animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
-              <div className="rounded-2xl overflow-hidden border border-border shadow-xl">
-                <img
-                  src={heroStressed}
-                  alt="Contador estressado com papéis de IRPF"
-                  className="w-full h-auto object-cover"
-                  width={1024}
-                  height={1024}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ══════════ 1.5 STORYTELLING ══════════ */}
       <Section className="gradient-brand">
