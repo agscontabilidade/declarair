@@ -88,18 +88,15 @@ export function StepInfoAdicionais({ data, onChange, confirmado, onConfirmChange
           <div>
             <Label className="text-xs">Confirme seu CPF (chave PIX)</Label>
             <Input
-              value={data.chave_pix_cliente || ''}
-              onChange={(e) => {
-                // Format CPF
-                let v = e.target.value.replace(/\D/g, '').slice(0, 11);
-                if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
-                else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
-                else if (v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
-                onChange('chave_pix_cliente', v);
-              }}
+              value={maskCPF(data.chave_pix_cliente || '')}
+              onChange={(e) => onChange('chave_pix_cliente', e.target.value)}
               placeholder="000.000.000-00"
               maxLength={14}
+              className={data.chave_pix_cliente && pixTipo === 'cpf' && !validateCPF(data.chave_pix_cliente) ? 'border-destructive' : ''}
             />
+            {data.chave_pix_cliente && pixTipo === 'cpf' && !validateCPF(data.chave_pix_cliente) && (
+              <p className="text-xs text-destructive mt-1">CPF inválido</p>
+            )}
           </div>
         )}
 
