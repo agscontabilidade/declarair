@@ -15,6 +15,8 @@ import featureDashboard from '@/assets/feature-dashboard.jpg';
 import featureMobile from '@/assets/feature-mobile.jpg';
 import lionBrave from '@/assets/lion-brave.jpg';
 import mockupDashboard from '@/assets/mockup-dashboard.jpg';
+import heroStressed from '@/assets/hero-stressed-person.jpg';
+
 import MetricCounter from '@/components/landing/MetricCounter';
 import { PlanosCardsPublic } from '@/components/planos/PlanosCardsPublic';
 import { TabelaAvulso } from '@/components/planos/TabelaAvulso';
