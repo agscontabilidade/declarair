@@ -88,7 +88,7 @@ export type DividaOnus = z.infer<typeof dividaOnusSchema>;
 export const formularioIRSchema = z.object({
   estado_civil: z.string().optional(),
   conjuge_nome: z.string().max(120).optional(),
-  conjuge_cpf: z.string().regex(/^\d{11}$/, 'CPF do cônjuge inválido').or(z.literal('')).optional(),
+  conjuge_cpf: z.string().refine((val) => !val || validateCPF(val), 'CPF do cônjuge inválido').or(z.literal('')).optional(),
   dependentes: z.array(dependenteSchema).default([]),
   rendimentos_emprego: z.array(rendimentoEmpregoSchema).default([]),
   rendimentos_autonomo: rendimentoAutonomoSchema.or(z.record(z.unknown())).default({}),
