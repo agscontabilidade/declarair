@@ -72,8 +72,8 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave }: Props) 
           </div>
           <div>
             <Label htmlFor="cpf">CPF *</Label>
-            <Input id="cpf" value={maskCpf(form.cpf)} onChange={e => setForm(f => ({ ...f, cpf: e.target.value }))} placeholder="000.000.000-00" />
-            {form.cpf && !cpfValid && <p className="text-xs text-destructive mt-1">CPF deve ter 11 dígitos</p>}
+            <Input id="cpf" value={maskCPF(form.cpf)} onChange={e => setForm(f => ({ ...f, cpf: e.target.value }))} placeholder="000.000.000-00" />
+            {form.cpf && !cpfValid && <p className="text-xs text-destructive mt-1">CPF inválido</p>}
           </div>
           <div>
             <Label htmlFor="email">Email</Label>
