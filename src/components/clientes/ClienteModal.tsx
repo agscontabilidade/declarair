@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { validateCPF, maskCPF } from '@/lib/formatters';
 
 interface Props {
   open: boolean;
@@ -13,13 +14,7 @@ interface Props {
   onSave: (data: any) => Promise<void>;
 }
 
-function maskCpf(value: string) {
-  const d = value.replace(/\D/g, '').slice(0, 11);
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
-  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
-  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
-}
+// Local mask functions removed in favor of @/lib/formatters
 
 function maskTelefone(value: string) {
   const d = value.replace(/\D/g, '').slice(0, 11);
@@ -36,7 +31,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave }: Props) 
   });
 
   const cpfDigits = form.cpf.replace(/\D/g, '');
-  const cpfValid = cpfDigits.length === 11;
+  const cpfValid = validateCPF(form.cpf);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,8 +72,8 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave }: Props) 
           </div>
           <div>
             <Label htmlFor="cpf">CPF *</Label>
-            <Input id="cpf" value={maskCpf(form.cpf)} onChange={e => setForm(f => ({ ...f, cpf: e.target.value }))} placeholder="000.000.000-00" />
-            {form.cpf && !cpfValid && <p className="text-xs text-destructive mt-1">CPF deve ter 11 dígitos</p>}
+            <Input id="cpf" value={maskCPF(form.cpf)} onChange={e => setForm(f => ({ ...f, cpf: e.target.value }))} placeholder="000.000.000-00" />
+            {form.cpf && !cpfValid && <p className="text-xs text-destructive mt-1">CPF inválido</p>}
           </div>
           <div>
             <Label htmlFor="email">Email</Label>

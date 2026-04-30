@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { validateCPF } from '../formatters';
 
 // --- Dependentes ---
 export const dependenteSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(120),
-  cpf: z.string().regex(/^\d{11}$/, 'CPF deve ter 11 dígitos').or(z.literal('')).optional(),
+  cpf: z.string().refine((val) => !val || validateCPF(val), 'CPF inválido').or(z.literal('')).optional(),
   data_nascimento: z.string().optional(),
   parentesco: z.string().optional(),
 });
@@ -87,7 +88,7 @@ export type DividaOnus = z.infer<typeof dividaOnusSchema>;
 export const formularioIRSchema = z.object({
   estado_civil: z.string().optional(),
   conjuge_nome: z.string().max(120).optional(),
-  conjuge_cpf: z.string().regex(/^\d{11}$/, 'CPF do cônjuge inválido').or(z.literal('')).optional(),
+  conjuge_cpf: z.string().refine((val) => !val || validateCPF(val), 'CPF do cônjuge inválido').or(z.literal('')).optional(),
   dependentes: z.array(dependenteSchema).default([]),
   rendimentos_emprego: z.array(rendimentoEmpregoSchema).default([]),
   rendimentos_autonomo: rendimentoAutonomoSchema.or(z.record(z.unknown())).default({}),

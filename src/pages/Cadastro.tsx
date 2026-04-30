@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { maskCPF, formatPhone } from '@/lib/formatters';
+import { maskCPF, formatPhone, validateCPF } from '@/lib/formatters';
 import { UpsellModal } from '@/components/cadastro/UpsellModal';
 import {
   FileText, Check, ArrowRight, ArrowLeft, Zap, Crown,
@@ -103,7 +103,7 @@ export default function Cadastro() {
       toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
       return;
     }
-    if (cpf.replace(/\D/g, '').length !== 11) {
+    if (!validateCPF(cpf)) {
       toast({ title: 'CPF inválido', variant: 'destructive' });
       return;
     }

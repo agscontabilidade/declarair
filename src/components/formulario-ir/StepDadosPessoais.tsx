@@ -1,7 +1,7 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { maskCPF } from '@/lib/formatters';
+import { maskCPF, validateCPF } from '@/lib/formatters';
 import type { FormularioData } from '@/hooks/useFormularioIR';
 
 interface Props {
@@ -43,7 +43,16 @@ export function StepDadosPessoais({ data, onChange }: Props) {
           </div>
           <div>
             <Label>CPF do Cônjuge</Label>
-            <Input value={data.conjuge_cpf} onChange={(e) => onChange('conjuge_cpf', maskCPF(e.target.value))} placeholder="000.000.000-00" maxLength={14} />
+            <Input
+              value={data.conjuge_cpf}
+              onChange={(e) => onChange('conjuge_cpf', maskCPF(e.target.value))}
+              placeholder="000.000.000-00"
+              maxLength={14}
+              className={data.conjuge_cpf && !validateCPF(data.conjuge_cpf) ? 'border-destructive' : ''}
+            />
+            {data.conjuge_cpf && !validateCPF(data.conjuge_cpf) && (
+              <p className="text-xs text-destructive mt-1">CPF inválido</p>
+            )}
           </div>
         </div>
       )}

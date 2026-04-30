@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { validateCPF } from '@/lib/formatters';
 
 interface ConviteData {
   id: string;
@@ -98,7 +99,7 @@ export default function CadastroCliente() {
 
     if (!form.nome.trim()) novosErros.nome = 'Nome é obrigatório';
     if (!form.cpf.trim()) novosErros.cpf = 'CPF é obrigatório';
-    else if (form.cpf.replace(/\D/g, '').length !== 11) novosErros.cpf = 'CPF inválido';
+    else if (!validateCPF(form.cpf)) novosErros.cpf = 'CPF inválido';
     if (!form.email.trim()) novosErros.email = 'Email é obrigatório';
     else if (!/\S+@\S+\.\S+/.test(form.email)) novosErros.email = 'Email inválido';
     if (!form.telefone.trim()) novosErros.telefone = 'Telefone é obrigatório';

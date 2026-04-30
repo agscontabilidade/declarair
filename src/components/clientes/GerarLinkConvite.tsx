@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Copy, Link2, Mail, MessageCircle } from 'lucide-react';
+import { maskCPF, validateCPF } from '@/lib/formatters';
 
 export default function GerarLinkConvite() {
   const { profile } = useAuth();
@@ -31,6 +32,10 @@ export default function GerarLinkConvite() {
 
   const handleGerar = async () => {
     if (!profile?.escritorioId) return;
+    if (formData.cpf_sugerido && !validateCPF(formData.cpf_sugerido)) {
+      toast({ title: 'CPF inválido', variant: 'destructive' });
+      return;
+    }
     setLoading(true);
     try {
       const token = crypto.randomUUID() + '-' + Date.now().toString(36);
@@ -124,10 +129,14 @@ export default function GerarLinkConvite() {
             <div className="space-y-2">
               <Label>CPF (opcional)</Label>
               <Input
-                value={formData.cpf_sugerido}
+                value={maskCPF(formData.cpf_sugerido)}
                 onChange={(e) => setFormData({ ...formData, cpf_sugerido: e.target.value })}
                 placeholder="000.000.000-00"
+                maxLength={14}
               />
+              {formData.cpf_sugerido && !validateCPF(formData.cpf_sugerido) && (
+                <p className="text-xs text-destructive mt-1">CPF inválido</p>
+              )}
             </div>
 
             <div className="space-y-2">

@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
-import { maskCPF, parseCPF } from '@/lib/formatters';
+import { maskCPF, parseCPF, validateCPF } from '@/lib/formatters';
 import type { FormularioData } from '@/hooks/useFormularioIR';
 
 interface Props {
@@ -29,7 +29,7 @@ export function StepDependentes({ data, onChange }: Props) {
     onChange('dependentes', deps.filter((_: any, idx: number) => idx !== i));
   };
 
-  const isValidCPF = (cpf: string) => parseCPF(cpf).length === 11;
+  const isValidCPF = (cpf: string) => validateCPF(cpf);
 
   return (
     <div className="space-y-6">
@@ -64,7 +64,7 @@ export function StepDependentes({ data, onChange }: Props) {
                 maxLength={14}
                 className={dep.cpf && !isValidCPF(dep.cpf) ? 'border-destructive' : ''}
               />
-              {dep.cpf && !isValidCPF(dep.cpf) && <p className="text-xs text-destructive mt-1">CPF inválido — deve conter 11 dígitos</p>}
+              {dep.cpf && !isValidCPF(dep.cpf) && <p className="text-xs text-destructive mt-1">CPF inválido</p>}
               {!dep.cpf && <p className="text-xs text-muted-foreground mt-1">Obrigatório pela Receita Federal</p>}
             </div>
             <div>
