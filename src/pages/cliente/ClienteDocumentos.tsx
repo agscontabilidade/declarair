@@ -141,18 +141,28 @@ export default function ClienteDocumentos() {
 
       const { error: dbError } = await supabase
         .from('checklist_documentos')
-        .update({
-          arquivo_url: null,
-          arquivo_nome: null,
-          status: 'pendente',
-          data_recebimento: null
-        })
+        .delete()
         .eq('id', docId);
 
       if (dbError) throw dbError;
 
+      // Se após a remoção não houver mais documentos, volta o status para aguardando
+      const { data: rest } = await supabase
+        .from('checklist_documentos')
+        .select('id')
+        .eq('declaracao_id', declaracao?.id)
+        .eq('status', 'recebido');
+
+      if (!rest || rest.length === 0) {
+        await supabase
+          .from('declaracoes')
+          .update({ status: 'aguardando_documentos' })
+          .eq('id', declaracao?.id);
+      }
+
       toast.success('Arquivo removido');
       queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
     } catch (err) {
       toast.error('Erro ao remover arquivo');
     }
