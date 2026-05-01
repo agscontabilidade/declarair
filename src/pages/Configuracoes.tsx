@@ -16,7 +16,7 @@ import AbaEquipe from '@/components/configuracoes/AbaEquipe';
 import { WhitelabelTab } from '@/components/configuracoes/WhitelabelTab';
 import { NotificacoesTab } from '@/components/configuracoes/NotificacoesTab';
 import { AutomacoesWhatsAppTab } from '@/components/configuracoes/AutomacoesWhatsAppTab';
-import { WhatsAppConfigTab } from '@/components/configuracoes/WhatsAppConfigTab';
+import { MensagensTab } from '@/components/configuracoes/MensagensTab';
 import { FeatureGate, PlanGate } from '@/components/billing/BillingGate';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissoes } from '@/hooks/usePermissoes';
