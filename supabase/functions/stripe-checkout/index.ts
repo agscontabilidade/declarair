@@ -78,7 +78,7 @@ const ADDON_PRICES: Record<string, { amount: number; name: string }> = {
 };
 
 // ── Ensure Stripe customer ──
-async function ensureStripeCustomer(escritorio: any, admin: any) {
+async function ensureStripeCustomer(escritorio: EscritorioBilling, admin: AdminClient) {
   if (escritorio.stripe_customer_id) {
     return escritorio.stripe_customer_id;
   }
@@ -98,7 +98,7 @@ async function ensureStripeCustomer(escritorio: any, admin: any) {
 // ── Create subscription ──
 async function createSubscription(
   escritorio: any,
-  admin: any,
+  admin: AdminClient,
   body: { plano: string; paymentMethod: string }
 ) {
   const planoConfig = PRICES[body.plano];
@@ -134,7 +134,7 @@ async function createSubscription(
     items: [{ price: price.id }],
     payment_behavior: "default_incomplete",
     payment_settings: {
-      payment_method_types: paymentMethodTypes as any,
+      payment_method_types: paymentMethodTypes as Stripe.SubscriptionCreateParams.PaymentSettings.PaymentMethodType[],
       save_default_payment_method: "on_subscription",
     },
     expand: ["latest_invoice.payment_intent"],
@@ -171,7 +171,7 @@ async function createSubscription(
 }
 
 // ── Cancel subscription ──
-async function cancelSubscription(escritorio: any, admin: any) {
+async function cancelSubscription(escritorio: EscritorioBilling, admin: AdminClient) {
   const { data: assinatura } = await admin
     .from("assinaturas")
     .select("*")
@@ -199,7 +199,7 @@ async function cancelSubscription(escritorio: any, admin: any) {
 }
 
 // ── Get subscription ──
-async function getSubscription(escritorio: any, admin: any) {
+async function getSubscription(escritorio: EscritorioBilling, admin: AdminClient) {
   const { data: assinatura } = await admin
     .from("assinaturas")
     .select("*")
@@ -210,7 +210,7 @@ async function getSubscription(escritorio: any, admin: any) {
 }
 
 // ── Get payments ──
-async function getPayments(escritorio: any, admin: any) {
+async function getPayments(escritorio: EscritorioBilling, admin: AdminClient) {
   const { data: pagamentos } = await admin
     .from("pagamentos_assinatura")
     .select("*")
@@ -224,7 +224,7 @@ async function getPayments(escritorio: any, admin: any) {
 // ── Activate addon ──
 async function activateAddon(
   escritorio: any,
-  admin: any,
+  admin: AdminClient,
   body: { addonSlug: string }
 ) {
   const addonConfig = ADDON_PRICES[body.addonSlug];
@@ -273,8 +273,8 @@ async function activateAddon(
       await saveAddonInDb(admin, escritorio.id, body.addonSlug, item.id);
 
       return { success: true, subscriptionItemId: item.id };
-    } catch (e: any) {
-      console.error("Failed to add to existing subscription, creating new one:", e.message);
+    } catch (e: unknown) {
+      console.error("Failed to add to existing subscription, creating new one:", e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -292,8 +292,8 @@ async function activateAddon(
     metadata: { escritorio_id: escritorio.id, addon: body.addonSlug },
   });
 
-  const invoice = subscription.latest_invoice as any;
-  const paymentIntent = invoice?.payment_intent as any;
+  const invoice = subscription.latest_invoice as Stripe.Invoice;
+  const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
 
   // Save addon as pending
   await saveAddonInDb(admin, escritorio.id, body.addonSlug, subscription.items.data[0].id);
@@ -307,7 +307,7 @@ async function activateAddon(
   };
 }
 
-async function saveAddonInDb(admin: any, escritorioId: string, addonSlug: string, subscriptionItemId: string) {
+async function saveAddonInDb(admin: AdminClient, escritorioId: string, addonSlug: string, subscriptionItemId: string) {
   const { data: addon } = await admin
     .from("addons")
     .select("id")
@@ -331,7 +331,7 @@ async function saveAddonInDb(admin: any, escritorioId: string, addonSlug: string
 // ── Deactivate addon ──
 async function deactivateAddon(
   escritorio: any,
-  admin: any,
+  admin: AdminClient,
   body: { addonSlug: string }
 ) {
   const { data: addon } = await admin
@@ -372,7 +372,7 @@ async function deactivateAddon(
 }
 
 // ── Create customer portal session ──
-async function createPortalSession(escritorio: any) {
+async function createPortalSession(escritorio: EscritorioBilling) {
   const customerId = escritorio.stripe_customer_id;
   if (!customerId) throw new Error("Customer não encontrado");
 
@@ -387,7 +387,7 @@ async function createPortalSession(escritorio: any) {
 // ── Buy extra declarations ──
 async function buyExtraDeclaracoes(
   escritorio: any,
-  admin: any,
+  admin: AdminClient,
   body: { quantidade: number }
 ) {
   const customerId = await ensureStripeCustomer(escritorio, admin);
