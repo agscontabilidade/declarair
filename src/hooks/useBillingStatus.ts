@@ -100,7 +100,7 @@ export function useBillingStatus(): BillingState {
         .eq('escritorio_id', profile.escritorioId!)
         .eq('status', 'ativo');
 
-      const activeAddonNames = (addons || []).map((a: any) => a.addons?.nome?.toLowerCase() || '');
+      const activeAddonNames = (addons || []).map((a: { addons?: { nome?: string } }) => a.addons?.nome?.toLowerCase() || '');
 
       return {
         subscriptionStatus: assinatura?.status || null,

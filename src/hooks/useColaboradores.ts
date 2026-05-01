@@ -85,7 +85,7 @@ export const useColaboradores = (escritorioId: string) => {
       navigator.clipboard.writeText(linkConvite).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ['convites-pendentes', escritorioId] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Erro ao enviar convite:', error);
       toast.error('Erro ao criar convite');
     },
