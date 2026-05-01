@@ -95,6 +95,17 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
+                        {onCobranca && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label="Nova cobrança"
+                            title="Criar cobrança"
+                            onClick={(e) => { e.stopPropagation(); onCobranca(c); }}
+                          >
+                            <DollarSign className="h-4 w-4 text-emerald-600" />
+                          </Button>
+                        )}
                         {tel && (
                           <Button size="icon" variant="ghost" asChild aria-label="Abrir WhatsApp">
                             <a
