@@ -16,12 +16,12 @@ import { useQuery } from '@tanstack/react-query';
 type TipoRelatorio = 'declaracoes' | 'clientes' | 'cobrancas' | 'resumo';
 
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+const years = [currentYear];
 
 export default function Relatorios() {
   const { profile } = useAuth();
   const [tipo, setTipo] = useState<TipoRelatorio>('resumo');
-  const [ano, setAno] = useState(currentYear - 1);
+  const [ano, setAno] = useState(currentYear);
   const [exporting, setExporting] = useState(false);
 
   const { data: resumo, isLoading } = useQuery({

@@ -12,7 +12,7 @@ interface Props {
   isPending: boolean;
 }
 
-const years = [2023, 2024, 2025, 2026];
+const years = [2026];
 
 export function NovaDeclaracaoModal({ open, onOpenChange, contadores, onSubmit, isPending }: Props) {
   const [anoBase, setAnoBase] = useState(String(new Date().getFullYear()));
