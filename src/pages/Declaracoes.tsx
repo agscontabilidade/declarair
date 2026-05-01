@@ -8,11 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Eye, FileText, Search } from 'lucide-react';
+import { FileText, Search, FolderOpen, StickyNote } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatCPF, formatDate, STATUS_LABELS } from '@/lib/formatters';
+import { formatCPF, formatDate, formatCurrency, STATUS_LABELS } from '@/lib/formatters';
+import { DocumentosDeclaracaoModal } from '@/components/declaracoes/DocumentosDeclaracaoModal';
+import { ObservacoesModal } from '@/components/declaracoes/ObservacoesModal';
+import { AnexarDeclaracaoButton } from '@/components/declaracoes/AnexarDeclaracaoButton';
+import { ProcessamentoSwitch } from '@/components/declaracoes/ProcessamentoSwitch';
 
 const STATUS_COLORS: Record<string, string> = {
   aguardando_documentos: 'bg-amber-100 text-amber-800',
@@ -21,16 +25,24 @@ const STATUS_COLORS: Record<string, string> = {
   transmitida: 'bg-gray-100 text-gray-700',
 };
 
+const RESULTADO_META: Record<string, { label: string; cls: string }> = {
+  restituicao: { label: 'Restituição', cls: 'bg-emerald-100 text-emerald-800' },
+  pagamento: { label: 'A pagar', cls: 'bg-amber-100 text-amber-800' },
+  nenhum: { label: 'Sem imposto', cls: 'bg-gray-100 text-gray-700' },
+};
+
 export default function Declaracoes() {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const escritorioId = profile.escritorioId;
-  const currentYear = new Date().getFullYear();
 
-  const [anoBase, setAnoBase] = useState(String(currentYear));
+  const [anoBase, setAnoBase] = useState('2026');
   const [statusFilter, setStatusFilter] = useState('todos');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  const [docsTarget, setDocsTarget] = useState<{ id: string; nome: string } | null>(null);
+  const [obsTarget, setObsTarget] = useState<{ id: string; nome: string } | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -43,7 +55,13 @@ export default function Declaracoes() {
       if (!escritorioId) return [];
       const { data, error } = await supabase
         .from('declaracoes')
-        .select('id, status, ano_base, ultima_atualizacao_status, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome)')
+        .select(`
+          id, status, ano_base, ultima_atualizacao_status,
+          tipo_resultado, valor_resultado,
+          arquivo_declaracao_url, arquivo_declaracao_nome, em_processamento,
+          clientes(nome, cpf),
+          declaracao_notas_internas(conteudo)
+        `)
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', Number(anoBase))
         .order('ultima_atualizacao_status', { ascending: false });
@@ -52,7 +70,7 @@ export default function Declaracoes() {
         ...d,
         clienteNome: d.clientes?.nome || '—',
         clienteCpf: d.clientes?.cpf || '',
-        contadorNome: d.usuarios?.nome || '—',
+        observacoes: d.declaracao_notas_internas?.[0]?.conteudo || '',
       }));
     },
     enabled: !!escritorioId,
@@ -83,9 +101,7 @@ export default function Declaracoes() {
           <Select value={anoBase} onValueChange={setAnoBase}>
             <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {[2023, 2024, 2025].map(y => (
-                <SelectItem key={y} value={String(y)}>Ano {y}</SelectItem>
-              ))}
+              <SelectItem value="2026">Ano 2026</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -105,7 +121,7 @@ export default function Declaracoes() {
         </div>
 
         <Card className="shadow-sm">
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             {isLoading ? (
               <div className="space-y-3 p-4">
                 {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
@@ -120,39 +136,109 @@ export default function Declaracoes() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cliente</TableHead>
                     <TableHead>CPF</TableHead>
-                    <TableHead className="hidden md:table-cell">Contador</TableHead>
-                    <TableHead>Ano Base</TableHead>
+                    <TableHead>Nome</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Última Atualização</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>Ver documentos</TableHead>
+                    <TableHead>Observações</TableHead>
+                    <TableHead>Última atualização</TableHead>
+                    <TableHead>Resultado</TableHead>
+                    <TableHead>Anexar declaração</TableHead>
+                    <TableHead>Processamento</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((d: any) => (
-                    <TableRow key={d.id}>
-                      <TableCell className="font-medium">{d.clienteNome}</TableCell>
-                      <TableCell className="tabular-nums">{maskCpf(d.clienteCpf)}</TableCell>
-                      <TableCell className="hidden md:table-cell">{d.contadorNome}</TableCell>
-                      <TableCell>{d.ano_base}</TableCell>
-                      <TableCell>
-                        <Badge className={STATUS_COLORS[d.status] || ''}>{STATUS_LABELS[d.status] || d.status}</Badge>
-                      </TableCell>
-                      <TableCell>{formatDate(d.ultima_atualizacao_status)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button size="icon" variant="ghost" onClick={() => navigate(`/declaracoes/${d.id}`)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filtered.map((d: any) => {
+                    const resultado = d.tipo_resultado ? RESULTADO_META[d.tipo_resultado] : null;
+                    const temObs = !!d.observacoes?.trim();
+                    return (
+                      <TableRow
+                        key={d.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/declaracoes/${d.id}`)}
+                      >
+                        <TableCell className="tabular-nums">{maskCpf(d.clienteCpf)}</TableCell>
+                        <TableCell className="font-medium">{d.clienteNome}</TableCell>
+                        <TableCell>
+                          <Badge className={STATUS_COLORS[d.status] || ''}>{STATUS_LABELS[d.status] || d.status}</Badge>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setDocsTarget({ id: d.id, nome: d.clienteNome })}
+                          >
+                            <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
+                            Documentos
+                          </Button>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="relative"
+                            onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
+                            title={temObs ? 'Ver observações' : 'Adicionar observação'}
+                          >
+                            <StickyNote className="h-4 w-4" />
+                            {temObs && (
+                              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
+                            )}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-sm">
+                          {formatDate(d.ultima_atualizacao_status)}
+                        </TableCell>
+                        <TableCell>
+                          {resultado ? (
+                            <div className="flex flex-col gap-1">
+                              <Badge className={resultado.cls}>{resultado.label}</Badge>
+                              {d.valor_resultado != null && d.tipo_resultado !== 'nenhum' && (
+                                <span className="text-xs text-muted-foreground tabular-nums">
+                                  {formatCurrency(Number(d.valor_resultado))}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          {escritorioId && (
+                            <AnexarDeclaracaoButton
+                              declaracaoId={d.id}
+                              escritorioId={escritorioId}
+                              arquivoUrl={d.arquivo_declaracao_url}
+                              arquivoNome={d.arquivo_declaracao_nome}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <ProcessamentoSwitch declaracaoId={d.id} emProcessamento={!!d.em_processamento} />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
           </CardContent>
         </Card>
       </div>
+
+      <DocumentosDeclaracaoModal
+        declaracaoId={docsTarget?.id ?? null}
+        clienteNome={docsTarget?.nome}
+        open={!!docsTarget}
+        onOpenChange={(o) => !o && setDocsTarget(null)}
+      />
+      <ObservacoesModal
+        declaracaoId={obsTarget?.id ?? null}
+        escritorioId={escritorioId}
+        clienteNome={obsTarget?.nome}
+        open={!!obsTarget}
+        onOpenChange={(o) => !o && setObsTarget(null)}
+      />
     </DashboardLayout>
   );
 }
