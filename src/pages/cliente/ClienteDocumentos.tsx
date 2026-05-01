@@ -102,16 +102,16 @@ export default function ClienteDocumentos() {
       if (successCount > 0) {
         toast.success(`${successCount} arquivo(s) carregado(s) com sucesso!`);
         
-        // Se já tinha sido enviado, volta para pendente para o cliente poder enviar novamente as atualizações
-        if ((declaracao as any)?.status_documentos === 'enviado') {
-          await supabase
-            .from('declaracoes')
-            .update({ 
-              status_documentos: 'pendente',
-              ultima_atualizacao_status: new Date().toISOString()
-            })
-            .eq('id', declaracao.id);
-        }
+        // Atualiza automaticamente o status da declaração e dos documentos
+        await supabase
+          .from('declaracoes')
+          .update({ 
+            status_documentos: 'enviado',
+            status: 'documentacao_recebida',
+            ultima_atualizacao_status: new Date().toISOString()
+          })
+          .eq('id', declaracao.id);
+
 
         queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
         queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
