@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Settings, Users, CreditCard, Puzzle, Palette, Bell, MessageSquare, Phone } from 'lucide-react';
+import { Settings, Users, CreditCard, Puzzle, Palette, Bell, MessageSquare, Phone, Key, ExternalLink } from 'lucide-react';
 import { buscarCNPJ } from '@/lib/apiBrasil';
 import { IntegracoesTab } from '@/components/configuracoes/IntegracoesTab';
 import AbaEquipe from '@/components/configuracoes/AbaEquipe';
