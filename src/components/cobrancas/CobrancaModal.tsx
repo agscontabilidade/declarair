@@ -19,9 +19,13 @@ interface CobrancaModalProps {
   onSave: (data: Record<string, unknown>) => void;
   loading?: boolean;
   editData?: Record<string, unknown> | null;
+  /** Pré-seleciona e bloqueia o cliente (ex.: ao abrir a partir da lista de clientes). */
+  clienteIdLocked?: string | null;
+  /** Nome opcional para exibir quando clienteIdLocked está definido. */
+  clienteNomeLocked?: string | null;
 }
 
-export function CobrancaModal({ open, onOpenChange, onSave, loading, editData }: CobrancaModalProps) {
+export function CobrancaModal({ open, onOpenChange, onSave, loading, editData, clienteIdLocked, clienteNomeLocked }: CobrancaModalProps) {
   const { profile } = useAuth();
   const [clienteId, setClienteId] = useState('');
   const [declaracaoId, setDeclaracaoId] = useState('');
@@ -37,9 +41,13 @@ export function CobrancaModal({ open, onOpenChange, onSave, loading, editData }:
       setDataVencimento(new Date(String(editData.data_vencimento) + 'T12:00:00'));
       setDeclaracaoId(String(editData.declaracao_id ?? ''));
     } else {
-      setClienteId(''); setDescricao(''); setValorStr(''); setDataVencimento(undefined); setDeclaracaoId('');
+      setClienteId(clienteIdLocked ?? '');
+      setDescricao('');
+      setValorStr('');
+      setDataVencimento(undefined);
+      setDeclaracaoId('');
     }
-  }, [editData, open]);
+  }, [editData, open, clienteIdLocked]);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes-select', profile.escritorioId],
