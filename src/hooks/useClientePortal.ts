@@ -53,12 +53,24 @@ export function useClientePortal() {
     enabled: !!declaracao?.id,
   });
 
-  const statusStep = declaracao ? {
-    aguardando_documentos: 1,
-    documentacao_recebida: 2,
-    declaracao_pronta: 3,
-    transmitida: 4,
-  }[declaracao.status] || 1 : 0;
+  const statusStep = (() => {
+    if (!declaracao) return 0;
+    
+    // Etapa 5: Transmitida
+    if (declaracao.status === 'transmitida') return 5;
+    
+    // Etapa 4: Declaração Pronta
+    if (declaracao.status === 'declaracao_pronta') return 4;
+    
+    // Etapa 3: Documentação Recebida
+    if (declaracao.status === 'documentacao_recebida') return 3;
+    
+    // Etapa 2: Enviar Documentos (se o formulário já foi concluído)
+    if (formulario?.status_preenchimento === 'concluido') return 2;
+    
+    // Etapa 1: Enviar Dados Cadastrais (status inicial)
+    return 1;
+  })();
 
   const pendentes = checklist.filter((c: any) => c.status === 'pendente');
 
