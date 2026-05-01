@@ -27,11 +27,12 @@ interface Props {
   onView: (cliente: ClienteRow) => void;
   onEdit: (cliente: ClienteRow) => void;
   onDelete: (cliente: ClienteRow) => void;
+  onCobranca?: (cliente: ClienteRow) => void;
   canEdit?: boolean;
   canDelete?: boolean;
 }
 
-export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, canEdit = true, canDelete = true }: Props) {
+export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, canEdit = true, canDelete = true }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-3 p-3">
