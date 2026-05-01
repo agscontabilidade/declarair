@@ -125,6 +125,31 @@ Para cada risco: descreva o problema, gravidade (baixa/média/alta), e ação co
 Considere divergências comuns como: rendimentos vs DIRF, bens incompatíveis com renda, etc.`;
   }
 
+  if (tipo === "analise_caixa") {
+    return base + `\n\nVocê está analisando o PDF da declaração de IRPF ANTES da transmissão à Receita Federal.
+Seu foco é identificar **estouro de caixa** e **inconsistências patrimoniais**. Estruture a resposta em seções:
+
+1. **Evolução Patrimonial**
+   - Patrimônio ano anterior vs ano atual (variação)
+   - Aquisições significativas no período
+
+2. **Análise de Caixa (Origens x Aplicações)**
+   - Origens: rendimentos tributáveis + isentos + tributação exclusiva + alienações + dívidas contraídas
+   - Aplicações: variação patrimonial positiva + despesas dedutíveis + imposto pago + dívidas quitadas
+   - **Saldo:** se Aplicações > Origens => ESTOURO DE CAIXA (sinalize com 🚨 e estime o valor)
+
+3. **Riscos de Malha Fina**
+   - Variação patrimonial incompatível com a renda declarada
+   - Bens sem origem comprovada
+   - Pontos críticos para revisão antes de transmitir
+
+4. **Recomendações ao Contador**
+   - Ajustes sugeridos (rendimentos isentos, doações recebidas, empréstimos a comprovar)
+   - Documentos adicionais que devem ser solicitados ao cliente
+
+Seja direto, use valores em R$ e cite as fichas/linhas do PDF quando relevante.`;
+  }
+
   return base + `\n\nFaça uma análise fiscal completa do contribuinte. Inclua:
 1. Resumo da situação fiscal
 2. Recomendação: declaração simplificada ou completa (e por quê)
@@ -197,4 +222,49 @@ function buildContext(declaracao: { ano_base: number; status: string; tipo_resul
   }
 
   return ctx;
+}
+
+// Constrói mensagem multimodal anexando o PDF da declaração para análise de caixa.
+// O Gemini aceita PDFs diretamente via input do tipo file/document através de URL pública assinada.
+async function buildAnaliseCaixaMessage(
+  supabase: ReturnType<typeof createClient>,
+  arquivoPath: string,
+  context: string,
+): Promise<unknown> {
+  // Gera URL assinada (válida por 10 min) para o Gemini conseguir baixar o PDF
+  const { data: signed, error: signErr } = await supabase.storage
+    .from("documentos-clientes")
+    .createSignedUrl(arquivoPath, 600);
+
+  if (signErr || !signed?.signedUrl) {
+    console.error("Erro ao gerar signed URL para análise de caixa:", signErr);
+    return `${context}\n\n⚠️ Não foi possível acessar o PDF da declaração. Faça a análise apenas com base no contexto acima.`;
+  }
+
+  // Baixa o PDF e converte para base64 (formato multimodal aceito pelo gateway)
+  try {
+    const pdfRes = await fetch(signed.signedUrl);
+    if (!pdfRes.ok) throw new Error(`HTTP ${pdfRes.status}`);
+    const buffer = await pdfRes.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    const base64 = btoa(binary);
+
+    return [
+      {
+        type: "text",
+        text:
+          `${context}\n\n## Tarefa\nAnalise o PDF anexo da declaração de IRPF deste contribuinte. ` +
+          `Identifique estouro de caixa, evolução patrimonial e riscos antes da transmissão à RFB.`,
+      },
+      {
+        type: "image_url",
+        image_url: { url: `data:application/pdf;base64,${base64}` },
+      },
+    ];
+  } catch (e) {
+    console.error("Erro ao baixar/codificar PDF para análise de caixa:", e);
+    return `${context}\n\n⚠️ Falha ao processar o PDF. Faça a análise apenas com base no contexto acima.`;
+  }
 }
