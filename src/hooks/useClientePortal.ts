@@ -56,21 +56,30 @@ export function useClientePortal() {
   const statusStep = (() => {
     if (!declaracao) return 0;
     
+    const hasPendencia = checklist.some((doc: any) => doc.status === 'pendente' && doc.obrigatorio);
+    
     // Etapa 5: Transmitida
     if (declaracao.status === 'transmitida') return 5;
     
     // Etapa 4: Declaração Pronta
     if (declaracao.status === 'declaracao_pronta') return 4;
     
+    // Se houver pendência marcada pelo contador, retorna para a etapa de Enviar Documentos (Etapa 2)
+    // mesmo que o status da declaração esteja como documentacao_recebida
+    if (hasPendencia && declaracao.status === 'documentacao_recebida') {
+      return 2;
+    }
+    
     // Etapa 3: Documentação Recebida
     if (declaracao.status === 'documentacao_recebida') return 3;
     
-    // Etapa 2: Enviar Documentos (se o formulário já foi concluído)
-    if (formulario?.status_preenchimento === 'concluido') return 2;
+    // Etapa 2: Enviar Documentos (se o formulário já foi concluído ou se já existem documentos anexados)
+    if (formulario?.status_preenchimento === 'concluido' || checklist.length > 0) return 2;
     
     // Etapa 1: Enviar Dados Cadastrais (status inicial)
     return 1;
   })();
+
 
   const pendentes = checklist.filter((c: any) => c.status === 'pendente');
 
