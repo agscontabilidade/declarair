@@ -768,6 +768,7 @@ export type Database = {
           observacoes_internas: string | null
           status: string
           status_documentos: string | null
+          status_processamento_rfb: string
           tipo_resultado: string | null
           ultima_atualizacao_status: string
           valor_resultado: number | null
@@ -790,6 +791,7 @@ export type Database = {
           observacoes_internas?: string | null
           status?: string
           status_documentos?: string | null
+          status_processamento_rfb?: string
           tipo_resultado?: string | null
           ultima_atualizacao_status?: string
           valor_resultado?: number | null
@@ -812,6 +814,7 @@ export type Database = {
           observacoes_internas?: string | null
           status?: string
           status_documentos?: string | null
+          status_processamento_rfb?: string
           tipo_resultado?: string | null
           ultima_atualizacao_status?: string
           valor_resultado?: number | null
@@ -2452,6 +2455,7 @@ export type Database = {
           observacoes_internas: string | null
           status: string
           status_documentos: string | null
+          status_processamento_rfb: string
           tipo_resultado: string | null
           ultima_atualizacao_status: string
           valor_resultado: number | null
