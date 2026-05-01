@@ -1,65 +1,37 @@
-## Visualizador de Arquivos no Drive
+## Visualização inline 100% confiável (sem download forçado)
 
-Hoje no módulo **Drive de Documentos**, o contador só consegue **baixar** os arquivos enviados pelos clientes. A proposta é adicionar um **visualizador integrado** (modal em tela cheia) que abre o arquivo direto no sistema, sem download, suportando os tipos mais comuns enviados na rotina de IRPF.
+### Por que alguns PDFs abrem e outros baixam hoje
 
-### O que vai mudar para o usuário
+Quando o cliente envia um arquivo, o storage guarda junto o cabeçalho `Content-Type`. Em alguns uploads esse header vem como `application/octet-stream` (arquivo "genérico"), ou com `Content-Disposition: attachment`. Resultado: ao colocar a URL assinada num `<iframe>`, o navegador respeita o header do servidor e **força o download** em vez de renderizar.
 
-- Ao clicar no nome do arquivo (ou em um novo botão de "olho" 👁️), abre um modal grande com o documento renderizado.
-- Botões no topo do visualizador: **Baixar**, **Abrir em nova aba**, **Fechar**, e navegação **Anterior / Próximo** entre os arquivos da mesma pasta do cliente.
-- Indicador de tipo de arquivo e nome no cabeçalho.
-- Botão de **download** atual continua funcionando (não vamos remover).
+PDFs enviados com o tipo correto funcionam; os enviados sem MIME explícito disparam o download. Mesmo sintoma para imagens.
 
-### Tipos de arquivo suportados
+### Solução: blob inline com MIME forçado
 
-| Tipo | Como será exibido |
-|---|---|
-| **PDF** | Renderizado nativamente em `<iframe>` com URL assinada (zoom, scroll, busca do navegador) |
-| **Imagens** (JPG, JPEG, PNG, WEBP, GIF, BMP) | Tag `<img>` com zoom (clique para 100%/ajustar) |
-| **Texto / CSV / JSON / XML** | `<pre>` com fonte mono e scroll |
-| **Word / Excel / PowerPoint** (DOCX, XLSX, PPTX, DOC, XLS, PPT) | Renderizado via **Microsoft Office Online Viewer** (iframe público da Microsoft que aceita URL assinada) — não exige login, funciona para escritórios |
-| **Outros** (ZIP, RAR, etc.) | Mensagem amigável: "Pré-visualização não disponível para este formato" + botão Baixar |
+Em vez de jogar a URL assinada direto no iframe/img, vamos:
 
-### Como funcionará tecnicamente
+1. Fazer **fetch** da URL assinada → obter os bytes do arquivo.
+2. Criar um **`Blob`** com o **MIME correto** deduzido pela extensão do nome (ex.: `.pdf` → `application/pdf`).
+3. Gerar um **`URL.createObjectURL(blob)`** (URL `blob:` local, que o navegador sempre abre inline).
+4. Passar esse blob URL para o `<iframe>` (PDF) ou `<img>` (imagem) ou `<pre>` (texto).
 
-```text
-[Drive.tsx]
-   │ clica em arquivo
-   ▼
-[FileViewerModal]
-   │ detecta extensão → escolhe renderer
-   ▼
- ┌─────────────┬─────────────┬──────────────┬──────────────┐
- │ PdfViewer   │ ImageViewer │ TextViewer   │ OfficeViewer │
- │ <iframe>    │ <img>       │ fetch+<pre>  │ MS iframe    │
- └─────────────┴─────────────┴──────────────┴──────────────┘
-```
+Como o blob URL é controlado pelo nosso código no navegador, o `Content-Type` é exatamente o que definimos — o browser **nunca** vai forçar download. Comportamento idêntico para todos os arquivos, sempre.
 
-- Continua usando **`createSignedUrl`** do bucket privado `documentos-clientes` (TTL 1h) — segurança preservada, RLS intacto.
-- Para Office, a URL assinada é passada como parâmetro para `https://view.officeapps.live.com/op/embed.aspx?src=<URL>` — é um serviço gratuito da Microsoft, não envia dados pessoais para terceiros além da própria Microsoft (mesmo modelo já usado pelo Outlook/SharePoint).
-- Texto puro é baixado via `fetch` da URL assinada e mostrado dentro do modal.
+Office (DOCX/XLSX/PPTX) continua usando o Microsoft Office Online Viewer com a URL assinada original (ele exige uma URL pública e renderiza no próprio iframe da Microsoft).
 
-### Arquivos a criar / alterar
+### Bônus: indicador de carregamento e gestão de memória
 
-1. **Criar** `src/components/drive/FileViewerModal.tsx` — componente principal com Dialog (shadcn), navegação entre arquivos, header com ações.
-2. **Criar** `src/components/drive/viewers/` com sub-componentes:
-   - `PdfViewer.tsx`
-   - `ImageViewer.tsx`
-   - `TextViewer.tsx`
-   - `OfficeViewer.tsx`
-   - `UnsupportedViewer.tsx`
-3. **Criar** `src/lib/file-types.ts` — função utilitária `getFileType(nomeArquivo)` que retorna `'pdf' | 'image' | 'text' | 'office' | 'unsupported'`.
-4. **Alterar** `src/pages/Drive.tsx`:
-   - Adicionar estado `viewerFile` e lista achatada de arquivos da pasta atual (para navegação anterior/próximo).
-   - Adicionar botão 👁️ ao lado do botão de download em cada arquivo.
-   - Tornar o nome do arquivo clicável (abre o viewer).
-   - Renderizar `<FileViewerModal />` no fim da página.
+- Skeleton enquanto baixa o blob (arquivos grandes).
+- `URL.revokeObjectURL()` no cleanup para liberar memória ao trocar de arquivo ou fechar o modal.
+- Toast de erro caso o fetch falhe.
 
-### Pontos de atenção
+### Arquivos alterados
 
-- **Sem download forçado**: o `<iframe>` para PDF usa `#toolbar=1&navpanes=0` para evitar baixar automaticamente.
-- **Imagens grandes**: aplicar `max-h-[85vh] object-contain` para caber no modal.
-- **Atalhos de teclado**: `←` / `→` para navegar, `Esc` para fechar (já vem do Dialog).
-- **Mobile**: modal full-screen em telas pequenas (`sm:max-w-5xl` no desktop, `w-full h-full` no mobile).
-- **Sem dependências novas**: usa só shadcn Dialog + iframe nativo + Office Online Viewer público. Não precisa instalar `react-pdf`, `pdfjs`, `mammoth`, etc.
+1. **`src/lib/file-types.ts`** — adicionar mapa de extensão → MIME e função `getMimeFromName(nome)`.
+2. **`src/components/drive/FileViewerModal.tsx`** — substituir lógica que apenas pega `signedUrl` pela rotina fetch → blob → object URL (exceto para Office, que continua usando signed URL). Limpar object URL no cleanup.
 
-Posso prosseguir com a implementação?
+Sem mudanças em PdfViewer, ImageViewer, TextViewer (já recebem a URL como prop).
+
+### Resultado esperado
+
+Todos os PDFs abrem dentro do sistema sem download. Imagens idem. Word/Excel/PowerPoint dentro do viewer da Microsoft. Texto plano dentro do modal. Comportamento consistente independente de como o arquivo foi enviado.
