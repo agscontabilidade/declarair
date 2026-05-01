@@ -55,9 +55,16 @@ serve(async (req) => {
       .eq("declaracao_id", declaracao_id)
       .single();
 
+    const isAnaliseCaixa = tipo === "analise_caixa";
+
     // Build context for AI
     const context = buildContext(declaracao, formulario);
     const systemPrompt = getSystemPrompt(tipo || "analise");
+
+    // Para análise de caixa, anexa o PDF da declaração como imagem
+    const userMessage: unknown = isAnaliseCaixa && declaracao.arquivo_analise_caixa_url
+      ? await buildAnaliseCaixaMessage(supabase, declaracao.arquivo_analise_caixa_url, context)
+      : context;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -66,10 +73,10 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: context },
+          { role: "user", content: userMessage },
         ],
         stream: true,
       }),

@@ -4,12 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
-import { TrendingUp, TrendingDown, Copy, Save } from 'lucide-react';
+import { TrendingUp, TrendingDown, Copy, Save, Activity } from 'lucide-react';
 import { toast } from 'sonner';
+import { ProcessamentoSwitch, type StatusProcessamentoRfb } from '@/components/declaracoes/ProcessamentoSwitch';
 
 interface Props {
-  declaracao: { tipo_resultado?: string | null; valor_resultado?: number | string | null; numero_recibo?: string | null; status?: string | null } | null | undefined;
+  declaracao: {
+    id?: string;
+    tipo_resultado?: string | null;
+    valor_resultado?: number | string | null;
+    numero_recibo?: string | null;
+    status?: string | null;
+    status_processamento_rfb?: string | null;
+    em_processamento?: boolean | null;
+  } | null | undefined;
   onSave: (data: { tipo_resultado: string; valor_resultado: number | null; numero_recibo: string }) => void;
   saving: boolean;
 }
@@ -113,6 +123,27 @@ export function SecaoResultado({ declaracao, onSave, saving }: Props) {
               {saving ? 'Salvando...' : 'Salvar Resultado'}
             </Button>
           </div>
+        )}
+
+        {declaracao?.id && (
+          <>
+            <Separator className="my-2" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm">Processamento na Receita Federal</Label>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <ProcessamentoSwitch
+                  declaracaoId={declaracao.id}
+                  status={(declaracao.status_processamento_rfb as StatusProcessamentoRfb) || 'aguardando'}
+                />
+                <span className="text-xs text-muted-foreground">
+                  Atualize quando a Receita devolver o status — o cliente verá em tempo real.
+                </span>
+              </div>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

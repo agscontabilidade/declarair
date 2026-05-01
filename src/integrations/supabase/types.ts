@@ -753,6 +753,8 @@ export type Database = {
       declaracoes: {
         Row: {
           ano_base: number
+          arquivo_analise_caixa_uploaded_at: string | null
+          arquivo_analise_caixa_url: string | null
           arquivo_declaracao_nome: string | null
           arquivo_declaracao_uploaded_at: string | null
           arquivo_declaracao_url: string | null
@@ -763,6 +765,7 @@ export type Database = {
           contador_id: string | null
           created_at: string
           data_transmissao: string | null
+          declaracao_enviada_em: string | null
           declaracao_extracao: Json | null
           declaracao_validada_em: string | null
           em_processamento: boolean
@@ -783,6 +786,8 @@ export type Database = {
         }
         Insert: {
           ano_base: number
+          arquivo_analise_caixa_uploaded_at?: string | null
+          arquivo_analise_caixa_url?: string | null
           arquivo_declaracao_nome?: string | null
           arquivo_declaracao_uploaded_at?: string | null
           arquivo_declaracao_url?: string | null
@@ -793,6 +798,7 @@ export type Database = {
           contador_id?: string | null
           created_at?: string
           data_transmissao?: string | null
+          declaracao_enviada_em?: string | null
           declaracao_extracao?: Json | null
           declaracao_validada_em?: string | null
           em_processamento?: boolean
@@ -813,6 +819,8 @@ export type Database = {
         }
         Update: {
           ano_base?: number
+          arquivo_analise_caixa_uploaded_at?: string | null
+          arquivo_analise_caixa_url?: string | null
           arquivo_declaracao_nome?: string | null
           arquivo_declaracao_uploaded_at?: string | null
           arquivo_declaracao_url?: string | null
@@ -823,6 +831,7 @@ export type Database = {
           contador_id?: string | null
           created_at?: string
           data_transmissao?: string | null
+          declaracao_enviada_em?: string | null
           declaracao_extracao?: Json | null
           declaracao_validada_em?: string | null
           em_processamento?: boolean
@@ -2461,6 +2470,8 @@ export type Database = {
         Args: never
         Returns: {
           ano_base: number
+          arquivo_analise_caixa_uploaded_at: string | null
+          arquivo_analise_caixa_url: string | null
           arquivo_declaracao_nome: string | null
           arquivo_declaracao_uploaded_at: string | null
           arquivo_declaracao_url: string | null
@@ -2471,6 +2482,7 @@ export type Database = {
           contador_id: string | null
           created_at: string
           data_transmissao: string | null
+          declaracao_enviada_em: string | null
           declaracao_extracao: Json | null
           declaracao_validada_em: string | null
           em_processamento: boolean

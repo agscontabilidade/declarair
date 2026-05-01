@@ -1,72 +1,77 @@
-## Objetivo
+## Contexto
 
-1. Melhorar responsividade da tabela em `/declaracoes` (colunas Status, Ver documentos, Anexar declaração e Processamento se quebrando em telas menores).
-2. Garantir que **todo arquivo enviado** — pelo cliente OU pelo contador (declaração + recibo) — apareça:
-   - No **Drive** (`/drive`).
-   - No modal **"Ver documentos"** da coluna correspondente em `/declaracoes`.
+A página `/declaracoes/:id` precisa ser reorganizada para refletir o fluxo correto do contador, e há inconsistências entre o nome exibido no Kanban/cabeçalho e o cliente real da declaração.
 
-## Diagnóstico atual
+## Investigação do nome incorreto (Adriana × Luana)
 
-- O modal `DocumentosDeclaracaoModal` e a página `Drive` leem APENAS de `checklist_documentos` filtrando por `arquivo_url not null`.
-- Quando o contador anexa via `AnexarDeclaracaoButton`, o PDF é salvo no bucket `documentos-clientes` em `{escritorioId}/declaracoes/{declaracaoId}/{tipo}-...pdf` e o caminho é gravado nas colunas `arquivo_declaracao_url` / `arquivo_recibo_url` da tabela `declaracoes` — **nunca entra em `checklist_documentos`**, por isso some do Drive e do modal.
-- A tabela em `/declaracoes` usa `overflow-x-auto` mas sem larguras mínimas otimizadas e sem versão em cards para telas estreitas, fazendo as colunas estourarem (conforme print).
+Consulta direta no banco: a única declaração transmitida de 2026 (CPF `292.***.***-40`) pertence ao cliente **Luana de Melo Oliveira**. Não existe nenhum cliente "Adriana Persico Carneiro dos Santos" cadastrado em nenhum escritório. O código (`KanbanCard`, `DeclaracaoHeader`, `useDashboardData`) busca o nome diretamente via `clientes(nome, cpf)` pelo FK — não há override em lugar nenhum.
 
-## Plano
+Hipóteses possíveis:
+- Cache antigo do React Query / browser
+- Dado alterado/renomeado depois da captura
+- Captura veio de um ambiente diferente (preview vs produção)
 
-### 1. Unificar documentos do contador no checklist
-Estratégia: continuar com upload no bucket `documentos-clientes` no mesmo path, **mas** registrar/atualizar uma linha em `checklist_documentos` para cada arquivo do contador.
+**Ação:** Após o ajuste das abas, vamos invalidar caches relevantes na invalidação de mutações e adicionar `staleTime` curto na query do detalhe. Se o problema persistir após reload duro, vamos pedir ao usuário o `id` da declaração para inspeção pontual.
 
-- Editar a Edge Function `processar-pdf-declaracao` (após validar com sucesso) para fazer um `upsert` em `checklist_documentos` com:
-  - `declaracao_id` = atual
-  - `categoria` = `'contador'`
-  - `nome_documento` = `'Declaração IRPF (PDF)'` ou `'Recibo da Receita (PDF)'`
-  - `arquivo_url` = mesmo path do storage
-  - `arquivo_nome` = nome original
-  - `status` = `'recebido'`
-  - `data_recebimento` = `now()`
-  - `obrigatorio` = `false`
-  - chave de unicidade lógica: combinação (`declaracao_id`, `categoria`, `nome_documento`) — ao substituir um arquivo, a mesma linha é atualizada.
-- Quando o contador **substitui** o arquivo, o upsert sobrescreve `arquivo_url`/`arquivo_nome`/`data_recebimento`.
+## Mudanças de UI/UX em `/declaracoes/:id`
 
-Isto faz com que o Drive e o modal exibam automaticamente esses arquivos sem outras mudanças de leitura — o Drive já agrupa por `categoria`, então surgirá uma pasta **"Contador"** dentro do cliente.
+### 1. Aba "Documentos" — unificar com o Drive
+Hoje usa o `<AbaDocumentos>` (checklist grande). Vamos substituir pela mesma listagem do `DocumentosDeclaracaoModal` (que já agrupa "Enviados pelo cliente" / "Anexados pelo contador" e usa o `FileViewerModal`), mantendo o checklist como seção secundária colapsável (para o contador ainda saber o que falta). Assim a aba mostra os mesmos arquivos do Drive (declaração, recibo, comprovantes do cliente) e abre tudo dentro do sistema.
 
-### 2. Garantir cobertura para uploads antigos
-Migration única (idempotente) para popular `checklist_documentos` a partir de `declaracoes` que já têm `arquivo_declaracao_url` ou `arquivo_recibo_url` mas ainda não têm a linha equivalente em `checklist_documentos`. Roda uma vez, retroativo.
+### 2. Renomear "Formulário" → "Informações Cadastrais"
+- Título da aba e do card.
+- Conteúdo: ler de `formulario_ir` + `clientes` (mesmos dados que o cliente preenche em `/cliente/formulario`).
+- Sincronização: já é a mesma fonte (`formulario_ir`), basta exibir todos os campos pessoais (nome, CPF, data nascimento, estado civil, endereço, contato, dependentes, chave PIX, perfil fiscal).
+- Reorganizar o `SecaoFormularioIR` para focar nos dados cadastrais (esconder seções de rendimentos/bens, que ficam no formulário detalhado da declaração — opcional manter em accordion separado "Dados da declaração").
 
-### 3. Modal "Ver documentos" — exibir tudo
-Sem alteração de query: como o passo 1 popula `checklist_documentos`, o modal já mostra automaticamente. Adicionaremos apenas:
-- Um agrupamento visual leve por categoria (`Cliente` vs `Contador`) com cabeçalho de seção.
-- Atualizar o título para "Documentos da declaração" e descrição para "Arquivos enviados pelo cliente e pelo contador".
+### 3. Aba "Resultado" — incluir status de processamento RFB
+Hoje mostra tipo_resultado, valor, número do recibo. Adicionar:
+- Bloco "Processamento na Receita" usando o componente `ProcessamentoSwitch` (já existe em `src/components/declaracoes/ProcessamentoSwitch.tsx`) — mostra `em_processamento` e `status_processamento_rfb` (na fila / processada / malha / etc.).
+- Quando o contador alterar o status no switch, o resultado atualiza em tempo real para o cliente também.
 
-### 4. Responsividade da lista `/declaracoes`
+### 4. Renomear "IA Fiscal" → "Análise de Caixa"
+- Trocar título da aba e do card no `SecaoIAFiscal`.
+- Adicionar área de upload do PDF da declaração **exclusiva desta aba** (não vai para o Drive, não cria registro em `checklist_documentos`):
+  - Subir para Storage em `documentos-clientes/{escritorio_id}/{cliente_id}/_analise_caixa/{declaracao_id}.pdf` (path com prefixo `_` para distinguir e garantir que não apareça em filtros do Drive).
+  - Salvar o caminho em uma nova coluna `declaracoes.arquivo_analise_caixa_url` (migração).
+  - Garantir que o Drive (`src/pages/Drive.tsx`) e o `DocumentosDeclaracaoModal` ignorem qualquer path que contenha `/_analise_caixa/`.
+- Ajustar `supabase/functions/ia-fiscal/index.ts` para baixar esse PDF e injetar como contexto na chamada do Lovable AI Gateway, focando o prompt em **estouro de caixa, evolução patrimonial e divergências entre rendimentos × bens**.
+- Botões da aba: "Subir Declaração para Análise" + "Executar Análise de Caixa". Se o PDF não foi enviado ainda, desabilita o botão de análise.
 
-**Abordagem:** manter tabela em desktop (≥ lg) e renderizar lista em **cards** abaixo de `lg` (≤1024px), evitando quebra horizontal.
+### 5. Botão "Enviar Declaração ao Cliente"
+Em `DeclaracaoDetalhe.tsx` o botão verde aparece sempre que `status === 'transmitida'`. Mudar a condição para:
+```ts
+const podeEnviarAoCliente = isTransmitida 
+  && !!declaracao.arquivo_declaracao_url 
+  && !!declaracao.arquivo_recibo_url
+  && !declaracao.declaracao_enviada_em;
+```
+Adicionar coluna `declaracoes.declaracao_enviada_em` (migração) marcada quando o `EnviarDeclaracaoModal` for confirmado, para esconder o botão definitivamente após o envio.
 
-- Wrap atual da `Table` com `hidden lg:block`.
-- Adicionar bloco `lg:hidden` com cards: cada declaração vira um card empilhado contendo:
-  - Topo: Nome + CPF mascarado + Badge de Status.
-  - Meta: Última atualização + Resultado (badge + valor).
-  - Ações em grid 2 colunas: `Documentos`, `Observações` (badge ou botão), `Anexar declaração`, `Processamento`.
-- Em desktop, ajustar a tabela:
-  - `min-w-[1100px]` no `Table` para forçar scroll horizontal apenas se realmente faltar espaço, evitando colunas comprimidas.
-  - `whitespace-nowrap` nas colunas de ações.
-  - Botões de ação com ícone-only quando `lg`–`xl` (texto reaparece em `xl+`) usando classes responsivas (`hidden xl:inline`).
+## Mudanças no banco (migração SQL)
 
-### 5. Detalhes técnicos
+```sql
+ALTER TABLE public.declaracoes
+  ADD COLUMN IF NOT EXISTS arquivo_analise_caixa_url text,
+  ADD COLUMN IF NOT EXISTS arquivo_analise_caixa_uploaded_at timestamptz,
+  ADD COLUMN IF NOT EXISTS declaracao_enviada_em timestamptz;
+```
 
-- Path do upload do contador permanece em `{escritorioId}/declaracoes/{declaracaoId}/...` — não muda RLS nem políticas de storage.
-- A query do Drive filtra por `declaracoes.escritorio_id = escritorioId`; como `checklist_documentos` está ligado à `declaracao_id`, a mesma RLS continua valendo.
-- Categoria `'contador'` é nova; o Drive mostra `capitalize` então aparecerá como **"Contador"**.
-- Nenhuma mudança em `src/integrations/supabase/client.ts` ou `types.ts`.
+## Arquivos a editar
 
-### Arquivos afetados
+- `src/pages/DeclaracaoDetalhe.tsx` — renomear abas, ajustar condição do botão verde, mover layout de documentos.
+- `src/components/declaracao/SecaoFormularioIR.tsx` → renomear conteúdo para "Informações Cadastrais" (manter componente, ajustar seções).
+- `src/components/declaracao/SecaoResultado.tsx` — embutir `ProcessamentoSwitch`.
+- `src/components/declaracao/SecaoIAFiscal.tsx` → renomear para "Análise de Caixa", incluir upload + estado.
+- `src/components/declaracao/EnviarDeclaracaoModal.tsx` — após sucesso, salvar `declaracao_enviada_em`.
+- `src/components/cliente-perfil/AbaDocumentos.tsx` ou novo `AbaDocumentosDeclaracao.tsx` — variante que usa a listagem unificada do modal + checklist colapsado.
+- `src/pages/Drive.tsx` — filtrar paths `/_analise_caixa/`.
+- `src/components/declaracoes/DocumentosDeclaracaoModal.tsx` — filtrar paths `/_analise_caixa/`.
+- `supabase/functions/ia-fiscal/index.ts` — usar PDF de análise de caixa como contexto.
+- Nova migração SQL com as 3 colunas.
 
-- `supabase/functions/processar-pdf-declaracao/index.ts` — após validar, upsert em `checklist_documentos`.
-- Migration SQL — backfill de declarações já anexadas.
-- `src/pages/Declaracoes.tsx` — versão responsiva (table desktop + cards mobile/tablet).
-- `src/components/declaracoes/DocumentosDeclaracaoModal.tsx` — agrupar por categoria com cabeçalhos "Cliente" / "Contador" e atualizar título.
-- (Opcional) `src/pages/Drive.tsx` — apenas tradução de label "contador" → "Contador (declaração e recibo)" para clareza.
+## Fora do escopo (até confirmação)
 
-### Fora de escopo
-- Não migrar arquivos antigos para outra estrutura de storage.
-- Não alterar fluxo de validação por IA dos PDFs.
+- Não vou tocar em renomeações no Kanban (`KanbanCard`) porque o nome vem direto do FK `clientes.nome`. Se após reload duro o nome ainda aparecer errado, abro investigação separada.
+
+Aprovado? Sigo com a implementação.
