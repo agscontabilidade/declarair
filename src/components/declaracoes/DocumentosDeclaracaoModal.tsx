@@ -40,7 +40,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
         .not('arquivo_url', 'is', null)
         .order('data_recebimento', { ascending: false });
       if (error) throw error;
-      return (data || []) as DocItem[];
+      return ((data || []) as DocItem[]).filter(d => !d.arquivo_url?.includes('/_analise_caixa/'));
     },
     enabled: !!declaracaoId && open,
   });

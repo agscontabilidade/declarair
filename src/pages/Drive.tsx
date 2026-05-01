@@ -48,7 +48,7 @@ export default function Drive() {
         .eq('declaracoes.ano_base', Number(anoFiltro))
         .not('arquivo_url', 'is', null)
         .order('created_at', { ascending: false });
-      return data || [];
+      return (data || []).filter((d: { arquivo_url: string | null }) => !d.arquivo_url?.includes('/_analise_caixa/'));
     },
     enabled: !!escritorioId,
   });
