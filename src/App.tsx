@@ -28,7 +28,7 @@ import Onboarding from "./pages/Onboarding";
 // MalhaFina removed
 import Drive from "./pages/Drive";
 import Addons from "./pages/Addons";
-import WhatsApp from "./pages/WhatsApp";
+// WhatsApp page removed (moved to settings)
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ConviteCliente from "./pages/cliente/ConviteCliente";
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
