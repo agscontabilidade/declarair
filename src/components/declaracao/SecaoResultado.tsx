@@ -1,12 +1,8 @@
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
-import { TrendingUp, TrendingDown, Copy, Save, Activity } from 'lucide-react';
+import { formatCurrency } from '@/lib/formatters';
+import { TrendingUp, TrendingDown, Copy, Activity, FileText, Info, MinusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProcessamentoSwitch, type StatusProcessamentoRfb } from '@/components/declaracoes/ProcessamentoSwitch';
 
@@ -19,119 +15,103 @@ interface Props {
     status?: string | null;
     status_processamento_rfb?: string | null;
     em_processamento?: boolean | null;
+    arquivo_declaracao_url?: string | null;
+    arquivo_recibo_url?: string | null;
   } | null | undefined;
-  onSave: (data: { tipo_resultado: string; valor_resultado: number | null; numero_recibo: string }) => void;
-  saving: boolean;
 }
 
-export function SecaoResultado({ declaracao, onSave, saving }: Props) {
-  const [tipoResultado, setTipoResultado] = useState(declaracao?.tipo_resultado || '');
-  const [valorResultado, setValorResultado] = useState(declaracao?.valor_resultado?.toString() || '');
-  const [numeroRecibo, setNumeroRecibo] = useState(declaracao?.numero_recibo || '');
+const TIPO_LABEL: Record<string, string> = {
+  restituicao: 'Restituição',
+  pagamento: 'Imposto a pagar',
+  nenhum: 'Sem imposto',
+};
 
-  useEffect(() => {
-    setTipoResultado(declaracao?.tipo_resultado || '');
-    setValorResultado(declaracao?.valor_resultado?.toString() || '');
-    setNumeroRecibo(declaracao?.numero_recibo || '');
-  }, [declaracao?.tipo_resultado, declaracao?.valor_resultado, declaracao?.numero_recibo]);
-
-  const isTransmitida = declaracao?.status === 'transmitida';
-  const readOnly = isTransmitida && !!declaracao?.numero_recibo;
+export function SecaoResultado({ declaracao }: Props) {
+  const tipoResultado = declaracao?.tipo_resultado || '';
+  const valorResultado = declaracao?.valor_resultado != null ? Number(declaracao.valor_resultado) : null;
+  const numeroRecibo = declaracao?.numero_recibo || '';
+  const temDeclaracao = !!declaracao?.arquivo_declaracao_url;
+  const temRecibo = !!declaracao?.arquivo_recibo_url;
+  const temDados = !!tipoResultado || valorResultado != null || !!numeroRecibo;
 
   const handleCopyRecibo = () => {
+    if (!numeroRecibo) return;
     navigator.clipboard.writeText(numeroRecibo);
     toast.success('Número do recibo copiado!');
   };
 
-  const handleSave = () => {
-    onSave({
-      tipo_resultado: tipoResultado,
-      valor_resultado: tipoResultado !== 'nenhum' && valorResultado ? parseFloat(valorResultado) : null,
-      numero_recibo: numeroRecibo,
-    });
-  };
+  const valorColor =
+    tipoResultado === 'restituicao'
+      ? 'text-emerald-600'
+      : tipoResultado === 'pagamento'
+        ? 'text-red-600'
+        : 'text-muted-foreground';
+
+  const TipoIcon =
+    tipoResultado === 'restituicao' ? TrendingUp : tipoResultado === 'pagamento' ? TrendingDown : MinusCircle;
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Resultado</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>Tipo de Resultado</Label>
-            {readOnly ? (
-              <div className="flex items-center gap-2 h-10">
-                {tipoResultado === 'restituicao' && <TrendingUp className="h-4 w-4 text-emerald-600" />}
-                {tipoResultado === 'pagamento' && <TrendingDown className="h-4 w-4 text-red-600" />}
-                <span className="font-medium">{STATUS_LABELS[tipoResultado] || '-'}</span>
-              </div>
-            ) : (
-              <Select value={tipoResultado} onValueChange={setTipoResultado}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="restituicao">Restituição</SelectItem>
-                  <SelectItem value="pagamento">Pagamento</SelectItem>
-                  <SelectItem value="nenhum">Nenhum</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Valor</Label>
-            {readOnly ? (
-              <p className={`text-lg font-bold h-10 flex items-center ${tipoResultado === 'restituicao' ? 'text-emerald-600' : tipoResultado === 'pagamento' ? 'text-red-600' : 'text-muted-foreground'}`}>
-                {valorResultado ? formatCurrency(parseFloat(valorResultado)) : '-'}
-              </p>
-            ) : (
-              <Input
-                type="number"
-                step="0.01"
-                value={valorResultado}
-                onChange={e => setValorResultado(e.target.value)}
-                placeholder="0,00"
-                disabled={tipoResultado === 'nenhum'}
-              />
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Número do Recibo</Label>
-            {readOnly ? (
-              <button
-                onClick={handleCopyRecibo}
-                className="flex items-center gap-2 h-10 text-sm font-medium hover:text-accent transition-colors"
-              >
-                {numeroRecibo || '-'}
-                {numeroRecibo && <Copy className="h-3 w-3" />}
-              </button>
-            ) : (
-              <Input
-                value={numeroRecibo}
-                onChange={e => setNumeroRecibo(e.target.value)}
-                placeholder="Número do recibo"
-              />
-            )}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <CardTitle className="text-base">Resultado da Declaração</CardTitle>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Info className="h-3.5 w-3.5" />
+            Extraído automaticamente do PDF anexado
           </div>
         </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!temDados ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center gap-2 border border-dashed rounded-lg bg-muted/20">
+            <FileText className="h-8 w-8 text-muted-foreground/60" />
+            <p className="text-sm text-muted-foreground max-w-md">
+              {temDeclaracao || temRecibo
+                ? 'Aguardando processamento dos arquivos pela IA…'
+                : 'Anexe o PDF da declaração e do recibo na aba Documentos. O resultado aparecerá aqui automaticamente.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Tipo</p>
+              <div className="flex items-center gap-2 h-9">
+                <TipoIcon className={`h-4 w-4 ${valorColor}`} />
+                <span className="font-semibold">{TIPO_LABEL[tipoResultado] || '—'}</span>
+              </div>
+            </div>
 
-        {!readOnly && (
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving} size="sm">
-              <Save className="h-4 w-4 mr-1" />
-              {saving ? 'Salvando...' : 'Salvar Resultado'}
-            </Button>
+            <div className="space-y-1.5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Valor</p>
+              <p className={`text-xl font-bold h-9 flex items-center ${valorColor}`}>
+                {valorResultado != null && tipoResultado !== 'nenhum' ? formatCurrency(valorResultado) : '—'}
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Número do Recibo</p>
+              {numeroRecibo ? (
+                <button
+                  onClick={handleCopyRecibo}
+                  className="flex items-center gap-2 h-9 text-sm font-medium font-mono hover:text-primary transition-colors group"
+                >
+                  <span className="truncate">{numeroRecibo}</span>
+                  <Copy className="h-3.5 w-3.5 opacity-50 group-hover:opacity-100 shrink-0" />
+                </button>
+              ) : (
+                <p className="text-sm text-muted-foreground h-9 flex items-center">— pendente —</p>
+              )}
+            </div>
           </div>
         )}
 
         {declaracao?.id && (
           <>
-            <Separator className="my-2" />
+            <Separator className="my-1" />
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm">Processamento na Receita Federal</Label>
+                <p className="text-sm font-medium">Processamento na Receita Federal</p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <ProcessamentoSwitch
@@ -144,6 +124,21 @@ export function SecaoResultado({ declaracao, onSave, saving }: Props) {
               </div>
             </div>
           </>
+        )}
+
+        {(temDeclaracao || temRecibo) && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {temDeclaracao && (
+              <Badge variant="secondary" className="gap-1 font-normal">
+                <FileText className="h-3 w-3" /> Declaração anexada
+              </Badge>
+            )}
+            {temRecibo && (
+              <Badge variant="secondary" className="gap-1 font-normal">
+                <FileText className="h-3 w-3" /> Recibo anexado
+              </Badge>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
