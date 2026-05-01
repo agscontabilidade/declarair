@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,7 +54,7 @@ export default function GerarLinkConvite() {
     fetchTemplate();
   }, [open, profile?.escritorioId]);
 
-  const carregarDadosEscritorio = async () => {
+  const carregarDadosEscritorio = useCallback(async () => {
     if (!profile?.escritorioId) return;
     const { data } = await supabase
       .from('escritorios')
@@ -62,7 +62,7 @@ export default function GerarLinkConvite() {
       .eq('id', profile.escritorioId)
       .single();
     if (data) setEscritorio(data);
-  };
+  }, [profile?.escritorioId]);
 
   const salvarTemplate = async () => {
     if (!profile?.escritorioId) return;
@@ -181,7 +181,7 @@ export default function GerarLinkConvite() {
 
   useEffect(() => {
     if (open) carregarDadosEscritorio();
-  }, [open]);
+  }, [open, carregarDadosEscritorio]);
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -31,16 +31,7 @@ export default function ConviteColaborador() {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [aceitando, setAceitando] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      setErro('Token inválido');
-      setLoading(false);
-      return;
-    }
-    carregarConvite();
-  }, [token]);
-
-  const carregarConvite = async () => {
+  const carregarConvite = useCallback(async () => {
     try {
       // Sign out any existing session first
       await supabase.auth.signOut();
@@ -78,7 +69,16 @@ export default function ConviteColaborador() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setErro('Token inválido');
+      setLoading(false);
+      return;
+    }
+    carregarConvite();
+  }, [token, carregarConvite]);
 
   const handleAceitarConvite = async (e: React.FormEvent) => {
     e.preventDefault();

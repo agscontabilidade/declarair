@@ -39,7 +39,7 @@ export default function Configuracoes() {
     if (tabParam && tabParam !== activeTab) {
       setActiveTab(tabParam);
     }
-  }, [tabParam]);
+  }, [tabParam, activeTab]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);

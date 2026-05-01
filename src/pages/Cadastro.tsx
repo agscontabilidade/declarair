@@ -94,7 +94,7 @@ export default function Cadastro() {
         step, nome, email, cpf, telefone, planoSelecionado, nomeEscritorio,
       }));
     } catch { /* quota exceeded - ignore */ }
-  }, [step, nome, email, telefone, planoSelecionado, nomeEscritorio]);
+  }, [step, nome, email, cpf, telefone, planoSelecionado, nomeEscritorio]);
 
   useEffect(() => { saveDraft(); }, [saveDraft]);
 
