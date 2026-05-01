@@ -15,6 +15,14 @@ import { QueryError } from '@/components/ui/QueryError';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState } from 'react';
+import passo1Img from '@/assets/ecac/passo-1.jpg';
+import passo2Img from '@/assets/ecac/passo-2.jpg';
+import passo3Img from '@/assets/ecac/passo-3.jpg';
+import passo4Img from '@/assets/ecac/passo-4.jpg';
+import passo5Img from '@/assets/ecac/passo-5.jpg';
+import passo7Img from '@/assets/ecac/passo-7.jpg';
+import passo8Img from '@/assets/ecac/passo-8.jpg';
+import passo9Img from '@/assets/ecac/passo-9.jpg';
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
@@ -24,75 +32,128 @@ export default function ClienteDashboard() {
 
   const tutorialSteps = [
     {
-      title: "Passo 1: Acesso ao Portal e-CAC",
-      description: "Acesse o Portal e-CAC da Receita Federal utilizando sua conta gov.br (nível Prata ou Ouro).",
+      title: "Antes de começar",
+      description: "Acesse o Portal e-CAC com sua conta gov.br nível Prata ou Ouro.",
+      image: null,
       content: (
         <div className="space-y-4">
-          <p>Para começar, acesse o link oficial do e-CAC:</p>
-          <a 
-            href="https://cav.receita.fazenda.gov.br/autenticacao/login" 
-            target="_blank" 
+          <p className="text-sm">Acesse o link oficial do e-CAC da Receita Federal:</p>
+          <a
+            href="https://cav.receita.fazenda.gov.br/ecac/"
+            target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline flex items-center gap-2 font-medium"
+            className="text-primary hover:underline flex items-center gap-2 font-medium text-sm break-all"
           >
-            Acessar Portal e-CAC <ExternalLink className="h-4 w-4" />
+            cav.receita.fazenda.gov.br/ecac/ <ExternalLink className="h-4 w-4 shrink-0" />
           </a>
-          <div className="bg-muted p-4 rounded-lg text-sm border border-border">
-            <strong>Dica:</strong> Utilize o botão "Entrar com gov.br" para um acesso mais seguro e completo.
+          <div className="bg-primary/5 p-4 rounded-lg text-sm border border-primary/20">
+            <strong>Importante:</strong> O acesso deve ser feito com sua conta <strong>gov.br nível Prata ou Ouro</strong>. Caso ainda não tenha esse nível, faça a verificação pelo aplicativo gov.br.
           </div>
         </div>
       )
     },
     {
-      title: "Passo 2: Localizar Senhas e Procurações",
-      description: "No menu superior ou lateral, localize a opção de Procurações.",
+      title: "Passo 1: Autorizações de Acesso",
+      description: 'No menu inicial do e-CAC, clique em "Autorizações de Acesso (Procurações)".',
+      image: passo1Img,
       content: (
-        <div className="space-y-4">
-          <p>Dentro do portal, procure pela aba <strong>"Senhas e Procurações"</strong>.</p>
-          <p>Em seguida, clique na opção <strong>"Cadastro, Consulta e Cancelamento - Procuração para e-CAC"</strong>.</p>
-          <div className="aspect-video bg-muted rounded-md flex items-center justify-center border border-dashed border-border">
-            <ShieldCheck className="h-12 w-12 text-muted-foreground/20" />
-            <span className="text-xs text-muted-foreground ml-2">Imagem ilustrativa do menu</span>
+        <p className="text-sm">Logo após o login, na tela inicial do e-CAC, localize e clique no card <strong>"Autorizações de Acesso (Procurações)"</strong>.</p>
+      )
+    },
+    {
+      title: "Passo 2: Minhas Autorizações de Acesso",
+      description: 'Em seguida, clique em "Minhas Autorizações de Acesso".',
+      image: passo2Img,
+      content: (
+        <p className="text-sm">Na próxima tela, no menu lateral ou na lista de opções, clique em <strong>"Minhas Autorizações de Acesso"</strong>.</p>
+      )
+    },
+    {
+      title: "Passo 3: Nova Autorização",
+      description: 'Clique no botão "+ Nova Autorização".',
+      image: passo3Img,
+      content: (
+        <p className="text-sm">Você verá a lista de autorizações já existentes (se houver). Clique no botão verde <strong>"+ Nova Autorização"</strong> no canto superior direito.</p>
+      )
+    },
+    {
+      title: "Passo 4: Dados do Procurador",
+      description: "Informe o CPF do contador e a validade da autorização.",
+      image: passo4Img,
+      content: (
+        <div className="space-y-3 text-sm">
+          <p>Preencha os campos com os dados do seu contador:</p>
+          <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+            <li><strong className="text-foreground">CPF</strong> da pessoa autorizada (seu contador)</li>
+            <li><strong className="text-foreground">Validade</strong> da autorização</li>
+          </ul>
+          <div className="bg-primary/5 p-3 rounded-lg border border-primary/20">
+            💡 <strong>Sugestão:</strong> Validade de <strong>5 anos</strong>. Pode ser cancelada a qualquer momento.
           </div>
+          <p>Clique em <strong>"Avançar"</strong>.</p>
         </div>
       )
     },
     {
-      title: "Passo 3: Cadastrar Procuração",
-      description: "Inicie o processo de cadastramento informando os dados do procurador.",
+      title: "Passo 5: Selecionar Serviços",
+      description: 'Na etapa de serviços, clique em "Selecionar Serviços".',
+      image: passo5Img,
+      content: (
+        <p className="text-sm">Leia as informações sobre os efeitos da autorização e clique no botão <strong>"Selecionar Serviços"</strong>.</p>
+      )
+    },
+    {
+      title: "Passo 6: Marcar os Serviços",
+      description: "Selecione os serviços orientados pelo escritório.",
+      image: null,
+      content: (
+        <div className="space-y-3 text-sm">
+          <p>Marque os seguintes serviços (todos relacionados ao IRPF):</p>
+          <ol className="list-decimal list-inside space-y-1 text-muted-foreground max-h-64 overflow-y-auto bg-muted/40 rounded-lg p-3">
+            <li>Atualização de Dados Bancários p/ Restituição – <span className="font-mono text-xs">Cód. 00082</span></li>
+            <li>Cópia de Declaração – <span className="font-mono text-xs">Cód. 00003</span></li>
+            <li>Declaração DIRPF Pré-Preenchida – <span className="font-mono text-xs">Cód. 00098</span></li>
+            <li>Declarações - DIRPF – <span className="font-mono text-xs">Cód. 00011</span></li>
+            <li>Entregar Arquivo de Dados - Obrigação Acessória – <span className="font-mono text-xs">Cód. 00120</span></li>
+            <li>Fontes Pagadoras – <span className="font-mono text-xs">Cód. 00021</span></li>
+            <li>IRPF - Carnê Leão Web – <span className="font-mono text-xs">Cód. 00204</span></li>
+            <li>Meu Imposto de Renda – <span className="font-mono text-xs">Cód. 00107</span></li>
+            <li>Notificações e Autos relativos à entrega de declarações – <span className="font-mono text-xs">Cód. 00088</span></li>
+            <li>Opção de Impressão do IRPF – <span className="font-mono text-xs">Cód. 00055</span></li>
+            <li>Pagamentos - Comprovante de Arrecadação – <span className="font-mono text-xs">Cód. 00004</span></li>
+            <li>Situação Fiscal do Contribuinte – <span className="font-mono text-xs">Cód. 00002</span></li>
+          </ol>
+        </div>
+      )
+    },
+    {
+      title: "Passo 7: Revisar Autorização",
+      description: "Confira as informações e siga para a etapa de assinatura.",
+      image: passo7Img,
+      content: (
+        <p className="text-sm">Revise os dados do procurador, prazo de validade e os serviços selecionados. Se estiver tudo certo, prossiga para a <strong>etapa de assinatura</strong>.</p>
+      )
+    },
+    {
+      title: "Passo 8: Autorizar via gov.br",
+      description: "No Portal de Assinatura gov.br, informe o código recebido no aplicativo.",
+      image: passo8Img,
+      content: (
+        <p className="text-sm">Você será redirecionado para o <strong>Portal de Assinatura gov.br</strong>. Abra o aplicativo gov.br no seu celular, copie o código exibido e cole no campo. Em seguida, clique em <strong>"Autorizar"</strong>.</p>
+      )
+    },
+    {
+      title: "Passo 9: Pronto!",
+      description: "Autorização registrada com sucesso.",
+      image: passo9Img,
       content: (
         <div className="space-y-4">
-          <p>Selecione a opção <strong>"Cadastrar Procuração"</strong>.</p>
-          <p>Você precisará informar o CPF ou CNPJ do seu contador/escritório que será o procurador.</p>
-          <div className="bg-yellow-50 dark:bg-yellow-950/20 p-4 rounded-lg text-sm border border-yellow-200 dark:border-yellow-900">
-            <p className="text-yellow-800 dark:text-yellow-200">
-              <strong>Importante:</strong> Verifique com seu contador qual o CPF/CNPJ correto para o cadastro da procuração.
+          <div className="bg-success/10 p-4 rounded-lg border border-success/20">
+            <p className="text-sm">
+              ✅ <strong>Autorização registrada com sucesso!</strong>
             </p>
-          </div>
-        </div>
-      )
-    },
-    {
-      title: "Passo 4: Definir Poderes e Prazo",
-      description: "Selecione os serviços que o procurador poderá acessar e a validade.",
-      content: (
-        <div className="space-y-4">
-          <p>Marque a opção <strong>"Todos os serviços com relação de processos"</strong> ou selecione especificamente os serviços de <strong>"Imposto de Renda"</strong>.</p>
-          <p>Defina um prazo de validade (recomendamos 5 anos para evitar renovações anuais).</p>
-          <p>Clique em <strong>"Cadastrar Procuração"</strong> ao final da página.</p>
-        </div>
-      )
-    },
-    {
-      title: "Passo 5: Assinar e Finalizar",
-      description: "Assine digitalmente para confirmar a autorização.",
-      content: (
-        <div className="space-y-4">
-          <p>O sistema solicitará a assinatura digital através do portal gov.br.</p>
-          <p>Confirme os dados e siga as instruções na tela para concluir.</p>
-          <div className="bg-success/10 p-4 rounded-lg text-sm border border-success/20">
-            <p className="text-success-foreground">
-              <strong>Pronto!</strong> Após concluído, seu contador poderá acompanhar sua declaração em tempo real e resolver pendências com agilidade.
+            <p className="text-sm text-muted-foreground mt-2">
+              Após a assinatura, a procuração eletrônica fica imediatamente ativa. Avise seu contador para que ele possa dar seguimento aos procedimentos da sua declaração.
             </p>
           </div>
         </div>
@@ -302,6 +363,20 @@ export default function ClienteDashboard() {
                             <h4 className="text-xl font-bold mb-2">{tutorialSteps[currentTutorialStep].title}</h4>
                             <p className="text-muted-foreground mb-6">{tutorialSteps[currentTutorialStep].description}</p>
                             
+                            {tutorialSteps[currentTutorialStep].image && (
+                              <div className="mb-4 rounded-xl overflow-hidden border border-border bg-muted/30 shadow-sm">
+                                <img
+                                  src={tutorialSteps[currentTutorialStep].image as string}
+                                  alt={tutorialSteps[currentTutorialStep].title}
+                                  className="w-full h-auto object-contain max-h-[360px] mx-auto"
+                                  loading="lazy"
+                                />
+                                <p className="text-xs text-muted-foreground text-center py-2 px-3 border-t border-border bg-background/50">
+                                  {tutorialSteps[currentTutorialStep].description}
+                                </p>
+                              </div>
+                            )}
+
                             <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                               {tutorialSteps[currentTutorialStep].content}
                             </div>
