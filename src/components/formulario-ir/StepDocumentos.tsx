@@ -161,5 +161,3 @@ export function StepDocumentos({ checklist, declaracaoId, escritorioId, clienteI
     </div>
   );
 }
-  );
-}
