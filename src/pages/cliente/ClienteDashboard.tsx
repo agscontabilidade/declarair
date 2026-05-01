@@ -252,6 +252,96 @@ export default function ClienteDashboard() {
             </div>
 
 
+            {/* Card de Procuração Eletrônica */}
+            <Card className="shadow-sm border-primary/20 bg-primary/5 overflow-hidden">
+              <div className="md:flex items-center">
+                <div className="p-6 md:p-8 flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <ShieldCheck className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-bold">Procuração Eletrônica e-CAC</h3>
+                  </div>
+                  <p className="text-muted-foreground text-sm max-w-2xl">
+                    Cadastre uma procuração eletrônica na Receita Federal através do portal e-CAC usando sua senha <strong>gov.br</strong>. 
+                    Isso permite que seu contador acompanhe sua declaração em tempo real e resolva qualquer pendência de forma muito mais ágil.
+                  </p>
+                </div>
+                <div className="px-6 pb-6 md:pb-0 md:pr-8">
+                  <Dialog onOpenChange={(open) => !open && setCurrentTutorialStep(0)}>
+                    <DialogTrigger asChild>
+                      <Button className="w-full md:w-auto shadow-md">
+                        Ver Passo a Passo
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-2xl">
+                          <ShieldCheck className="h-6 w-6 text-primary" />
+                          Tutorial de Procuração e-CAC
+                        </DialogTitle>
+                      </DialogHeader>
+                      
+                      <div className="mt-6">
+                        {/* Progress Bar */}
+                        <div className="flex justify-between mb-8 gap-1">
+                          {tutorialSteps.map((_, i) => (
+                            <div 
+                              key={i} 
+                              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                                i <= currentTutorialStep ? 'bg-primary' : 'bg-muted'
+                              }`}
+                            />
+                          ))}
+                        </div>
+
+                        {/* Step Content */}
+                        <div className="min-h-[300px] flex flex-col">
+                          <div className="flex-1">
+                            <h4 className="text-xl font-bold mb-2">{tutorialSteps[currentTutorialStep].title}</h4>
+                            <p className="text-muted-foreground mb-6">{tutorialSteps[currentTutorialStep].description}</p>
+                            
+                            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                              {tutorialSteps[currentTutorialStep].content}
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between items-center mt-8 pt-4 border-t border-border">
+                            <Button 
+                              variant="outline" 
+                              onClick={handlePrevTutorial}
+                              disabled={currentTutorialStep === 0}
+                            >
+                              <ChevronLeft className="h-4 w-4 mr-2" />
+                              Anterior
+                            </Button>
+                            
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Passo {currentTutorialStep + 1} de {tutorialSteps.length}
+                            </span>
+
+                            {currentTutorialStep < tutorialSteps.length - 1 ? (
+                              <Button onClick={handleNextTutorial}>
+                                Próximo
+                                <ChevronRight className="h-4 w-4 ml-2" />
+                              </Button>
+                            ) : (
+                              <DialogClose asChild>
+                                <Button className="bg-success hover:bg-success/90">
+                                  Entendi, vou cadastrar!
+                                </Button>
+                              </DialogClose>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+            </Card>
+
             {/* Floating chat */}
             {profile.clienteId && (
               <ChatFlutuante
