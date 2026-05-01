@@ -53,7 +53,7 @@ export function AnexarDeclaracaoButton({
       if (file.type !== 'application/pdf') throw new Error('Envie um arquivo PDF');
       if (file.size > 18 * 1024 * 1024) throw new Error('Tamanho máximo: 18MB');
       setProcessandoTipo(tipo);
-      const safeName = file.name.replace(/[^\w.\-]/g, '_');
+      const safeName = file.name.replace(/[^\w.-]/g, '_');
       const path = `${escritorioId}/declaracoes/${declaracaoId}/${tipo}-${Date.now()}-${safeName}`;
 
       const { error: upErr } = await supabase.storage
