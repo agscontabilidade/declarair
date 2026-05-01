@@ -62,7 +62,7 @@ const BoasVindasEmail = ({ nome, escritorio, loginUrl }: BoasVindasProps) => (
 
 export const template = {
   component: BoasVindasEmail,
-  subject: (data: Record<string, any>) => `Bem-vindo ao ${data.escritorio || SITE_NAME}!`,
+  subject: (data: Record<string, unknown>) => `Bem-vindo ao ${data.escritorio || SITE_NAME}!`,
   displayName: 'Boas-vindas',
   previewData: { nome: 'João Silva', escritorio: 'Contabilidade ABC', loginUrl: 'https://declarair.com.br/login' },
 } satisfies TemplateEntry

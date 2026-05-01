@@ -63,7 +63,7 @@ const NovaDeclaracaoEmail = ({ nomeCliente, nomeEscritorio, anoBase, linkPortal 
 
 export const template = {
   component: NovaDeclaracaoEmail,
-  subject: (data: Record<string, any>) => `Sua declaração IRPF ${data.anoBase || '2025'} foi criada`,
+  subject: (data: Record<string, unknown>) => `Sua declaração IRPF ${data.anoBase || '2025'} foi criada`,
   displayName: 'Nova declaração criada',
   previewData: { nomeCliente: 'João Silva', nomeEscritorio: 'Contabilidade ABC', anoBase: '2025', linkPortal: 'https://declarair.com.br/cliente/dashboard' },
 } satisfies TemplateEntry

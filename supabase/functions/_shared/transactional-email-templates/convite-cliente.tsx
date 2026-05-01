@@ -68,7 +68,7 @@ const ConviteClienteEmail = ({ nomeCliente, nomeEscritorio, linkConvite, mensage
 
 export const template = {
   component: ConviteClienteEmail,
-  subject: (data: Record<string, any>) => `${data.nomeEscritorio || 'Seu escritório'} — Acesse sua Declaração de IR`,
+  subject: (data: Record<string, unknown>) => `${data.nomeEscritorio || 'Seu escritório'} — Acesse sua Declaração de IR`,
   displayName: 'Convite de cliente',
   previewData: { nomeCliente: 'Ana Costa', nomeEscritorio: 'Contabilidade ABC', linkConvite: 'https://declarair.com.br/cliente/convite/xyz', mensagemPersonalizada: 'Precisamos dos seus informes de rendimento até dia 15.' },
 } satisfies TemplateEntry
