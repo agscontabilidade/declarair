@@ -753,10 +753,14 @@ export type Database = {
       declaracoes: {
         Row: {
           ano_base: number
+          arquivo_declaracao_nome: string | null
+          arquivo_declaracao_uploaded_at: string | null
+          arquivo_declaracao_url: string | null
           cliente_id: string
           contador_id: string | null
           created_at: string
           data_transmissao: string | null
+          em_processamento: boolean
           escritorio_id: string
           forma_tributacao: string | null
           id: string
@@ -771,10 +775,14 @@ export type Database = {
         }
         Insert: {
           ano_base: number
+          arquivo_declaracao_nome?: string | null
+          arquivo_declaracao_uploaded_at?: string | null
+          arquivo_declaracao_url?: string | null
           cliente_id: string
           contador_id?: string | null
           created_at?: string
           data_transmissao?: string | null
+          em_processamento?: boolean
           escritorio_id: string
           forma_tributacao?: string | null
           id?: string
@@ -789,10 +797,14 @@ export type Database = {
         }
         Update: {
           ano_base?: number
+          arquivo_declaracao_nome?: string | null
+          arquivo_declaracao_uploaded_at?: string | null
+          arquivo_declaracao_url?: string | null
           cliente_id?: string
           contador_id?: string | null
           created_at?: string
           data_transmissao?: string | null
+          em_processamento?: boolean
           escritorio_id?: string
           forma_tributacao?: string | null
           id?: string
@@ -2425,10 +2437,14 @@ export type Database = {
         Args: never
         Returns: {
           ano_base: number
+          arquivo_declaracao_nome: string | null
+          arquivo_declaracao_uploaded_at: string | null
+          arquivo_declaracao_url: string | null
           cliente_id: string
           contador_id: string | null
           created_at: string
           data_transmissao: string | null
+          em_processamento: boolean
           escritorio_id: string
           forma_tributacao: string | null
           id: string
