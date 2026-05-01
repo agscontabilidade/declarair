@@ -9,6 +9,8 @@ import { useClientes } from '@/hooks/useClientes';
 import { ClientesTable, type ClienteRow } from '@/components/clientes/ClientesTable';
 import { ClienteModal } from '@/components/clientes/ClienteModal';
 import { ClienteViewModal } from '@/components/clientes/ClienteViewModal';
+import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
+import { useCobrancas } from '@/hooks/useCobrancas';
 import { QueryError } from '@/components/ui/QueryError';
 import type { ClienteWithContador } from '@/types/domain';
 import { usePermissoes } from '@/hooks/usePermissoes';
@@ -25,6 +27,8 @@ export default function Clientes() {
   const [createOpen, setCreateOpen] = useState(false);
   const [viewCliente, setViewCliente] = useState<ClienteRow | null>(null);
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
+  const [cobrancaCliente, setCobrancaCliente] = useState<ClienteRow | null>(null);
+  const { criar: criarCobranca } = useCobrancas('todos');
   const { podeVerClientes, podeCriarClientes, isDono } = usePermissoes();
   const { toast } = useToast();
 
@@ -102,6 +106,7 @@ export default function Clientes() {
               onView={(c) => setViewCliente(c)}
               onEdit={(c) => setEditCliente(c)}
               onDelete={handleDelete}
+              onCobranca={(c) => setCobrancaCliente(c)}
               canEdit={podeCriarClientes}
               canDelete={podeCriarClientes}
             />
@@ -145,6 +150,20 @@ export default function Clientes() {
         onOpenChange={(o) => !o && setViewCliente(null)}
         cliente={viewCliente}
         onEdit={handleEditFromView}
+      />
+
+      <CobrancaModal
+        open={!!cobrancaCliente}
+        onOpenChange={(o) => !o && setCobrancaCliente(null)}
+        clienteIdLocked={cobrancaCliente?.id ?? null}
+        clienteNomeLocked={cobrancaCliente?.nome ?? null}
+        loading={criarCobranca.isPending}
+        onSave={(data) => {
+          criarCobranca.mutate(
+            data as { cliente_id: string; declaracao_id?: string; descricao: string; valor: number; data_vencimento: string },
+            { onSuccess: () => setCobrancaCliente(null) },
+          );
+        }}
       />
     </DashboardLayout>
   );

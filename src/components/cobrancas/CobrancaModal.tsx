@@ -19,9 +19,13 @@ interface CobrancaModalProps {
   onSave: (data: Record<string, unknown>) => void;
   loading?: boolean;
   editData?: Record<string, unknown> | null;
+  /** Pré-seleciona e bloqueia o cliente (ex.: ao abrir a partir da lista de clientes). */
+  clienteIdLocked?: string | null;
+  /** Nome opcional para exibir quando clienteIdLocked está definido. */
+  clienteNomeLocked?: string | null;
 }
 
-export function CobrancaModal({ open, onOpenChange, onSave, loading, editData }: CobrancaModalProps) {
+export function CobrancaModal({ open, onOpenChange, onSave, loading, editData, clienteIdLocked, clienteNomeLocked }: CobrancaModalProps) {
   const { profile } = useAuth();
   const [clienteId, setClienteId] = useState('');
   const [declaracaoId, setDeclaracaoId] = useState('');
@@ -37,9 +41,13 @@ export function CobrancaModal({ open, onOpenChange, onSave, loading, editData }:
       setDataVencimento(new Date(String(editData.data_vencimento) + 'T12:00:00'));
       setDeclaracaoId(String(editData.declaracao_id ?? ''));
     } else {
-      setClienteId(''); setDescricao(''); setValorStr(''); setDataVencimento(undefined); setDeclaracaoId('');
+      setClienteId(clienteIdLocked ?? '');
+      setDescricao('');
+      setValorStr('');
+      setDataVencimento(undefined);
+      setDeclaracaoId('');
     }
-  }, [editData, open]);
+  }, [editData, open, clienteIdLocked]);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes-select', profile.escritorioId],
@@ -90,12 +98,18 @@ export function CobrancaModal({ open, onOpenChange, onSave, loading, editData }:
         <div className="space-y-4">
           <div>
             <Label>Cliente *</Label>
-            <Select value={clienteId} onValueChange={(v) => { setClienteId(v); setDeclaracaoId(''); }}>
-              <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
-              <SelectContent>
-                {clientes.map((c: { id: string; nome: string }) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            {clienteIdLocked ? (
+              <div className="h-10 px-3 rounded-md border bg-muted/40 flex items-center text-sm font-medium">
+                {clienteNomeLocked || clientes.find((c: { id: string; nome: string }) => c.id === clienteIdLocked)?.nome || 'Cliente selecionado'}
+              </div>
+            ) : (
+              <Select value={clienteId} onValueChange={(v) => { setClienteId(v); setDeclaracaoId(''); }}>
+                <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                <SelectContent>
+                  {clientes.map((c: { id: string; nome: string }) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           {declaracoes.length > 0 && (
             <div>

@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, DollarSign } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,11 +27,12 @@ interface Props {
   onView: (cliente: ClienteRow) => void;
   onEdit: (cliente: ClienteRow) => void;
   onDelete: (cliente: ClienteRow) => void;
+  onCobranca?: (cliente: ClienteRow) => void;
   canEdit?: boolean;
   canDelete?: boolean;
 }
 
-export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, canEdit = true, canDelete = true }: Props) {
+export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, canEdit = true, canDelete = true }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-3 p-3">
@@ -94,6 +95,17 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, c
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
+                        {onCobranca && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label="Nova cobrança"
+                            title="Criar cobrança"
+                            onClick={(e) => { e.stopPropagation(); onCobranca(c); }}
+                          >
+                            <DollarSign className="h-4 w-4 text-emerald-600" />
+                          </Button>
+                        )}
                         {tel && (
                           <Button size="icon" variant="ghost" asChild aria-label="Abrir WhatsApp">
                             <a
