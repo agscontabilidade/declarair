@@ -17,7 +17,7 @@ interface Props {
     valor_resultado?: number | string | null;
     numero_recibo?: string | null;
     status?: string | null;
-    status_processamento_rfb?: StatusProcessamentoRfb | null;
+    status_processamento_rfb?: string | null;
     em_processamento?: boolean | null;
   } | null | undefined;
   onSave: (data: { tipo_resultado: string; valor_resultado: number | null; numero_recibo: string }) => void;
