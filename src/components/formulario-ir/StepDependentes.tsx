@@ -1,3 +1,4 @@
+import type { Dependente, Alimentando } from '@/lib/schemas/formulario-ir';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,12 +27,12 @@ export function StepDependentes({ data, onChange }: Props) {
   };
 
   const updateDep = (i: number, field: string, value: string) => {
-    const updated = deps.map((d: Record<string, unknown>, idx: number) => idx === i ? { ...d, [field]: value } : d);
+    const updated = deps.map((d: Dependente, idx: number) => idx === i ? { ...d, [field]: value } : d);
     onChange('dependentes', updated);
   };
 
   const updateAli = (i: number, field: string, value: string) => {
-    const updated = alimentandos.map((a: Record<string, unknown>, idx: number) => idx === i ? { ...a, [field]: value } : a);
+    const updated = alimentandos.map((a: Alimentando, idx: number) => idx === i ? { ...a, [field]: value } : a);
     onChange('alimentandos', updated);
   };
 
@@ -56,7 +57,7 @@ export function StepDependentes({ data, onChange }: Props) {
         ⚠️ A Receita Federal exige CPF para todos os dependentes. Certifique-se de preencher corretamente.
       </div>
 
-      {deps.map((dep: Record<string, unknown>, i: number) => (
+      {deps.map((dep: Dependente, i: number) => (
         <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Dependente {i + 1}</span>
@@ -107,7 +108,7 @@ export function StepDependentes({ data, onChange }: Props) {
           <p className="text-sm text-muted-foreground">Adicione os beneficiários de pensão alimentícia (alimentandos).</p>
         </div>
 
-        {alimentandos.map((ali: Record<string, unknown>, i: number) => (
+        {alimentandos.map((ali: Alimentando, i: number) => (
           <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Beneficiário {i + 1}</span>

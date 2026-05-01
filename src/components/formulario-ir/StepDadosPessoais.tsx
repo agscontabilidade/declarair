@@ -1,3 +1,4 @@
+import type { Dependente, Alimentando } from '@/lib/schemas/formulario-ir';
 import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -75,7 +76,7 @@ export function StepDadosPessoais({ data, onChange }: Props) {
   };
 
   const updateDep = (i: number, field: string, value: string) => {
-    const updated = deps.map((d: Record<string, unknown>, idx: number) => idx === i ? { ...d, [field]: value } : d);
+    const updated = deps.map((d: Dependente, idx: number) => idx === i ? { ...d, [field]: value } : d);
     onChange('dependentes', updated);
   };
 
@@ -90,7 +91,7 @@ export function StepDadosPessoais({ data, onChange }: Props) {
   };
 
   const updateAli = (i: number, field: string, value: string) => {
-    const updated = alimentandos.map((a: Record<string, unknown>, idx: number) => idx === i ? { ...a, [field]: value } : a);
+    const updated = alimentandos.map((a: Alimentando, idx: number) => idx === i ? { ...a, [field]: value } : a);
     onChange('alimentandos', updated);
   };
 
@@ -280,7 +281,7 @@ export function StepDadosPessoais({ data, onChange }: Props) {
             <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
               ⚠️ A Receita Federal exige CPF para todos os dependentes.
             </div>
-            {deps.map((dep: Record<string, unknown>, i: number) => (
+            {deps.map((dep: Dependente, i: number) => (
               <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Dependente {i + 1}</span>
@@ -340,7 +341,7 @@ export function StepDadosPessoais({ data, onChange }: Props) {
 
         {showAlimentandos && (
           <div className="space-y-6 animate-in zoom-in-95 duration-300">
-            {alimentandos.map((ali: Record<string, unknown>, i: number) => (
+            {alimentandos.map((ali: Alimentando, i: number) => (
               <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Alimentando {i + 1}</span>
