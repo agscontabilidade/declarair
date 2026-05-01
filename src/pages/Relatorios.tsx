@@ -21,7 +21,7 @@ const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 export default function Relatorios() {
   const { profile } = useAuth();
   const [tipo, setTipo] = useState<TipoRelatorio>('resumo');
-  const [ano, setAno] = useState(currentYear - 1);
+  const [ano, setAno] = useState(currentYear);
   const [exporting, setExporting] = useState(false);
 
   const { data: resumo, isLoading } = useQuery({
