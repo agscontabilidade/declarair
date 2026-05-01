@@ -248,9 +248,10 @@ Deno.serve(async (req) => {
     await logActivity(admin, event);
 
     return new Response(JSON.stringify({ received: true }), { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Stripe webhook error:", error);
-    await logActivity(admin, { type: 'error' }, 'erro', error.message);
-    return new Response(JSON.stringify({ error: error.message }), { status: 400 });
+    const message = error instanceof Error ? error.message : String(error);
+    await logActivity(admin, { type: 'error' }, 'erro', message);
+    return new Response(JSON.stringify({ error: message }), { status: 400 });
   }
 });
