@@ -71,7 +71,7 @@ export function ReportBugModal() {
         descricao: descricao.trim(),
         pagina_url: window.location.pathname,
         prioridade,
-        screenshots: screenshots as any,
+        screenshots: screenshots,
         reportado_por: user.id,
         reportado_por_nome: profile.nome ?? user.email,
         reportado_por_email: user.email,

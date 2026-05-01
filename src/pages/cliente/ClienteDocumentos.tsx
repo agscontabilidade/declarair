@@ -257,8 +257,8 @@ export default function ClienteDocumentos() {
     );
   }
 
-  const recebidos = checklist.filter((d: any) => d.status === 'recebido');
-  const docsEnviadosAoContador = (declaracao as any)?.status_documentos === 'enviado';
+  const recebidos = checklist.filter((d: { status: string }) => d.status === 'recebido');
+  const docsEnviadosAoContador = (declaracao as { status_documentos?: string } | null)?.status_documentos === 'enviado';
 
   return (
     <ClienteLayout>
@@ -373,7 +373,7 @@ export default function ClienteDocumentos() {
                 </div>
               ) : (
                 <div className="divide-y divide-border">
-                  {recebidos.map((doc: any) => (
+                  {recebidos.map((doc: { id: string; arquivo_nome: string; data_recebimento: string; arquivo_url?: string | null }) => (
                     <div key={doc.id} className="p-4 flex items-center justify-between group hover:bg-muted/30 transition-colors">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">{doc.arquivo_nome}</p>
