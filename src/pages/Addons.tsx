@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { PlanGate } from '@/components/billing/BillingGate';
+import { useBilling } from '@/hooks/useBilling';
 import { useAddons, useToggleAddon } from '@/hooks/useAddons';
 import { useDeclaracoesExtras } from '@/hooks/useDeclaracoesExtras';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, Brain, ShieldCheck, Palette, Zap, Check, Loader2, ShoppingCart, FileText } from 'lucide-react';
+import { MessageCircle, Brain, ShieldCheck, Palette, Zap, Check, Loader2, ShoppingCart, FileText, Crown, Lock } from 'lucide-react';
 import { formatarPreco, PRECOS } from '@/lib/constants/planos';
 import { formatCurrency } from '@/lib/formatters';
 
