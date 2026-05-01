@@ -105,11 +105,11 @@ export default function ClienteDashboard() {
 
               {/* Envio de Documentos (Originalmente pendentes) */}
               <Card 
-                className={`shadow-sm transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${pendentes.length === 0 ? 'border-success/30 bg-success/5' : ''}`}
+                className={`shadow-sm transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${(declaracao as any)?.status_documentos === 'enviado' ? 'border-success/30 bg-success/5' : ''}`}
                 onClick={() => navigate('/cliente/documentos')}
               >
                 <CardContent className="flex flex-col items-center py-8 text-center">
-                  <Upload className={`h-10 w-10 mb-3 ${pendentes.length === 0 ? 'text-success' : 'text-primary'}`} />
+                  <Upload className={`h-10 w-10 mb-3 ${(declaracao as any)?.status_documentos === 'enviado' ? 'text-success' : 'text-primary'}`} />
                   <p className="font-medium">Envio de Documentos</p>
                   
                   <div className="w-full max-w-[140px] mt-3">
@@ -117,13 +117,21 @@ export default function ClienteDashboard() {
                       <span>Documentos</span>
                       <span>{checklist.length}</span>
                     </div>
-                    <Progress value={checklist.length > 0 ? 100 : 0} className="h-1.5" />
+                    <Progress value={(declaracao as any)?.status_documentos === 'enviado' ? 100 : checklist.length > 0 ? 50 : 0} className="h-1.5" />
                   </div>
 
                   <Badge className={`mt-3 ${
-                    (declaracao as any)?.status_documentos === 'enviado' ? 'bg-success/15 text-success hover:bg-success/20' : checklist.length > 0 ? 'bg-primary/15 text-primary hover:bg-primary/20' : 'bg-warning/15 text-warning hover:bg-warning/20'
+                    (declaracao as any)?.status_documentos === 'enviado' 
+                      ? 'bg-success/15 text-success hover:bg-success/20' 
+                      : checklist.length > 0 
+                      ? 'bg-primary/15 text-primary hover:bg-primary/20' 
+                      : 'bg-warning/15 text-warning hover:bg-warning/20'
                   }`}>
-                    {(declaracao as any)?.status_documentos === 'enviado' ? 'Enviado ao Contador' : checklist.length > 0 ? 'Pronto para Enviar' : 'Nenhum Anexo'}
+                    {(declaracao as any)?.status_documentos === 'enviado' 
+                      ? 'Enviado ao Contador' 
+                      : checklist.length > 0 
+                      ? 'Pronto para Enviar' 
+                      : 'Pendente'}
                   </Badge>
                 </CardContent>
               </Card>
