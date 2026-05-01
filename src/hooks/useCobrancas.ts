@@ -2,28 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-
-interface CobrancaComCliente {
-  id: string;
-  cliente_id: string;
-  declaracao_id: string | null;
-  escritorio_id: string;
-  descricao: string;
-  valor: number;
-  status: string;
-  data_vencimento: string;
-  data_pagamento: string | null;
-  created_at: string;
-  boleto_codigo_barras: string | null;
-  boleto_linha_digitavel: string | null;
-  boleto_pdf_url: string | null;
-  pix_qrcode: string | null;
-  pix_qrcode_url: string | null;
-  cobranca_externa_id: string | null;
-  cobranca_externa_status: string | null;
-  notificacao_vencimento_enviada: boolean;
-  clientes: { nome: string; cpf: string } | null;
-}
+import type { CobrancaComCliente } from '@/types/domain';
 
 export function useCobrancas(statusFilter?: string, periodoInicio?: string, periodoFim?: string) {
   const { profile } = useAuth();

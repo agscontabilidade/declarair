@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import type { ClienteRow } from '@/types/domain';
 
 interface Props {
-  cliente: ClienteRow | null | undefined;
+  cliente: (ClienteRow & { usuarios?: { nome: string } | null }) | null | undefined;
   isLoading: boolean;
   onEnviarConvite: (mode: 'auto' | 'copy' | 'email' | 'whatsapp-manual') => void;
   enviandoConvite: boolean;
