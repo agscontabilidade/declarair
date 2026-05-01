@@ -23,6 +23,7 @@ const navItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Clientes', url: '/clientes', icon: Users },
   { title: 'Declarações', url: '/declaracoes', icon: FileText },
+  { title: 'Drive', url: '/drive', icon: FolderOpen },
   
   { title: 'Cobrança', url: '/cobrancas', icon: DollarSign, badge: true },
   { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
