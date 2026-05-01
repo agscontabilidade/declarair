@@ -27,4 +27,12 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "warn",
     },
   },
+  {
+    // Edge functions run on Deno, not Vite. React-refresh / fast-refresh rule
+    // does not apply to email templates rendered server-side.
+    files: ["supabase/functions/**/*.{ts,tsx}"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
 );
