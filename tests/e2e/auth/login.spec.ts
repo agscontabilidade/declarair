@@ -13,7 +13,8 @@ test.describe('Login do Contador', () => {
     await page.fill('input[type="email"]', 'invalido@teste.com');
     await page.fill('input[type="password"]', 'senhaerrada');
     await page.click('button[type="submit"]');
-    await expect(page.locator('text=/[Ee]rro/')).toBeVisible({ timeout: 10000 });
+    // Usamos .first() para evitar erro de strict mode se houver múltiplos elementos com "Erro" (ex: toast + heading)
+    await expect(page.getByText(/Erro ao entrar|Invalid login/i).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('deve redirecionar para /login quando não autenticado', async ({ page }) => {
