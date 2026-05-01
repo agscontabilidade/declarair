@@ -126,7 +126,7 @@ Considere divergências comuns como: rendimentos vs DIRF, bens incompatíveis co
 5. Orientações para o próximo ano`;
 }
 
-function buildContext(declaracao: any, formulario: any): string {
+function buildContext(declaracao: { ano_base: number; status: string; tipo_resultado?: string; valor_resultado?: number; clientes: { nome: string } }, formulario: any): string {
   const cliente = declaracao.clientes;
   let ctx = `## Dados do Contribuinte\n- Nome: ${cliente?.nome || "N/I"}\n- Ano-base: ${declaracao.ano_base}\n`;
 
@@ -143,27 +143,27 @@ function buildContext(declaracao: any, formulario: any): string {
   ctx += `- Dependentes: ${deps.length}\n`;
 
   const rendEmp = Array.isArray(formulario.rendimentos_emprego) ? formulario.rendimentos_emprego : [];
-  const totalRend = rendEmp.reduce((s: number, r: any) => s + (parseFloat(r.rendimento_bruto) || 0), 0);
+  const totalRend = rendEmp.reduce((s: number, r: { rendimento_bruto: string }) => s + (parseFloat(r.rendimento_bruto) || 0), 0);
   ctx += `\n## Rendimentos\n- Emprego: R$ ${totalRend.toFixed(2)} (${rendEmp.length} fonte(s))\n`;
 
   const rendAut = Array.isArray(formulario.rendimentos_autonomo) ? formulario.rendimentos_autonomo : [];
   if (rendAut.length > 0) {
-    const totalAut = rendAut.reduce((s: number, r: any) => s + (parseFloat(r.valor) || 0), 0);
+    const totalAut = rendAut.reduce((s: number, r: { valor: string }) => s + (parseFloat(r.valor) || 0), 0);
     ctx += `- Autônomo: R$ ${totalAut.toFixed(2)}\n`;
   }
 
   const rendAlug = Array.isArray(formulario.rendimentos_aluguel) ? formulario.rendimentos_aluguel : [];
   if (rendAlug.length > 0) {
-    const totalAlug = rendAlug.reduce((s: number, r: any) => s + (parseFloat(r.valor_mensal) || 0) * 12, 0);
+    const totalAlug = rendAlug.reduce((s: number, r: { valor_mensal: string }) => s + (parseFloat(r.valor_mensal) || 0) * 12, 0);
     ctx += `- Aluguel: R$ ${totalAlug.toFixed(2)}/ano\n`;
   }
 
   const medicas = Array.isArray(formulario.despesas_medicas) ? formulario.despesas_medicas : [];
-  const totalMed = medicas.reduce((s: number, d: any) => s + (parseFloat(d.valor) || 0), 0);
+  const totalMed = medicas.reduce((s: number, d: { valor: string }) => s + (parseFloat(d.valor) || 0), 0);
   ctx += `\n## Deduções\n- Despesas Médicas: R$ ${totalMed.toFixed(2)} (${medicas.length} item(s))\n`;
 
   const educ = Array.isArray(formulario.despesas_educacao) ? formulario.despesas_educacao : [];
-  const totalEduc = educ.reduce((s: number, d: any) => s + (parseFloat(d.valor) || 0), 0);
+  const totalEduc = educ.reduce((s: number, d: { valor: string }) => s + (parseFloat(d.valor) || 0), 0);
   ctx += `- Educação: R$ ${totalEduc.toFixed(2)} (${educ.length} item(s))\n`;
 
   const prev = formulario.previdencia_privada || {};
@@ -171,13 +171,13 @@ function buildContext(declaracao: any, formulario: any): string {
 
   const bens = Array.isArray(formulario.bens_direitos) ? formulario.bens_direitos : [];
   if (bens.length > 0) {
-    const totalBens = bens.reduce((s: number, b: any) => s + (parseFloat(b.valor) || 0), 0);
+    const totalBens = bens.reduce((s: number, b: { valor: string }) => s + (parseFloat(b.valor) || 0), 0);
     ctx += `\n## Bens e Direitos\n- ${bens.length} bem(ns) — Total: R$ ${totalBens.toFixed(2)}\n`;
   }
 
   const dividas = Array.isArray(formulario.dividas_onus) ? formulario.dividas_onus : [];
   if (dividas.length > 0) {
-    const totalDiv = dividas.reduce((s: number, d: any) => s + (parseFloat(d.valor) || 0), 0);
+    const totalDiv = dividas.reduce((s: number, d: { valor: string }) => s + (parseFloat(d.valor) || 0), 0);
     ctx += `\n## Dívidas\n- ${dividas.length} dívida(s) — Total: R$ ${totalDiv.toFixed(2)}\n`;
   }
 
