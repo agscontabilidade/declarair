@@ -6,8 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DeclaracaoHeader } from '@/components/declaracao/DeclaracaoHeader';
 import { TransmitidaModal } from '@/components/declaracao/TransmitidaModal';
 import { EnviarDeclaracaoModal } from '@/components/declaracao/EnviarDeclaracaoModal';
-import { AbaDocumentos } from '@/components/cliente-perfil/AbaDocumentos';
-import { SecaoFormularioIR } from '@/components/declaracao/SecaoFormularioIR';
+import { AbaDocumentosUnificada } from '@/components/declaracao/AbaDocumentosUnificada';
+import { SecaoInformacoesCadastrais } from '@/components/declaracao/SecaoInformacoesCadastrais';
 import { SecaoResultado } from '@/components/declaracao/SecaoResultado';
 import { SecaoNotas } from '@/components/declaracao/SecaoNotas';
 import { Button } from '@/components/ui/button';
@@ -15,11 +15,11 @@ import { Send } from 'lucide-react';
 
 import { SecaoChat } from '@/components/declaracao/SecaoChat';
 import { SecaoTimeline } from '@/components/declaracao/SecaoTimeline';
-import { SecaoIAFiscal } from '@/components/declaracao/SecaoIAFiscal';
+import { SecaoAnaliseCaixa } from '@/components/declaracao/SecaoAnaliseCaixa';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { QueryError } from '@/components/ui/QueryError';
 
