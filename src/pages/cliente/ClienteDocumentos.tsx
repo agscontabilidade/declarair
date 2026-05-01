@@ -193,9 +193,13 @@ export default function ClienteDocumentos() {
       if (!rest || rest.length === 0) {
         await supabase
           .from('declaracoes')
-          .update({ status: 'aguardando_documentos' })
+          .update({ 
+            status: 'aguardando_documentos',
+            status_documentos: 'pendente' 
+          })
           .eq('id', declaracao?.id);
       }
+
 
       toast.success('Arquivo removido');
       queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
