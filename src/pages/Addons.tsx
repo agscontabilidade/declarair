@@ -312,7 +312,6 @@ export default function Addons() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </PlanGate>
     </DashboardLayout>
   );
 }
