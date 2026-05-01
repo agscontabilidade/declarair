@@ -97,7 +97,7 @@ async function ensureStripeCustomer(escritorio: EscritorioBilling, admin: AdminC
 
 // ── Create subscription ──
 async function createSubscription(
-  escritorio: any,
+  escritorio: EscritorioBilling,
   admin: AdminClient,
   body: { plano: string; paymentMethod: string }
 ) {
@@ -223,7 +223,7 @@ async function getPayments(escritorio: EscritorioBilling, admin: AdminClient) {
 
 // ── Activate addon ──
 async function activateAddon(
-  escritorio: any,
+  escritorio: EscritorioBilling,
   admin: AdminClient,
   body: { addonSlug: string }
 ) {
@@ -330,7 +330,7 @@ async function saveAddonInDb(admin: AdminClient, escritorioId: string, addonSlug
 
 // ── Deactivate addon ──
 async function deactivateAddon(
-  escritorio: any,
+  escritorio: EscritorioBilling,
   admin: AdminClient,
   body: { addonSlug: string }
 ) {
@@ -386,7 +386,7 @@ async function createPortalSession(escritorio: EscritorioBilling) {
 
 // ── Buy extra declarations ──
 async function buyExtraDeclaracoes(
-  escritorio: any,
+  escritorio: EscritorioBilling,
   admin: AdminClient,
   body: { quantidade: number }
 ) {
