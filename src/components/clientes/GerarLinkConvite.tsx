@@ -112,6 +112,7 @@ export default function GerarLinkConvite() {
       await salvarTemplate();
 
       const token = crypto.randomUUID() + '-' + Date.now().toString(36);
+      const cleanCPF = formData.cpf_sugerido ? formData.cpf_sugerido.replace(/\D/g, '') : null;
 
       const { error } = await supabase
         .from('convites_cliente')
@@ -120,7 +121,7 @@ export default function GerarLinkConvite() {
           token,
           created_by: user?.id,
           nome_sugerido: formData.nome_sugerido || null,
-          cpf_sugerido: formData.cpf_sugerido || null,
+          cpf_sugerido: cleanCPF,
           email_sugerido: formData.email_sugerido || null,
           mensagem_personalizada: mensagemTemplate || null,
         });
