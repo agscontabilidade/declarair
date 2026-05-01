@@ -31,6 +31,20 @@ export default function Configuracoes() {
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabParam || 'escritorio');
   const { isDono } = usePermissoes();
+  const escritorioId = profile.escritorioId;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchParams({ tab: value });
+  };
 
   const { data: escritorio, isLoading: loadingEsc } = useQuery({
     queryKey: ['escritorio', escritorioId],
