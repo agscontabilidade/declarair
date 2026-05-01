@@ -62,7 +62,7 @@ export default function Clientes() {
     }
   };
 
-  const handleEditFromView = (c: any) => {
+  const handleEditFromView = (c: ClienteWithContador) => {
     setViewCliente(null);
     setEditCliente(c);
   };
@@ -142,7 +142,7 @@ export default function Clientes() {
       <ClienteViewModal
         open={!!viewCliente}
         onOpenChange={(o) => !o && setViewCliente(null)}
-        cliente={viewCliente as any}
+        cliente={viewCliente}
         onEdit={handleEditFromView}
       />
     </DashboardLayout>

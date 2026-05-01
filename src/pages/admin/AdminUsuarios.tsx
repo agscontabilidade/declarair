@@ -62,7 +62,7 @@ export default function AdminUsuarios() {
                       <Badge variant="outline" className="capitalize">{u.papel}</Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {(u as any).escritorios?.nome ?? '—'}
+                      {(u as { escritorios?: { nome?: string } }).escritorios?.nome ?? '—'}
                     </TableCell>
                     <TableCell>
                       <Badge variant={u.ativo ? 'default' : 'secondary'}>

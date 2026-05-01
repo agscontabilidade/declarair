@@ -72,12 +72,12 @@ export default function Relatorios() {
       } else if (tipoExport === 'declaracoes') {
         const { data } = await supabase.from('declaracoes').select('ano_base, status, tipo_resultado, valor_resultado, data_transmissao, numero_recibo, created_at, clientes(nome, cpf)').eq('escritorio_id', eid).eq('ano_base', ano).order('created_at', { ascending: false });
         csvContent = 'Cliente,CPF,Ano Base,Status,Resultado,Valor,Recibo,Transmissão\n' +
-          (data || []).map((d: any) => `"${d.clientes?.nome || ''}","${d.clientes?.cpf || ''}",${d.ano_base},"${d.status}","${d.tipo_resultado || ''}",${d.valor_resultado || 0},"${d.numero_recibo || ''}","${d.data_transmissao ? new Date(d.data_transmissao).toLocaleDateString('pt-BR') : ''}"`).join('\n');
+          (data || []).map((d: { ano_base: number; status: string; tipo_resultado?: string | null; valor_resultado?: number | null; numero_recibo?: string | null; data_transmissao?: string | null; clientes?: { nome?: string; cpf?: string } | null }) => `"${d.clientes?.nome || ''}","${d.clientes?.cpf || ''}",${d.ano_base},"${d.status}","${d.tipo_resultado || ''}",${d.valor_resultado || 0},"${d.numero_recibo || ''}","${d.data_transmissao ? new Date(d.data_transmissao).toLocaleDateString('pt-BR') : ''}"`).join('\n');
         filename = `declaracoes_${ano}_${new Date().toISOString().slice(0, 10)}.csv`;
       } else if (tipoExport === 'cobrancas') {
         const { data } = await supabase.from('cobrancas').select('descricao, valor, status, data_vencimento, data_pagamento, created_at, clientes(nome)').eq('escritorio_id', eid).order('created_at', { ascending: false });
         csvContent = 'Cliente,Descrição,Valor,Status,Vencimento,Pagamento\n' +
-          (data || []).map((c: any) => `"${c.clientes?.nome || ''}","${c.descricao}",${c.valor},"${c.status}","${new Date(c.data_vencimento).toLocaleDateString('pt-BR')}","${c.data_pagamento ? new Date(c.data_pagamento).toLocaleDateString('pt-BR') : ''}"`).join('\n');
+          (data || []).map((c: { descricao: string; valor: number | string; status: string; data_vencimento: string; data_pagamento?: string | null; clientes?: { nome?: string } | null }) => `"${c.clientes?.nome || ''}","${c.descricao}",${c.valor},"${c.status}","${new Date(c.data_vencimento).toLocaleDateString('pt-BR')}","${c.data_pagamento ? new Date(c.data_pagamento).toLocaleDateString('pt-BR') : ''}"`).join('\n');
         filename = `cobrancas_${new Date().toISOString().slice(0, 10)}.csv`;
       }
 

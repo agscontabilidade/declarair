@@ -88,15 +88,18 @@ export function SecaoChat({ declaracaoId, escritorioId, clienteId }: Props) {
                       <span className={`text-[10px] ${isMe ? 'text-accent-foreground/60' : 'text-muted-foreground'}`}>
                         {new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      {isMe && msg.remetente_tipo === 'contador' && (
-                        <span className={`text-[10px] ${isMe ? 'text-accent-foreground/60' : 'text-muted-foreground'}`} title={(msg as any).enviado_whatsapp ? 'Enviado no WhatsApp' : 'Apenas plataforma'}>
-                          {(msg as any).enviado_whatsapp ? (
-                            <CheckCheck className="h-3 w-3 inline text-emerald-400" />
-                          ) : (
-                            <Check className="h-3 w-3 inline" />
-                          )}
-                        </span>
-                      )}
+                      {isMe && msg.remetente_tipo === 'contador' && (() => {
+                        const enviadoWhatsapp = (msg as { enviado_whatsapp?: boolean }).enviado_whatsapp;
+                        return (
+                          <span className={`text-[10px] ${isMe ? 'text-accent-foreground/60' : 'text-muted-foreground'}`} title={enviadoWhatsapp ? 'Enviado no WhatsApp' : 'Apenas plataforma'}>
+                            {enviadoWhatsapp ? (
+                              <CheckCheck className="h-3 w-3 inline text-emerald-400" />
+                            ) : (
+                              <Check className="h-3 w-3 inline" />
+                            )}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

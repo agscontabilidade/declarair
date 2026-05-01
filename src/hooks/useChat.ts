@@ -153,7 +153,7 @@ async function sendViaWhatsApp(messageId: string, clienteId: string, escritorioI
             enviado_whatsapp: true,
             whatsapp_enviado_em: new Date().toISOString(),
             whatsapp_tentativas: attempt + 1,
-          } as any)
+          })
           .eq('id', messageId);
         return { success: true };
       }
@@ -172,7 +172,7 @@ async function sendViaWhatsApp(messageId: string, clienteId: string, escritorioI
             enviado_whatsapp: false,
             whatsapp_erro: getErrorMessage(err) || 'Erro desconhecido',
             whatsapp_tentativas: MAX_RETRIES,
-          } as any)
+          })
           .eq('id', messageId);
         return { success: false, error: err };
       }

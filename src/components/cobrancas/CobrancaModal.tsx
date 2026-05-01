@@ -103,7 +103,7 @@ export function CobrancaModal({ open, onOpenChange, onSave, loading, editData }:
               <Select value={declaracaoId} onValueChange={setDeclaracaoId}>
                 <SelectTrigger><SelectValue placeholder="Vincular a declaração" /></SelectTrigger>
                 <SelectContent>
-                  {declaracoes.map((d: any) => <SelectItem key={d.id} value={d.id}>IR {d.ano_base}</SelectItem>)}
+                  {declaracoes.map((d: { id: string; ano_base: number }) => <SelectItem key={d.id} value={d.id}>IR {d.ano_base}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

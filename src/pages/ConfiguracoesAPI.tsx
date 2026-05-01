@@ -182,7 +182,7 @@ export default function ConfiguracoesAPI() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {apiKeys.map((key: any) => (
+                  {apiKeys.map((key: { id: string; nome: string; key_prefix: string; ultimo_uso: string | null; ativo: boolean }) => (
                     <TableRow key={key.id}>
                       <TableCell className="font-medium">{key.nome}</TableCell>
                       <TableCell className="font-mono text-sm text-muted-foreground">{key.key_prefix}...</TableCell>

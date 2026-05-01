@@ -1,4 +1,20 @@
 import { useState } from 'react';
+import { getErrorMessage } from '@/lib/errors';
+
+interface BugReport {
+  id: string;
+  titulo: string;
+  descricao: string;
+  status: string;
+  prioridade?: string;
+  pagina_url?: string | null;
+  reportado_por_nome?: string | null;
+  reportado_por_email?: string | null;
+  resposta_admin?: string | null;
+  screenshots?: string[] | null;
+  created_at: string;
+  updated_at?: string;
+}
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/layout/AdminLayout';
