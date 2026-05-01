@@ -9,12 +9,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, Search, FolderOpen, StickyNote } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatCPF, formatDate, formatCurrency, STATUS_LABELS } from '@/lib/formatters';
+import { formatCPF, formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { DocumentosDeclaracaoModal } from '@/components/declaracoes/DocumentosDeclaracaoModal';
 import { ObservacoesModal } from '@/components/declaracoes/ObservacoesModal';
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return '—';
+  return new Date(value).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 import { AnexarDeclaracaoButton } from '@/components/declaracoes/AnexarDeclaracaoButton';
 import { ProcessamentoSwitch } from '@/components/declaracoes/ProcessamentoSwitch';
 
@@ -34,6 +39,7 @@ const RESULTADO_META: Record<string, { label: string; cls: string }> = {
 export default function Declaracoes() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const escritorioId = profile.escritorioId;
 
   const [anoBase, setAnoBase] = useState('2026');
@@ -48,6 +54,24 @@ export default function Declaracoes() {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(t);
   }, [search]);
+
+  // Realtime: invalida a lista a cada mudança em declaracoes do escritório
+  useEffect(() => {
+    if (!escritorioId) return;
+    const channel = supabase
+      .channel(`declaracoes-realtime-${escritorioId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'declaracoes', filter: `escritorio_id=eq.${escritorioId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['declaracoes-lista', escritorioId] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [escritorioId, queryClient]);
 
   const { data: declaracoes = [], isLoading } = useQuery({
     queryKey: ['declaracoes-lista', escritorioId, anoBase],
@@ -195,7 +219,7 @@ export default function Declaracoes() {
                           )}
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-sm">
-                          {formatDate(d.ultima_atualizacao_status)}
+                          {formatDateTime(d.ultima_atualizacao_status)}
                         </TableCell>
                         <TableCell>
                           {resultado ? (
