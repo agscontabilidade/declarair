@@ -151,6 +151,20 @@ export default function Clientes() {
         cliente={viewCliente}
         onEdit={handleEditFromView}
       />
+
+      <CobrancaModal
+        open={!!cobrancaCliente}
+        onOpenChange={(o) => !o && setCobrancaCliente(null)}
+        clienteIdLocked={cobrancaCliente?.id ?? null}
+        clienteNomeLocked={cobrancaCliente?.nome ?? null}
+        loading={criarCobranca.isPending}
+        onSave={(data) => {
+          criarCobranca.mutate(
+            data as { cliente_id: string; declaracao_id?: string; descricao: string; valor: number; data_vencimento: string },
+            { onSuccess: () => setCobrancaCliente(null) },
+          );
+        }}
+      />
     </DashboardLayout>
   );
 }
