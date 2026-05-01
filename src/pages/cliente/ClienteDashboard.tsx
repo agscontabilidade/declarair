@@ -20,6 +20,97 @@ export default function ClienteDashboard() {
   const { profile, user } = useAuth();
   const { declaracao, checklist, formulario, statusStep, pendentes, isLoading, isError, error, refetch } = useClientePortal();
   const navigate = useNavigate();
+  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+
+  const tutorialSteps = [
+    {
+      title: "Passo 1: Acesso ao Portal e-CAC",
+      description: "Acesse o Portal e-CAC da Receita Federal utilizando sua conta gov.br (nível Prata ou Ouro).",
+      content: (
+        <div className="space-y-4">
+          <p>Para começar, acesse o link oficial do e-CAC:</p>
+          <a 
+            href="https://cav.receita.fazenda.gov.br/autenticacao/login" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline flex items-center gap-2 font-medium"
+          >
+            Acessar Portal e-CAC <ExternalLink className="h-4 w-4" />
+          </a>
+          <div className="bg-muted p-4 rounded-lg text-sm border border-border">
+            <strong>Dica:</strong> Utilize o botão "Entrar com gov.br" para um acesso mais seguro e completo.
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Passo 2: Localizar Senhas e Procurações",
+      description: "No menu superior ou lateral, localize a opção de Procurações.",
+      content: (
+        <div className="space-y-4">
+          <p>Dentro do portal, procure pela aba <strong>"Senhas e Procurações"</strong>.</p>
+          <p>Em seguida, clique na opção <strong>"Cadastro, Consulta e Cancelamento - Procuração para e-CAC"</strong>.</p>
+          <div className="aspect-video bg-muted rounded-md flex items-center justify-center border border-dashed border-border">
+            <ShieldCheck className="h-12 w-12 text-muted-foreground/20" />
+            <span className="text-xs text-muted-foreground ml-2">Imagem ilustrativa do menu</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Passo 3: Cadastrar Procuração",
+      description: "Inicie o processo de cadastramento informando os dados do procurador.",
+      content: (
+        <div className="space-y-4">
+          <p>Selecione a opção <strong>"Cadastrar Procuração"</strong>.</p>
+          <p>Você precisará informar o CPF ou CNPJ do seu contador/escritório que será o procurador.</p>
+          <div className="bg-yellow-50 dark:bg-yellow-950/20 p-4 rounded-lg text-sm border border-yellow-200 dark:border-yellow-900">
+            <p className="text-yellow-800 dark:text-yellow-200">
+              <strong>Importante:</strong> Verifique com seu contador qual o CPF/CNPJ correto para o cadastro da procuração.
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Passo 4: Definir Poderes e Prazo",
+      description: "Selecione os serviços que o procurador poderá acessar e a validade.",
+      content: (
+        <div className="space-y-4">
+          <p>Marque a opção <strong>"Todos os serviços com relação de processos"</strong> ou selecione especificamente os serviços de <strong>"Imposto de Renda"</strong>.</p>
+          <p>Defina um prazo de validade (recomendamos 5 anos para evitar renovações anuais).</p>
+          <p>Clique em <strong>"Cadastrar Procuração"</strong> ao final da página.</p>
+        </div>
+      )
+    },
+    {
+      title: "Passo 5: Assinar e Finalizar",
+      description: "Assine digitalmente para confirmar a autorização.",
+      content: (
+        <div className="space-y-4">
+          <p>O sistema solicitará a assinatura digital através do portal gov.br.</p>
+          <p>Confirme os dados e siga as instruções na tela para concluir.</p>
+          <div className="bg-success/10 p-4 rounded-lg text-sm border border-success/20">
+            <p className="text-success-foreground">
+              <strong>Pronto!</strong> Após concluído, seu contador poderá acompanhar sua declaração em tempo real e resolver pendências com agilidade.
+            </p>
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  const handleNextTutorial = () => {
+    if (currentTutorialStep < tutorialSteps.length - 1) {
+      setCurrentTutorialStep(prev => prev + 1);
+    }
+  };
+
+  const handlePrevTutorial = () => {
+    if (currentTutorialStep > 0) {
+      setCurrentTutorialStep(prev => prev - 1);
+    }
+  };
 
   const { unreadCount } = useChat(
     declaracao?.id,
