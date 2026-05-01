@@ -15,6 +15,13 @@ export type ChecklistDocumentoRow = Tables['checklist_documentos']['Row'];
 export type FormularioIRRow = Tables['formulario_ir']['Row'];
 export type TemplateMensagemRow = Tables['templates_mensagem']['Row'];
 
+// Aliases retro-compatíveis
+export type Cliente = ClienteRow;
+export type Cobranca = CobrancaRow;
+export type ClienteWithContador = ClienteRow & {
+  contador_responsavel?: { id: string; nome: string } | null;
+};
+
 // Joins comuns
 export type CobrancaComCliente = CobrancaRow & {
   clientes?: Pick<ClienteRow, 'nome' | 'cpf' | 'email' | 'telefone'> | null;
