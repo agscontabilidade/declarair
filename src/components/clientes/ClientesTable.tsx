@@ -5,21 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCPF } from '@/lib/formatters';
 import { WhatsAppIcon } from './WhatsAppIcon';
+import { Cliente } from '@/types/domain';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-export interface ClienteRow {
-  id: string;
-  nome: string;
-  cpf: string;
-  email: string | null;
-  telefone: string | null;
-  status_onboarding: string;
-  procuracao_ecac?: boolean | null;
-  procuracao_ecac_validade?: string | null;
-}
+export type ClienteRow = Cliente;
 
 function formatTelefone(tel: string | null) {
   if (!tel) return '—';

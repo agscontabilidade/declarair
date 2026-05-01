@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 
 const corsHeaders = {
@@ -24,7 +24,7 @@ const PLAN_CONFIG: Record<string, { limite: number; storage: number; usuarios: n
   pro: { limite: 3, storage: 102400, usuarios: 5 },
 };
 
-async function logActivity(admin: any, event: any, status: string = 'sucesso', message: string = '') {
+async function logActivity(admin: SupabaseClient, event: Stripe.Event | { type: string }, status: string = 'sucesso', message: string = '') {
   try {
     await admin.rpc('registrar_log_auditoria', {
       p_tipo: 'webhook_stripe',
@@ -38,7 +38,7 @@ async function logActivity(admin: any, event: any, status: string = 'sucesso', m
   }
 }
 
-async function handleInvoicePaid(invoice: Stripe.Invoice, admin: any) {
+async function handleInvoicePaid(invoice: Stripe.Invoice, admin: SupabaseClient) {
   const subscription = invoice.subscription as string;
   if (!subscription) return;
 
@@ -82,7 +82,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, admin: any) {
   });
 }
 
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, admin: any) {
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, admin: SupabaseClient) {
   const subscription = invoice.subscription as string;
   if (!subscription) return;
 
@@ -114,7 +114,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, admin: any) {
   });
 }
 
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription, admin: any) {
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription, admin: SupabaseClient) {
   const escritorioId = subscription.metadata?.escritorio_id;
   if (!escritorioId) return;
 
@@ -136,7 +136,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription, admi
   });
 }
 
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription, admin: any) {
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription, admin: SupabaseClient) {
   const escritorioId = subscription.metadata?.escritorio_id;
   if (!escritorioId) return;
 
@@ -162,7 +162,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription, admi
     .eq("stripe_subscription_id", subscription.id);
 }
 
-async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent, admin: any) {
+async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent, admin: SupabaseClient) {
   const escritorioId = paymentIntent.metadata?.escritorio_id;
   const type = paymentIntent.metadata?.type;
   

@@ -8,6 +8,7 @@ import { STATUS_LABELS, formatCurrency, formatDate } from '@/lib/formatters';
 import { CheckCircle, Plus, Receipt } from 'lucide-react';
 import { NovaCobrancaModal } from './NovaCobrancaModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Cobranca } from '@/types/domain';
 
 const statusColors: Record<string, string> = {
   pendente: 'bg-amber-100 text-amber-800',
@@ -17,7 +18,7 @@ const statusColors: Record<string, string> = {
 };
 
 interface Props {
-  cobrancas: any[];
+  cobrancas: Cobranca[];
   isLoading: boolean;
   onMarcarPago: (id: string) => void;
   onCriarCobranca: (input: { descricao: string; valor: number; data_vencimento: string }) => void;

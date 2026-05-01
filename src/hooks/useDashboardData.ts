@@ -16,6 +16,7 @@ export interface DeclaracaoKanban {
   version: number;
 }
 
+
 interface DeclaracaoRow {
   id: string;
   status: string;

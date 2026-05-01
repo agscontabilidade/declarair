@@ -1,6 +1,6 @@
 // Edge function: valida PDF anexado (Declaração ou Recibo) com IA,
 // atualiza o status da declaração e dispara notificações ao cliente.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +26,7 @@ interface Body {
   arquivo_nome?: string;
 }
 
-function digits(s?: string | null) {
+function digits(s: string | null | undefined) {
   return (s || "").replace(/\D/g, "");
 }
 
@@ -71,14 +71,14 @@ Deno.serve(async (req) => {
     const { data: dec, error: decErr } = await admin
       .from("declaracoes")
       .select(
-        "id, escritorio_id, cliente_id, ano_base, status, recibo_validado_em, clientes:cliente_id(nome, cpf, email, telefone)",
+        "id, escritorio_id, cliente_id, ano_base, status, recibo_validado_em, clientes:cliente_id(id, nome, cpf, email, telefone)",
       )
       .eq("id", declaracao_id)
       .eq("escritorio_id", usuario.escritorio_id)
       .single();
     if (decErr || !dec) return json({ error: "Declaração não encontrada" }, 404);
 
-    const cliente = (dec as any).clientes;
+    const cliente = dec.clientes as unknown as { id: string; nome: string; cpf: string; email: string; telefone: string };
     if (!cliente) return fail("Cliente da declaração não encontrado");
 
     // Baixa o PDF do Storage
@@ -103,7 +103,25 @@ Deno.serve(async (req) => {
     const base64 = btoa(bin);
 
     // Prompt
-    const schemaDeclaracao = {
+    interface ExtracaoDeclaracao {
+      eh_declaracao_irpf: boolean;
+      cpf: string;
+      nome: string;
+      ano_exercicio: number;
+      tipo_resultado: 'restituicao' | 'pagamento' | 'nenhum';
+      valor_resultado: number;
+      motivo_rejeicao: string | null;
+    }
+    interface ExtracaoRecibo {
+      eh_recibo_rfb: boolean;
+      numero_recibo: string;
+      cpf: string;
+      ano_exercicio: number;
+      data_transmissao: string;
+      motivo_rejeicao: string | null;
+    }
+
+    const promptDeclaracao = {
       eh_declaracao_irpf: "boolean — true somente se for de fato uma Declaração de Ajuste Anual do IRPF (DIRPF) emitida pelo programa da Receita Federal",
       cpf: "string — CPF do declarante apenas dígitos (11)",
       nome: "string — nome completo do declarante",
@@ -112,7 +130,7 @@ Deno.serve(async (req) => {
       valor_resultado: "number — valor em reais (sem sinal); 0 se nenhum",
       motivo_rejeicao: "string|null — preencha se eh_declaracao_irpf=false explicando o motivo",
     };
-    const schemaRecibo = {
+    const promptRecibo = {
       eh_recibo_rfb: "boolean — true somente se for o Recibo de Entrega da DIRPF emitido pela Receita Federal",
       numero_recibo: "string — número do recibo conforme aparece no documento",
       cpf: "string — CPF do declarante (11 dígitos)",
@@ -120,7 +138,7 @@ Deno.serve(async (req) => {
       data_transmissao: "string ISO (YYYY-MM-DD) — data de transmissão",
       motivo_rejeicao: "string|null",
     };
-    const schema = tipo === "declaracao" ? schemaDeclaracao : schemaRecibo;
+    const schema = tipo === "declaracao" ? promptDeclaracao : promptRecibo;
 
     const systemPrompt = `Você é um validador rigoroso de documentos fiscais brasileiros (IRPF).
 Você receberá um PDF anexado. Analise visual e textualmente.
@@ -167,7 +185,7 @@ Seja conservador: se houver QUALQUER dúvida sobre autenticidade ou tipo do docu
     }
     const aiJson = await aiRes.json();
     const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-    let extracao: any;
+    let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo>;
     try {
       extracao = JSON.parse(content);
     } catch {

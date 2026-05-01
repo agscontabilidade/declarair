@@ -3,13 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import type { ClienteWithContador } from '@/types/domain';
 
 const PAGE_SIZE = 10;
 
 export function useClientes() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
-  const escritorioId = profile.escritorioId;
+  const escritorioId = profile?.escritorioId;
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -23,7 +24,7 @@ export function useClientes() {
   const query = useQuery({
     queryKey: ['clientes', escritorioId, debouncedSearch, page],
     queryFn: async () => {
-      if (!escritorioId) return { data: [], total: 0 };
+      if (!escritorioId) return { data: [] as ClienteWithContador[], total: 0 };
       let q = supabase
         .from('clientes')
         .select('id, escritorio_id, contador_responsavel_id, nome, cpf, email, telefone, data_nascimento, status_onboarding, created_at, auth_user_id, conta_azul_id, procuracao_ecac, procuracao_ecac_validade, usuarios!clientes_contador_responsavel_id_fkey(nome)', { count: 'exact' })
@@ -39,7 +40,7 @@ export function useClientes() {
 
       const { data, count, error } = await q;
       if (error) throw error;
-      return { data: data || [], total: count ?? 0 };
+      return { data: (data as ClienteWithContador[]) || [], total: count ?? 0 };
     },
     enabled: !!escritorioId,
   });

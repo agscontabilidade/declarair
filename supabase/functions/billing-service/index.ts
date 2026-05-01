@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 
 const corsHeaders = {
@@ -55,7 +55,7 @@ async function authenticateUser(req: Request) {
 }
 
 // ── Ensure Stripe customer ──
-async function ensureStripeCustomer(escritorio: any, admin: any) {
+async function ensureStripeCustomer(escritorio: any, admin: SupabaseClient) {
   if (escritorio.stripe_customer_id) {
     return escritorio.stripe_customer_id;
   }
@@ -88,7 +88,7 @@ const ADDON_PRICES: Record<string, { amount: number; name: string }> = {
 // ── Create subscription ──
 async function createSubscription(
   escritorio: any,
-  admin: any,
+  admin: SupabaseClient,
   body: { plano: string; paymentMethod: string }
 ) {
   const planoConfig = PRICES[body.plano];
@@ -158,7 +158,7 @@ async function createSubscription(
 }
 
 // ── Cancel subscription ──
-async function cancelSubscription(escritorio: any, admin: any) {
+async function cancelSubscription(escritorio: any, admin: SupabaseClient) {
   const { data: assinatura } = await admin
     .from("assinaturas")
     .select("*")
@@ -186,7 +186,7 @@ async function cancelSubscription(escritorio: any, admin: any) {
 }
 
 // ── Get subscription ──
-async function getSubscription(escritorio: any, admin: any) {
+async function getSubscription(escritorio: any, admin: SupabaseClient) {
   const { data: assinatura } = await admin
     .from("assinaturas")
     .select("*")
@@ -197,7 +197,7 @@ async function getSubscription(escritorio: any, admin: any) {
 }
 
 // ── Get payments ──
-async function getPayments(escritorio: any, admin: any) {
+async function getPayments(escritorio: any, admin: SupabaseClient) {
   const { data: pagamentos } = await admin
     .from("pagamentos_assinatura")
     .select("*")
@@ -211,7 +211,7 @@ async function getPayments(escritorio: any, admin: any) {
 // ── Activate addon ──
 async function activateAddon(
   escritorio: any,
-  admin: any,
+  admin: SupabaseClient,
   body: { addonSlug: string }
 ) {
   const addonConfig = ADDON_PRICES[body.addonSlug];
@@ -293,7 +293,7 @@ async function activateAddon(
 // ── Deactivate addon ──
 async function deactivateAddon(
   escritorio: any,
-  admin: any,
+  admin: SupabaseClient,
   body: { addonSlug: string }
 ) {
   const { data: addon } = await admin
@@ -348,7 +348,7 @@ async function createPortalSession(escritorio: any) {
 // ── Buy extra declarations ──
 async function buyExtraDeclaracoes(
   escritorio: any,
-  admin: any,
+  admin: SupabaseClient,
   body: { quantidade: number }
 ) {
   const customerId = await ensureStripeCustomer(escritorio, admin);
