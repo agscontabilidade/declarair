@@ -9,6 +9,8 @@ import { useClientes } from '@/hooks/useClientes';
 import { ClientesTable, type ClienteRow } from '@/components/clientes/ClientesTable';
 import { ClienteModal } from '@/components/clientes/ClienteModal';
 import { ClienteViewModal } from '@/components/clientes/ClienteViewModal';
+import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
+import { useCobrancas } from '@/hooks/useCobrancas';
 import { QueryError } from '@/components/ui/QueryError';
 import type { ClienteWithContador } from '@/types/domain';
 import { usePermissoes } from '@/hooks/usePermissoes';
