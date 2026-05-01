@@ -126,7 +126,7 @@ export default function Clientes() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         contadores={contadores}
-        onSave={(data) => createCliente.mutateAsync(data)}
+        onSave={(data) => createCliente.mutateAsync(data as Parameters<typeof createCliente.mutateAsync>[0])}
         mode="create"
       />
 
@@ -134,7 +134,7 @@ export default function Clientes() {
         open={!!editCliente}
         onOpenChange={(o) => !o && setEditCliente(null)}
         contadores={contadores}
-        onSave={(data) => updateCliente.mutateAsync(data)}
+        onSave={(data) => updateCliente.mutateAsync(data as Parameters<typeof updateCliente.mutateAsync>[0])}
         mode="edit"
         cliente={editCliente}
       />
