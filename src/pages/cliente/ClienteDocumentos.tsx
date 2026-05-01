@@ -289,23 +289,23 @@ export default function ClienteDocumentos() {
 
         <RelacaoDocumentosModal open={relacaoModalOpen} onOpenChange={setRelacaoModalOpen} />
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Documentos</h1>
             <p className="text-sm text-muted-foreground mt-1">Gerencie e envie seus documentos para o contador</p>
           </div>
           {recebidos.length > 0 && !docsEnviadosAoContador && (
-            <Button 
-              onClick={handleFinalize} 
+            <Button
+              onClick={handleFinalize}
               disabled={sending}
-              className="gap-2 bg-primary hover:bg-primary/90"
+              className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"
             >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Enviar ao Contador
             </Button>
           )}
           {docsEnviadosAoContador && (
-            <Badge className="bg-success/15 text-success py-1.5 px-3 border-success/30">
+            <Badge className="bg-success/15 text-success py-1.5 px-3 border-success/30 self-start sm:self-auto">
               <CheckCircle2 className="h-4 w-4 mr-2" />
               Enviado ao Contador
             </Badge>
