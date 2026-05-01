@@ -47,6 +47,7 @@ export default function ClienteDocumentos() {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [concluido, setConcluido] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
