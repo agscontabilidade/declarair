@@ -31,11 +31,11 @@ export function CobrancaModal({ open, onOpenChange, onSave, loading, editData }:
 
   useEffect(() => {
     if (editData) {
-      setClienteId(editData.cliente_id);
-      setDescricao(editData.descricao);
-      setValorStr(String(editData.valor).replace('.', ','));
-      setDataVencimento(new Date(editData.data_vencimento + 'T12:00:00'));
-      setDeclaracaoId(editData.declaracao_id || '');
+      setClienteId(String(editData.cliente_id ?? ''));
+      setDescricao(String(editData.descricao ?? ''));
+      setValorStr(String(editData.valor ?? '').replace('.', ','));
+      setDataVencimento(new Date(String(editData.data_vencimento) + 'T12:00:00'));
+      setDeclaracaoId(String(editData.declaracao_id ?? ''));
     } else {
       setClienteId(''); setDescricao(''); setValorStr(''); setDataVencimento(undefined); setDeclaracaoId('');
     }
