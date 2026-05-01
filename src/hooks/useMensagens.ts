@@ -31,7 +31,7 @@ export const AVAILABLE_TAGS = [
 const MOCK_DATA: Record<string, string> = {
   '{nome_cliente}': 'João Silva',
   '{cpf_cliente}': '123.456.789-00',
-  '{ano_base}': '2025',
+  '{ano_base}': '2026',
   '{status_declaracao}': 'Transmitida',
   '{tipo_resultado}': 'Restituição',
   '{valor_resultado}': '2.450,00',
