@@ -150,12 +150,21 @@ export default function Addons() {
                   return (
                     <Card
                       key={addon.id}
-                      className={`relative overflow-hidden transition-all ${isActive ? 'border-primary/40 shadow-md' : 'hover:shadow-sm'}`}
+                      className={`relative overflow-hidden transition-all ${isActive ? 'border-primary/40 shadow-md' : 'hover:shadow-sm'} ${!isPro ? 'opacity-90' : ''}`}
                     >
                       {isActive && (
                         <div className="absolute top-3 right-3">
                           <Badge className="bg-primary/10 text-primary border-primary/20">
                             <Check className="h-3 w-3 mr-1" /> Ativo
+                          </Badge>
+                        </div>
+                      )}
+
+                      {!isPro && (
+                        <div className="absolute top-3 right-3">
+                          <Badge variant="secondary" className="gap-1.5">
+                            <Crown className="h-3 w-3 text-amber-500" />
+                            Pro
                           </Badge>
                         </div>
                       )}
@@ -166,7 +175,9 @@ export default function Addons() {
                             <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
                           </div>
                           <div>
-                            <CardTitle className="text-lg">{addon.nome}</CardTitle>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              {addon.nome}
+                            </CardTitle>
                             <p className="text-lg font-bold text-foreground mt-0.5">
                               {formatCurrency(addon.preco)}<span className="text-xs font-normal text-muted-foreground">/mês</span>
                             </p>
