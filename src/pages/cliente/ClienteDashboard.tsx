@@ -7,11 +7,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useClientePortal } from '@/hooks/useClientePortal';
 import { StatusStepper } from '@/components/cliente-portal/StatusStepper';
 import { ChatFlutuante } from '@/components/cliente-portal/ChatFlutuante';
-import { FileText, ClipboardList, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { FileText, ClipboardList, Upload, AlertCircle, CheckCircle2, ShieldCheck, ExternalLink, ChevronRight, ChevronLeft } from 'lucide-react';
 import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '@/hooks/useChat';
 import { QueryError } from '@/components/ui/QueryError';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useState } from 'react';
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
