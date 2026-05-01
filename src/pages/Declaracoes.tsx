@@ -256,6 +256,9 @@ export default function Declaracoes() {
                               escritorioId={escritorioId}
                               arquivoUrl={d.arquivo_declaracao_url}
                               arquivoNome={d.arquivo_declaracao_nome}
+                              arquivoReciboUrl={d.arquivo_recibo_url}
+                              arquivoReciboNome={d.arquivo_recibo_nome}
+                              reciboValidadoEm={d.recibo_validado_em}
                             />
                           )}
                         </TableCell>
