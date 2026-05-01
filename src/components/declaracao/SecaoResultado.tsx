@@ -2,9 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/formatters';
-import { TrendingUp, TrendingDown, Copy, Activity, FileText, Info, MinusCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Copy, Activity, FileText, Info, MinusCircle, Clock, CheckCircle2, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
-import { ProcessamentoSwitch, type StatusProcessamentoRfb } from '@/components/declaracoes/ProcessamentoSwitch';
 
 interface Props {
   declaracao: {
