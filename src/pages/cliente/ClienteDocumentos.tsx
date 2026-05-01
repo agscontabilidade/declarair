@@ -66,26 +66,61 @@ export default function ClienteDocumentos() {
   const [dragActive, setDragActive] = useState(false);
 
   const handleFiles = async (files: FileList | File[]) => {
-    if (!declaracao || !profile.clienteId) return;
-    
+    const list = Array.from(files);
+    console.log('[upload] start', {
+      count: list.length,
+      hasDeclaracao: !!declaracao,
+      clienteId: profile.clienteId,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'n/a',
+    });
+
+    if (!declaracao) {
+      toast.error('Declaração não encontrada. Recarregue a página.');
+      console.warn('[upload] aborted: no declaracao');
+      return;
+    }
+    if (!profile.clienteId) {
+      toast.error('Sessão inválida. Faça login novamente.');
+      console.warn('[upload] aborted: no clienteId in profile');
+      return;
+    }
+
+    const MAX_BYTES = 20 * 1024 * 1024; // 20MB
+    const oversize = list.filter((f) => f.size > MAX_BYTES);
+    if (oversize.length > 0) {
+      toast.error(
+        `Arquivo muito grande (máx 20MB): ${oversize.map((f) => f.name).join(', ')}`
+      );
+      console.warn('[upload] oversize files', oversize.map((f) => ({ name: f.name, size: f.size })));
+      return;
+    }
+
     setUploading(true);
     let successCount = 0;
+    const failures: { name: string; reason: string }[] = [];
 
     try {
-      for (const file of Array.from(files)) {
-        // Just upload as a new document entry, ignoring any checklist requirements
+      for (const file of list) {
         const timestamp = Date.now();
         const safeName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
         const path = `${declaracao.escritorio_id}/${profile.clienteId}/geral/${safeName}`;
-        
+
+        console.log('[upload] uploading', { name: file.name, size: file.size, type: file.type, path });
+
         const { error: uploadError } = await supabase.storage
           .from('documentos-clientes')
-          .upload(path, file, { upsert: true });
-        
-        if (uploadError) throw uploadError;
+          .upload(path, file, {
+            upsert: true,
+            contentType: file.type || 'application/octet-stream',
+          });
 
-        // Create a new entry in checklist_documentos for this specific file
-        await supabase
+        if (uploadError) {
+          console.error('[upload] storage error', { name: file.name, error: uploadError });
+          failures.push({ name: file.name, reason: uploadError.message });
+          continue;
+        }
+
+        const { error: insertError } = await supabase
           .from('checklist_documentos')
           .insert({
             declaracao_id: declaracao.id,
@@ -98,31 +133,59 @@ export default function ClienteDocumentos() {
             data_recebimento: new Date().toISOString(),
           });
 
+        if (insertError) {
+          console.error('[upload] db insert error', { name: file.name, error: insertError });
+          // Best-effort cleanup of orphan storage object
+          await supabase.storage.from('documentos-clientes').remove([path]).catch(() => undefined);
+          failures.push({ name: file.name, reason: insertError.message });
+          continue;
+        }
+
+        console.log('[upload] ok', { name: file.name });
         successCount++;
       }
 
       if (successCount > 0) {
         toast.success(`${successCount} arquivo(s) carregado(s) com sucesso!`);
-        
-        // Atualiza automaticamente o status da declaração e dos documentos
-        await supabase
+
+        const { error: updErr } = await supabase
           .from('declaracoes')
-          .update({ 
+          .update({
             status_documentos: 'enviado',
             status: 'documentacao_recebida',
-            ultima_atualizacao_status: new Date().toISOString()
+            ultima_atualizacao_status: new Date().toISOString(),
           })
           .eq('id', declaracao.id);
 
+        if (updErr) {
+          console.error('[upload] declaracao update error', updErr);
+          toast.error(`Documentos salvos, mas falha ao atualizar status: ${updErr.message}`);
+        }
 
+        // Sincroniza com o painel do contador (drive, checklist, lista de declarações)
         queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
         queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
+        queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
+        queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs'] });
+        queryClient.invalidateQueries({ queryKey: ['declaracao-checklist'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes'] });
+        queryClient.invalidateQueries({ queryKey: ['declaracoes'] });
+      }
+
+      if (failures.length > 0) {
+        toast.error(
+          `Falha em ${failures.length} arquivo(s): ${failures.map((f) => `${f.name} (${f.reason})`).join('; ')}`,
+          { duration: 8000 }
+        );
       }
     } catch (err: unknown) {
-      toast.error('Erro ao carregar arquivos');
-      console.error(err);
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('[upload] unexpected error', err);
+      toast.error(`Erro inesperado no upload: ${message}`);
     } finally {
       setUploading(false);
+      // Reset input so the same file can be re-selected after a failure
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
