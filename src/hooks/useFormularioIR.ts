@@ -136,23 +136,41 @@ export function useFormularioIR() {
   // Sync form data from DB
   useEffect(() => {
     if (formulario) {
+      // The Supabase generated types don't yet include the newer endereço/ocupação/pix
+      // columns; cast through a partial typed shape rather than `any`.
+      type FormularioExtra = Partial<{
+        data_nascimento: string;
+        raca_cor: string;
+        cep: string;
+        logradouro: string;
+        numero: string;
+        complemento: string;
+        bairro: string;
+        cidade: string;
+        uf: string;
+        natureza_ocupacao: string;
+        ocupacao_principal: string;
+        alimentandos: Alimentando[];
+        chave_pix_cliente: string;
+      }>;
+      const extra = formulario as unknown as FormularioExtra;
       setFormData({
         estado_civil: formulario.estado_civil || '',
         conjuge_nome: formulario.conjuge_nome || '',
         conjuge_cpf: formulario.conjuge_cpf || '',
-        data_nascimento: (formulario as any).data_nascimento || '',
-        raca_cor: (formulario as any).raca_cor || '',
-        cep: (formulario as any).cep || '',
-        logradouro: (formulario as any).logradouro || '',
-        numero: (formulario as any).numero || '',
-        complemento: (formulario as any).complemento || '',
-        bairro: (formulario as any).bairro || '',
-        cidade: (formulario as any).cidade || '',
-        uf: (formulario as any).uf || '',
-        natureza_ocupacao: (formulario as any).natureza_ocupacao || '',
-        ocupacao_principal: (formulario as any).ocupacao_principal || '',
+        data_nascimento: extra.data_nascimento || '',
+        raca_cor: extra.raca_cor || '',
+        cep: extra.cep || '',
+        logradouro: extra.logradouro || '',
+        numero: extra.numero || '',
+        complemento: extra.complemento || '',
+        bairro: extra.bairro || '',
+        cidade: extra.cidade || '',
+        uf: extra.uf || '',
+        natureza_ocupacao: extra.natureza_ocupacao || '',
+        ocupacao_principal: extra.ocupacao_principal || '',
         dependentes: (formulario.dependentes as unknown as Dependente[]) || [],
-        alimentandos: (formulario as any).alimentandos || [],
+        alimentandos: extra.alimentandos || [],
         rendimentos_emprego: (formulario.rendimentos_emprego as unknown as RendimentoEmprego[]) || [],
         rendimentos_autonomo: (formulario.rendimentos_autonomo as unknown as Record<string, unknown>) || {},
         rendimentos_aluguel: (formulario.rendimentos_aluguel as unknown as RendimentoAluguel[]) || [],
@@ -163,7 +181,7 @@ export function useFormularioIR() {
         despesas_educacao: (formulario.despesas_educacao as unknown as DespesaEducacao[]) || [],
         previdencia_privada: (formulario.previdencia_privada as unknown as Record<string, unknown>) || {},
         informacoes_adicionais: formulario.informacoes_adicionais || '',
-        chave_pix_cliente: (formulario as any).chave_pix_cliente || '',
+        chave_pix_cliente: extra.chave_pix_cliente || '',
       });
     }
   }, [formulario]);
