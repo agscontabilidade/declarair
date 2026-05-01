@@ -125,6 +125,31 @@ Para cada risco: descreva o problema, gravidade (baixa/média/alta), e ação co
 Considere divergências comuns como: rendimentos vs DIRF, bens incompatíveis com renda, etc.`;
   }
 
+  if (tipo === "analise_caixa") {
+    return base + `\n\nVocê está analisando o PDF da declaração de IRPF ANTES da transmissão à Receita Federal.
+Seu foco é identificar **estouro de caixa** e **inconsistências patrimoniais**. Estruture a resposta em seções:
+
+1. **Evolução Patrimonial**
+   - Patrimônio ano anterior vs ano atual (variação)
+   - Aquisições significativas no período
+
+2. **Análise de Caixa (Origens x Aplicações)**
+   - Origens: rendimentos tributáveis + isentos + tributação exclusiva + alienações + dívidas contraídas
+   - Aplicações: variação patrimonial positiva + despesas dedutíveis + imposto pago + dívidas quitadas
+   - **Saldo:** se Aplicações > Origens => ESTOURO DE CAIXA (sinalize com 🚨 e estime o valor)
+
+3. **Riscos de Malha Fina**
+   - Variação patrimonial incompatível com a renda declarada
+   - Bens sem origem comprovada
+   - Pontos críticos para revisão antes de transmitir
+
+4. **Recomendações ao Contador**
+   - Ajustes sugeridos (rendimentos isentos, doações recebidas, empréstimos a comprovar)
+   - Documentos adicionais que devem ser solicitados ao cliente
+
+Seja direto, use valores em R$ e cite as fichas/linhas do PDF quando relevante.`;
+  }
+
   return base + `\n\nFaça uma análise fiscal completa do contribuinte. Inclua:
 1. Resumo da situação fiscal
 2. Recomendação: declaração simplificada ou completa (e por quê)
