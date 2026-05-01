@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { validateCPF, maskCPF } from '@/lib/formatters';
+import { getErrorMessage } from '@/lib/errors';
 
 interface ClienteEditavel {
   id?: string;
@@ -24,7 +25,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contadores: { id: string; nome: string }[];
-  onSave: (data: any) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<void>;
   mode?: 'create' | 'edit';
   cliente?: ClienteEditavel | null;
 }
@@ -96,8 +97,8 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
         toast({ title: 'Cliente criado com sucesso!' });
       }
       onOpenChange(false);
-    } catch (err: any) {
-      toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
       setLoading(false);
     }

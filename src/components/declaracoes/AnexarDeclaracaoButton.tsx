@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/errors';
 
 type Tipo = 'declaracao' | 'recibo';
 
@@ -93,7 +94,7 @@ export function AnexarDeclaracaoButton({
       }
       queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
     },
-    onError: (e: any) => toast.error(e.message || 'Erro ao enviar arquivo'),
+    onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao enviar arquivo')),
     onSettled: () => setProcessandoTipo(null),
   });
 

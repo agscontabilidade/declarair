@@ -13,6 +13,7 @@ import { QueryError } from '@/components/ui/QueryError';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function Clientes() {
   const {
@@ -56,8 +57,8 @@ export default function Clientes() {
     try {
       await deleteCliente.mutateAsync(cliente.id);
       toast({ title: 'Cliente excluído com sucesso' });
-    } catch (err: any) {
-      toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Erro ao excluir', description: getErrorMessage(err), variant: 'destructive' });
     }
   };
 
@@ -125,7 +126,7 @@ export default function Clientes() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         contadores={contadores}
-        onSave={(data) => createCliente.mutateAsync(data)}
+        onSave={(data) => createCliente.mutateAsync(data as Parameters<typeof createCliente.mutateAsync>[0])}
         mode="create"
       />
 
@@ -133,7 +134,7 @@ export default function Clientes() {
         open={!!editCliente}
         onOpenChange={(o) => !o && setEditCliente(null)}
         contadores={contadores}
-        onSave={(data) => updateCliente.mutateAsync(data)}
+        onSave={(data) => updateCliente.mutateAsync(data as Parameters<typeof updateCliente.mutateAsync>[0])}
         mode="edit"
         cliente={editCliente}
       />

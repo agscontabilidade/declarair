@@ -10,7 +10,7 @@ import { validateCPF, maskCPF } from '@/lib/formatters';
 
 interface Props {
   data: FormularioData;
-  onChange: (field: keyof FormularioData, value: any) => void;
+  onChange: (field: keyof FormularioData, value: unknown) => void;
   confirmado: boolean;
   onConfirmChange: (v: boolean) => void;
 }

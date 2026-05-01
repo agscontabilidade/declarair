@@ -6,7 +6,7 @@ import { getPlanoConfig } from '@/lib/constants/planos';
 
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 
-async function billingAction(action: string, body?: any) {
+async function billingAction(action: string, body?: Record<string, unknown>) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Não autenticado');
 
@@ -114,7 +114,7 @@ export function useBilling() {
   const atingiuLimiteDeclaracoes = usadas >= limite;
 
   const hasAddon = (addonNome: string) => {
-    return addons.some((a: any) => a.addons?.nome?.toLowerCase().includes(addonNome.toLowerCase()));
+    return addons.some((a: { addons?: { nome?: string } }) => a.addons?.nome?.toLowerCase().includes(addonNome.toLowerCase()));
   };
 
   const cancelSub = useMutation({

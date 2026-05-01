@@ -9,6 +9,7 @@ import { CheckCircle2, ArrowLeft, Mail } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import logoFull from '@/assets/logo-full.png';
 import logoIcon from '@/assets/logo-icon.png';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function RecuperarSenha() {
   const [email, setEmail] = useState('');
@@ -25,8 +26,8 @@ export default function RecuperarSenha() {
       if (error) throw error;
       setEnviado(true);
       toast({ title: 'Email enviado', description: 'Verifique sua caixa de entrada.' });
-    } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Erro', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
       setLoading(false);
     }

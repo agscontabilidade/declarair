@@ -82,7 +82,7 @@ export function AddonsMarketplace() {
       activateAddon.mutate(
         { addonSlug: pendingAction.addon.slug },
         {
-          onSuccess: (data: any) => {
+          onSuccess: (data: { url?: string; requiresPayment?: boolean; clientSecret?: string } | undefined) => {
             setPendingAction(null);
             if (data.requiresPayment && data.clientSecret) {
               // Open payment modal

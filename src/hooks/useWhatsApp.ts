@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-async function callWhatsApp(action: string, body?: any) {
+async function callWhatsApp(action: string, body?: Record<string, unknown>) {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     await supabase.auth.signOut({ scope: 'local' });

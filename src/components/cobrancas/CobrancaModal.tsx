@@ -16,9 +16,9 @@ import { useAuth } from '@/contexts/AuthContext';
 interface CobrancaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: any) => void;
+  onSave: (data: Record<string, unknown>) => void;
   loading?: boolean;
-  editData?: any;
+  editData?: Record<string, unknown> | null;
 }
 
 export function CobrancaModal({ open, onOpenChange, onSave, loading, editData }: CobrancaModalProps) {
@@ -31,11 +31,11 @@ export function CobrancaModal({ open, onOpenChange, onSave, loading, editData }:
 
   useEffect(() => {
     if (editData) {
-      setClienteId(editData.cliente_id);
-      setDescricao(editData.descricao);
-      setValorStr(String(editData.valor).replace('.', ','));
-      setDataVencimento(new Date(editData.data_vencimento + 'T12:00:00'));
-      setDeclaracaoId(editData.declaracao_id || '');
+      setClienteId(String(editData.cliente_id ?? ''));
+      setDescricao(String(editData.descricao ?? ''));
+      setValorStr(String(editData.valor ?? '').replace('.', ','));
+      setDataVencimento(new Date(String(editData.data_vencimento) + 'T12:00:00'));
+      setDeclaracaoId(String(editData.declaracao_id ?? ''));
     } else {
       setClienteId(''); setDescricao(''); setValorStr(''); setDataVencimento(undefined); setDeclaracaoId('');
     }
@@ -93,7 +93,7 @@ export function CobrancaModal({ open, onOpenChange, onSave, loading, editData }:
             <Select value={clienteId} onValueChange={(v) => { setClienteId(v); setDeclaracaoId(''); }}>
               <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
               <SelectContent>
-                {clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                {clientes.map((c: { id: string; nome: string }) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

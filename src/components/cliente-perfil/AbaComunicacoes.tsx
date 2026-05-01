@@ -2,9 +2,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquare } from 'lucide-react';
+import type { MensagemEnviadaRow } from '@/types/domain';
 
 interface Props {
-  mensagens: any[];
+  mensagens: MensagemEnviadaRow[];
   isLoading: boolean;
 }
 

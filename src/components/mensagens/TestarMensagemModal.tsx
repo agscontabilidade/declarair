@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 interface TestarMensagemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  template: any;
+  template: { id: string; nome?: string; canal: string; assunto?: string | null; corpo: string } | null;
   onEnviar: (clienteId: string, conteudo: string) => void;
 }
 
@@ -36,7 +36,7 @@ export function TestarMensagemModal({ open, onOpenChange, template, onEnviar }: 
     enabled: open && !!profile.escritorioId,
   });
 
-  const cliente = clientes.find((c: any) => c.id === clienteId);
+  const cliente = clientes.find((c: { id: string }) => c.id === clienteId);
 
   const { data: declaracao } = useQuery({
     queryKey: ['declaracao-test', clienteId],
@@ -121,7 +121,7 @@ export function TestarMensagemModal({ open, onOpenChange, template, onEnviar }: 
             <Select value={clienteId} onValueChange={setClienteId}>
               <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
               <SelectContent>
-                {clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                {clientes.map((c: { id: string; nome: string }) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

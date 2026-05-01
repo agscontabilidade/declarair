@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { CategoriaRF } from '@/lib/checklistPorPerfil';
 import { CATEGORIAS_RF, DOCUMENTO_TOOLTIPS } from '@/lib/checklistPorPerfil';
+import { getErrorMessage } from '@/lib/errors';
 
 const CATEGORIA_META: Record<CategoriaRF, { label: string; icon: React.ElementType; color: string }> = {
   documentos_pessoais: { label: 'Documentos Pessoais', icon: User, color: 'text-primary' },
@@ -90,9 +91,9 @@ export function StepDocumentos({ checklist, declaracaoId, escritorioId, clienteI
       toast.success('Documentos enviados com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['formulario-checklist'] });
       queryClient.invalidateQueries({ queryKey: ['checklist-documentos'] });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Upload error:', err);
-      toast.error(`Erro ao enviar documentos: ${err?.message || 'Tente novamente'}`);
+      toast.error(`Erro ao enviar documentos: ${getErrorMessage(err) || 'Tente novamente'}`);
     } finally {
       setUploading(null);
     }

@@ -17,7 +17,7 @@ export function usePermissoes() {
         .eq('user_id', user!.id);
 
       if (error) throw error;
-      return (data ?? []).map((p: any) => p.permissoes?.nome).filter(Boolean) as string[];
+      return (data ?? []).map((p: { permissoes?: { nome?: string } }) => p.permissoes?.nome).filter(Boolean) as string[];
     },
     enabled: !!user?.id,
   });

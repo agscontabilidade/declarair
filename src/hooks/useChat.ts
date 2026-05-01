@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
+import { getErrorMessage } from '@/lib/errors';
 
 type MensagemChat = Tables<'mensagens_chat'> & { enviado_whatsapp?: boolean };
 
@@ -119,7 +120,7 @@ async function sendViaWhatsApp(messageId: string, clienteId: string, escritorioI
     .eq('escritorio_id', escritorioId)
     .eq('status', 'ativo');
 
-  const hasWhatsApp = addons?.some((a: any) => a.addons?.nome?.toLowerCase().includes('whatsapp'));
+  const hasWhatsApp = addons?.some((a: { addons?: { nome?: string } }) => a.addons?.nome?.toLowerCase().includes('whatsapp'));
   if (!hasWhatsApp) return { success: true }; // Not applicable, not a failure
 
   // Get client phone
@@ -158,7 +159,7 @@ async function sendViaWhatsApp(messageId: string, clienteId: string, escritorioI
       }
 
       throw error;
-    } catch (err: any) {
+    } catch (err: unknown) {
       attempt++;
       console.error(`[WhatsApp] Tentativa ${attempt}/${MAX_RETRIES} falhou:`, err);
 
@@ -169,7 +170,7 @@ async function sendViaWhatsApp(messageId: string, clienteId: string, escritorioI
           .from('mensagens_chat')
           .update({
             enviado_whatsapp: false,
-            whatsapp_erro: err?.message || 'Erro desconhecido',
+            whatsapp_erro: getErrorMessage(err) || 'Erro desconhecido',
             whatsapp_tentativas: MAX_RETRIES,
           } as any)
           .eq('id', messageId);

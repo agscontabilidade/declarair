@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Brain, Sparkles, ShieldAlert, Receipt, Loader2, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBillingStatus } from '@/hooks/useBillingStatus';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   declaracaoId: string;
@@ -80,9 +81,9 @@ export function SecaoIAFiscal({ declaracaoId }: Props) {
           }
         }
       }
-    } catch (e: any) {
-      if (e.name !== 'AbortError') {
-        setResultado(`❌ Erro: ${e.message}`);
+    } catch (e: unknown) {
+      if (((e) as { name?: unknown }).name !== 'AbortError') {
+        setResultado(`❌ Erro: ${getErrorMessage(e)}`);
       }
     } finally {
       setLoading(false);

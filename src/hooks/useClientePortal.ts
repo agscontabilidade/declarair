@@ -56,7 +56,7 @@ export function useClientePortal() {
   const statusStep = (() => {
     if (!declaracao) return 0;
     
-    const hasPendencia = checklist.some((doc: any) => doc.status === 'pendente' && doc.obrigatorio);
+    const hasPendencia = checklist.some((doc: { status: string; obrigatorio: boolean }) => doc.status === 'pendente' && doc.obrigatorio);
     
     // Etapa 5: Transmitida
     if (declaracao.status === 'transmitida') return 5;
@@ -81,7 +81,7 @@ export function useClientePortal() {
   })();
 
 
-  const pendentes = checklist.filter((c: any) => c.status === 'pendente');
+  const pendentes = checklist.filter((c: { status: string }) => c.status === 'pendente');
 
   return {
     declaracao, checklist, formulario, statusStep, pendentes,

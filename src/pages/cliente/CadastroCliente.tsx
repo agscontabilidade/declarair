@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { validateCPF } from '@/lib/formatters';
+import { getErrorMessage } from '@/lib/errors';
 
 interface ConviteData {
   id: string;
@@ -149,8 +150,8 @@ export default function CadastroCliente() {
 
       toast({ title: 'Conta criada com sucesso!', description: 'Redirecionando para o portal...' });
       setTimeout(() => navigate('/cliente/dashboard'), 1500);
-    } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Erro', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }

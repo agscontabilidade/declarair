@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import logoFull from '@/assets/logo-full.png';
 import logoIcon from '@/assets/logo-icon.png';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function ClienteLogin() {
   const navigate = useNavigate();
@@ -39,8 +40,8 @@ export default function ClienteLogin() {
       });
       if (error) throw error;
       // Navigation will happen via the useEffect above once AuthContext updates
-    } catch (err: any) {
-      toast({ title: 'Erro ao entrar', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Erro ao entrar', description: getErrorMessage(err), variant: 'destructive' });
       setIsSubmitting(false);
     }
   }

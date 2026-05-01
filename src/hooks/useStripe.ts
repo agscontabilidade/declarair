@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 
-async function stripeAction(action: string, body?: any) {
+async function stripeAction(action: string, body?: Record<string, unknown>) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Não autenticado');
 

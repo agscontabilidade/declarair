@@ -69,7 +69,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
               </p>
             </div>
           ) : (
-            docs.map((d: any) => (
+            docs.map((d: { id: string; arquivo_nome?: string | null; nome_documento?: string; data_recebimento?: string | null; arquivo_url?: string | null }) => (
               <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 hover:border-primary/40 transition-colors">
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0">

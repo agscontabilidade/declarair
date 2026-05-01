@@ -19,8 +19,8 @@ import {
 } from '@/lib/calculoIR';
 
 interface Props {
-  formulario: any;
-  declaracao: any;
+  formulario: Record<string, unknown> | null | undefined;
+  declaracao: Record<string, unknown> | null | undefined;
   onSaveForma: (forma: string) => void;
   savingForma: boolean;
 }
@@ -111,7 +111,7 @@ export function SecaoCalculoIR({ formulario, declaracao, onSaveForma, savingForm
   // Pre-fill from formulario data
   const rendimentosEmprego = useMemo(() => {
     const arr = Array.isArray(formulario?.rendimentos_emprego) ? formulario.rendimentos_emprego : [];
-    return arr.reduce((sum: number, r: any) => sum + (parseFloat(r.rendimento_bruto) || 0), 0);
+    return arr.reduce((sum: number, r: { rendimento_bruto?: string | number }) => sum + (parseFloat(String(r.rendimento_bruto)) || 0), 0);
   }, [formulario]);
 
   const totalDependentes = useMemo(() => {
@@ -120,12 +120,12 @@ export function SecaoCalculoIR({ formulario, declaracao, onSaveForma, savingForm
 
   const totalMedicas = useMemo(() => {
     const arr = Array.isArray(formulario?.despesas_medicas) ? formulario.despesas_medicas : [];
-    return arr.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
+    return arr.reduce((sum: number, d: { valor?: string | number }) => sum + (parseFloat(String(d.valor)) || 0), 0);
   }, [formulario]);
 
   const totalEducacao = useMemo(() => {
     const arr = Array.isArray(formulario?.despesas_educacao) ? formulario.despesas_educacao : [];
-    return arr.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
+    return arr.reduce((sum: number, d: { valor?: string | number }) => sum + (parseFloat(String(d.valor)) || 0), 0);
   }, [formulario]);
 
   const [dados, setDados] = useState<DadosCalculo>({

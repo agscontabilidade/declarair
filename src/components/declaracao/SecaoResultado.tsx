@@ -9,7 +9,7 @@ import { TrendingUp, TrendingDown, Copy, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
-  declaracao: any;
+  declaracao: { tipo_resultado?: string | null; valor_resultado?: number | string | null; numero_recibo?: string | null; status?: string | null } | null | undefined;
   onSave: (data: { tipo_resultado: string; valor_resultado: number | null; numero_recibo: string }) => void;
   saving: boolean;
 }

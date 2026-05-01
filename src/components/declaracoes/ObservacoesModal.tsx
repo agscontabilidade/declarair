@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   declaracaoId: string | null;
@@ -56,7 +57,7 @@ export function ObservacoesModal({ declaracaoId, escritorioId, clienteNome, open
       queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error(e.message || 'Erro ao salvar'),
+    onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao salvar')),
   });
 
   return (
