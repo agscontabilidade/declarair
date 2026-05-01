@@ -214,7 +214,7 @@ export default function Declaracoes() {
                           )}
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
-                          <ProcessamentoSwitch declaracaoId={d.id} emProcessamento={!!d.em_processamento} />
+                          <ProcessamentoSwitch declaracaoId={d.id} status={d.status_processamento_rfb || 'aguardando'} />
                         </TableCell>
                       </TableRow>
                     );
