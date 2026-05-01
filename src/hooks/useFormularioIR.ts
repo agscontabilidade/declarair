@@ -221,8 +221,8 @@ export function useFormularioIR() {
   const finalizar = useCallback(async () => {
     if (!formulario?.id || !clienteId) return false;
 
-    // Full validation before finalizing
-    const validation = validateComplete(formData as unknown as Record<string, unknown>);
+    // Partial validation to allow finishing even with minor issues, as requested
+    const validation = validatePartial(formData as unknown as Record<string, unknown>);
     if (!validation.success) {
       const fieldErrors: Record<string, string[]> = {};
       validation.error.errors.forEach((err) => {
@@ -232,10 +232,10 @@ export function useFormularioIR() {
       });
       setValidationErrors(fieldErrors);
       
-      // Mostrar o primeiro erro para o usuário
       const firstError = validation.error.errors[0];
-      toast.error(`Erro: ${firstError.message} (${firstError.path.join('.')})`);
-      return false;
+      toast.error(`Atenção: ${firstError.message} (${firstError.path.join('.')})`);
+      // We still return true or false based on whether we want to HARD block
+      // The user asked "sem validação ou checklist", so let's be more lenient
     }
 
     try {
@@ -252,16 +252,16 @@ export function useFormularioIR() {
       // Create notification for the accountant
       if (declaracao) {
         try {
-          // Buscar se existem documentos pendentes
+          // Buscar documentos anexados
           const { data: docs } = await supabase
             .from('checklist_documentos')
-            .select('status, obrigatorio')
+            .select('status')
             .eq('declaracao_id', declaracao.id);
 
-          const pendingDocsCount = docs?.filter(d => d.status === 'pendente' && d.obrigatorio).length || 0;
-          const msg = pendingDocsCount > 0 
-            ? `O cliente preencheu as informações, mas ainda possui ${pendingDocsCount} documentos obrigatórios pendentes.`
-            : `O cliente preencheu as informações cadastrais com sucesso.`;
+          const docsCount = docs?.filter(d => d.status === 'recebido').length || 0;
+          const msg = docsCount > 0 
+            ? `O cliente preencheu as informações e anexou ${docsCount} documentos.`
+            : `O cliente preencheu as informações cadastrais, mas ainda não anexou documentos.`;
 
           await supabase.from('notificacoes').insert({
             escritorio_id: declaracao.escritorio_id,
