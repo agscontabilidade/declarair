@@ -97,13 +97,13 @@ async function createSubscription(
 
   // Find or create product+price
   const productName = `DeclaraIR ${planoConfig.name}`;
-  let products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
+  const products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
   let product = products.data[0];
   if (!product) {
     product = await stripe.products.create({ name: productName, metadata: { plano: body.plano } });
   }
 
-  let prices = await stripe.prices.list({ product: product.id, active: true, type: "recurring", limit: 5 });
+  const prices = await stripe.prices.list({ product: product.id, active: true, type: "recurring", limit: 5 });
   let price = prices.data.find(p => p.unit_amount === planoConfig.amount && p.currency === "brl" && p.recurring?.interval === "month");
   if (!price) {
     price = await stripe.prices.create({
@@ -223,13 +223,13 @@ async function activateAddon(
 
   // Find or create addon product+price
   const productName = `DeclaraIR Addon - ${addonConfig.name}`;
-  let products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
+  const products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
   let product = products.data[0];
   if (!product) {
     product = await stripe.products.create({ name: productName, metadata: { addon: body.addonSlug } });
   }
 
-  let prices = await stripe.prices.list({ product: product.id, active: true, type: "recurring", limit: 5 });
+  const prices = await stripe.prices.list({ product: product.id, active: true, type: "recurring", limit: 5 });
   let price = prices.data.find(p => p.unit_amount === addonConfig.amount && p.currency === "brl" && p.recurring?.interval === "month");
   if (!price) {
     price = await stripe.prices.create({
@@ -385,7 +385,7 @@ async function buyExtraDeclaracoes(
   const totalAmount = unitAmount * quantidade;
 
   const productName = "DeclaraIR - Declaração Extra";
-  let products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
+  const products = await stripe.products.search({ query: `name:'${productName}' active:'true'` });
   let product = products.data[0];
   if (!product) {
     product = await stripe.products.create({ name: productName, metadata: { type: "declaracao_extra" } });
