@@ -129,6 +129,11 @@ export default function DeclaracaoDetalhe() {
 
   const clienteId = hook.declaracao?.clientes?.id;
   const isTransmitida = hook.declaracao?.status === 'transmitida';
+  const decl = hook.declaracao as Record<string, unknown> | undefined;
+  const podeEnviarAoCliente = isTransmitida
+    && !!decl?.arquivo_declaracao_url
+    && !!decl?.arquivo_recibo_url
+    && !decl?.declaracao_enviada_em;
 
   return (
     <DashboardLayout>
@@ -139,7 +144,7 @@ export default function DeclaracaoDetalhe() {
           onChangeStatus={handleChangeStatus}
         />
 
-        {isTransmitida && (
+        {podeEnviarAoCliente && (
           <div className="flex justify-end">
             <Button onClick={() => setEnviarModalOpen(true)} className="gap-2">
               <Send className="h-4 w-4" />
@@ -151,34 +156,30 @@ export default function DeclaracaoDetalhe() {
         <Tabs defaultValue="documentos" className="w-full">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
-            <TabsTrigger value="formulario">Formulário</TabsTrigger>
+            <TabsTrigger value="cadastro">Informações Cadastrais</TabsTrigger>
             <TabsTrigger value="resultado">Resultado</TabsTrigger>
-            <TabsTrigger value="ia-fiscal">IA Fiscal</TabsTrigger>
+            <TabsTrigger value="analise-caixa">Análise de Caixa</TabsTrigger>
             <TabsTrigger value="chat">Mensagens</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
 
           <TabsContent value="documentos" className="mt-4">
-            <AbaDocumentos
-              checklist={hook.checklist}
-              isLoading={hook.checklistLoading}
-              declaracaoId={id}
-              onUpload={handleUpload}
-              uploading={hook.uploadDoc.isPending}
-              onAddItem={handleAddDocItem}
-              hasDeclaracao={true}
-            />
+            {id && (
+              <AbaDocumentosUnificada
+                declaracaoId={id}
+                clienteNome={hook.declaracao?.clientes?.nome}
+              />
+            )}
           </TabsContent>
 
-          <TabsContent value="formulario" className="mt-4">
-            <SecaoFormularioIR
-              formulario={hook.formularioIR}
-              isLoading={hook.formularioLoading}
-            />
+          <TabsContent value="cadastro" className="mt-4">
+            {id && (
+              <SecaoInformacoesCadastrais
+                declaracaoId={id}
+                clienteId={clienteId}
+              />
+            )}
           </TabsContent>
-
-
-
 
           <TabsContent value="resultado" className="mt-4 space-y-6">
             <SecaoResultado
@@ -192,8 +193,8 @@ export default function DeclaracaoDetalhe() {
             />
           </TabsContent>
 
-          <TabsContent value="ia-fiscal" className="mt-4">
-            {id && <SecaoIAFiscal declaracaoId={id} />}
+          <TabsContent value="analise-caixa" className="mt-4">
+            {id && <SecaoAnaliseCaixa declaracaoId={id} />}
           </TabsContent>
 
           <TabsContent value="chat" className="mt-4">
