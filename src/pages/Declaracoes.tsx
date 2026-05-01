@@ -55,6 +55,24 @@ export default function Declaracoes() {
     return () => clearTimeout(t);
   }, [search]);
 
+  // Realtime: invalida a lista a cada mudança em declaracoes do escritório
+  useEffect(() => {
+    if (!escritorioId) return;
+    const channel = supabase
+      .channel(`declaracoes-realtime-${escritorioId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'declaracoes', filter: `escritorio_id=eq.${escritorioId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['declaracoes-lista', escritorioId] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [escritorioId, queryClient]);
+
   const { data: declaracoes = [], isLoading } = useQuery({
     queryKey: ['declaracoes-lista', escritorioId, anoBase],
     queryFn: async () => {
