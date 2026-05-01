@@ -261,9 +261,9 @@ Deno.serve(async (req) => {
             unsubscribe_token: payload.unsubscribe_token,
             message_id: payload.message_id,
           },
-          // sendUrl is optional — when LOVABLE_SEND_URL is not set, the library
-          // falls back to the default Lovable API endpoint (https://api.lovable.dev).
-          // Set LOVABLE_SEND_URL as a Supabase secret to override (e.g. for local dev).
+          // sendUrl is optional — when SEND_URL is not set, the library
+          // falls back to the default API endpoint.
+          // Set SEND_URL as a Supabase secret to override.
           { apiKey, sendUrl: Deno.env.get('LOVABLE_SEND_URL') }
         )
 
