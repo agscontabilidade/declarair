@@ -40,7 +40,7 @@ export function useClientes() {
 
       const { data, count, error } = await q;
       if (error) throw error;
-      return { data: (data as ClienteWithContador[]) || [], total: count ?? 0 };
+      return { data: ((data as unknown) as ClienteWithContador[]) || [], total: count ?? 0 };
     },
     enabled: !!escritorioId,
   });
