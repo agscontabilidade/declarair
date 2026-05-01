@@ -104,26 +104,37 @@ export function SecaoResultado({ declaracao }: Props) {
           </div>
         )}
 
-        {declaracao?.id && (
-          <>
-            <Separator className="my-1" />
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Processamento na Receita Federal</p>
+        {declaracao?.id && (() => {
+          const PROC_META = {
+            aguardando: { label: 'Aguardando processamento', cls: 'border-slate-300 text-slate-700 bg-slate-50', icon: Clock, descricao: 'Ainda não há retorno da Receita Federal' },
+            processada: { label: 'Processada sem erros', cls: 'border-emerald-300 text-emerald-700 bg-emerald-50', icon: CheckCircle2, descricao: 'Recebida e processada normalmente pela Receita' },
+            pendencias: { label: 'Com pendências', cls: 'border-amber-300 text-amber-700 bg-amber-50', icon: AlertTriangle, descricao: 'A Receita identificou pendências a corrigir' },
+            malha_fina: { label: 'Em malha fina', cls: 'border-red-300 text-red-700 bg-red-50', icon: ShieldAlert, descricao: 'Declaração retida em malha fiscal' },
+          } as const;
+          const key = (declaracao.status_processamento_rfb as keyof typeof PROC_META) || 'aguardando';
+          const meta = PROC_META[key] || PROC_META.aguardando;
+          const PIcon = meta.icon;
+          return (
+            <>
+              <Separator className="my-1" />
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm font-medium">Processamento na Receita Federal</p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${meta.cls}`}>
+                    <PIcon className="h-3.5 w-3.5" />
+                    {meta.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {meta.descricao} — atualiza em tempo real quando o status mudar.
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <ProcessamentoSwitch
-                  declaracaoId={declaracao.id}
-                  status={(declaracao.status_processamento_rfb as StatusProcessamentoRfb) || 'aguardando'}
-                />
-                <span className="text-xs text-muted-foreground">
-                  Atualize quando a Receita devolver o status — o cliente verá em tempo real.
-                </span>
-              </div>
-            </div>
-          </>
-        )}
+            </>
+          );
+        })()}
 
         {(temDeclaracao || temRecibo) && (
           <div className="flex flex-wrap gap-1.5 pt-1">
