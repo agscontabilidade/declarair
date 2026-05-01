@@ -220,7 +220,39 @@ export default function Configuracoes() {
           </TabsContent>
 
           <TabsContent value="integracoes">
-            <IntegracoesTab escritorioId={escritorioId} isDono={isDono} />
+            <div className="space-y-6">
+              <IntegracoesTab escritorioId={escritorioId} isDono={isDono} />
+              
+              <PlanGate requiredPlan="pro" featureName="API Pública">
+                <FeatureGate feature="api_publica">
+                  <Card className="shadow-sm border-primary/20 bg-primary/5">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                          <Key className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">API Pública & Chaves de Acesso</CardTitle>
+                          <CardDescription>Gerencie suas chaves para integração com sistemas externos</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="text-sm text-muted-foreground flex-1">
+                          Sua API permite que outros softwares se conectem ao DeclaraIR para sincronizar clientes, declarações e cobranças.
+                        </p>
+                        <Button asChild variant="outline" className="gap-2 whitespace-nowrap">
+                          <Link to="/api-keys">
+                            Gerenciar Chaves <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </FeatureGate>
+              </PlanGate>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
