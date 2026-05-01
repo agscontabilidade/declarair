@@ -109,7 +109,7 @@ export default function Drive() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
-              <FolderOpen className="h-6 w-6 text-accent" />
+              <FolderOpen className="h-6 w-6 text-sidebar-primary" />
               Drive de Documentos
             </h1>
             <p className="text-muted-foreground text-sm mt-1">{totalDocs} documentos recebidos</p>
@@ -146,7 +146,7 @@ export default function Drive() {
                 >
                   <div className="flex items-center gap-3">
                     <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${expandedCliente === cliente.id ? 'rotate-90' : ''}`} />
-                    <FolderOpen className="h-5 w-5 text-accent" />
+                    <FolderOpen className="h-5 w-5 text-sidebar-primary" />
                     <span className="font-medium text-foreground">{cliente.nome}</span>
                     <span className="text-xs text-muted-foreground font-mono">{formatCPF(cliente.cpf)}</span>
                   </div>
