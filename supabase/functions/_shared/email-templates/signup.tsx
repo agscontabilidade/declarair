@@ -1,41 +1,56 @@
-/// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
-import { Body, Button, Container, Head, Heading, Html, Link, Preview, Text, Section } from 'npm:@react-email/components@0.0.22'
+import { Button, Heading, Text, Section, Link } from 'npm:@react-email/components@0.0.22'
+import EmailLayout from '../email-layout.tsx'
 
-interface SignupEmailProps { siteName: string; siteUrl: string; recipient: string; confirmationUrl: string }
+interface SignupEmailProps { 
+  siteName: string; 
+  siteUrl: string; 
+  recipient: string; 
+  confirmationUrl: string 
+}
 
 export const SignupEmail = ({ siteName, siteUrl, recipient, confirmationUrl }: SignupEmailProps) => (
-  <Html lang="pt-BR" dir="ltr">
-    <Head />
-    <Preview>Confirme seu email para acessar o {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Section style={headerSection}>
-          <Heading style={h1}>📧 Confirme seu Email</Heading>
-        </Section>
-        <Text style={text}>
-          Obrigado por se cadastrar no <Link href={siteUrl} style={link}><strong>{siteName}</strong></Link>!
-        </Text>
-        <Text style={text}>
-          Para ativar sua conta, confirme seu endereço de email (<Link href={`mailto:${recipient}`} style={link}>{recipient}</Link>) clicando no botão abaixo:
-        </Text>
-        <Section style={buttonContainer}>
-          <Button style={button} href={confirmationUrl}>Confirmar Email</Button>
-        </Section>
-        <Text style={footer}>Se você não criou uma conta, ignore este email.</Text>
-      </Container>
-    </Body>
-  </Html>
+  <EmailLayout 
+    preview={`Confirme seu email para acessar o ${siteName}`}
+    siteName={siteName}
+    siteUrl={siteUrl}
+  >
+    <Heading className="text-gray-900 text-[20px] font-bold text-center p-0 my-[30px] mx-0">
+      Confirme seu Email
+    </Heading>
+    
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Olá,
+    </Text>
+    
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Obrigado por se cadastrar no <strong>{siteName}</strong>! Estamos felizes em ter você conosco.
+    </Text>
+    
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Para ativar sua conta e começar a gerenciar suas declarações, confirme seu endereço de email ({recipient}) clicando no botão abaixo:
+    </Text>
+    
+    <Section className="text-center mt-[32px] mb-[32px]">
+      <Button
+        className="bg-brand rounded text-white text-[14px] font-bold no-underline text-center px-6 py-3"
+        href={confirmationUrl}
+      >
+        Confirmar Email
+      </Button>
+    </Section>
+    
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Ou copie e cole este link em seu navegador: <br />
+      <Link href={confirmationUrl} className="text-brand break-all text-[12px]">
+        {confirmationUrl}
+      </Link>
+    </Text>
+    
+    <Text className="text-gray-500 text-[12px] leading-[24px] mt-4">
+      Se você não criou uma conta, pode ignorar este email com segurança.
+    </Text>
+  </EmailLayout>
 )
 
 export default SignupEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: "'Segoe UI', Arial, sans-serif" }
-const container = { padding: '20px 25px', maxWidth: '600px', margin: '0 auto' }
-const headerSection = { backgroundColor: '#1A4F9C', padding: '24px 20px', borderRadius: '8px 8px 0 0', textAlign: 'center' as const }
-const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#ffffff', margin: '0' }
-const text = { fontSize: '14px', color: '#333333', lineHeight: '1.6', margin: '0 0 16px' }
-const link = { color: '#1A4F9C', textDecoration: 'underline' }
-const buttonContainer = { textAlign: 'center' as const, margin: '24px 0' }
-const button = { backgroundColor: '#00C6FF', color: '#1A4F9C', fontSize: '14px', fontWeight: 'bold', borderRadius: '6px', padding: '12px 24px', textDecoration: 'none' }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

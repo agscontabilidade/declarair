@@ -1,7 +1,6 @@
 import * as React from 'npm:react@18.3.1'
-import {
-  Body, Container, Head, Heading, Html, Preview, Text, Hr, Section,
-} from 'npm:@react-email/components@0.0.22'
+import { Heading, Text, Section } from 'npm:@react-email/components@0.0.22'
+import EmailLayout from '../email-layout.tsx'
 import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = 'DeclaraIR'
@@ -15,44 +14,43 @@ interface CobrancaPagaProps {
 }
 
 const CobrancaPagaEmail = ({ nomeCliente, nomeEscritorio, descricao, valor, dataPagamento }: CobrancaPagaProps) => (
-  <Html lang="pt-BR" dir="ltr">
-    <Head />
-    <Preview>✅ Pagamento de R$ {valor || '0,00'} confirmado — {nomeEscritorio || SITE_NAME}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Section style={headerSection}>
-          <Heading style={h1}>✅ Pagamento Confirmado</Heading>
-        </Section>
+  <EmailLayout 
+    preview={`✅ Pagamento de R$ ${valor || '0,00'} confirmado — ${nomeEscritorio || SITE_NAME}`}
+    siteName={nomeEscritorio || SITE_NAME}
+  >
+    <Heading className="text-gray-900 text-[20px] font-bold text-center p-0 my-[30px] mx-0">
+      Pagamento Confirmado
+    </Heading>
 
-        <Text style={text}>
-          Olá <strong>{nomeCliente || 'contribuinte'}</strong>,
-        </Text>
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Olá <strong>{nomeCliente || 'contribuinte'}</strong>,
+    </Text>
 
-        <Text style={text}>
-          Confirmamos o recebimento do seu pagamento. Obrigado!
-        </Text>
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Confirmamos o recebimento do seu pagamento com sucesso. Obrigado!
+    </Text>
 
-        <Section style={detailBox}>
-          <Text style={detailText}>📝 <strong>Descrição:</strong> {descricao || 'Serviço contábil'}</Text>
-          <Text style={detailText}>💰 <strong>Valor pago:</strong> R$ {valor || '0,00'}</Text>
-          <Text style={detailText}>📅 <strong>Data do pagamento:</strong> {dataPagamento || '—'}</Text>
-        </Section>
+    <Section className="bg-emerald-50 border border-emerald-200 rounded-lg p-[16px] my-[24px]">
+      <Text className="text-emerald-800 text-[14px] leading-[22px] m-0 mb-2">
+        📝 <strong>Descrição:</strong> {descricao || 'Serviço contábil'}
+      </Text>
+      <Text className="text-emerald-800 text-[14px] leading-[22px] m-0 mb-2">
+        💰 <strong>Valor pago:</strong> R$ {valor || '0,00'}
+      </Text>
+      <Text className="text-emerald-800 text-[14px] leading-[22px] m-0">
+        📅 <strong>Data do pagamento:</strong> {dataPagamento || '—'}
+      </Text>
+    </Section>
 
-        <Text style={text}>
-          Este email serve como comprovante de pagamento. Guarde-o para seus registros.
-        </Text>
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Este email serve como comprovante de que sua obrigação financeira foi baixada em nosso sistema.
+    </Text>
 
-        <Hr style={hr} />
-
-        <Text style={text}>
-          Atenciosamente,<br />
-          <strong>{nomeEscritorio || SITE_NAME}</strong>
-        </Text>
-
-        <Text style={footer}>{SITE_NAME} — Gestão Inteligente de IR para Escritórios Contábeis</Text>
-      </Container>
-    </Body>
-  </Html>
+    <Text className="text-gray-800 text-[14px] leading-[24px] mt-4">
+      Atenciosamente,<br />
+      <strong>{nomeEscritorio || SITE_NAME}</strong>
+    </Text>
+  </EmailLayout>
 )
 
 export const template = {
@@ -62,12 +60,4 @@ export const template = {
   previewData: { nomeCliente: 'João Silva', nomeEscritorio: 'Contabilidade ABC', descricao: 'Declaração IRPF 2025', valor: '350,00', dataPagamento: '10/04/2025' },
 } satisfies TemplateEntry
 
-const main = { backgroundColor: '#ffffff', fontFamily: "'Segoe UI', Arial, sans-serif" }
-const container = { padding: '20px 25px', maxWidth: '600px', margin: '0 auto' }
-const headerSection = { backgroundColor: '#10B981', padding: '30px 20px', borderRadius: '8px 8px 0 0', textAlign: 'center' as const }
-const h1 = { fontSize: '24px', fontWeight: 'bold', color: '#ffffff', margin: '0' }
-const text = { fontSize: '14px', color: '#333333', lineHeight: '1.6', margin: '0 0 12px' }
-const detailBox = { backgroundColor: '#F0FDF4', border: '1px solid #10B981', padding: '16px', margin: '16px 0', borderRadius: '8px' }
-const detailText = { fontSize: '14px', color: '#065F46', margin: '0 0 8px' }
-const hr = { borderTop: '1px solid #e0e0e0', margin: '24px 0' }
-const footer = { fontSize: '12px', color: '#999999', textAlign: 'center' as const, margin: '30px 0 0' }
+export default CobrancaPagaEmail

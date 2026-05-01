@@ -1,7 +1,6 @@
 import * as React from 'npm:react@18.3.1'
-import {
-  Body, Container, Head, Heading, Html, Preview, Text, Button, Hr, Section,
-} from 'npm:@react-email/components@0.0.22'
+import { Button, Heading, Text, Section } from 'npm:@react-email/components@0.0.22'
+import EmailLayout from '../email-layout.tsx'
 import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = 'DeclaraIR'
@@ -14,56 +13,53 @@ interface ConviteClienteProps {
 }
 
 const ConviteClienteEmail = ({ nomeCliente, nomeEscritorio, linkConvite, mensagemPersonalizada }: ConviteClienteProps) => (
-  <Html lang="pt-BR" dir="ltr">
-    <Head />
-    <Preview>Acompanhe sua declaração de IR em tempo real — {nomeEscritorio || 'seu escritório'}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Section style={headerSection}>
-          <Heading style={h1}>📋 Sua Declaração de IR</Heading>
-        </Section>
+  <EmailLayout 
+    preview={`Acompanhe sua declaração de IR em tempo real — ${nomeEscritorio || 'seu escritório'}`}
+    siteName={nomeEscritorio || SITE_NAME}
+  >
+    <Heading className="text-gray-900 text-[20px] font-bold text-center p-0 my-[30px] mx-0">
+      Sua Declaração de IR
+    </Heading>
 
-        <Text style={text}>
-          Olá <strong>{nomeCliente || 'contribuinte'}</strong>,
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Olá <strong>{nomeCliente || 'contribuinte'}</strong>,
+    </Text>
+
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      O <strong>{nomeEscritorio || 'seu escritório contábil'}</strong> preparou um acesso exclusivo para você gerenciar e acompanhar sua declaração de Imposto de Renda com total segurança.
+    </Text>
+
+    {mensagemPersonalizada && (
+      <Section className="bg-blue-50 border-l-4 border-blue-500 p-[16px] my-[24px] rounded">
+        <Text className="text-blue-800 text-[14px] leading-[22px] m-0 italic">
+          💬 <strong>Mensagem do contador:</strong><br />
+          "{mensagemPersonalizada}"
         </Text>
+      </Section>
+    )}
 
-        <Text style={text}>
-          O <strong>{nomeEscritorio || 'seu escritório contábil'}</strong> criou um acesso exclusivo para você acompanhar sua declaração de Imposto de Renda em tempo real!
-        </Text>
+    <Text className="text-gray-800 text-[14px] leading-[24px] font-bold">
+      Com o seu Portal você pode:
+    </Text>
+    <Text className="text-gray-700 text-[14px] leading-[20px] m-0 mb-1">📊 Acompanhar o status 24h por dia</Text>
+    <Text className="text-gray-700 text-[14px] leading-[20px] m-0 mb-1">📤 Enviar documentos digitalizados</Text>
+    <Text className="text-gray-700 text-[14px] leading-[20px] m-0 mb-1">💬 Falar direto com seu contador via Chat</Text>
+    <Text className="text-gray-700 text-[14px] leading-[20px] m-0">✅ Receber avisos importantes</Text>
 
-        {mensagemPersonalizada && (
-          <Section style={messageBox}>
-            <Text style={messageText}>
-              💬 <strong>Mensagem do contador:</strong><br />
-              "{mensagemPersonalizada}"
-            </Text>
-          </Section>
-        )}
+    <Section className="text-center mt-[32px] mb-[32px]">
+      <Button
+        className="bg-brand rounded text-white text-[14px] font-bold no-underline text-center px-6 py-3"
+        href={linkConvite || '#'}
+      >
+        Acessar Minha Declaração
+      </Button>
+    </Section>
 
-        <Text style={text}><strong>Com o Portal do Contribuinte você pode:</strong></Text>
-        <Text style={listItem}>📊 Acompanhar o status da sua declaração 24/7</Text>
-        <Text style={listItem}>📤 Enviar documentos com segurança total</Text>
-        <Text style={listItem}>💬 Chat direto com seu contador</Text>
-        <Text style={listItem}>✅ Receber notificações em tempo real</Text>
-
-        <Section style={buttonContainer}>
-          <Button style={button} href={linkConvite || '#'}>
-            Acessar Minha Declaração
-          </Button>
-        </Section>
-
-        <Hr style={hr} />
-
-        <Text style={text}>
-          Atenciosamente,<br />
-          <strong>{nomeEscritorio || SITE_NAME}</strong><br />
-          <span style={{ fontSize: '12px', color: '#999' }}>via {SITE_NAME}</span>
-        </Text>
-
-        <Text style={footer}>{SITE_NAME} — Gestão Inteligente de IR para Escritórios Contábeis</Text>
-      </Container>
-    </Body>
-  </Html>
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Atenciosamente,<br />
+      <strong>{nomeEscritorio || SITE_NAME}</strong>
+    </Text>
+  </EmailLayout>
 )
 
 export const template = {
@@ -73,15 +69,4 @@ export const template = {
   previewData: { nomeCliente: 'Ana Costa', nomeEscritorio: 'Contabilidade ABC', linkConvite: 'https://declarair.com.br/cliente/convite/xyz', mensagemPersonalizada: 'Precisamos dos seus informes de rendimento até dia 15.' },
 } satisfies TemplateEntry
 
-const main = { backgroundColor: '#ffffff', fontFamily: "'Segoe UI', Arial, sans-serif" }
-const container = { padding: '20px 25px', maxWidth: '600px', margin: '0 auto' }
-const headerSection = { backgroundColor: '#1A4F9C', padding: '30px 20px', borderRadius: '8px 8px 0 0', textAlign: 'center' as const }
-const h1 = { fontSize: '24px', fontWeight: 'bold', color: '#ffffff', margin: '0' }
-const text = { fontSize: '14px', color: '#333333', lineHeight: '1.6', margin: '0 0 12px' }
-const listItem = { fontSize: '14px', color: '#333333', lineHeight: '1.6', margin: '0 0 4px', paddingLeft: '12px' }
-const messageBox = { backgroundColor: '#F0F7FF', borderLeft: '4px solid #1A4F9C', padding: '12px 16px', margin: '16px 0', borderRadius: '4px' }
-const messageText = { fontSize: '13px', color: '#1A4F9C', margin: '0' }
-const buttonContainer = { textAlign: 'center' as const, margin: '24px 0' }
-const button = { backgroundColor: '#10B981', color: '#ffffff', fontWeight: 'bold', padding: '14px 28px', borderRadius: '6px', textDecoration: 'none', fontSize: '14px' }
-const hr = { borderTop: '1px solid #e0e0e0', margin: '24px 0' }
-const footer = { fontSize: '12px', color: '#999999', textAlign: 'center' as const, margin: '30px 0 0' }
+export default ConviteClienteEmail
