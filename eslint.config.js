@@ -23,7 +23,8 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
       // Phase 1: temporarily downgraded to warn to unblock CI.
       // Goal is to bring count to 0 and re-enable as "error" (see .lovable/plan.md).
-      "@typescript-eslint/no-explicit-any": "warn",
+      // Phase 4: Restored to error as planned.
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
 );
