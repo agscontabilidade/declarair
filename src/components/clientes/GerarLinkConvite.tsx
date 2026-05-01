@@ -20,7 +20,7 @@ import { getErrorMessage } from '@/lib/errors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function GerarLinkConvite() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
@@ -118,7 +118,7 @@ export default function GerarLinkConvite() {
         .insert({
           escritorio_id: profile.escritorioId,
           token,
-          created_by: profile.nome,
+          created_by: user?.id,
           nome_sugerido: formData.nome_sugerido || null,
           cpf_sugerido: formData.cpf_sugerido || null,
           email_sugerido: formData.email_sugerido || null,
