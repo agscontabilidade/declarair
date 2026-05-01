@@ -12,12 +12,6 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   declaracao: { id?: string; ano_base?: number; escritorio_id?: string; clientes?: { id?: string; nome?: string; cpf?: string; email?: string } | null } | null | undefined;
-  escritorioData: {
-    nome: string;
-    email: string | null;
-    telefone: string | null;
-    logoUrl: string | null;
-  } | null;
   contadorNome: string;
   onSendChat: (message: string) => Promise<void>;
 }
