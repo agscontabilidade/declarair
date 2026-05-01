@@ -408,13 +408,10 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                 sideOffset={8}
               >
                 <Command shouldFilter={true} className="border-0">
-                  <div className="flex items-center border-b px-3">
-                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                    <CommandInput 
-                      placeholder="Busque por código ou nome..." 
-                      className="h-12 border-0 focus:ring-0"
-                    />
-                  </div>
+                  <CommandInput 
+                    placeholder="Busque por código ou nome..." 
+                    className="h-12"
+                  />
                   <CommandList className="max-h-[400px] overflow-y-auto scrollbar-thin">
                     <CommandEmpty>Nenhuma natureza encontrada.</CommandEmpty>
                     <CommandGroup>
@@ -470,13 +467,10 @@ export function StepDadosPessoais({ data, onChange }: Props) {
                 sideOffset={8}
               >
                 <Command shouldFilter={true} className="border-0">
-                  <div className="flex items-center border-b px-3">
-                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                    <CommandInput 
-                      placeholder="Ex: Médico, Engenheiro, 221..." 
-                      className="h-12 border-0 focus:ring-0"
-                    />
-                  </div>
+                  <CommandInput 
+                    placeholder="Ex: Médico, Engenheiro, 221..." 
+                    className="h-12"
+                  />
                   <CommandList className="max-h-[400px]">
                     <CommandEmpty>Nenhuma ocupação encontrada.</CommandEmpty>
                     <CommandGroup>
