@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Copy, Link2, Mail, MessageCircle } from 'lucide-react';
 import { maskCPF, validateCPF } from '@/lib/formatters';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function GerarLinkConvite() {
   const { profile } = useAuth();
@@ -58,9 +59,9 @@ export default function GerarLinkConvite() {
       const linkCompleto = `${baseUrl}/cadastro-cliente/${token}`;
       setLinkGerado(linkCompleto);
       toast({ title: 'Link gerado com sucesso!' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao gerar link:', error);
-      toast({ title: 'Erro ao gerar link', description: error.message, variant: 'destructive' });
+      toast({ title: 'Erro ao gerar link', description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setLoading(false);
     }

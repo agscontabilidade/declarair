@@ -161,7 +161,7 @@ export default function Perfil() {
       setAvatarUrl(publicUrl);
       queryClient.invalidateQueries({ queryKey: ['usuario-perfil'] });
       toast.success('Foto atualizada!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Perfil] Upload error:', error);
       toast.error('Erro ao fazer upload da foto');
     } finally {

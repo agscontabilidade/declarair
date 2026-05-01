@@ -13,6 +13,7 @@ import { QueryError } from '@/components/ui/QueryError';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function Clientes() {
   const {
@@ -56,8 +57,8 @@ export default function Clientes() {
     try {
       await deleteCliente.mutateAsync(cliente.id);
       toast({ title: 'Cliente excluído com sucesso' });
-    } catch (err: any) {
-      toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Erro ao excluir', description: getErrorMessage(err), variant: 'destructive' });
     }
   };
 

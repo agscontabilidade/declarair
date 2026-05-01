@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Shield, Eye, EyeOff } from 'lucide-react';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -31,8 +32,8 @@ export default function AdminLogin() {
         password: senha,
       });
       if (error) throw error;
-    } catch (err: any) {
-      toast({ title: 'Erro ao entrar', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Erro ao entrar', description: getErrorMessage(err), variant: 'destructive' });
       setIsSubmitting(false);
     }
   }

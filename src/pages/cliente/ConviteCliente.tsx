@@ -8,6 +8,7 @@ import { CheckCircle2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import logoFull from '@/assets/logo-full.png';
 import logoIcon from '@/assets/logo-icon.png';
+import { getErrorMessage } from '@/lib/errors';
 
 interface ClienteInfo {
   id: string;
@@ -77,8 +78,8 @@ export default function ConviteCliente() {
 
       toast({ title: 'Conta criada com sucesso!', description: 'Redirecionando para o portal...' });
       setTimeout(() => navigate('/cliente/dashboard'), 1500);
-    } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Erro', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }

@@ -8,6 +8,7 @@ import { AlertTriangle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function RedefinirSenha() {
   const navigate = useNavigate();
@@ -72,8 +73,8 @@ export default function RedefinirSenha() {
       await supabase.auth.signOut();
       toast({ title: 'Senha redefinida com sucesso!' });
       navigate(redirectTo);
-    } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Erro', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
       setLoading(false);
     }

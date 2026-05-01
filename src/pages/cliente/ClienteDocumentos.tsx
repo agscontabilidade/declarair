@@ -118,7 +118,7 @@ export default function ClienteDocumentos() {
         queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
         queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error('Erro ao carregar arquivos');
       console.error(err);
     } finally {
@@ -153,7 +153,7 @@ export default function ClienteDocumentos() {
       toast.success('Documentos enviados ao contador com sucesso!');
       setConcluido(true);
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error('Erro ao enviar documentos');
     } finally {
       setSending(false);
