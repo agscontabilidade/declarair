@@ -16,7 +16,7 @@ const statusColors: Record<string, string> = {
 const statusOrder = ['aguardando_documentos', 'documentacao_recebida', 'declaracao_pronta', 'transmitida'];
 
 interface Props {
-  declaracao: { id?: string; status?: string; ano_base?: number; clientes?: { nome?: string; cpf?: string } | null } | null | undefined;
+  declaracao: { id?: string; status?: string; ano_base?: number; escritorio_id?: string; clientes?: { id?: string; nome?: string; cpf?: string; email?: string } | null } | null | undefined;
   papel: string | null;
   onChangeStatus: (status: string) => void;
 }
@@ -25,7 +25,7 @@ export function DeclaracaoHeader({ declaracao, papel, onChangeStatus }: Props) {
   const navigate = useNavigate();
   const clienteNome = declaracao?.clientes?.nome || 'Cliente';
   const clienteId = declaracao?.clientes?.id;
-  const currentIndex = statusOrder.indexOf(declaracao?.status);
+  const currentIndex = statusOrder.indexOf(declaracao?.status || '');
 
   const getAvailableStatuses = () => {
     if (papel === 'dono') {

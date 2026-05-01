@@ -95,16 +95,17 @@ export function SecaoFormularioIR({ formulario, isLoading }: Props) {
       </Card>
     );
   }
-
-  const status = formulario.status_preenchimento || 'nao_iniciado';
+  if (!formulario) return null;
+  const f = formulario as Record<string, unknown>;
+  const status = (f.status_preenchimento as string) || 'nao_iniciado';
   const statusLabel = status === 'concluido' ? 'Concluído' : status === 'em_andamento' ? 'Em Andamento' : 'Não Iniciado';
 
   const sections = [
-    { key: 'dados_pessoais', title: 'Dados Pessoais', data: { estado_civil: formulario.estado_civil, conjuge_nome: formulario.conjuge_nome, conjuge_cpf: formulario.conjuge_cpf ? formatCPF(formulario.conjuge_cpf) : null } },
-    { key: 'perfil_fiscal', title: 'Perfil Fiscal', data: formulario.perfil_fiscal, customRender: true },
-    { key: 'dependentes', title: 'Dependentes', data: formulario.dependentes },
-    { key: 'chave_pix', title: 'Chave PIX (Restituição)', data: formulario.chave_pix_cliente ? { chave_pix: formulario.chave_pix_cliente } : null },
-    { key: 'adicionais', title: 'Informações Adicionais', data: formulario.informacoes_adicionais },
+    { key: 'dados_pessoais', title: 'Dados Pessoais', data: { estado_civil: f.estado_civil, conjuge_nome: f.conjuge_nome, conjuge_cpf: f.conjuge_cpf ? formatCPF(String(f.conjuge_cpf)) : null } },
+    { key: 'perfil_fiscal', title: 'Perfil Fiscal', data: f.perfil_fiscal, customRender: true },
+    { key: 'dependentes', title: 'Dependentes', data: f.dependentes },
+    { key: 'chave_pix', title: 'Chave PIX (Restituição)', data: f.chave_pix_cliente ? { chave_pix: f.chave_pix_cliente } : null },
+    { key: 'adicionais', title: 'Informações Adicionais', data: f.informacoes_adicionais },
   ];
 
   const renderPerfilFiscal = (data: unknown) => {
