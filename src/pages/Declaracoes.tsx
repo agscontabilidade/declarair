@@ -82,7 +82,9 @@ export default function Declaracoes() {
         .select(`
           id, status, ano_base, ultima_atualizacao_status,
           tipo_resultado, valor_resultado,
-          arquivo_declaracao_url, arquivo_declaracao_nome, em_processamento, status_processamento_rfb,
+          arquivo_declaracao_url, arquivo_declaracao_nome,
+          arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em,
+          em_processamento, status_processamento_rfb,
           clientes(nome, cpf)
         `)
         .eq('escritorio_id', escritorioId)
@@ -254,6 +256,9 @@ export default function Declaracoes() {
                               escritorioId={escritorioId}
                               arquivoUrl={d.arquivo_declaracao_url}
                               arquivoNome={d.arquivo_declaracao_nome}
+                              arquivoReciboUrl={d.arquivo_recibo_url}
+                              arquivoReciboNome={d.arquivo_recibo_nome}
+                              reciboValidadoEm={d.recibo_validado_em}
                             />
                           )}
                         </TableCell>

@@ -1,56 +1,96 @@
-## Plano: reformulação de /declaracoes (lado contador)
 
-### 1. Filtro de ano
-- No `Select` de ano, manter apenas a opção **2026** e definir como default (`useState('2026')`).
-- Remover opções 2023, 2024 e 2025.
+## Objetivo
+Na coluna "Anexar declaração" da `/declaracoes`, permitir upload de **dois PDFs** (Declaração e Recibo). O sistema lê os PDFs com IA (Lovable AI Gateway), valida que são realmente IRPF/Recibo da Receita, extrai metadados e, ao receber o **Recibo**, marca a declaração como **Transmitida** e notifica o cliente (in-app + email + WhatsApp se ativo).
 
-### 2. Banco de dados (migração)
-Adicionar à tabela `declaracoes` os campos necessários para suportar as novas colunas:
-- `arquivo_declaracao_url text` — caminho no bucket `documentos-clientes` para o PDF da declaração transmitida.
-- `arquivo_declaracao_nome text` — nome original do arquivo.
-- `arquivo_declaracao_uploaded_at timestamptz`.
-- `em_processamento boolean not null default false` — flag controlada pelo contador para indicar “em processamento” (ex.: aguardando análise da Receita).
+## 1. Banco de dados (migração)
+Adicionar à tabela `declaracoes`:
+- `arquivo_recibo_url text`
+- `arquivo_recibo_nome text`
+- `arquivo_recibo_uploaded_at timestamptz`
+- `recibo_validado_em timestamptz` — quando IA confirmou
+- `recibo_numero text` — número de recibo extraído do PDF
+- `declaracao_validada_em timestamptz`
+- `declaracao_extracao jsonb` — metadados extraídos (cpf, nome, ano, valor, tipo)
+- `recibo_extracao jsonb`
 
-Sem alterações em RLS (já cobertas pelas políticas existentes de `declaracoes`). Storage usará o bucket existente `documentos-clientes`, com path `{escritorio_id}/declaracoes/{declaracao_id}/arquivo.pdf`.
+Sem mudanças em RLS (já cobertas).
 
-### 3. Nova tabela em `/declaracoes`
-Reordenar colunas exatamente nesta sequência:
+## 2. Edge Function: `processar-pdf-declaracao`
+Nova função (`verify_jwt = false`, valida JWT em código) responsável pelo fluxo crítico:
 
-| # | Coluna | Conteúdo |
-|---|--------|----------|
-| 1 | CPF | `formatCPF` (mascarado como hoje) |
-| 2 | Nome | nome do cliente |
-| 3 | Status | Badge atual (`STATUS_LABELS` + cores) |
-| 4 | Ver documentos | Botão ícone (FolderOpen) → abre `DocumentosDeclaracaoModal` listando `checklist_documentos` da declaração com link/preview de cada arquivo |
-| 5 | Observações | Botão ícone (StickyNote) com indicador (ponto) se houver `observacoes_internas` → abre `ObservacoesModal` (textarea editável, salva em `declaracoes.observacoes_internas`) |
-| 6 | Última atualização | `formatDate(ultima_atualizacao_status)` |
-| 7 | Resultado | Badge colorido conforme `tipo_resultado` (Restituição verde / A pagar âmbar / Sem imposto cinza) + `formatCurrency(valor_resultado)` quando aplicável; “—” se ainda não definido |
-| 8 | Anexar declaração | Se `arquivo_declaracao_url` vazio: botão (Upload) que abre input file (PDF) → faz upload no bucket e atualiza a declaração. Se já existir: ícone Download/Eye com tooltip do nome + botão para substituir |
-| 9 | Processamento | `Switch` controlado por `em_processamento`; toggle salva direto via mutation (com toast). Quando ligado, mostra Badge “Em processamento” ao lado |
+**Input:** `{ declaracao_id, tipo: 'declaracao' | 'recibo', storage_path }`
 
-Observações:
-- Remover a coluna “Contador” e a coluna “Ano Base” (redundante com filtro fixo 2026).
-- Remover a antiga coluna “Ações” / botão olho — a navegação para detalhes passa a ser pelo clique na linha (`onClick` em `<TableRow>` exceto botões/switch, com `stopPropagation` nos controles).
-- Manter busca por nome/CPF e filtro de status.
+**Passos:**
+1. Validar JWT, obter usuário e `escritorio_id`.
+2. Confirmar que a declaração pertence ao escritório.
+3. Baixar PDF do bucket `documentos-clientes` (service role).
+4. Converter PDF em base64 e enviar para **Lovable AI** (`google/gemini-2.5-flash`) com prompt estruturado pedindo JSON:
+   - Para `declaracao`: `{ eh_declaracao_irpf: bool, cpf, nome, ano_exercicio, tipo_resultado, valor_resultado, motivo_rejeicao? }`
+   - Para `recibo`: `{ eh_recibo_rfb: bool, numero_recibo, cpf, ano_exercicio, data_transmissao, motivo_rejeicao? }`
+5. Validar coerência: CPF do PDF == CPF do cliente; ano == `ano_base`. Se divergir → rejeita com mensagem clara.
+6. Atualizar `declaracoes`:
+   - **Declaração validada:** preenche `arquivo_declaracao_*`, `declaracao_validada_em`, `declaracao_extracao`, `tipo_resultado`, `valor_resultado` (se ainda vazios), e `status = 'declaracao_pronta'` (se estava em estágio anterior).
+   - **Recibo validado:** preenche `arquivo_recibo_*`, `recibo_numero`, `recibo_validado_em`, `recibo_extracao`, `numero_recibo`, `data_transmissao`, e força `status = 'transmitida'`, `status_processamento_rfb = 'aguardando'`.
+7. Se virou **transmitida**:
+   - Insere `notificacoes` para o escritório.
+   - Insere `declaracao_atividades` (auditoria).
+   - Chama `send-transactional-email` com template `declaracao-transmitida` para o cliente.
+   - Se escritório tem WhatsApp ativo (`integracoes_whatsapp` ativo), invoca `whatsapp-service` com mensagem padronizada.
+8. Retorna `{ ok: true, status_novo, extracao }` ou `{ ok: false, motivo }`.
 
-### 4. Componentes novos
-- `src/components/declaracoes/DocumentosDeclaracaoModal.tsx` — Dialog que carrega `checklist_documentos` por `declaracao_id`, lista nome/categoria/status e botão para abrir `arquivo_url` (signed URL via storage).
-- `src/components/declaracoes/ObservacoesModal.tsx` — Dialog com Textarea + Salvar (mutation update em `declaracoes.observacoes_internas`).
-- `src/components/declaracoes/AnexarDeclaracaoButton.tsx` — Encapsula upload (input hidden, validação PDF, max 20MB), grava no bucket `documentos-clientes` no path acima e atualiza colunas `arquivo_declaracao_*`. Mostra estado “anexado” com Download.
-- `src/components/declaracoes/ProcessamentoSwitch.tsx` — Switch controlado com mutation otimista.
+**Tratamento robusto:** wrap em try/catch, logs detalhados, status HTTP 200 mesmo em rejeição (com `ok:false`) para o frontend tratar; 4xx/5xx só em erros sistêmicos. Idempotente — reprocessar mesmo PDF não duplica notificações (checa `recibo_validado_em`).
 
-### 5. Hooks / data
-- Atualizar a query principal de `Declaracoes.tsx` para selecionar também: `observacoes_internas, tipo_resultado, valor_resultado, arquivo_declaracao_url, arquivo_declaracao_nome, em_processamento`.
-- Invalidar `['declaracoes-lista']` após cada mutation (observações, upload, switch).
-- Reaproveitar `formatCurrency` de `@/lib/formatters`.
+## 3. Frontend — `AnexarDeclaracaoButton.tsx`
+Reescrever para suportar **dois slots** (Declaração + Recibo) num único `Popover`/menu:
 
-### 6. UI / Design
-- Manter padrão visual atual (Card shadow-sm, Table shadcn, Badges Tailwind).
-- Usar ícones lucide: `FolderOpen`, `StickyNote`, `Upload`, `Download`, `Loader2`.
-- Linha clicável com `cursor-pointer hover:bg-muted/50`; controles internos com `e.stopPropagation()`.
-- Em telas pequenas, manter colunas essenciais (CPF, Nome, Status, Ações) visíveis e ocultar Observações/Resultado/Processamento com `hidden lg:table-cell`.
+```text
+[Anexar ▾]
+ ├─ 📄 Declaração     [Anexar | Baixar | ✓]
+ └─ 🧾 Recibo         [Anexar | Baixar | ✓]
+```
 
-### Arquivos a criar/editar
-- migração SQL nova em `supabase/migrations/`
-- editar `src/pages/Declaracoes.tsx`
-- criar 4 componentes em `src/components/declaracoes/`
+Comportamento:
+- Cada slot tem seu próprio `<input type="file" accept="application/pdf">`.
+- Ao selecionar: faz upload no Storage (path `{escritorio_id}/declaracoes/{id}/{tipo}-{timestamp}.pdf`), depois invoca `processar-pdf-declaracao`.
+- Mostra `Loader2` "Validando com IA..." enquanto processa.
+- Em rejeição: `toast.error(motivo)` e remove o arquivo do Storage.
+- Em sucesso: badge verde com nome + tooltip; ícone download abre signed URL (5min).
+- Quando recibo validado → badge "Transmitida ✓" sutil ao lado.
+
+Props atualizadas para receber `arquivoReciboUrl`, `arquivoReciboNome`, `reciboValidadoEm`.
+
+## 4. Atualização em `Declaracoes.tsx`
+- Incluir nos selects: `arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em`.
+- Passar para `AnexarDeclaracaoButton`.
+- Como já há realtime + trigger `touch_declaracao_ultima_atualizacao`, o status muda visualmente sozinho.
+
+## 5. Notificação ao cliente (template já existe)
+Reusar `declaracao-transmitida.tsx` enviando:
+```ts
+{
+  template: 'declaracao-transmitida',
+  to: cliente.email,
+  data: { nome_cliente, ano_base, numero_recibo, escritorio_nome }
+}
+```
+
+WhatsApp (se ativo):
+> "Olá {nome}! Sua declaração de IRPF {ano} foi transmitida com sucesso. Recibo: {numero}. Em breve enviaremos uma cópia. — {escritorio}"
+
+## 6. Configuração
+- `supabase/config.toml`: adicionar bloco para `processar-pdf-declaracao` com `verify_jwt = false` (validação manual no código, padrão dos demais).
+- Sem novos secrets — `LOVABLE_API_KEY` já existe.
+
+## Detalhes técnicos
+- **Modelo IA:** `google/gemini-2.5-flash` (rápido, multimodal, lê PDF nativo via base64 inline).
+- **Tamanho máx:** 20MB por arquivo (já validado no front).
+- **Garantia de transmissão:** o status só muda para `transmitida` **após** IA validar o **recibo**. Anexar só a declaração não transmite.
+- **Anti-duplicação:** edge function checa `recibo_validado_em IS NULL` antes de notificar.
+- **Logs:** auditoria via `declaracao_atividades` em cada etapa.
+
+## Arquivos a criar/editar
+- `supabase/migrations/<timestamp>_recibo_declaracao.sql` (novos campos)
+- `supabase/functions/processar-pdf-declaracao/index.ts` (novo)
+- `supabase/config.toml` (bloco da função)
+- `src/components/declaracoes/AnexarDeclaracaoButton.tsx` (reescrito com 2 slots)
+- `src/pages/Declaracoes.tsx` (selects + props extras)

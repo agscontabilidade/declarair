@@ -756,16 +756,23 @@ export type Database = {
           arquivo_declaracao_nome: string | null
           arquivo_declaracao_uploaded_at: string | null
           arquivo_declaracao_url: string | null
+          arquivo_recibo_nome: string | null
+          arquivo_recibo_uploaded_at: string | null
+          arquivo_recibo_url: string | null
           cliente_id: string
           contador_id: string | null
           created_at: string
           data_transmissao: string | null
+          declaracao_extracao: Json | null
+          declaracao_validada_em: string | null
           em_processamento: boolean
           escritorio_id: string
           forma_tributacao: string | null
           id: string
           numero_recibo: string | null
           observacoes_internas: string | null
+          recibo_extracao: Json | null
+          recibo_validado_em: string | null
           status: string
           status_documentos: string | null
           status_processamento_rfb: string
@@ -779,16 +786,23 @@ export type Database = {
           arquivo_declaracao_nome?: string | null
           arquivo_declaracao_uploaded_at?: string | null
           arquivo_declaracao_url?: string | null
+          arquivo_recibo_nome?: string | null
+          arquivo_recibo_uploaded_at?: string | null
+          arquivo_recibo_url?: string | null
           cliente_id: string
           contador_id?: string | null
           created_at?: string
           data_transmissao?: string | null
+          declaracao_extracao?: Json | null
+          declaracao_validada_em?: string | null
           em_processamento?: boolean
           escritorio_id: string
           forma_tributacao?: string | null
           id?: string
           numero_recibo?: string | null
           observacoes_internas?: string | null
+          recibo_extracao?: Json | null
+          recibo_validado_em?: string | null
           status?: string
           status_documentos?: string | null
           status_processamento_rfb?: string
@@ -802,16 +816,23 @@ export type Database = {
           arquivo_declaracao_nome?: string | null
           arquivo_declaracao_uploaded_at?: string | null
           arquivo_declaracao_url?: string | null
+          arquivo_recibo_nome?: string | null
+          arquivo_recibo_uploaded_at?: string | null
+          arquivo_recibo_url?: string | null
           cliente_id?: string
           contador_id?: string | null
           created_at?: string
           data_transmissao?: string | null
+          declaracao_extracao?: Json | null
+          declaracao_validada_em?: string | null
           em_processamento?: boolean
           escritorio_id?: string
           forma_tributacao?: string | null
           id?: string
           numero_recibo?: string | null
           observacoes_internas?: string | null
+          recibo_extracao?: Json | null
+          recibo_validado_em?: string | null
           status?: string
           status_documentos?: string | null
           status_processamento_rfb?: string
@@ -2443,16 +2464,23 @@ export type Database = {
           arquivo_declaracao_nome: string | null
           arquivo_declaracao_uploaded_at: string | null
           arquivo_declaracao_url: string | null
+          arquivo_recibo_nome: string | null
+          arquivo_recibo_uploaded_at: string | null
+          arquivo_recibo_url: string | null
           cliente_id: string
           contador_id: string | null
           created_at: string
           data_transmissao: string | null
+          declaracao_extracao: Json | null
+          declaracao_validada_em: string | null
           em_processamento: boolean
           escritorio_id: string
           forma_tributacao: string | null
           id: string
           numero_recibo: string | null
           observacoes_internas: string | null
+          recibo_extracao: Json | null
+          recibo_validado_em: string | null
           status: string
           status_documentos: string | null
           status_processamento_rfb: string
