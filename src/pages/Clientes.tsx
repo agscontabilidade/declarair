@@ -10,6 +10,7 @@ import { ClientesTable, type ClienteRow } from '@/components/clientes/ClientesTa
 import { ClienteModal } from '@/components/clientes/ClienteModal';
 import { ClienteViewModal } from '@/components/clientes/ClienteViewModal';
 import { QueryError } from '@/components/ui/QueryError';
+import type { ClienteWithContador } from '@/types/domain';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
