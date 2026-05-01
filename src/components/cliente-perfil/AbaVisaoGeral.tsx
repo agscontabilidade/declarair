@@ -10,6 +10,7 @@ import { NovaDeclaracaoModal } from './NovaDeclaracaoModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useUsageStatus } from '@/hooks/useUsageStatus';
 import { formatarPreco, PRECOS } from '@/lib/constants/planos';
+import type { DeclaracaoComContador } from '@/types/domain';
 
 const statusColors: Record<string, string> = {
   aguardando_documentos: 'bg-amber-100 text-amber-800',

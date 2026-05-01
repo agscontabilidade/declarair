@@ -7,6 +7,7 @@ import { Check, Edit, X, Trash2, DollarSign, CreditCard, QrCode, FileText } from
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { GerarBoletoModal, VerQrModal, VerBoletoModal } from './PixBoletoModals';
+import type { CobrancaComCliente } from '@/types/domain';
 
 const STATUS_COLORS: Record<string, string> = {
   pendente: 'bg-amber-100 text-amber-800',

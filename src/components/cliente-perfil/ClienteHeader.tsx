@@ -11,6 +11,7 @@ import {
 import { formatCPF, formatPhone, STATUS_LABELS } from '@/lib/formatters';
 import { Send, Copy, MessageCircle, Mail, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import type { ClienteRow } from '@/types/domain';
 
 interface Props {
   cliente: ClienteRow | null | undefined;
