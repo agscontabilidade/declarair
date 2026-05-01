@@ -182,9 +182,7 @@ export default function Dashboard() {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-            </Button>
+            {/* Notification bell removed as it's already in the header */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">

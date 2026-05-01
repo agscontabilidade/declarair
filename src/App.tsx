@@ -18,7 +18,7 @@ import Cobrancas from "./pages/Cobrancas";
 import Mensagens from "./pages/Mensagens";
 import Configuracoes from "./pages/Configuracoes";
 import Declaracoes from "./pages/Declaracoes";
-import Capa from "./pages/Capa";
+// Capa removed
 import Perfil from "./pages/Perfil";
 import Planos from "./pages/Planos";
 import Checkout from "./pages/Checkout";
@@ -28,7 +28,7 @@ import Onboarding from "./pages/Onboarding";
 // MalhaFina removed
 import Drive from "./pages/Drive";
 import Addons from "./pages/Addons";
-import WhatsApp from "./pages/WhatsApp";
+// WhatsApp page removed (moved to settings)
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ConviteCliente from "./pages/cliente/ConviteCliente";
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
@@ -118,11 +118,11 @@ const App = () => (
               <Route path="/clientes" element={<ProtectedRoute allowedType="contador"><BillingGate><Clientes /></BillingGate></ProtectedRoute>} />
               <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><BillingGate><Cobrancas /></BillingGate></ProtectedRoute>} />
               <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><BillingGate><Mensagens /></BillingGate></ProtectedRoute>} />
-              <Route path="/capa" element={<ProtectedRoute allowedType="contador"><BillingGate><Capa /></BillingGate></ProtectedRoute>} />
+              {/* Capa removed */}
               {/* MalhaFina route removed */}
               <Route path="/drive" element={<ProtectedRoute allowedType="contador"><BillingGate><Drive /></BillingGate></ProtectedRoute>} />
               <Route path="/addons" element={<ProtectedRoute allowedType="contador"><BillingGate><Addons /></BillingGate></ProtectedRoute>} />
-              <Route path="/whatsapp" element={<ProtectedRoute allowedType="contador"><BillingGate><WhatsApp /></BillingGate></ProtectedRoute>} />
+              <Route path="/whatsapp" element={<Navigate to="/configuracoes?tab=comunicacao" replace />} />
               <Route path="/relatorios" element={<ProtectedRoute allowedType="contador"><BillingGate><Relatorios /></BillingGate></ProtectedRoute>} />
               <Route path="/webhooks" element={<ProtectedRoute allowedType="contador"><BillingGate><WebhooksPage /></BillingGate></ProtectedRoute>} />
 
