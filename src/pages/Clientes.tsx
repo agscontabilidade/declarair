@@ -106,6 +106,7 @@ export default function Clientes() {
               onView={(c) => setViewCliente(c)}
               onEdit={(c) => setEditCliente(c)}
               onDelete={handleDelete}
+              onCobranca={(c) => setCobrancaCliente(c)}
               canEdit={podeCriarClientes}
               canDelete={podeCriarClientes}
             />
