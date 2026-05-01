@@ -224,7 +224,6 @@ export default function DeclaracaoDetalhe() {
           open={enviarModalOpen}
           onOpenChange={setEnviarModalOpen}
           declaracao={hook.declaracao}
-          escritorioData={escritorioData || null}
           contadorNome={contadorNome}
           onSendChat={handleSendChat}
         />
