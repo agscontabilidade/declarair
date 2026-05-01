@@ -63,7 +63,7 @@ export async function triggerStatusAutomation(
       .replace(/{tipo_resultado}/g, decl.tipo_resultado || '')
       .replace(/{valor_resultado}/g, decl.valor_resultado ? String(decl.valor_resultado) : '')
       .replace(/{numero_recibo}/g, decl.numero_recibo || '')
-      .replace(/{link_portal}/g, 'https://declarair.lovable.app/cliente/login');
+      .replace(/{link_portal}/g, 'https://declarair.com.br/cliente/login');
 
     const phone = clienteData.telefone.replace(/\D/g, '');
     const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;

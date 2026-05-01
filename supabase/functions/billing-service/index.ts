@@ -350,7 +350,7 @@ async function createPortalSession(escritorio: EscritorioBilling) {
 
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
-    return_url: `${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app')}/meus-planos`,
+    return_url: "https://declarair.com.br/meus-planos",
   });
 
   return { url: session.url };
