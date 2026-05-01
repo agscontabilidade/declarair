@@ -34,7 +34,7 @@ const checklistPadrao = [
 ];
 
 export default function Dashboard() {
-  const [anoBase, setAnoBase] = useState(currentYear - 1);
+  const [anoBase, setAnoBase] = useState(currentYear);
   const { kpis, declaracoes } = useDashboardData(anoBase);
   const {
     filters,
