@@ -15,6 +15,14 @@ import { QueryError } from '@/components/ui/QueryError';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState } from 'react';
+import passo1Img from '@/assets/ecac/passo-1.jpg';
+import passo2Img from '@/assets/ecac/passo-2.jpg';
+import passo3Img from '@/assets/ecac/passo-3.jpg';
+import passo4Img from '@/assets/ecac/passo-4.jpg';
+import passo5Img from '@/assets/ecac/passo-5.jpg';
+import passo7Img from '@/assets/ecac/passo-7.jpg';
+import passo8Img from '@/assets/ecac/passo-8.jpg';
+import passo9Img from '@/assets/ecac/passo-9.jpg';
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
