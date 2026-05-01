@@ -25,6 +25,7 @@ export function useNotificacoes() {
       return (data || []) as Notificacao[];
     },
     enabled: !!escritorioId,
+    staleTime: 1000 * 60, // 1 minute
   });
 
   useEffect(() => {
