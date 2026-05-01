@@ -27,10 +27,10 @@ import { useToast } from '@/hooks/use-toast';
 export default function Configuracoes() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'escritorio');
   const { isDono } = usePermissoes();
-  const escritorioId = profile.escritorioId;
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: escritorio, isLoading: loadingEsc } = useQuery({
     queryKey: ['escritorio', escritorioId],
