@@ -35,6 +35,11 @@ export type DeclaracaoComContador = DeclaracaoRow & {
   contador?: { nome: string } | null;
 };
 
-// Formulário payload genérico (JSONB do Supabase)
+// JSON helpers
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 export type JsonRecord = Record<string, Json | undefined>;
+
+// Helper para itens de formulário (JSONB com campos variáveis)
+export interface RendimentoItem { rendimento_bruto?: string | number; [k: string]: unknown }
+export interface DespesaItem { valor?: string | number; descricao?: string; [k: string]: unknown }
+export interface DependenteItem { nome?: string; cpf?: string; [k: string]: unknown }

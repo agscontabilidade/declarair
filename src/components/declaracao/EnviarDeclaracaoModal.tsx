@@ -14,7 +14,7 @@ import { formatCPF } from '@/lib/formatters';
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  declaracao: any;
+  declaracao: Record<string, unknown> | null | undefined;
   escritorioData: {
     nome: string;
     email: string | null;

@@ -16,7 +16,7 @@ const statusColors: Record<string, string> = {
 const statusOrder = ['aguardando_documentos', 'documentacao_recebida', 'declaracao_pronta', 'transmitida'];
 
 interface Props {
-  declaracao: any;
+  declaracao: { id?: string; status?: string; ano_base?: number; clientes?: { nome?: string; cpf?: string } | null } | null | undefined;
   papel: string | null;
   onChangeStatus: (status: string) => void;
 }

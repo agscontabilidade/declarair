@@ -7,7 +7,7 @@ import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { PERFIL_LABELS, type PerfilFiscal } from '@/lib/checklistPorPerfil';
 
 interface Props {
-  formulario: any;
+  formulario: Record<string, unknown> | null | undefined;
   isLoading: boolean;
 }
 
@@ -19,7 +19,7 @@ const formStatusColors: Record<string, string> = {
 
 const NAO_ENVIADA = 'Informação não enviada';
 
-function isEmpty(data: any): boolean {
+function isEmpty(data: unknown): boolean {
   if (data === null || data === undefined || data === '') return true;
   if (Array.isArray(data)) return data.length === 0;
   if (typeof data === 'object') {
@@ -29,7 +29,7 @@ function isEmpty(data: any): boolean {
   return false;
 }
 
-function renderJsonList(data: any, labelMap?: Record<string, string>) {
+function renderJsonList(data: unknown, labelMap?: Record<string, string>) {
   if (isEmpty(data)) return <p className="text-sm text-muted-foreground italic">{NAO_ENVIADA}</p>;
 
   if (Array.isArray(data)) {
@@ -107,7 +107,7 @@ export function SecaoFormularioIR({ formulario, isLoading }: Props) {
     { key: 'adicionais', title: 'Informações Adicionais', data: formulario.informacoes_adicionais },
   ];
 
-  const renderPerfilFiscal = (data: any) => {
+  const renderPerfilFiscal = (data: unknown) => {
     if (isEmpty(data)) return <p className="text-sm text-muted-foreground italic">{NAO_ENVIADA}</p>;
     const perfil = data as Partial<PerfilFiscal>;
     return (
