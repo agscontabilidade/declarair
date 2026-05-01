@@ -18,7 +18,7 @@ import Cobrancas from "./pages/Cobrancas";
 import Mensagens from "./pages/Mensagens";
 import Configuracoes from "./pages/Configuracoes";
 import Declaracoes from "./pages/Declaracoes";
-import Capa from "./pages/Capa";
+// Capa removed
 import Perfil from "./pages/Perfil";
 import Planos from "./pages/Planos";
 import Checkout from "./pages/Checkout";
