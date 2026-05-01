@@ -179,7 +179,7 @@ export default function Declaracoes() {
         </div>
 
         <Card className="shadow-sm">
-          <CardContent className="p-0 overflow-x-auto">
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="space-y-3 p-4">
                 {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
@@ -191,51 +191,162 @@ export default function Declaracoes() {
                 <p className="text-sm text-muted-foreground/60 mt-1">Crie declarações pelo Dashboard ou perfil do cliente</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>CPF</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ver documentos</TableHead>
-                    <TableHead>Observações</TableHead>
-                    <TableHead>Última atualização</TableHead>
-                    <TableHead>Resultado</TableHead>
-                    <TableHead>Anexar declaração</TableHead>
-                    <TableHead>Processamento</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Desktop: tabela com scroll horizontal se necessário */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <Table className="min-w-[1100px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>CPF</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Ver documentos</TableHead>
+                        <TableHead>Observações</TableHead>
+                        <TableHead className="whitespace-nowrap">Última atualização</TableHead>
+                        <TableHead>Resultado</TableHead>
+                        <TableHead>Anexar declaração</TableHead>
+                        <TableHead>Processamento</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((d) => {
+                        const resultado = d.tipo_resultado ? RESULTADO_META[d.tipo_resultado] : null;
+                        const temObs = !!d.observacoes?.trim();
+                        return (
+                          <TableRow
+                            key={d.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => navigate(`/declaracoes/${d.id}`)}
+                          >
+                            <TableCell className="tabular-nums whitespace-nowrap">{maskCpf(d.clienteCpf)}</TableCell>
+                            <TableCell className="font-medium">{d.clienteNome}</TableCell>
+                            <TableCell>
+                              <Badge className={`${STATUS_COLORS[d.status] || ''} whitespace-nowrap`}>{STATUS_LABELS[d.status] || d.status}</Badge>
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setDocsTarget({ id: d.id, nome: d.clienteNome })}
+                                className="whitespace-nowrap"
+                              >
+                                <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
+                                Documentos
+                              </Button>
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              {temObs ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
+                                  className="inline-flex items-center gap-1.5 max-w-[220px] rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100 transition-colors"
+                                  title={d.observacoes}
+                                >
+                                  <StickyNote className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="truncate">{d.observacoes}</span>
+                                </button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
+                                  className="whitespace-nowrap"
+                                >
+                                  <StickyNote className="h-3.5 w-3.5 mr-1.5" />
+                                  Adicionar
+                                </Button>
+                              )}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-sm">
+                              {formatDateTime(d.ultima_atualizacao_status)}
+                            </TableCell>
+                            <TableCell>
+                              {resultado ? (
+                                <div className="flex flex-col gap-1">
+                                  <Badge className={`${resultado.cls} whitespace-nowrap`}>{resultado.label}</Badge>
+                                  {d.valor_resultado != null && d.tipo_resultado !== 'nenhum' && (
+                                    <span className="text-xs text-muted-foreground tabular-nums">
+                                      {formatCurrency(Number(d.valor_resultado))}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              {escritorioId && (
+                                <AnexarDeclaracaoButton
+                                  declaracaoId={d.id}
+                                  escritorioId={escritorioId}
+                                  arquivoUrl={d.arquivo_declaracao_url}
+                                  arquivoNome={d.arquivo_declaracao_nome}
+                                  arquivoReciboUrl={d.arquivo_recibo_url}
+                                  arquivoReciboNome={d.arquivo_recibo_nome}
+                                  reciboValidadoEm={d.recibo_validado_em}
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile/Tablet: cards empilhados */}
+                <div className="lg:hidden divide-y">
                   {filtered.map((d) => {
                     const resultado = d.tipo_resultado ? RESULTADO_META[d.tipo_resultado] : null;
                     const temObs = !!d.observacoes?.trim();
                     return (
-                      <TableRow
-                        key={d.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/declaracoes/${d.id}`)}
-                      >
-                        <TableCell className="tabular-nums">{maskCpf(d.clienteCpf)}</TableCell>
-                        <TableCell className="font-medium">{d.clienteNome}</TableCell>
-                        <TableCell>
-                          <Badge className={STATUS_COLORS[d.status] || ''}>{STATUS_LABELS[d.status] || d.status}</Badge>
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
+                      <div key={d.id} className="p-4 space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/declaracoes/${d.id}`)}
+                          className="w-full text-left"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-foreground truncate">{d.clienteNome}</p>
+                              <p className="text-xs text-muted-foreground tabular-nums mt-0.5">{maskCpf(d.clienteCpf)}</p>
+                            </div>
+                            <Badge className={`${STATUS_COLORS[d.status] || ''} whitespace-nowrap shrink-0`}>
+                              {STATUS_LABELS[d.status] || d.status}
+                            </Badge>
+                          </div>
+                        </button>
+
+                        <div className="flex items-center justify-between text-xs text-muted-foreground gap-2">
+                          <span className="truncate">{formatDateTime(d.ultima_atualizacao_status)}</span>
+                          {resultado && (
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Badge className={`${resultado.cls} whitespace-nowrap`}>{resultado.label}</Badge>
+                              {d.valor_resultado != null && d.tipo_resultado !== 'nenhum' && (
+                                <span className="tabular-nums">{formatCurrency(Number(d.valor_resultado))}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => setDocsTarget({ id: d.id, nome: d.clienteNome })}
+                            className="justify-start"
                           >
                             <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
                             Documentos
                           </Button>
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
                           {temObs ? (
                             <button
                               type="button"
                               onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
-                              className="inline-flex items-center gap-1.5 max-w-[220px] rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100 transition-colors"
+                              className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100 transition-colors min-w-0"
                               title={d.observacoes}
                             >
                               <StickyNote className="h-3.5 w-3.5 shrink-0" />
@@ -246,30 +357,15 @@ export default function Declaracoes() {
                               size="sm"
                               variant="outline"
                               onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
+                              className="justify-start"
                             >
                               <StickyNote className="h-3.5 w-3.5 mr-1.5" />
-                              Adicionar
+                              Observações
                             </Button>
                           )}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap text-sm">
-                          {formatDateTime(d.ultima_atualizacao_status)}
-                        </TableCell>
-                        <TableCell>
-                          {resultado ? (
-                            <div className="flex flex-col gap-1">
-                              <Badge className={resultado.cls}>{resultado.label}</Badge>
-                              {d.valor_resultado != null && d.tipo_resultado !== 'nenhum' && (
-                                <span className="text-xs text-muted-foreground tabular-nums">
-                                  {formatCurrency(Number(d.valor_resultado))}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
                           {escritorioId && (
                             <AnexarDeclaracaoButton
                               declaracaoId={d.id}
@@ -281,15 +377,13 @@ export default function Declaracoes() {
                               reciboValidadoEm={d.recibo_validado_em}
                             />
                           )}
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
-                        </TableCell>
-                      </TableRow>
+                        </div>
+                      </div>
                     );
                   })}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

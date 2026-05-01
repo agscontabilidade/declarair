@@ -269,6 +269,50 @@ Seja conservador: se houver QUALQUER dúvida sobre autenticidade ou tipo do docu
       return fail("Erro ao atualizar declaração: " + upErr.message);
     }
 
+    // Espelha o arquivo do contador no checklist_documentos
+    // (para aparecer no Drive e no modal "Ver documentos")
+    try {
+      const nomeDocumento = tipo === "declaracao"
+        ? "Declaração IRPF (PDF)"
+        : "Recibo da Receita (PDF)";
+      const arquivoNomeFinal = (arquivo_nome || storage_path.split("/").pop()) ?? null;
+
+      // Tenta atualizar entrada existente
+      const { data: existente } = await admin
+        .from("checklist_documentos")
+        .select("id")
+        .eq("declaracao_id", declaracao_id)
+        .eq("categoria", "contador")
+        .eq("nome_documento", nomeDocumento)
+        .maybeSingle();
+
+      if (existente?.id) {
+        await admin
+          .from("checklist_documentos")
+          .update({
+            arquivo_url: storage_path,
+            arquivo_nome: arquivoNomeFinal,
+            data_recebimento: nowIso,
+            status: "recebido",
+          })
+          .eq("id", existente.id);
+      } else {
+        await admin.from("checklist_documentos").insert({
+          declaracao_id,
+          categoria: "contador",
+          nome_documento: nomeDocumento,
+          obrigatorio: false,
+          status: "recebido",
+          arquivo_url: storage_path,
+          arquivo_nome: arquivoNomeFinal,
+          data_recebimento: nowIso,
+        });
+      }
+    } catch (e) {
+      // Não bloqueia o fluxo principal
+      console.error("Falha ao espelhar arquivo do contador no checklist", e);
+    }
+
     // Auditoria
     await admin.from("declaracao_atividades").insert({
       declaracao_id,

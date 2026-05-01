@@ -1,37 +1,72 @@
-## Visualização inline 100% confiável (sem download forçado)
+## Objetivo
 
-### Por que alguns PDFs abrem e outros baixam hoje
+1. Melhorar responsividade da tabela em `/declaracoes` (colunas Status, Ver documentos, Anexar declaração e Processamento se quebrando em telas menores).
+2. Garantir que **todo arquivo enviado** — pelo cliente OU pelo contador (declaração + recibo) — apareça:
+   - No **Drive** (`/drive`).
+   - No modal **"Ver documentos"** da coluna correspondente em `/declaracoes`.
 
-Quando o cliente envia um arquivo, o storage guarda junto o cabeçalho `Content-Type`. Em alguns uploads esse header vem como `application/octet-stream` (arquivo "genérico"), ou com `Content-Disposition: attachment`. Resultado: ao colocar a URL assinada num `<iframe>`, o navegador respeita o header do servidor e **força o download** em vez de renderizar.
+## Diagnóstico atual
 
-PDFs enviados com o tipo correto funcionam; os enviados sem MIME explícito disparam o download. Mesmo sintoma para imagens.
+- O modal `DocumentosDeclaracaoModal` e a página `Drive` leem APENAS de `checklist_documentos` filtrando por `arquivo_url not null`.
+- Quando o contador anexa via `AnexarDeclaracaoButton`, o PDF é salvo no bucket `documentos-clientes` em `{escritorioId}/declaracoes/{declaracaoId}/{tipo}-...pdf` e o caminho é gravado nas colunas `arquivo_declaracao_url` / `arquivo_recibo_url` da tabela `declaracoes` — **nunca entra em `checklist_documentos`**, por isso some do Drive e do modal.
+- A tabela em `/declaracoes` usa `overflow-x-auto` mas sem larguras mínimas otimizadas e sem versão em cards para telas estreitas, fazendo as colunas estourarem (conforme print).
 
-### Solução: blob inline com MIME forçado
+## Plano
 
-Em vez de jogar a URL assinada direto no iframe/img, vamos:
+### 1. Unificar documentos do contador no checklist
+Estratégia: continuar com upload no bucket `documentos-clientes` no mesmo path, **mas** registrar/atualizar uma linha em `checklist_documentos` para cada arquivo do contador.
 
-1. Fazer **fetch** da URL assinada → obter os bytes do arquivo.
-2. Criar um **`Blob`** com o **MIME correto** deduzido pela extensão do nome (ex.: `.pdf` → `application/pdf`).
-3. Gerar um **`URL.createObjectURL(blob)`** (URL `blob:` local, que o navegador sempre abre inline).
-4. Passar esse blob URL para o `<iframe>` (PDF) ou `<img>` (imagem) ou `<pre>` (texto).
+- Editar a Edge Function `processar-pdf-declaracao` (após validar com sucesso) para fazer um `upsert` em `checklist_documentos` com:
+  - `declaracao_id` = atual
+  - `categoria` = `'contador'`
+  - `nome_documento` = `'Declaração IRPF (PDF)'` ou `'Recibo da Receita (PDF)'`
+  - `arquivo_url` = mesmo path do storage
+  - `arquivo_nome` = nome original
+  - `status` = `'recebido'`
+  - `data_recebimento` = `now()`
+  - `obrigatorio` = `false`
+  - chave de unicidade lógica: combinação (`declaracao_id`, `categoria`, `nome_documento`) — ao substituir um arquivo, a mesma linha é atualizada.
+- Quando o contador **substitui** o arquivo, o upsert sobrescreve `arquivo_url`/`arquivo_nome`/`data_recebimento`.
 
-Como o blob URL é controlado pelo nosso código no navegador, o `Content-Type` é exatamente o que definimos — o browser **nunca** vai forçar download. Comportamento idêntico para todos os arquivos, sempre.
+Isto faz com que o Drive e o modal exibam automaticamente esses arquivos sem outras mudanças de leitura — o Drive já agrupa por `categoria`, então surgirá uma pasta **"Contador"** dentro do cliente.
 
-Office (DOCX/XLSX/PPTX) continua usando o Microsoft Office Online Viewer com a URL assinada original (ele exige uma URL pública e renderiza no próprio iframe da Microsoft).
+### 2. Garantir cobertura para uploads antigos
+Migration única (idempotente) para popular `checklist_documentos` a partir de `declaracoes` que já têm `arquivo_declaracao_url` ou `arquivo_recibo_url` mas ainda não têm a linha equivalente em `checklist_documentos`. Roda uma vez, retroativo.
 
-### Bônus: indicador de carregamento e gestão de memória
+### 3. Modal "Ver documentos" — exibir tudo
+Sem alteração de query: como o passo 1 popula `checklist_documentos`, o modal já mostra automaticamente. Adicionaremos apenas:
+- Um agrupamento visual leve por categoria (`Cliente` vs `Contador`) com cabeçalho de seção.
+- Atualizar o título para "Documentos da declaração" e descrição para "Arquivos enviados pelo cliente e pelo contador".
 
-- Skeleton enquanto baixa o blob (arquivos grandes).
-- `URL.revokeObjectURL()` no cleanup para liberar memória ao trocar de arquivo ou fechar o modal.
-- Toast de erro caso o fetch falhe.
+### 4. Responsividade da lista `/declaracoes`
 
-### Arquivos alterados
+**Abordagem:** manter tabela em desktop (≥ lg) e renderizar lista em **cards** abaixo de `lg` (≤1024px), evitando quebra horizontal.
 
-1. **`src/lib/file-types.ts`** — adicionar mapa de extensão → MIME e função `getMimeFromName(nome)`.
-2. **`src/components/drive/FileViewerModal.tsx`** — substituir lógica que apenas pega `signedUrl` pela rotina fetch → blob → object URL (exceto para Office, que continua usando signed URL). Limpar object URL no cleanup.
+- Wrap atual da `Table` com `hidden lg:block`.
+- Adicionar bloco `lg:hidden` com cards: cada declaração vira um card empilhado contendo:
+  - Topo: Nome + CPF mascarado + Badge de Status.
+  - Meta: Última atualização + Resultado (badge + valor).
+  - Ações em grid 2 colunas: `Documentos`, `Observações` (badge ou botão), `Anexar declaração`, `Processamento`.
+- Em desktop, ajustar a tabela:
+  - `min-w-[1100px]` no `Table` para forçar scroll horizontal apenas se realmente faltar espaço, evitando colunas comprimidas.
+  - `whitespace-nowrap` nas colunas de ações.
+  - Botões de ação com ícone-only quando `lg`–`xl` (texto reaparece em `xl+`) usando classes responsivas (`hidden xl:inline`).
 
-Sem mudanças em PdfViewer, ImageViewer, TextViewer (já recebem a URL como prop).
+### 5. Detalhes técnicos
 
-### Resultado esperado
+- Path do upload do contador permanece em `{escritorioId}/declaracoes/{declaracaoId}/...` — não muda RLS nem políticas de storage.
+- A query do Drive filtra por `declaracoes.escritorio_id = escritorioId`; como `checklist_documentos` está ligado à `declaracao_id`, a mesma RLS continua valendo.
+- Categoria `'contador'` é nova; o Drive mostra `capitalize` então aparecerá como **"Contador"**.
+- Nenhuma mudança em `src/integrations/supabase/client.ts` ou `types.ts`.
 
-Todos os PDFs abrem dentro do sistema sem download. Imagens idem. Word/Excel/PowerPoint dentro do viewer da Microsoft. Texto plano dentro do modal. Comportamento consistente independente de como o arquivo foi enviado.
+### Arquivos afetados
+
+- `supabase/functions/processar-pdf-declaracao/index.ts` — após validar, upsert em `checklist_documentos`.
+- Migration SQL — backfill de declarações já anexadas.
+- `src/pages/Declaracoes.tsx` — versão responsiva (table desktop + cards mobile/tablet).
+- `src/components/declaracoes/DocumentosDeclaracaoModal.tsx` — agrupar por categoria com cabeçalhos "Cliente" / "Contador" e atualizar título.
+- (Opcional) `src/pages/Drive.tsx` — apenas tradução de label "contador" → "Contador (declaração e recibo)" para clareza.
+
+### Fora de escopo
+- Não migrar arquivos antigos para outra estrutura de storage.
+- Não alterar fluxo de validação por IA dos PDFs.
