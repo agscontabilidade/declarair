@@ -93,6 +93,28 @@ export function FileViewerModal({ files, currentId, onClose, onChange }: Props) 
     };
   }, [current, fileType]);
 
+  const goPrev = useCallback(() => {
+    if (currentIndex > 0) onChange(files[currentIndex - 1].id);
+  }, [currentIndex, files, onChange]);
+
+  const goNext = useCallback(() => {
+    if (currentIndex < files.length - 1) onChange(files[currentIndex + 1].id);
+  }, [currentIndex, files, onChange]);
+
+  useEffect(() => {
+    if (!current) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') goPrev();
+      if (e.key === 'ArrowRight') goNext();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [current, goPrev, goNext]);
+
+  const handleDownload = useCallback(() => {
+    if (signedUrl) window.open(signedUrl, '_blank');
+  }, [signedUrl]);
+
   return (
     <Dialog open={!!currentId} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0">
@@ -130,16 +152,16 @@ export function FileViewerModal({ files, currentId, onClose, onChange }: Props) 
 
         {/* Body */}
         <div className="flex-1 min-h-0 p-3 bg-background">
-          {loading || !signedUrl ? (
+          {loading ? (
             <div className="w-full h-full flex items-center justify-center">
               <Skeleton className="w-full h-full" />
             </div>
           ) : current ? (
             <>
-              {fileType === 'pdf' && <PdfViewer url={signedUrl} nome={current.arquivo_nome} />}
-              {fileType === 'image' && <ImageViewer url={signedUrl} nome={current.arquivo_nome} />}
-              {fileType === 'text' && <TextViewer url={signedUrl} />}
-              {fileType === 'office' && <OfficeViewer url={signedUrl} nome={current.arquivo_nome} />}
+              {fileType === 'pdf' && inlineUrl && <PdfViewer url={inlineUrl} nome={current.arquivo_nome} />}
+              {fileType === 'image' && inlineUrl && <ImageViewer url={inlineUrl} nome={current.arquivo_nome} />}
+              {fileType === 'text' && inlineUrl && <TextViewer url={inlineUrl} />}
+              {fileType === 'office' && signedUrl && <OfficeViewer url={signedUrl} nome={current.arquivo_nome} />}
               {fileType === 'unsupported' && <UnsupportedViewer nome={current.arquivo_nome} onDownload={handleDownload} />}
             </>
           ) : null}
