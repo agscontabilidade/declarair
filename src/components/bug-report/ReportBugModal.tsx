@@ -46,8 +46,9 @@ export function ReportBugModal() {
         newUrls.push(signedUrlData.signedUrl);
       }
       setScreenshots(prev => [...prev, ...newUrls]);
-    } catch (err: any) {
-      toast({ title: 'Erro ao fazer upload', description: err.message, variant: 'destructive' });
+    } catch (err) {
+      const error = err as Error;
+      toast({ title: 'Erro ao fazer upload', description: error.message, variant: 'destructive' });
     } finally {
       setUploading(false);
     }
@@ -83,8 +84,9 @@ export function ReportBugModal() {
       setDescricao('');
       setPrioridade('media');
       setScreenshots([]);
-    } catch (err: any) {
-      toast({ title: 'Erro ao enviar report', description: err.message, variant: 'destructive' });
+    } catch (err) {
+      const error = err as Error;
+      toast({ title: 'Erro ao enviar report', description: error.message, variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
