@@ -355,7 +355,7 @@ export default function ClienteDocumentos() {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="text-destructive transition-colors hover:bg-destructive/10"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
