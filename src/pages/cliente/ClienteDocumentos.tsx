@@ -200,6 +200,22 @@ export default function ClienteDocumentos() {
     );
   }
 
+  if (concluido) {
+    return (
+      <ClienteLayout>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="animate-in zoom-in-50 duration-500">
+            <CheckCircle2 className="h-20 w-20 text-success mb-6" />
+          </div>
+          <h2 className="font-display text-2xl font-bold text-foreground mb-2">Documentos Enviados!</h2>
+          <p className="text-muted-foreground max-w-md">
+            Seus documentos foram enviados com sucesso para análise do seu contador. Você será notificado sobre qualquer atualização.
+          </p>
+        </div>
+      </ClienteLayout>
+    );
+  }
+
   const recebidos = checklist.filter((d: any) => d.status === 'recebido');
   const docsEnviadosAoContador = (declaracao as any)?.status_documentos === 'enviado';
 
