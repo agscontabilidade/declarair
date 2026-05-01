@@ -121,13 +121,13 @@ export default function ClienteDashboard() {
                   </div>
 
                   <Badge className={`mt-3 ${
-                    (declaracao as any)?.status_documentos === 'enviado' 
+                    (declaracao as any)?.status_documentos === 'enviado' || (declaracao as any)?.status === 'documentacao_recebida' || (declaracao as any)?.status === 'declaracao_pronta' || (declaracao as any)?.status === 'transmitida'
                       ? 'bg-success/15 text-success hover:bg-success/20' 
                       : checklist.length > 0 
                       ? 'bg-primary/15 text-primary hover:bg-primary/20' 
                       : 'bg-warning/15 text-warning hover:bg-warning/20'
                   }`}>
-                    {(declaracao as any)?.status_documentos === 'enviado' 
+                    {(declaracao as any)?.status_documentos === 'enviado' || (declaracao as any)?.status === 'documentacao_recebida' || (declaracao as any)?.status === 'declaracao_pronta' || (declaracao as any)?.status === 'transmitida'
                       ? 'Enviado ao Contador' 
                       : checklist.length > 0 
                       ? 'Pronto para Enviar' 
