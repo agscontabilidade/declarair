@@ -124,6 +124,27 @@ export function SecaoResultado({ declaracao, onSave, saving }: Props) {
             </Button>
           </div>
         )}
+
+        {declaracao?.id && (
+          <>
+            <Separator className="my-2" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm">Processamento na Receita Federal</Label>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <ProcessamentoSwitch
+                  declaracaoId={declaracao.id}
+                  status={(declaracao.status_processamento_rfb as StatusProcessamentoRfb) || 'aguardando'}
+                />
+                <span className="text-xs text-muted-foreground">
+                  Atualize quando a Receita devolver o status — o cliente verá em tempo real.
+                </span>
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
