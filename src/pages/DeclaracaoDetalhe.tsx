@@ -182,11 +182,7 @@ export default function DeclaracaoDetalhe() {
           </TabsContent>
 
           <TabsContent value="resultado" className="mt-4 space-y-6">
-            <SecaoResultado
-              declaracao={hook.declaracao}
-              onSave={handleSaveResultado}
-              saving={hook.saveResultado.isPending}
-            />
+            <SecaoResultado declaracao={hook.declaracao} />
             <SecaoNotas
               observacoes={hook.notasInternas}
               onSave={handleSaveNotas}
