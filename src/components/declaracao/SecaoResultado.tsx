@@ -4,12 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
-import { TrendingUp, TrendingDown, Copy, Save } from 'lucide-react';
+import { TrendingUp, TrendingDown, Copy, Save, Activity } from 'lucide-react';
 import { toast } from 'sonner';
+import { ProcessamentoSwitch, type StatusProcessamentoRfb } from '@/components/declaracoes/ProcessamentoSwitch';
 
 interface Props {
-  declaracao: { tipo_resultado?: string | null; valor_resultado?: number | string | null; numero_recibo?: string | null; status?: string | null } | null | undefined;
+  declaracao: {
+    id?: string;
+    tipo_resultado?: string | null;
+    valor_resultado?: number | string | null;
+    numero_recibo?: string | null;
+    status?: string | null;
+    status_processamento_rfb?: StatusProcessamentoRfb | null;
+    em_processamento?: boolean | null;
+  } | null | undefined;
   onSave: (data: { tipo_resultado: string; valor_resultado: number | null; numero_recibo: string }) => void;
   saving: boolean;
 }
