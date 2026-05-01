@@ -52,7 +52,7 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
       className="min-h-screen flex flex-col bg-background"
       style={whitelabelAtivo ? { '--color-brand': corPrimaria } as React.CSSProperties : undefined}
     >
-      <header className="h-16 flex items-center justify-between border-b bg-card px-6 shrink-0">
+      <header className="h-16 flex items-center justify-between border-b bg-card px-3 sm:px-6 shrink-0 gap-2">
         <div className="flex items-center gap-3">
           {whitelabelAtivo && logoUrl ? (
             <img src={logoUrl} alt={nomePortal} className="h-10 w-auto rounded-lg object-contain" />
