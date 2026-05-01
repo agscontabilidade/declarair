@@ -200,7 +200,7 @@ export default function Declaracoes() {
                           )}
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-sm">
-                          {formatDate(d.ultima_atualizacao_status)}
+                          {formatDateTime(d.ultima_atualizacao_status)}
                         </TableCell>
                         <TableCell>
                           {resultado ? (
