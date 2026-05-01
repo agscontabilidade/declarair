@@ -1,110 +1,62 @@
+# Correção definitiva: `Cannot find module 'tests/playwright-fixture'`
 
-# Plano definitivo: zerar `any`, blindar o CI
+## Diagnóstico
 
-## Diagnóstico (verificado agora, não suposição)
+Os 4 specs e2e (`auth/login`, `navigation/rotas-protegidas`, `navigation/rotas-publicas`, `ui/responsividade`) importam de `'../../playwright-fixture'`, ou seja, esperam o arquivo **`tests/playwright-fixture.ts`** — que **não existe** no repositório. Só existem:
 
-- `eslint.config.js` já está com `no-explicit-any: "warn"` (Fase 1 feita).
-- `bun run lint` retorna **0 erros + 213 warnings**, exit 0.
-- `package.json` tem `"lint": "eslint . --max-warnings 213"` — **margem zero**. Qualquer novo `any` quebra o CI.
-- Distribuição: 69 warnings em `src/`, 14 em `supabase/functions/` (Stripe, Inter, PDF — alto risco financeiro).
-- `ci.yml` ainda usa `actions/checkout@v4` (Node 20, deprecação anunciada para 2026 — não bloqueia hoje).
-- Não existe `src/types/` centralizado — tipagem está inline e duplicada.
+- `tests/example.spec.ts`
+- `tests/e2e/helpers/auth.ts` (helpers de login)
 
-A análise do GPT identifica corretamente o sintoma estrutural (falta de domínio tipado), mas a "solução rápida" dele já foi aplicada. O caminho agora é eliminar a dívida, não adiá-la.
+Resultado: `playwright test` falha em todos os 4 arquivos com `Cannot find module`, e o job `bun run test:e2e` morre com exit code 1 no GitHub Actions.
 
-## Estratégia: ratchet decrescente
+Além disso, o `playwright.config.ts` tem `baseURL: http://localhost:8080` mas **não inicia o dev server** (`webServer` ausente). Mesmo corrigindo o fixture, os testes continuariam falhando no CI por não ter app rodando.
 
-Em vez de um big-bang arriscado em produção, vamos zerar warnings em **lotes priorizados por risco**, baixando `--max-warnings` a cada lote. Isso garante que:
-- O CI nunca regride (lote concluído = teto novo, mais baixo).
-- Bugs financeiros silenciosos são eliminados primeiro.
-- A revisão humana fica gerenciável (lotes de 30–50 warnings).
+## Plano de correção
 
-## Fases
+### 1. Criar `tests/playwright-fixture.ts`
 
-### Fase A — Tipagem central (fundação)
-Criar `src/types/` com contratos compartilhados, alimentados por `src/integrations/supabase/types.ts` (gerado pelo Supabase) e Zod:
+Fixture mínima que reexporta `test` e `expect` do Playwright, pronta para futuras extensões (ex.: usuário autenticado, contexto multi-tenant). Conteúdo:
 
-```text
-src/types/
-  cliente.ts        // Cliente, ClienteComContador, StatusOnboarding
-  declaracao.ts     // Declaracao, StatusDeclaracao, TipoResultado
-  cobranca.ts       // Cobranca, StatusCobranca, payloads Inter/Stripe
-  formulario-ir.ts  // FormularioIR + JSONB inferidos de Zod schemas
-  pdf.ts            // payloads de processar-pdf-declaracao
-  stripe.ts         // re-export de Stripe.* + tipos de webhook locais
-  inter.ts          // contratos da API Inter (token, boleto, webhook)
-  index.ts          // barrel
+```ts
+import { test as base, expect } from '@playwright/test';
+
+// Espaço para fixtures customizadas (auth, escritorio, etc.)
+export const test = base.extend({});
+export { expect };
 ```
 
-Padrão: derivar de `Database["public"]["Tables"][...]["Row"]` quando possível; usar `z.infer<typeof schema>` para JSONB.
+Isso resolve imediatamente os 4 erros de import sem alterar nenhum spec.
 
-### Fase B — Backend financeiro (14 warnings, prioridade máxima)
-Edge functions onde `any` é risco direto de bug financeiro:
+### 2. Ajustar `playwright.config.ts` para o CI
 
-- `supabase/functions/stripe-webhook/index.ts` — usar `Stripe.Event`, `Stripe.Invoice`, `Stripe.Subscription`.
-- `supabase/functions/billing-service/index.ts`
-- `supabase/functions/stripe-checkout/index.ts`
-- `supabase/functions/inter-*` (boleto, webhook, token mTLS)
-- `supabase/functions/processar-pdf-declaracao/index.ts` — tipar payload de OCR/extração.
+- Adicionar bloco `webServer` que sobe o Vite antes dos testes:
+  ```ts
+  webServer: {
+    command: 'bun run dev',
+    url: 'http://localhost:8080',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  }
+  ```
+- Restringir `testDir` para `./tests/e2e` (evita rodar `tests/example.spec.ts` solto e qualquer arquivo futuro fora de e2e).
 
-Ao final: `--max-warnings 199`.
+### 3. Garantir que o workflow do GitHub instale browsers
 
-### Fase C — Frontend de domínio crítico (~30 warnings)
-Componentes que tocam dinheiro, status legal e dados sensíveis:
+Verificar `.github/workflows/*.yml` e, se necessário, adicionar antes do `bun run test:e2e`:
+```
+- run: bunx playwright install --with-deps chromium
+```
+(só edito se o passo não existir; sem isso o Playwright também falha no runner.)
 
-- `src/pages/Declaracoes.tsx`, `src/pages/Cobrancas.tsx`, `src/pages/Clientes.tsx`
-- `src/components/declaracoes/*` (incluindo `AnexarDeclaracaoButton.tsx`)
-- `src/components/cobrancas/*`
-- Hooks: `useDashboardData`, `useDeclaracoes`, `useCobrancas`
+### 4. Validação local (após aprovação)
 
-Ao final: `--max-warnings ~170`.
+- `bun run lint` continua verde (sem novos `any`).
+- `bunx playwright test --list` deve listar todos os specs sem erro de módulo.
 
-### Fase D — Frontend operacional (~25 warnings)
-Mensagens, templates, comunicação, configurações, capa PDF.
-Ao final: `--max-warnings ~145`.
+## Arquivos a alterar
 
-### Fase E — Frontend auxiliar e UI (~14 warnings)
-Componentes de UI, formulários secundários, utilitários.
-Ao final: `--max-warnings 0`.
+- **criar** `tests/playwright-fixture.ts`
+- **editar** `playwright.config.ts` (adiciona `webServer`, ajusta `testDir`)
+- **editar** `.github/workflows/<ci>.yml` apenas se faltar `playwright install`
 
-### Fase F — Hardening permanente
-1. `eslint.config.js`: voltar `no-explicit-any` para `"error"`.
-2. `package.json`: remover `--max-warnings`, adicionar:
-   - `"typecheck": "tsc --noEmit"`
-   - `"lint": "eslint ."`
-3. `.github/workflows/ci.yml`:
-   - Adicionar step `bun run typecheck` antes de `lint`.
-   - Atualizar `actions/checkout@v4` → manter (já é v4, ok). Adicionar `actions/setup-node@v4` só se necessário.
-   - Adicionar cache de dependências do bun para acelerar.
-4. Documentar em `.lovable/plan.md` que `any` é proibido — usar `unknown` + narrowing ou tipo concreto.
-
-## Detalhes técnicos
-
-**Substituições padrão:**
-- `(payload: any)` → `(payload: unknown)` + Zod parse, ou tipo do domínio.
-- `catch (e: any)` → `catch (e: unknown)` + `e instanceof Error ? e.message : String(e)`.
-- `Record<string, any>` JSONB → `z.infer<typeof schema>` da Fase A.
-- Eventos Stripe: `Stripe.Event` + discriminated union em `event.type`.
-- Respostas Supabase: usar tipos gerados, nunca `any` em `.from(...).select()`.
-
-**Riscos e mitigações:**
-- *Risco:* mudança de tipo expõe bug latente (ex: campo opcional acessado sem guard).
-- *Mitigação:* cada fase é um commit separado; rodar `bun run test` + revisão visual no preview entre fases.
-- *Risco:* tipos do Supabase desatualizados quebram Fase A.
-- *Mitigação:* `src/integrations/supabase/types.ts` é regenerado automaticamente; validar antes da Fase A começar.
-
-**Não tocar:**
-- `src/integrations/supabase/client.ts` e `types.ts` (auto-gerados).
-- Schema do banco (produção estável).
-- RLS policies.
-
-## Entregável final
-
-- 0 errors, 0 warnings, `no-explicit-any: error`.
-- `tsc --noEmit` rodando no CI.
-- `src/types/` como única fonte de verdade dos contratos de domínio.
-- Pipeline GitHub Actions verde e à prova de regressões.
-
-## Execução proposta
-
-Começo pela **Fase A + Fase B** num único commit (fundação + backend financeiro), depois cada fase seguinte em commits separados para revisão incremental. Aprove e eu sigo.
+Sem mudanças em specs, helpers, ou código de aplicação.
