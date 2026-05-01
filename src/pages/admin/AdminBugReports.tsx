@@ -1,4 +1,20 @@
 import { useState } from 'react';
+import { getErrorMessage } from '@/lib/errors';
+
+interface BugReport {
+  id: string;
+  titulo: string;
+  descricao: string;
+  status: string;
+  prioridade?: string;
+  pagina_url?: string | null;
+  reportado_por_nome?: string | null;
+  reportado_por_email?: string | null;
+  resposta_admin?: string | null;
+  screenshots?: unknown;
+  created_at: string;
+  updated_at?: string;
+}
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -32,7 +48,7 @@ export default function AdminBugReports() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
-  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [selectedReport, setSelectedReport] = useState<BugReport | null>(null);
   const [resposta, setResposta] = useState('');
   const [novoStatus, setNovoStatus] = useState('');
 
@@ -50,7 +66,7 @@ export default function AdminBugReports() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, status, resposta_admin }: { id: string; status: string; resposta_admin?: string }) => {
-      const updateData: any = { status, updated_at: new Date().toISOString() };
+      const updateData: { status: string; updated_at: string; resposta_admin?: string } = { status, updated_at: new Date().toISOString() };
       if (resposta_admin !== undefined) updateData.resposta_admin = resposta_admin;
       const { error } = await supabase.from('bug_reports').update(updateData).eq('id', id);
       if (error) throw error;
@@ -60,8 +76,8 @@ export default function AdminBugReports() {
       toast({ title: 'Bug report atualizado!' });
       setSelectedReport(null);
     },
-    onError: (err: any) => {
-      toast({ title: 'Erro ao atualizar', description: err.message, variant: 'destructive' });
+    onError: (err: unknown) => {
+      toast({ title: 'Erro ao atualizar', description: getErrorMessage(err), variant: 'destructive' });
     },
   });
 
@@ -73,7 +89,7 @@ export default function AdminBugReports() {
     return matchSearch && matchStatus;
   });
 
-  const openDetail = (report: any) => {
+  const openDetail = (report: BugReport) => {
     setSelectedReport(report);
     setResposta(report.resposta_admin ?? '');
     setNovoStatus(report.status);

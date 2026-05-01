@@ -20,7 +20,7 @@ export default function AdminAssinaturas() {
   const [search, setSearch] = useState('');
 
   const filtered = (assinaturas ?? []).filter(a =>
-    ((a as any).escritorios?.nome ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    ((a as { escritorios?: { nome?: string } }).escritorios?.nome ?? '').toLowerCase().includes(search.toLowerCase()) ||
     a.plano.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -64,7 +64,7 @@ export default function AdminAssinaturas() {
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <CreditCard className="h-4 w-4 text-muted-foreground" />
-                          {(a as any).escritorios?.nome ?? '—'}
+                          {(a as { escritorios?: { nome?: string } }).escritorios?.nome ?? '—'}
                         </div>
                       </TableCell>
                       <TableCell>

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { getErrorMessage } from '@/lib/errors';
 
 interface ConviteData {
   id: string;
@@ -128,13 +129,14 @@ export default function ConviteColaborador() {
 
       toast.success('Conta criada com sucesso! Verifique seu email para confirmar.');
       setTimeout(() => navigate('/login'), 3000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao aceitar convite:', error);
-      if (error.message?.includes('already registered')) {
+      const msg = getErrorMessage(error);
+      if (msg.includes('already registered')) {
         toast.error('Este email já possui uma conta. Faça login.');
         navigate('/login');
       } else {
-        toast.error(error.message || 'Erro ao criar conta. Tente novamente.');
+        toast.error(msg || 'Erro ao criar conta. Tente novamente.');
       }
     } finally {
       setAceitando(false);

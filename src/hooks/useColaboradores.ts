@@ -36,7 +36,7 @@ export const useColaboradores = (escritorioId: string) => {
   const { data: convitesPendentes = [] } = useQuery({
     queryKey: ['convites-pendentes', escritorioId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('colaborador_convites')
         .select('*')
         .eq('escritorio_id', escritorioId)
@@ -57,7 +57,7 @@ export const useColaboradores = (escritorioId: string) => {
 
       const userId = (await supabase.auth.getUser()).data.user?.id;
 
-      const { data: convite, error: conviteError } = await (supabase as any)
+      const { data: convite, error: conviteError } = await supabase
         .from('colaborador_convites')
         .insert({
           escritorio_id: escritorioId,
@@ -93,7 +93,7 @@ export const useColaboradores = (escritorioId: string) => {
 
   const cancelarConvite = useMutation({
     mutationFn: async (conviteId: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('colaborador_convites')
         .delete()
         .eq('id', conviteId);

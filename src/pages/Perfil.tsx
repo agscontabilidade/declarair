@@ -66,7 +66,7 @@ export default function Perfil() {
       setNome(usuario.nome || '');
       setTelefone(usuario.telefone || '');
       setAvatarUrl(usuario.avatar_url || null);
-      const prefs = (usuario as any).preferencias_notificacao;
+      const prefs = (usuario as { preferencias_notificacao?: { email?: boolean; whatsapp?: boolean } }).preferencias_notificacao;
       if (prefs) {
         setNotifEmail(prefs.email ?? true);
         setNotifWhatsApp(prefs.whatsapp ?? true);
@@ -225,7 +225,7 @@ export default function Perfil() {
         .from('usuarios')
         .update({
           preferencias_notificacao: { email: notifEmail, whatsapp: notifWhatsApp },
-        } as any)
+        })
         .eq('id', user.id);
       if (error) throw error;
       toast.success('Preferências salvas!');
@@ -381,7 +381,7 @@ export default function Perfil() {
                   <p className="text-sm text-muted-foreground text-center py-6">Nenhuma declaração atribuída</p>
                 ) : (
                   <div className="space-y-2">
-                    {minhasDeclaracoes.map((d: any) => {
+                    {minhasDeclaracoes.map((d: { id: string; status: string; ano_base: number; clientes?: { nome?: string } | null }) => {
                       const st = statusLabels[d.status] || { label: d.status, color: 'bg-muted text-muted-foreground' };
                       return (
                         <div
@@ -414,7 +414,7 @@ export default function Perfil() {
                   <p className="text-sm text-muted-foreground text-center py-6">Nenhuma atividade registrada</p>
                 ) : (
                   <div className="space-y-2">
-                    {atividadeRecente.map((a: any) => (
+                    {atividadeRecente.map((a: { id: string; descricao: string; created_at: string }) => (
                       <div key={a.id} className="flex items-start gap-3 py-2 px-3 rounded-lg bg-muted/20">
                         <div className="h-2 w-2 rounded-full bg-accent mt-1.5 shrink-0" />
                         <div className="flex-1 min-w-0">

@@ -112,14 +112,14 @@ export default function Declaracoes() {
         .order('ultima_atualizacao_status', { ascending: false });
       if (error) throw error;
 
-      const ids = (data || []).map((d: any) => d.id);
+      const ids = (data || []).map((d: { id: string }) => d.id);
       const notasMap = new Map<string, string>();
       if (ids.length > 0) {
         const { data: notas } = await supabase
           .from('declaracao_notas_internas')
           .select('declaracao_id, conteudo')
           .in('declaracao_id', ids);
-        (notas || []).forEach((n: any) => {
+        (notas || []).forEach((n: { declaracao_id: string; conteudo: string | null }) => {
           if (n.conteudo?.trim()) notasMap.set(n.declaracao_id, n.conteudo);
         });
       }
@@ -134,7 +134,7 @@ export default function Declaracoes() {
     enabled: !!escritorioId,
   });
 
-  const filtered = declaracoes.filter((d: any) => {
+  const filtered = declaracoes.filter((d: { status: string; clienteCpf: string; clienteNome: string }) => {
     if (statusFilter !== 'todos' && d.status !== statusFilter) return false;
     if (debouncedSearch) {
       const s = debouncedSearch.toLowerCase();
