@@ -1,13 +1,14 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Download, Eye, User, Briefcase } from 'lucide-react';
+import { FileText, Download, Eye, User, Briefcase, Upload, Loader2, Trash2 } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { useState, useMemo } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   declaracaoId: string | null;
@@ -25,9 +26,35 @@ interface DocItem {
   categoria: string;
 }
 
+interface DeclaracaoCtx {
+  escritorio_id: string;
+  cliente_id: string;
+  ano_base: number;
+}
+
+const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+const MAX_SIZE = 20 * 1024 * 1024;
+
 export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onOpenChange }: Props) {
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [viewerCurrentId, setViewerCurrentId] = useState<string | null>(null);
+
+  const { data: ctx } = useQuery({
+    queryKey: ['declaracao-ctx', declaracaoId],
+    queryFn: async (): Promise<DeclaracaoCtx | null> => {
+      if (!declaracaoId) return null;
+      const { data, error } = await supabase
+        .from('declaracoes')
+        .select('escritorio_id, cliente_id, ano_base')
+        .eq('id', declaracaoId)
+        .single();
+      if (error) throw error;
+      return data as DeclaracaoCtx;
+    },
+    enabled: !!declaracaoId && open,
+  });
 
   const { data: docs = [] as DocItem[], isLoading } = useQuery({
     queryKey: ['documentos-declaracao', declaracaoId],
@@ -63,6 +90,62 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
     [docs]
   );
 
+  const upload = useMutation({
+    mutationFn: async (files: File[]) => {
+      if (!ctx || !declaracaoId) throw new Error('Declaração não carregada');
+      for (const file of files) {
+        if (!ALLOWED.includes(file.type)) throw new Error(`Tipo não permitido: ${file.name}`);
+        if (file.size > MAX_SIZE) throw new Error(`Arquivo > 20MB: ${file.name}`);
+      }
+      for (const file of files) {
+        const safeName = file.name.replace(/[^\w.-]/g, '_');
+        const path = `${ctx.escritorio_id}/${ctx.cliente_id}/contador-${Date.now()}-${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from('documentos-clientes')
+          .upload(path, file, { upsert: true, contentType: file.type });
+        if (upErr) throw upErr;
+
+        const { error: insErr } = await supabase.from('checklist_documentos').insert({
+          declaracao_id: declaracaoId,
+          nome_documento: file.name,
+          categoria: 'contador',
+          obrigatorio: false,
+          status: 'recebido',
+          arquivo_url: path,
+          arquivo_nome: file.name,
+          data_recebimento: new Date().toISOString(),
+        });
+        if (insErr) throw insErr;
+      }
+    },
+    onSuccess: () => {
+      toast.success('Arquivo(s) enviado(s) e sincronizado(s) com o Drive');
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e, 'Falha ao enviar arquivo')),
+  });
+
+  const remover = useMutation({
+    mutationFn: async (doc: DocItem) => {
+      if (doc.arquivo_url) {
+        await supabase.storage.from('documentos-clientes').remove([doc.arquivo_url]);
+      }
+      const { error } = await supabase.from('checklist_documentos').delete().eq('id', doc.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Arquivo removido');
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e, 'Falha ao remover')),
+  });
+
   async function baixarArquivo(path: string, id: string) {
     try {
       setDownloadingId(id);
@@ -78,7 +161,13 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
     }
   }
 
-  function renderDoc(d: DocItem) {
+  function onSelectFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length) upload.mutate(files);
+    e.target.value = '';
+  }
+
+  function renderDoc(d: DocItem, removable = false) {
     return (
       <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 hover:border-primary/40 transition-colors">
         <button
@@ -119,6 +208,21 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
           >
             <Download className="h-3.5 w-3.5" />
           </Button>
+          {removable && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (confirm('Remover este arquivo? Essa ação também o remove do Drive.')) {
+                  remover.mutate(d);
+                }
+              }}
+              title="Remover"
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -136,6 +240,32 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
                 : 'Arquivos enviados pelo cliente e pelo contador'}
             </DialogDescription>
           </DialogHeader>
+
+          <div className="flex items-center justify-between gap-2 pb-2 border-b">
+            <p className="text-xs text-muted-foreground">
+              Os arquivos enviados aqui aparecem automaticamente no Drive do cliente.
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={onSelectFiles}
+            />
+            <Button
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={upload.isPending || !ctx}
+            >
+              {upload.isPending ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Enviando...</>
+              ) : (
+                <><Upload className="h-3.5 w-3.5 mr-1.5" /> Enviar arquivo</>
+              )}
+            </Button>
+          </div>
+
           <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-1">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)
@@ -156,7 +286,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
                         Enviados pelo cliente ({grupos.cliente.length})
                       </h3>
                     </div>
-                    <div className="space-y-2">{grupos.cliente.map(renderDoc)}</div>
+                    <div className="space-y-2">{grupos.cliente.map(d => renderDoc(d, false))}</div>
                   </section>
                 )}
                 {grupos.contador.length > 0 && (
@@ -167,7 +297,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
                         Anexados pelo contador ({grupos.contador.length})
                       </h3>
                     </div>
-                    <div className="space-y-2">{grupos.contador.map(renderDoc)}</div>
+                    <div className="space-y-2">{grupos.contador.map(d => renderDoc(d, true))}</div>
                   </section>
                 )}
               </>
