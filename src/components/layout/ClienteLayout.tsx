@@ -90,7 +90,7 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
           </button>
         </nav>
       </header>
-      <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
+      <main className="flex-1 p-4 sm:p-6 pb-24 sm:pb-6 max-w-5xl mx-auto w-full">
         {children}
       </main>
     </div>
