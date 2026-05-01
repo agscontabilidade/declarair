@@ -25,7 +25,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contadores: { id: string; nome: string }[];
-  onSave: (data: any) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<void>;
   mode?: 'create' | 'edit';
   cliente?: ClienteEditavel | null;
 }
