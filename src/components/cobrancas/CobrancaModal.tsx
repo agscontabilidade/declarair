@@ -98,12 +98,18 @@ export function CobrancaModal({ open, onOpenChange, onSave, loading, editData, c
         <div className="space-y-4">
           <div>
             <Label>Cliente *</Label>
-            <Select value={clienteId} onValueChange={(v) => { setClienteId(v); setDeclaracaoId(''); }}>
-              <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
-              <SelectContent>
-                {clientes.map((c: { id: string; nome: string }) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            {clienteIdLocked ? (
+              <div className="h-10 px-3 rounded-md border bg-muted/40 flex items-center text-sm font-medium">
+                {clienteNomeLocked || clientes.find((c: { id: string; nome: string }) => c.id === clienteIdLocked)?.nome || 'Cliente selecionado'}
+              </div>
+            ) : (
+              <Select value={clienteId} onValueChange={(v) => { setClienteId(v); setDeclaracaoId(''); }}>
+                <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                <SelectContent>
+                  {clientes.map((c: { id: string; nome: string }) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           {declaracoes.length > 0 && (
             <div>
