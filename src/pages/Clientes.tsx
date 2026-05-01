@@ -27,6 +27,8 @@ export default function Clientes() {
   const [createOpen, setCreateOpen] = useState(false);
   const [viewCliente, setViewCliente] = useState<ClienteRow | null>(null);
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
+  const [cobrancaCliente, setCobrancaCliente] = useState<ClienteRow | null>(null);
+  const { criar: criarCobranca } = useCobrancas('todos');
   const { podeVerClientes, podeCriarClientes, isDono } = usePermissoes();
   const { toast } = useToast();
 
