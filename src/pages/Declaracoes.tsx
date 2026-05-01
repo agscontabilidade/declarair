@@ -173,18 +173,26 @@ export default function Declaracoes() {
                           </Button>
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="relative"
-                            onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
-                            title={temObs ? 'Ver observações' : 'Adicionar observação'}
-                          >
-                            <StickyNote className="h-4 w-4" />
-                            {temObs && (
-                              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
-                            )}
-                          </Button>
+                          {temObs ? (
+                            <button
+                              type="button"
+                              onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
+                              className="inline-flex items-center gap-1.5 max-w-[220px] rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100 transition-colors"
+                              title={d.observacoes}
+                            >
+                              <StickyNote className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">{d.observacoes}</span>
+                            </button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
+                            >
+                              <StickyNote className="h-3.5 w-3.5 mr-1.5" />
+                              Adicionar
+                            </Button>
+                          )}
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-sm">
                           {formatDate(d.ultima_atualizacao_status)}
