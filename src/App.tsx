@@ -15,7 +15,7 @@ import RedefinirSenha from "./pages/RedefinirSenha";
 import Dashboard from "./pages/Dashboard";
 import Clientes from "./pages/Clientes";
 import Cobrancas from "./pages/Cobrancas";
-import Mensagens from "./pages/Mensagens";
+
 import Configuracoes from "./pages/Configuracoes";
 import Declaracoes from "./pages/Declaracoes";
 // Capa removed
