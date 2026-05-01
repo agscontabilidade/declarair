@@ -57,6 +57,12 @@ export function useDeclaracao(declaracaoId: string | undefined) {
       tipo_resultado?: string;
       valor_resultado?: number | null;
     }) => {
+      const { data: currentDecl } = await supabase
+        .from('declaracoes')
+        .select('status, cliente_id, escritorio_id, ano_base')
+        .eq('id', declaracaoId!)
+        .single();
+
       const { error } = await supabase
         .from('declaracoes')
         .update({
@@ -69,6 +75,16 @@ export function useDeclaracao(declaracaoId: string | undefined) {
         })
         .eq('id', declaracaoId!);
       if (error) throw error;
+
+      // Se o status regrediu para aguardando_documentos, notifica o cliente
+      if (input.status === 'aguardando_documentos' && currentDecl && currentDecl.status !== 'aguardando_documentos') {
+        await supabase.from('notificacoes').insert({
+          escritorio_id: currentDecl.escritorio_id,
+          titulo: '⚠️ Pendência na Documentação',
+          mensagem: `Seu contador solicitou novos documentos ou correções na declaração de ${currentDecl.ano_base}. Verifique os detalhes no portal.`,
+          link_destino: '/cliente/documentos',
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
@@ -124,7 +140,7 @@ export function useDeclaracao(declaracaoId: string | undefined) {
   });
 
   const uploadDoc = useMutation({
-    mutationFn: async ({ docId, file }: { docId: string; file: File }) => {
+    mutationFn: async ({ docId, file, isRequestingNew }: { docId: string; file: File; isRequestingNew?: boolean }) => {
       const escritorioId = profile.escritorioId;
       const clienteId = declaracao.data?.clientes?.id;
       if (!escritorioId || !clienteId) throw new Error('Dados incompletos');
@@ -152,14 +168,44 @@ export function useDeclaracao(declaracaoId: string | undefined) {
   });
 
   const addDocItem = useMutation({
-    mutationFn: async (input: { nome_documento: string; categoria: string }) => {
+    mutationFn: async (input: { nome_documento: string; categoria: string; obrigatorio?: boolean }) => {
+      const { data: currentDecl } = await supabase
+        .from('declaracoes')
+        .select('escritorio_id, ano_base, status')
+        .eq('id', declaracaoId!)
+        .single();
+
       const { error } = await supabase
         .from('checklist_documentos')
-        .insert({ ...input, declaracao_id: declaracaoId! });
+        .insert({ 
+          ...input, 
+          declaracao_id: declaracaoId!,
+          status: 'pendente'
+        });
       if (error) throw error;
+
+      // Se o contador adicionar um documento e o status da declaração estiver avançado,
+      // regride o status e notifica o cliente
+      if (currentDecl && currentDecl.status !== 'aguardando_documentos') {
+        await supabase
+          .from('declaracoes')
+          .update({ 
+            status: 'aguardando_documentos',
+            ultima_atualizacao_status: new Date().toISOString()
+          })
+          .eq('id', declaracaoId!);
+        
+        await supabase.from('notificacoes').insert({
+          escritorio_id: currentDecl.escritorio_id,
+          titulo: '📂 Novo Documento Solicitado',
+          mensagem: `Seu contador adicionou um novo item necessário à sua checklist de ${currentDecl.ano_base}.`,
+          link_destino: '/cliente/documentos',
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
     },
   });
 

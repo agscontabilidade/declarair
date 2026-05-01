@@ -32,7 +32,7 @@ interface Props {
   checklist: ChecklistItem[];
   isLoading: boolean;
   declaracaoId?: string;
-  onUpload: (docId: string, file: File) => void;
+  onUpload: (docId: string, file: File, isRequestingNew?: boolean) => void;
   uploading: boolean;
   onAddItem?: (input: { nome_documento: string; categoria: string }) => void;
   hasDeclaracao: boolean;
@@ -261,6 +261,9 @@ export function AbaDocumentos({ checklist, isLoading, onUpload, uploading, onAdd
                     <Button variant="outline" size="sm" onClick={() => handleFileSelect(item.id)} disabled={uploading}>
                       <Upload className="h-4 w-4" />
                     </Button>
+                    {item.status === 'pendente' && item.arquivo_url && (
+                      <Badge variant="destructive" className="text-[10px] px-1 h-4">Pendente</Badge>
+                    )}
                   </div>
                 </div>
               ))}
