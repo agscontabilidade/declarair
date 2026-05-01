@@ -228,76 +228,85 @@ export default function ClienteDashboard() {
           <>
             {/* Status Stepper */}
             <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <p className="text-sm text-muted-foreground mb-4">Declaração IR {declaracao.ano_base}</p>
+              <CardContent className="p-4 sm:p-6">
+                <p className="text-sm text-muted-foreground mb-3 sm:mb-4">Declaração IR {declaracao.ano_base}</p>
                 <StatusStepper currentStep={statusStep} />
               </CardContent>
             </Card>
 
             {/* Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Informações Cadastrais */}
-              <Card 
-                className={`shadow-sm transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${formulario?.status_preenchimento === 'concluido' ? 'border-success/30 bg-success/5' : ''}`}
+              <button
+                type="button"
                 onClick={() => navigate('/cliente/formulario')}
+                className="text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
               >
-                <CardContent className="flex flex-col items-center py-8 text-center">
-                  <ClipboardList className={`h-10 w-10 mb-3 ${formulario?.status_preenchimento === 'concluido' ? 'text-success' : 'text-primary'}`} />
-                  <p className="font-medium">Informações Cadastrais</p>
-                  
-                  <div className="w-full max-w-[140px] mt-3">
-                    <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
-                      <span>Status</span>
-                      <span>{formulario?.status_preenchimento === 'concluido' ? '100%' : '50%'}</span>
+                <Card
+                  className={`shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${formulario?.status_preenchimento === 'concluido' ? 'border-success/30 bg-success/5' : ''}`}
+                >
+                  <CardContent className="flex flex-col items-center py-6 sm:py-8 text-center">
+                    <ClipboardList className={`h-10 w-10 mb-3 ${formulario?.status_preenchimento === 'concluido' ? 'text-success' : 'text-primary'}`} />
+                    <p className="font-medium">Informações Cadastrais</p>
+
+                    <div className="w-full max-w-[140px] mt-3">
+                      <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
+                        <span>Status</span>
+                        <span>{formulario?.status_preenchimento === 'concluido' ? '100%' : '50%'}</span>
+                      </div>
+                      <Progress value={formulario?.status_preenchimento === 'concluido' ? 100 : 50} className="h-1.5" />
                     </div>
-                    <Progress value={formulario?.status_preenchimento === 'concluido' ? 100 : 50} className="h-1.5" />
-                  </div>
 
-                  <Badge className={`mt-3 ${
-                    formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success hover:bg-success/20' : 'bg-warning/15 text-warning hover:bg-warning/20'
-                  }`}>
-                    {formulario?.status_preenchimento === 'concluido' ? 'Preenchido' : 'Pendente'}
-                  </Badge>
-                </CardContent>
-              </Card>
+                    <Badge className={`mt-3 ${
+                      formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success hover:bg-success/20' : 'bg-warning/15 text-warning hover:bg-warning/20'
+                    }`}>
+                      {formulario?.status_preenchimento === 'concluido' ? 'Preenchido' : 'Pendente'}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              </button>
 
-              {/* Envio de Documentos (Originalmente pendentes) */}
-              <Card 
-                className={`shadow-sm transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${decl?.status_documentos === 'enviado' ? 'border-success/30 bg-success/5' : ''}`}
+              {/* Envio de Documentos */}
+              <button
+                type="button"
                 onClick={() => navigate('/cliente/documentos')}
+                className="text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
               >
-                <CardContent className="flex flex-col items-center py-8 text-center">
-                  <Upload className={`h-10 w-10 mb-3 ${decl?.status_documentos === 'enviado' ? 'text-success' : 'text-primary'}`} />
-                  <p className="font-medium">Envio de Documentos</p>
-                  
-                  <div className="w-full max-w-[140px] mt-3">
-                    <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
-                      <span>Documentos</span>
-                      <span>{checklist.length}</span>
+                <Card
+                  className={`shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${decl?.status_documentos === 'enviado' ? 'border-success/30 bg-success/5' : ''}`}
+                >
+                  <CardContent className="flex flex-col items-center py-6 sm:py-8 text-center">
+                    <Upload className={`h-10 w-10 mb-3 ${decl?.status_documentos === 'enviado' ? 'text-success' : 'text-primary'}`} />
+                    <p className="font-medium">Envio de Documentos</p>
+
+                    <div className="w-full max-w-[140px] mt-3">
+                      <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
+                        <span>Documentos</span>
+                        <span>{checklist.length}</span>
+                      </div>
+                      <Progress value={decl?.status_documentos === 'enviado' ? 100 : checklist.length > 0 ? 50 : 0} className="h-1.5" />
                     </div>
-                    <Progress value={decl?.status_documentos === 'enviado' ? 100 : checklist.length > 0 ? 50 : 0} className="h-1.5" />
-                  </div>
 
-                  <Badge className={`mt-3 ${
-                    statusStep === 2 && decl?.status === 'documentacao_recebida'
-                      ? 'bg-destructive/15 text-destructive hover:bg-destructive/20'
-                      : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
-                      ? 'bg-success/15 text-success hover:bg-success/20' 
-                      : checklist.length > 0 
-                      ? 'bg-primary/15 text-primary hover:bg-primary/20' 
-                      : 'bg-warning/15 text-warning hover:bg-warning/20'
-                  }`}>
-                    {statusStep === 2 && decl?.status === 'documentacao_recebida'
-                      ? 'Pendente de Reenvio'
-                      : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
-                      ? 'Enviado ao Contador' 
-                      : checklist.length > 0 
-                      ? 'Pronto para Enviar' 
-                      : 'Pendente'}
-                  </Badge>
-
-                </CardContent>
-              </Card>
+                    <Badge className={`mt-3 ${
+                      statusStep === 2 && decl?.status === 'documentacao_recebida'
+                        ? 'bg-destructive/15 text-destructive hover:bg-destructive/20'
+                        : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                        ? 'bg-success/15 text-success hover:bg-success/20'
+                        : checklist.length > 0
+                        ? 'bg-primary/15 text-primary hover:bg-primary/20'
+                        : 'bg-warning/15 text-warning hover:bg-warning/20'
+                    }`}>
+                      {statusStep === 2 && decl?.status === 'documentacao_recebida'
+                        ? 'Pendente de Reenvio'
+                        : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                        ? 'Enviado ao Contador'
+                        : checklist.length > 0
+                        ? 'Pronto para Enviar'
+                        : 'Pendente'}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              </button>
 
               {/* Resultado */}
               <Card className="shadow-sm">

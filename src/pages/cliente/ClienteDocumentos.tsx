@@ -265,21 +265,23 @@ export default function ClienteDocumentos() {
       <div className="space-y-6">
         {/* Card de ajuda - Relação de documentos */}
         <Card className="border-primary/20 bg-primary/5 shadow-sm">
-          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="h-11 w-11 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-              <HelpCircle className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-display text-base font-semibold text-foreground">
-                Não sabe quais documentos enviar?
-              </h3>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Consulte a relação completa de documentos necessários para sua declaração de IRPF 2026.
-              </p>
+          <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-start gap-3 sm:contents">
+              <div className="h-11 w-11 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                <HelpCircle className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display text-base font-semibold text-foreground">
+                  Não sabe quais documentos enviar?
+                </h3>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Consulte a relação completa de documentos necessários para sua declaração de IRPF 2026.
+                </p>
+              </div>
             </div>
             <Button
               onClick={() => setRelacaoModalOpen(true)}
-              className="gap-2 bg-primary hover:bg-primary/90 shrink-0"
+              className="gap-2 bg-primary hover:bg-primary/90 shrink-0 w-full sm:w-auto"
             >
               <FileText className="h-4 w-4" />
               Ver lista de documentos
@@ -289,23 +291,23 @@ export default function ClienteDocumentos() {
 
         <RelacaoDocumentosModal open={relacaoModalOpen} onOpenChange={setRelacaoModalOpen} />
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Documentos</h1>
             <p className="text-sm text-muted-foreground mt-1">Gerencie e envie seus documentos para o contador</p>
           </div>
           {recebidos.length > 0 && !docsEnviadosAoContador && (
-            <Button 
-              onClick={handleFinalize} 
+            <Button
+              onClick={handleFinalize}
               disabled={sending}
-              className="gap-2 bg-primary hover:bg-primary/90"
+              className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"
             >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Enviar ao Contador
             </Button>
           )}
           {docsEnviadosAoContador && (
-            <Badge className="bg-success/15 text-success py-1.5 px-3 border-success/30">
+            <Badge className="bg-success/15 text-success py-1.5 px-3 border-success/30 self-start sm:self-auto">
               <CheckCircle2 className="h-4 w-4 mr-2" />
               Enviado ao Contador
             </Badge>
