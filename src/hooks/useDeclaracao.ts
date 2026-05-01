@@ -21,6 +21,24 @@ export function useDeclaracao(declaracaoId: string | undefined) {
     enabled: !!declaracaoId,
   });
 
+  // Realtime: mantém a declaração sincronizada (status_processamento_rfb, status, etc.)
+  useEffect(() => {
+    if (!declaracaoId) return;
+    const channel = supabase
+      .channel(`declaracao-${declaracaoId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'declaracoes', filter: `id=eq.${declaracaoId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [declaracaoId, queryClient]);
+
   const checklist = useQuery({
     queryKey: ['declaracao-checklist', declaracaoId],
     queryFn: async () => {
