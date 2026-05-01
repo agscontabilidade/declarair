@@ -122,7 +122,7 @@ const App = () => (
               {/* MalhaFina route removed */}
               <Route path="/drive" element={<ProtectedRoute allowedType="contador"><BillingGate><Drive /></BillingGate></ProtectedRoute>} />
               <Route path="/addons" element={<ProtectedRoute allowedType="contador"><BillingGate><Addons /></BillingGate></ProtectedRoute>} />
-              <Route path="/whatsapp" element={<ProtectedRoute allowedType="contador"><BillingGate><WhatsApp /></BillingGate></ProtectedRoute>} />
+              <Route path="/whatsapp" element={<Navigate to="/configuracoes?tab=comunicacao" replace />} />
               <Route path="/relatorios" element={<ProtectedRoute allowedType="contador"><BillingGate><Relatorios /></BillingGate></ProtectedRoute>} />
               <Route path="/webhooks" element={<ProtectedRoute allowedType="contador"><BillingGate><WebhooksPage /></BillingGate></ProtectedRoute>} />
 
