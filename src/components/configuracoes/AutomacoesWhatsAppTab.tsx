@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -59,11 +59,6 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
     enabled: !!escritorioId,
   });
 
-  useEffect(() => {
-    if (!escritorioId) return;
-    loadConfig();
-  }, [escritorioId, loadConfig]);
-
   const loadConfig = useCallback(async () => {
     const { data } = await supabase
       .from('configuracoes_escritorio')
@@ -92,6 +87,11 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
 
     setConfig(cfg);
   }, [escritorioId]);
+
+  useEffect(() => {
+    if (!escritorioId) return;
+    loadConfig();
+  }, [escritorioId, loadConfig]);
 
   async function handleSave() {
     if (!escritorioId || !isDono) return;

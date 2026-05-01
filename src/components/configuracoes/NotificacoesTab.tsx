@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -44,11 +44,6 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
   const [config, setConfig] = useState<Record<string, Record<string, boolean>>>({});
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!escritorioId) return;
-    loadConfig();
-  }, [escritorioId, loadConfig]);
-
   const loadConfig = useCallback(async () => {
     const { data } = await supabase
       .from('configuracoes_escritorio')
@@ -71,6 +66,11 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
 
     setConfig(cfg);
   }, [escritorioId, CANAIS]);
+
+  useEffect(() => {
+    if (!escritorioId) return;
+    loadConfig();
+  }, [escritorioId, loadConfig]);
 
   function toggle(etapa: string, canal: string) {
     setConfig(prev => ({
