@@ -57,6 +57,12 @@ export function useDeclaracao(declaracaoId: string | undefined) {
       tipo_resultado?: string;
       valor_resultado?: number | null;
     }) => {
+      const { data: currentDecl } = await supabase
+        .from('declaracoes')
+        .select('status, cliente_id, escritorio_id, ano_base')
+        .eq('id', declaracaoId!)
+        .single();
+
       const { error } = await supabase
         .from('declaracoes')
         .update({
@@ -69,6 +75,16 @@ export function useDeclaracao(declaracaoId: string | undefined) {
         })
         .eq('id', declaracaoId!);
       if (error) throw error;
+
+      // Se o status regrediu para aguardando_documentos, notifica o cliente
+      if (input.status === 'aguardando_documentos' && currentDecl && currentDecl.status !== 'aguardando_documentos') {
+        await supabase.from('notificacoes').insert({
+          escritorio_id: currentDecl.escritorio_id,
+          titulo: '⚠️ Pendência na Documentação',
+          mensagem: `Seu contador solicitou novos documentos ou correções na declaração de ${currentDecl.ano_base}. Verifique os detalhes no portal.`,
+          link_destino: '/cliente/documentos',
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
