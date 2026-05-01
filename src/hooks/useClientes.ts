@@ -69,7 +69,7 @@ export function useClientes() {
       if (error) throw error;
 
       // Auto-create declaration for current year
-      const anoBase = new Date().getFullYear() - 1;
+      const anoBase = new Date().getFullYear();
       const { data: newDecl } = await supabase
         .from('declaracoes')
         .insert({
