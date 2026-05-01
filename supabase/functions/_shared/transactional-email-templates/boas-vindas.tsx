@@ -1,7 +1,6 @@
 import * as React from 'npm:react@18.3.1'
-import {
-  Body, Container, Head, Heading, Html, Preview, Text, Button, Hr, Section,
-} from 'npm:@react-email/components@0.0.22'
+import { Button, Heading, Text, Section, Hr } from 'npm:@react-email/components@0.0.22'
+import EmailLayout from '../email-layout.tsx'
 import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = 'DeclaraIR'
@@ -13,51 +12,49 @@ interface BoasVindasProps {
 }
 
 const BoasVindasEmail = ({ nome, escritorio, loginUrl }: BoasVindasProps) => (
-  <Html lang="pt-BR" dir="ltr">
-    <Head />
-    <Preview>Bem-vindo ao {escritorio || SITE_NAME}! Sua plataforma de IR está pronta.</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Section style={headerSection}>
-          <Heading style={h1}>🎉 Bem-vindo ao {SITE_NAME}!</Heading>
-        </Section>
+  <EmailLayout 
+    preview={`Bem-vindo ao ${escritorio || SITE_NAME}! Sua plataforma de IR está pronta.`}
+    siteName={escritorio || SITE_NAME}
+  >
+    <Heading className="text-gray-900 text-[20px] font-bold text-center p-0 my-[30px] mx-0">
+      Bem-vindo ao {SITE_NAME}!
+    </Heading>
 
-        <Text style={text}>
-          Olá <strong>{nome || 'contribuinte'}</strong>,
-        </Text>
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Olá <strong>{nome || 'contribuinte'}</strong>,
+    </Text>
 
-        <Text style={text}>
-          É um prazer tê-lo(a) conosco! Você agora faz parte do <strong>{escritorio || 'nosso escritório'}</strong> e tem acesso à plataforma mais moderna para gestão de declarações de Imposto de Renda.
-        </Text>
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      É um prazer tê-lo(a) conosco! Você agora faz parte do <strong>{escritorio || 'nosso escritório'}</strong> e tem acesso à plataforma mais moderna para gestão de declarações de Imposto de Renda.
+    </Text>
 
-        <Text style={text}><strong>O que você pode fazer agora:</strong></Text>
-        <Text style={listItem}>✓ Acompanhar suas declarações em tempo real</Text>
-        <Text style={listItem}>✓ Enviar documentos com segurança</Text>
-        <Text style={listItem}>✓ Chat direto com seu contador</Text>
-        <Text style={listItem}>✓ Verificar malha fina automaticamente</Text>
+    <Text className="text-gray-800 text-[14px] leading-[24px] font-bold">
+      O que você pode fazer agora:
+    </Text>
+    
+    <Text className="text-gray-700 text-[14px] leading-[20px] m-0 mb-1 italic">✓ Acompanhar suas declarações em tempo real</Text>
+    <Text className="text-gray-700 text-[14px] leading-[20px] m-0 mb-1 italic">✓ Enviar documentos com segurança</Text>
+    <Text className="text-gray-700 text-[14px] leading-[20px] m-0 mb-1 italic">✓ Chat direto com seu contador</Text>
+    <Text className="text-gray-700 text-[14px] leading-[20px] m-0 italic">✓ Verificar malha fina automaticamente</Text>
 
-        <Section style={buttonContainer}>
-          <Button style={button} href={loginUrl || 'https://declarair.com.br/login'}>
-            Acessar Plataforma
-          </Button>
-        </Section>
+    <Section className="text-center mt-[32px] mb-[32px]">
+      <Button
+        className="bg-brand rounded text-white text-[14px] font-bold no-underline text-center px-6 py-3"
+        href={loginUrl || 'https://declarair.com.br/login'}
+      >
+        Acessar Plataforma
+      </Button>
+    </Section>
 
-        <Hr style={hr} />
-
-        <Text style={text}>
-          Qualquer dúvida, estamos à disposição!
-        </Text>
-        <Text style={text}>
-          Atenciosamente,<br />
-          Equipe <strong>{escritorio || SITE_NAME}</strong>
-        </Text>
-
-        <Text style={footer}>
-          {SITE_NAME} — Gestão Inteligente de IR para Escritórios Contábeis
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Qualquer dúvida, estamos à disposição!
+    </Text>
+    
+    <Text className="text-gray-800 text-[14px] leading-[24px]">
+      Atenciosamente,<br />
+      Equipe <strong>{escritorio || SITE_NAME}</strong>
+    </Text>
+  </EmailLayout>
 )
 
 export const template = {
@@ -67,13 +64,4 @@ export const template = {
   previewData: { nome: 'João Silva', escritorio: 'Contabilidade ABC', loginUrl: 'https://declarair.com.br/login' },
 } satisfies TemplateEntry
 
-const main = { backgroundColor: '#ffffff', fontFamily: "'Segoe UI', Arial, sans-serif" }
-const container = { padding: '20px 25px', maxWidth: '600px', margin: '0 auto' }
-const headerSection = { backgroundColor: '#1A4F9C', padding: '30px 20px', borderRadius: '8px 8px 0 0', textAlign: 'center' as const }
-const h1 = { fontSize: '24px', fontWeight: 'bold', color: '#ffffff', margin: '0' }
-const text = { fontSize: '14px', color: '#333333', lineHeight: '1.6', margin: '0 0 12px' }
-const listItem = { fontSize: '14px', color: '#333333', lineHeight: '1.6', margin: '0 0 4px', paddingLeft: '12px' }
-const buttonContainer = { textAlign: 'center' as const, margin: '24px 0' }
-const button = { backgroundColor: '#00C6FF', color: '#1A4F9C', fontWeight: 'bold', padding: '12px 24px', borderRadius: '6px', textDecoration: 'none', fontSize: '14px' }
-const hr = { borderTop: '1px solid #e0e0e0', margin: '24px 0' }
-const footer = { fontSize: '12px', color: '#999999', textAlign: 'center' as const, margin: '30px 0 0' }
+export default BoasVindasEmail
