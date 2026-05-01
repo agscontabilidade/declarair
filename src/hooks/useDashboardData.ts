@@ -69,8 +69,8 @@ export function useDashboardData(anoBase: number) {
 
       // Fetch doc counts (total + pending)
       const ids = (data || []).map(d => d.id);
-      let pendingMap: Record<string, number> = {};
-      let totalMap: Record<string, number> = {};
+      const pendingMap: Record<string, number> = {};
+      const totalMap: Record<string, number> = {};
       if (ids.length > 0) {
         const { data: docs } = await supabase
           .from('checklist_documentos')
