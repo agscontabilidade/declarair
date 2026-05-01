@@ -63,12 +63,6 @@ export default function DeclaracaoDetalhe() {
     });
   };
 
-  const handleSaveResultado = (data: { tipo_resultado: string; valor_resultado: number | null; numero_recibo: string }) => {
-    hook.saveResultado.mutate(data, {
-      onSuccess: () => toast.success('Resultado salvo!'),
-      onError: () => toast.error('Erro ao salvar resultado'),
-    });
-  };
 
   const handleSaveNotas = (text: string) => {
     hook.saveNotas.mutate(text);
@@ -182,11 +176,7 @@ export default function DeclaracaoDetalhe() {
           </TabsContent>
 
           <TabsContent value="resultado" className="mt-4 space-y-6">
-            <SecaoResultado
-              declaracao={hook.declaracao}
-              onSave={handleSaveResultado}
-              saving={hook.saveResultado.isPending}
-            />
+            <SecaoResultado declaracao={hook.declaracao} />
             <SecaoNotas
               observacoes={hook.notasInternas}
               onSave={handleSaveNotas}
