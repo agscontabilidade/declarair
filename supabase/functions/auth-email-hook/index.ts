@@ -39,7 +39,7 @@ const EMAIL_TEMPLATES: Record<string, EmailComponent> = {
 }
 
 // Configuration
-const SITE_NAME = "declarair"
+const SITE_NAME = "DeclaraIR"
 const SENDER_DOMAIN = "notifica.declarair.com.br"
 const ROOT_DOMAIN = "declarair.com.br"
 const FROM_DOMAIN = "declarair.com.br" // Domain shown in From address (may be root or sender subdomain)
