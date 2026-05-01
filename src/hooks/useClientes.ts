@@ -81,15 +81,9 @@ export function useClientes() {
         .select('id')
         .single();
 
-      // Create base checklist
+      // Checklist will be populated by the client as they upload files, or by the accountant manually.
       if (newDecl) {
-        await supabase.from('checklist_documentos').insert([
-          { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true, declaracao_id: newDecl.id },
-          { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true, declaracao_id: newDecl.id },
-          { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true, declaracao_id: newDecl.id },
-          { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false, declaracao_id: newDecl.id },
-          { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false, declaracao_id: newDecl.id },
-        ]);
+        // No automatic checklist items created, as requested to keep upload simple and free-form.
       }
     },
     onSuccess: () => {

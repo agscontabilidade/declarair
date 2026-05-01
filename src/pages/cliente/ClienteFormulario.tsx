@@ -99,26 +99,21 @@ export default function ClienteFormulario() {
     }
     */
 
-    const pendingDocs = checklist.filter(d => d.status === 'pendente');
+    const attachedDocs = checklist.filter(d => d.status === 'recebido');
     
-    if (pendingDocs.length > 0) {
+    if (attachedDocs.length === 0) {
       try {
-        const obrigatoriosPendentes = pendingDocs.filter(d => d.obrigatorio);
-        const msg = obrigatoriosPendentes.length > 0
-          ? `Cliente finalizou o formulário com ${pendingDocs.length} documento(s) pendente(s), sendo ${obrigatoriosPendentes.length} obrigatório(s).`
-          : `Cliente finalizou o formulário com ${pendingDocs.length} documento(s) opcional(is) pendente(s).`;
-
         await supabase.from('notificacoes').insert({
           escritorio_id: declaracao.escritorio_id,
-          titulo: '⚠️ Documentos pendentes',
-          mensagem: msg,
+          titulo: 'ℹ️ Informações Preenchidas',
+          mensagem: `O cliente preencheu os dados cadastrais, mas ainda não anexou nenhum documento.`,
           link_destino: `/clientes/${declaracao.cliente_id}`,
         });
 
         await supabase.from('declaracao_atividades').insert({
           declaracao_id: declaracao.id,
-          tipo: 'documento',
-          descricao: `Cliente finalizou formulário com ${pendingDocs.length} documento(s) pendente(s)`,
+          tipo: 'info',
+          descricao: `Cliente preencheu formulário (sem anexos ainda)`,
           usuario_nome: 'Cliente',
         });
       } catch { /* best-effort */ }
@@ -126,8 +121,8 @@ export default function ClienteFormulario() {
 
     const ok = await finalizar();
     if (ok) {
-      if (pendingDocs.length > 0) {
-        toast.info(`Formulário enviado! ${pendingDocs.length} documento(s) ainda pendente(s) — seu contador será notificado.`);
+      if (attachedDocs.length === 0) {
+        toast.info(`Formulário enviado! Não esqueça de anexar seus documentos na área de 'Envio de Documentos'.`);
       }
       setConcluido(true);
     }

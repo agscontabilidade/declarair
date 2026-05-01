@@ -115,15 +115,15 @@ export default function ClienteDashboard() {
                   <div className="w-full max-w-[140px] mt-3">
                     <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
                       <span>Documentos</span>
-                      <span>{pendentes.length > 0 ? `${checklist.length - pendentes.length}/${checklist.length}` : 'OK'}</span>
+                      <span>{checklist.length}</span>
                     </div>
-                    <Progress value={checklist.length > 0 ? ((checklist.length - pendentes.length) / checklist.length) * 100 : 0} className="h-1.5" />
+                    <Progress value={checklist.length > 0 ? 100 : 0} className="h-1.5" />
                   </div>
 
                   <Badge className={`mt-3 ${
-                    (declaracao as any)?.status_documentos === 'enviado' ? 'bg-success/15 text-success hover:bg-success/20' : pendentes.length === 0 ? 'bg-primary/15 text-primary hover:bg-primary/20' : 'bg-destructive/15 text-destructive hover:bg-destructive/20'
+                    (declaracao as any)?.status_documentos === 'enviado' ? 'bg-success/15 text-success hover:bg-success/20' : checklist.length > 0 ? 'bg-primary/15 text-primary hover:bg-primary/20' : 'bg-warning/15 text-warning hover:bg-warning/20'
                   }`}>
-                    {(declaracao as any)?.status_documentos === 'enviado' ? 'Enviado ao Contador' : pendentes.length === 0 ? 'Pronto para Enviar' : `${pendentes.length} Pendentes`}
+                    {(declaracao as any)?.status_documentos === 'enviado' ? 'Enviado ao Contador' : checklist.length > 0 ? 'Pronto para Enviar' : 'Nenhum Anexo'}
                   </Badge>
                 </CardContent>
               </Card>
@@ -144,28 +144,6 @@ export default function ClienteDashboard() {
               </Card>
             </div>
 
-            {/* Checklist pendente */}
-            {pendentes.length > 0 && (
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-warning" />
-                    Documentos Pendentes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {pendentes.map((doc: any) => (
-                      <li key={doc.id} className="flex items-center gap-2 text-sm">
-                        <div className="h-2 w-2 rounded-full bg-warning" />
-                        {doc.nome_documento}
-                        {doc.obrigatorio && <Badge variant="outline" className="text-[10px] py-0">Obrigatório</Badge>}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
 
             {/* Floating chat */}
             {profile.clienteId && (
