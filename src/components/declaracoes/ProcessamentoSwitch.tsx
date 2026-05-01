@@ -74,13 +74,13 @@ export function ProcessamentoSwitch({ declaracaoId, status }: Props) {
       const prev = queryClient.getQueriesData({ queryKey: ['declaracoes-lista'] });
       queryClient.setQueriesData({ queryKey: ['declaracoes-lista'] }, (old: unknown) => {
         if (!Array.isArray(old)) return old;
-        return old.map((d: { id: string }) =>
+        return (old as { id: string }[]).map((d) =>
           d.id === declaracaoId ? { ...d, status_processamento_rfb: next, em_processamento: next === 'processada' } : d,
         );
       });
       return { prev };
     },
-    onError: (_e, _v, ctx) => {
+    onError: (_e, _v, ctx: any) => {
       const c = ctx as { prev?: Array<[unknown, unknown]> } | undefined;
       c?.prev?.forEach(([key, val]) => queryClient.setQueryData(key as readonly unknown[], val));
       toast.error('Erro ao atualizar processamento');

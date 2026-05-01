@@ -10,7 +10,7 @@ const PAGE_SIZE = 10;
 export function useClientes() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
-  const escritorioId = profile.escritorioId;
+  const escritorioId = profile?.escritorioId;
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');

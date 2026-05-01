@@ -21,7 +21,7 @@ function formatDateTime(value: string | null | undefined) {
   return new Date(value).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 import { AnexarDeclaracaoButton } from '@/components/declaracoes/AnexarDeclaracaoButton';
-import { ProcessamentoSwitch } from '@/components/declaracoes/ProcessamentoSwitch';
+import { ProcessamentoSwitch, type StatusProcessamentoRfb } from '@/components/declaracoes/ProcessamentoSwitch';
 
 const STATUS_COLORS: Record<string, string> = {
   aguardando_documentos: 'bg-amber-100 text-amber-800',
@@ -86,7 +86,7 @@ export default function Declaracoes() {
     arquivo_recibo_nome: string | null;
     recibo_validado_em: string | null;
     em_processamento: boolean | null;
-    status_processamento_rfb: string | null;
+    status_processamento_rfb: StatusProcessamentoRfb | null;
     clientes: { nome: string; cpf: string } | null;
     clienteNome: string;
     clienteCpf: string;
