@@ -8,8 +8,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Upload, CheckCircle2, Clock, XCircle, Briefcase, Heart,
   GraduationCap, Home, AlertCircle, User, PiggyBank,
-  Landmark, FileWarning, Send, FileStack, Trash2, Loader2
+  Landmark, FileWarning, Send, FileStack, Trash2, Loader2,
+  AlertTriangle
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useClientePortal } from '@/hooks/useClientePortal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -146,7 +158,7 @@ export default function ClienteDocumentos() {
     }
   };
 
-  const removeFile = async (docId: string, filePath: string) => {
+  const removeFile = async (docId: string, filePath: string, fileName: string) => {
     try {
       const { error: storageError } = await supabase.storage
         .from('documentos-clientes')
@@ -160,6 +172,16 @@ export default function ClienteDocumentos() {
         .eq('id', docId);
 
       if (dbError) throw dbError;
+
+      // Notify accountant
+      if (declaracao) {
+        await supabase.from('notificacoes').insert({
+          escritorio_id: declaracao.escritorio_id,
+          titulo: '🗑️ Documento Removido',
+          mensagem: `O cliente ${profile.nome} removeu o documento "${fileName}" às ${new Date().toLocaleTimeString('pt-BR')}.`,
+          link_destino: `/clientes/${declaracao.cliente_id}`,
+        });
+      }
 
       // Se após a remoção não houver mais documentos, volta o status para aguardando
       const { data: rest } = await supabase
@@ -328,14 +350,38 @@ export default function ClienteDocumentos() {
                         </p>
                       </div>
                       {!docsEnviadosAoContador && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeFile(doc.id, doc.arquivo_url)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                                <AlertTriangle className="h-5 w-5" />
+                                Confirmar Exclusão
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Você tem certeza que deseja excluir o documento <strong>{doc.arquivo_nome}</strong>? 
+                                Esta ação não pode ser desfeita e seu contador será notificado.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => removeFile(doc.id, doc.arquivo_url, doc.arquivo_nome)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
                     </div>
                   ))}
