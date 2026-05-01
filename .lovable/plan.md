@@ -1,80 +1,133 @@
 ## Objetivo
 
-Em `/cliente/documentos`, no topo da tela, exibir um card de ajuda informando que o cliente pode consultar a lista completa de documentos necessários. Ao clicar no botão, abrir um modal com a relação detalhada extraída do PDF anexado, organizada por categorias, respeitando nosso design system (Bricolage Grotesque, DM Sans, verde Emerald, glassmorphism, cards com radius 10px).
+Reformular a tela `/clientes` (lado contador) para:
+1. Nova ordem de colunas: CPF, Nome, WhatsApp, Procuração e-CAC.
+2. Ações limpas em cada linha (excluir, editar, WhatsApp).
+3. Clique na linha abre modal com dados cadastrais + resumo de cobranças/pagamentos.
+4. Suporte a marcar se o cliente tem procuração e-CAC ativa.
+
+---
+
+## 1. Banco de dados
+
+A tabela `clientes` não tem hoje campo para procuração e-CAC. Criar migration adicionando:
+
+- `procuracao_ecac` (boolean, default `false`, not null) — indica se o cliente já cadastrou a procuração eletrônica no e-CAC.
+- `procuracao_ecac_validade` (date, nullable) — opcional, data limite (procurações e-CAC valem até 5 anos), para alerta futuro.
+
+A coluna entra nas RLS já existentes (sem alteração de policies).
+
+---
+
+## 2. Tabela de clientes (`src/components/clientes/ClientesTable.tsx`)
+
+Nova ordem e conteúdo de colunas:
+
+| Coluna | Conteúdo |
+|---|---|
+| CPF | `formatCPF(c.cpf)`, tabular-nums |
+| Nome | `c.nome`, font-medium |
+| WhatsApp | telefone formatado `(00) 00000-0000` ou `—` |
+| Procuração e-CAC | Badge verde "Ativa" se `procuracao_ecac=true`, badge cinza "Pendente" caso contrário |
+| Ações | 3 ícones: WhatsApp, Editar (lápis), Excluir (lixeira) |
+
+Mudanças nas ações (canto direito):
+- Remover ícone de olho (`Eye`).
+- Remover ícone de dinheiro (`DollarSign`).
+- Substituir balão de conversa (`MessageCircle`) pelo ícone do WhatsApp — usar SVG inline da marca (lucide não tem oficial), abrindo `https://wa.me/55<telefone>`.
+- Adicionar ícone Lápis (`Pencil`) → dispara callback `onEdit(cliente)`.
+- Adicionar ícone Lixeira (`Trash2`) com `AlertDialog` de confirmação → dispara `onDelete(cliente)`.
+
+A linha inteira (`<TableRow>`) recebe `onClick` que dispara `onView(cliente)`. Ações usam `e.stopPropagation()` para não abrir o modal de visualização. `cursor-pointer` + `hover:bg-muted/40`.
+
+Coluna de Onboarding e coluna de Email saem desta tela (passam a viver dentro do modal de detalhes para não poluir).
+
+Remoção do `useNavigate` para `/clientes/:id` na tabela — abrir o modal substitui a navegação.
+
+---
+
+## 3. Hook `src/hooks/useClientes.ts`
+
+Acrescentar:
+
+- Selecionar `procuracao_ecac, procuracao_ecac_validade` no `select`.
+- `updateCliente` (mutation): edita nome, email, telefone, data_nascimento, contador_responsavel_id, procuracao_ecac, procuracao_ecac_validade.
+- `deleteCliente` (mutation): `.delete().eq('id', id)` — confia no `ON DELETE CASCADE` já existente em declarações, cobranças, formulário etc. Invalida `['clientes']`, `['dashboard-kpis']`, `['dashboard-declaracoes']`, `['declaracoes']`.
+
+---
+
+## 4. Modal de visualização (novo)
+
+`src/components/clientes/ClienteViewModal.tsx`
+
+Aberto ao clicar na linha. Conteúdo (somente leitura, layout em duas colunas, tipografia da marca):
+
+- **Cabeçalho**: nome do cliente + Badge de status_onboarding + Badge de Procuração e-CAC.
+- **Bloco Dados cadastrais**: CPF, Email, WhatsApp (com link `wa.me`), Data de nascimento, Contador responsável, Data de cadastro.
+- **Bloco Procuração e-CAC**: status (Ativa/Pendente) + validade (se houver).
+- **Bloco Cobranças e pagamentos**: 
+  - 3 mini-cards (Pago / Pendente / Atrasado) reutilizando os totais do `AbaCobrancas` (extraídos para função utilitária `getCobrancasResumo` em `src/lib/formatters.ts` ou local).
+  - Lista compacta das últimas 5 cobranças (descrição, valor, vencimento, status badge).
+  - Botão "Ver todas as cobranças" → navega para `/clientes/:id` aba Cobranças (mantém perfil completo existente).
+- **Rodapé**: Botão "Editar" (abre o modal de edição), Botão "Abrir perfil completo" (navega `/clientes/:id`), Botão "Fechar".
+
+Dados de cobranças carregados via novo hook leve `useCobrancasCliente(clienteId)` (query `cobrancas` filtrando por `cliente_id`, limit 5 + counts/aggregations).
+
+---
+
+## 5. Modal de edição
+
+Refatorar `src/components/clientes/ClienteModal.tsx` para suportar dois modos:
+
+- `mode="create"` (já existente).
+- `mode="edit"` recebe `cliente` inicial e chama `onSave` que internamente decide create vs update.
+
+Campos editáveis:
+- Nome, Email, WhatsApp, Data de nascimento, Contador responsável.
+- **Switch** "Cliente possui procuração e-CAC ativa" (`Switch` do shadcn).
+- Se ligado, mostrar `Input type="date"` para validade (opcional).
+- CPF mantido como somente leitura no modo edição (chave fiscal).
+
+Título do dialog muda conforme o modo ("Novo Cliente" / "Editar Cliente").
+
+---
+
+## 6. Modal de exclusão
+
+Usar `AlertDialog` inline na linha, mensagem:
+
+> Excluir definitivamente o cliente "{nome}"? Todos os dados vinculados (declarações, documentos, cobranças, mensagens) serão removidos. Esta ação não pode ser desfeita.
+
+Confirmação chama `deleteCliente.mutateAsync(id)` + toast.
+
+---
+
+## 7. Página `src/pages/Clientes.tsx`
+
+- Estados novos: `viewCliente`, `editCliente` (Cliente | null).
+- Passar `onView`, `onEdit`, `onDelete` para `ClientesTable`.
+- Renderizar `ClienteViewModal`, `ClienteModal` (modo edit), e o modal de criação já existente.
+- Permissões: editar/excluir respeitam `usePermissoes` (provavelmente `podeCriarClientes`; confirmar e usar a flag adequada).
+
+---
+
+## 8. Detalhes técnicos
+
+- Ícone WhatsApp: SVG inline (24x24) já que lucide não inclui o logo oficial; usar `currentColor`.
+- Acessibilidade: `aria-label` em todos os ícones de ação, `role="button"` na linha clicável + `tabIndex={0}` + handler de teclado (Enter).
+- Não tocar em `src/integrations/supabase/client.ts` nem `types.ts` (regenerados após migration).
+- Página de perfil existente (`/clientes/:id`) é mantida intacta — fica acessível pelo botão "Abrir perfil completo" no modal e por deep links.
+
+---
 
 ## Arquivos afetados
 
-1. **Novo**: `src/components/cliente-portal/RelacaoDocumentosModal.tsx` — componente do modal com a lista completa.
-2. **Editado**: `src/pages/cliente/ClienteDocumentos.tsx` — adicionar o card de ajuda no topo (antes do header existente ou logo abaixo) com botão que abre o modal.
-
-## Conteúdo do Card de Ajuda (topo da página)
-
-- **Layout**: Card horizontal com glassmorphism sutil (border-primary/20, bg-primary/5), ícone `HelpCircle` ou `FileQuestion` à esquerda em círculo verde, texto à direita e botão CTA "Ver lista completa".
-- **Título**: "Não sabe quais documentos enviar?"
-- **Descrição**: "Consulte a relação completa de documentos necessários para sua declaração de IRPF 2026, organizada por categoria."
-- **Botão**: `Button` variant default verde primary com ícone `FileText` — "Ver lista de documentos".
-- Posicionado **acima** do header "Documentos / Gerencie e envie...".
-
-## Conteúdo do Modal (`RelacaoDocumentosModal`)
-
-Componente baseado em `Dialog` do shadcn, `max-w-3xl`, `max-h-[85vh] overflow-y-auto`.
-
-### Header do modal
-- Título: "Relação de Documentos – IRPF 2026" (font-display)
-- Subtítulo: "Prazo legal para entrega: 29/05/2026"
-- Badge informativo destacando o prazo
-
-### Bloco "Quem está obrigado a declarar"
-Grid 2 colunas (md:grid-cols-2) com cards pequenos contendo cada critério extraído do PDF:
-- Rendimentos tributáveis acima de **R$ 35.584,00**
-- Rendimentos isentos/exclusivos acima de **R$ 200.000,00**
-- Operações em bolsa acima de **R$ 40.000,00** ou ganho tributável
-- Ganho de capital (venda de bens com lucro)
-- Atividade rural com receita acima de **R$ 177.920,00**
-- Patrimônio em 31/12/2025 acima de **R$ 800.000,00**
-- Passou à condição de residente no Brasil em 2025
-
-### Bloco "Documentos por categoria"
-Accordion (`@/components/ui/accordion`) com 8 seções, cada uma com ícone e cor da categoria correspondente (mesmo `CATEGORIA_META` já usado na página). Os 8 grupos extraídos do PDF:
-
-1. **Dados cadastrais** (User) — Nome, CPF, data de nascimento; Título de eleitor; Telefone/e-mail; Endereço; Procuração eletrônica (gov.br).
-2. **Dependentes** (Users) — Dados pessoais; Informes de rendimentos e despesas.
-3. **Alimentandos (pensão alimentícia)** (Heart) — Dados pessoais; Escritura/acordo/decisão judicial.
-4. **Comprovantes de rendimentos** (Briefcase) — Salários, pró-labore, aposentadoria, pensão; rendimentos bancários; corretoras; aluguéis; demais rendas.
-5. **Despesas / Pagamentos** (Receipt) — Despesas médicas e odontológicas; plano de saúde; educação; previdência privada; pensão alimentícia; pagamentos a profissionais.
-6. **Bens e direitos** (Home) — Aquisição/venda de veículos e imóveis; dados de comprador/vendedor; financiamentos; participações societárias; herança.
-7. **Investimentos (ações e criptoativos)** (TrendingUp) — Notas de corretagem; posição em custódia 31/12/2025; informes; DARFs; criptoativos (informes, relatório, extratos de carteiras).
-8. **Dívidas e ônus** (FileWarning) — Contratos; identificação do credor; saldo devedor 31/12/2025; comprovantes de pagamentos.
-
-Cada item dentro do accordion: lista com `<ul>` estilizado, marcador verde `CheckCircle2` h-4 w-4, texto `text-sm text-muted-foreground`.
-
-### Bloco "Observações finais"
-Card destacado em amarelo suave (border-warning/30 bg-warning/5) com ícone `AlertCircle`:
-- "Receberemos documentação somente até **18/05/2026**"
-- "Restituição via Pix: somente se a chave cadastrada for o número do CPF"
-
-(Não incluir os dados de contato da AGS Cont — adriana@, gelson@, telefones, conforme convenção de whitelabel.)
-
-### Footer do modal
-Botão único "Entendi" que fecha o modal.
-
-## Design / UI
-
-- Tipografia: títulos com `font-display` (Bricolage Grotesque), corpo `font-sans` (DM Sans).
-- Cores: usar tokens semânticos — `primary` (Emerald #10B981), `success`, `warning`, `muted-foreground`. Nunca cores hard-coded.
-- Cards internos com `rounded-lg`, sombra suave, hover sutil.
-- Ícones lucide-react já presentes no projeto.
-- Responsivo: grid de 2 colunas em md+, 1 coluna no mobile; accordion full-width.
-- Acessibilidade: `Dialog` shadcn já fornece foco/escape/aria.
-
-## Estado e Lógica
-
-- Estado local `modalOpen` em `ClienteDocumentos.tsx` controla abertura.
-- Sem chamadas a backend — conteúdo 100% estático em constante exportada do componente do modal.
-- Não altera nenhuma lógica de upload, RLS, status ou banco.
-
-## Fora de escopo
-
-- Não usar logos, contatos ou branding da AGS Cont.
-- Não alterar o fluxo de upload, status_documentos, ou notificações existentes.
-- Não criar nova rota — apenas modal sobre a página atual.
+```text
+NOVO  src/components/clientes/ClienteViewModal.tsx
+NOVO  src/hooks/useCobrancasCliente.ts
+EDIT  src/components/clientes/ClientesTable.tsx        (colunas, ícones, click linha)
+EDIT  src/components/clientes/ClienteModal.tsx         (suporte a modo edit + procuração)
+EDIT  src/hooks/useClientes.ts                         (select, update, delete)
+EDIT  src/pages/Clientes.tsx                           (estados + novos modais)
+MIGR  add column procuracao_ecac (bool) + procuracao_ecac_validade (date)
+```
