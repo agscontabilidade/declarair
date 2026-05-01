@@ -1,32 +1,32 @@
-/// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
-import { Body, Container, Head, Heading, Html, Preview, Text, Section } from 'npm:@react-email/components@0.0.22'
+import { Heading, Text, Section } from 'npm:@react-email/components@0.0.22'
+import EmailLayout from '../email-layout.tsx'
 
 interface ReauthenticationEmailProps { token: string }
 
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
-  <Html lang="pt-BR" dir="ltr">
-    <Head />
-    <Preview>Seu código de verificação</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Section style={headerSection}>
-          <Heading style={h1}>🔑 Verificação</Heading>
-        </Section>
-        <Text style={text}>Use o código abaixo para confirmar sua identidade:</Text>
-        <Text style={codeStyle}>{token}</Text>
-        <Text style={footer}>Este código expira em breve. Se você não solicitou, ignore este email.</Text>
-      </Container>
-    </Body>
-  </Html>
+  <EmailLayout 
+    preview="Seu código de verificação"
+  >
+    <Heading className="text-gray-900 text-[20px] font-bold text-center p-0 my-[30px] mx-0">
+      Verificação de Segurança
+    </Heading>
+    
+    <Text className="text-gray-800 text-[14px] leading-[24px] text-center">
+      Para prosseguir com sua ação, utilize o código de segurança abaixo:
+    </Text>
+    
+    <Section className="bg-gray-100 rounded-lg p-[24px] my-[32px] text-center">
+      <Text className="font-mono text-[32px] font-bold tracking-[6px] m-0 text-brand">
+        {token}
+      </Text>
+    </Section>
+    
+    <Text className="text-gray-500 text-[12px] leading-[24px] text-center">
+      Este código expira em breve por sua segurança. <br />
+      Se você não solicitou esta verificação, ignore este email.
+    </Text>
+  </EmailLayout>
 )
 
 export default ReauthenticationEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: "'Segoe UI', Arial, sans-serif" }
-const container = { padding: '20px 25px', maxWidth: '600px', margin: '0 auto' }
-const headerSection = { backgroundColor: '#1A4F9C', padding: '24px 20px', borderRadius: '8px 8px 0 0', textAlign: 'center' as const }
-const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#ffffff', margin: '0' }
-const text = { fontSize: '14px', color: '#333333', lineHeight: '1.6', margin: '0 0 16px' }
-const codeStyle = { fontFamily: 'Courier, monospace', fontSize: '28px', fontWeight: 'bold' as const, color: '#1A4F9C', margin: '0 0 30px', textAlign: 'center' as const, letterSpacing: '4px' }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
