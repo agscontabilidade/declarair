@@ -40,7 +40,7 @@ export default function Declaracoes() {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const escritorioId = profile.escritorioId;
+  const escritorioId = profile?.escritorioId;
 
   const [anoBase, setAnoBase] = useState('2026');
   const [statusFilter, setStatusFilter] = useState('todos');
@@ -73,7 +73,27 @@ export default function Declaracoes() {
     };
   }, [escritorioId, queryClient]);
 
-  const { data: declaracoes = [], isLoading } = useQuery({
+  interface DeclaracaoListaItem {
+    id: string;
+    status: string;
+    ano_base: number;
+    ultima_atualizacao_status: string | null;
+    tipo_resultado: string | null;
+    valor_resultado: number | null;
+    arquivo_declaracao_url: string | null;
+    arquivo_declaracao_nome: string | null;
+    arquivo_recibo_url: string | null;
+    arquivo_recibo_nome: string | null;
+    recibo_validado_em: string | null;
+    em_processamento: boolean | null;
+    status_processamento_rfb: string | null;
+    clientes: { nome: string; cpf: string } | null;
+    clienteNome: string;
+    clienteCpf: string;
+    observacoes: string;
+  }
+
+  const { data: declaracoes = [] as DeclaracaoListaItem[], isLoading } = useQuery({
     queryKey: ['declaracoes-lista', escritorioId, anoBase],
     queryFn: async () => {
       if (!escritorioId) return [];
@@ -104,7 +124,7 @@ export default function Declaracoes() {
         });
       }
 
-      return (data || []).map((d: any) => ({
+      return (data || []).map((d) => ({
         ...d,
         clienteNome: d.clientes?.nome || '—',
         clienteCpf: d.clientes?.cpf || '',
@@ -186,7 +206,7 @@ export default function Declaracoes() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((d: any) => {
+                  {filtered.map((d) => {
                     const resultado = d.tipo_resultado ? RESULTADO_META[d.tipo_resultado] : null;
                     const temObs = !!d.observacoes?.trim();
                     return (
