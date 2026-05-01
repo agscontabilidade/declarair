@@ -123,12 +123,19 @@ Deno.serve(async (req) => {
 
     const promptDeclaracao = {
       eh_declaracao_irpf: "boolean — true somente se for de fato uma Declaração de Ajuste Anual do IRPF (DIRPF) emitida pelo programa da Receita Federal",
-...
+      cpf: "string — CPF do declarante apenas dígitos (11)",
+      nome: "string — nome completo do declarante",
+      ano_exercicio: "number — ano-exercício (ex.: 2026)",
+      tipo_resultado: "'restituicao'|'pagamento'|'nenhum'",
+      valor_resultado: "number — valor em reais (sem sinal); 0 se nenhum",
       motivo_rejeicao: "string|null — preencha se eh_declaracao_irpf=false explicando o motivo",
     };
     const promptRecibo = {
       eh_recibo_rfb: "boolean — true somente se for o Recibo de Entrega da DIRPF emitido pela Receita Federal",
-...
+      numero_recibo: "string — número do recibo conforme aparece no documento",
+      cpf: "string — CPF do declarante (11 dígitos)",
+      ano_exercicio: "number",
+      data_transmissao: "string ISO (YYYY-MM-DD) — data de transmissão",
       motivo_rejeicao: "string|null",
     };
     const schema = tipo === "declaracao" ? promptDeclaracao : promptRecibo;
