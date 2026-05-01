@@ -1,10 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Download, FileText, ExternalLink } from 'lucide-react';
+import { FileText, ExternalLink, Download } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -16,43 +15,31 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pendente: 'bg-amber-100 text-amber-800',
-  recebido: 'bg-emerald-100 text-emerald-800',
-  dispensado: 'bg-gray-100 text-gray-700',
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  pendente: 'Pendente',
-  recebido: 'Recebido',
-  dispensado: 'Dispensado',
-};
-
 export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onOpenChange }: Props) {
   const [openingId, setOpeningId] = useState<string | null>(null);
 
   const { data: docs = [], isLoading } = useQuery({
-    queryKey: ['checklist-documentos', declaracaoId],
+    queryKey: ['documentos-enviados-cliente', declaracaoId],
     queryFn: async () => {
       if (!declaracaoId) return [];
       const { data, error } = await supabase
         .from('checklist_documentos')
-        .select('id, nome_documento, categoria, status, obrigatorio, arquivo_url, arquivo_nome, data_recebimento')
+        .select('id, nome_documento, arquivo_url, arquivo_nome, data_recebimento')
         .eq('declaracao_id', declaracaoId)
-        .order('obrigatorio', { ascending: false })
-        .order('nome_documento');
+        .not('arquivo_url', 'is', null)
+        .order('data_recebimento', { ascending: false });
       if (error) throw error;
       return data || [];
     },
     enabled: !!declaracaoId && open,
   });
 
-  async function abrirArquivo(path: string, id: string) {
+  async function abrirArquivo(path: string, id: string, download = false) {
     try {
       setOpeningId(id);
       const { data, error } = await supabase.storage
         .from('documentos-clientes')
-        .createSignedUrl(path, 60 * 5);
+        .createSignedUrl(path, 60 * 5, download ? { download: true } : undefined);
       if (error || !data?.signedUrl) throw error;
       window.open(data.signedUrl, '_blank', 'noopener');
     } catch {
@@ -66,9 +53,9 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Documentos da declaração</DialogTitle>
+          <DialogTitle>Documentos enviados pelo cliente</DialogTitle>
           <DialogDescription>
-            {clienteNome ? `Documentos enviados por ${clienteNome}` : 'Lista de documentos do checklist'}
+            {clienteNome ? `Arquivos que ${clienteNome} enviou no portal` : 'Arquivos enviados pelo cliente no portal'}
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-[60vh] overflow-y-auto space-y-2">
@@ -77,40 +64,46 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
           ) : docs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <FileText className="h-10 w-10 text-muted-foreground/40 mb-3" />
-              <p className="text-sm text-muted-foreground">Nenhum documento no checklist</p>
+              <p className="text-sm text-muted-foreground">
+                O cliente ainda não enviou documentos
+              </p>
             </div>
           ) : (
             docs.map((d: any) => (
-              <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3">
+              <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 hover:border-primary/40 transition-colors">
                 <div className="flex items-start gap-3 min-w-0">
-                  <FileText className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                    <FileText className="h-4.5 w-4.5 text-primary" />
+                  </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{d.nome_documento}</p>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-[10px]">{d.categoria}</Badge>
-                      <Badge className={`text-[10px] ${STATUS_COLORS[d.status] || ''}`}>
-                        {STATUS_LABEL[d.status] || d.status}
-                      </Badge>
-                      {d.obrigatorio && <span className="text-[10px] text-muted-foreground">obrigatório</span>}
-                      {d.data_recebimento && (
-                        <span className="text-[10px] text-muted-foreground">recebido em {formatDate(d.data_recebimento)}</span>
-                      )}
-                    </div>
+                    <p className="font-medium text-sm truncate">{d.arquivo_nome || d.nome_documento}</p>
+                    {d.data_recebimento && (
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Enviado em {formatDate(d.data_recebimento)}
+                      </p>
+                    )}
                   </div>
                 </div>
-                {d.arquivo_url ? (
+                <div className="flex items-center gap-1.5 shrink-0">
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => abrirArquivo(d.arquivo_url, d.id)}
+                    onClick={() => abrirArquivo(d.arquivo_url, d.id, false)}
                     disabled={openingId === d.id}
                   >
                     <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                     Abrir
                   </Button>
-                ) : (
-                  <span className="text-xs text-muted-foreground">—</span>
-                )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => abrirArquivo(d.arquivo_url, d.id, true)}
+                    disabled={openingId === d.id}
+                    title="Baixar"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             ))
           )}
