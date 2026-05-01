@@ -62,11 +62,10 @@ export function ProcessamentoSwitch({ declaracaoId, status }: Props) {
 
   const mutate = useMutation({
     mutationFn: async (next: StatusProcessamentoRfb) => {
-      const updates: Record<string, unknown> = {
-        status_processamento_rfb: next,
-        em_processamento: next === 'processada',
-      };
-      const { error } = await supabase.from('declaracoes').update(updates).eq('id', declaracaoId);
+      const { error } = await supabase
+        .from('declaracoes')
+        .update({ status_processamento_rfb: next, em_processamento: next === 'processada' })
+        .eq('id', declaracaoId);
       if (error) throw error;
       return next;
     },
