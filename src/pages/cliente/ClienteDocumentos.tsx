@@ -124,6 +124,7 @@ export default function ClienteDocumentos() {
       });
 
       toast.success('Documentos enviados ao contador com sucesso!');
+      setConcluido(true);
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
     } catch (err: any) {
       toast.error('Erro ao enviar documentos');
