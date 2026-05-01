@@ -9,8 +9,9 @@ import {
   Upload, CheckCircle2, Clock, XCircle, Briefcase, Heart,
   GraduationCap, Home, AlertCircle, User, PiggyBank,
   Landmark, FileWarning, Send, FileStack, Trash2, Loader2,
-  AlertTriangle
+  AlertTriangle, HelpCircle, FileText
 } from 'lucide-react';
+import { RelacaoDocumentosModal } from '@/components/cliente-portal/RelacaoDocumentosModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,6 +61,7 @@ export default function ClienteDocumentos() {
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [concluido, setConcluido] = useState(false);
+  const [relacaoModalOpen, setRelacaoModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
@@ -261,6 +263,32 @@ export default function ClienteDocumentos() {
   return (
     <ClienteLayout>
       <div className="space-y-6">
+        {/* Card de ajuda - Relação de documentos */}
+        <Card className="border-primary/20 bg-primary/5 shadow-sm">
+          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="h-11 w-11 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+              <HelpCircle className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display text-base font-semibold text-foreground">
+                Não sabe quais documentos enviar?
+              </h3>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Consulte a relação completa de documentos necessários para sua declaração de IRPF 2026.
+              </p>
+            </div>
+            <Button
+              onClick={() => setRelacaoModalOpen(true)}
+              className="gap-2 bg-primary hover:bg-primary/90 shrink-0"
+            >
+              <FileText className="h-4 w-4" />
+              Ver lista de documentos
+            </Button>
+          </CardContent>
+        </Card>
+
+        <RelacaoDocumentosModal open={relacaoModalOpen} onOpenChange={setRelacaoModalOpen} />
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Documentos</h1>
