@@ -120,7 +120,7 @@ async function sendViaWhatsApp(messageId: string, clienteId: string, escritorioI
     .eq('escritorio_id', escritorioId)
     .eq('status', 'ativo');
 
-  const hasWhatsApp = addons?.some((a: any) => a.addons?.nome?.toLowerCase().includes('whatsapp'));
+  const hasWhatsApp = addons?.some((a: { addons?: { nome?: string } }) => a.addons?.nome?.toLowerCase().includes('whatsapp'));
   if (!hasWhatsApp) return { success: true }; // Not applicable, not a failure
 
   // Get client phone
