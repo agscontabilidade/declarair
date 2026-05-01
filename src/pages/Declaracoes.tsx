@@ -58,7 +58,7 @@ export default function Declaracoes() {
         .select(`
           id, status, ano_base, ultima_atualizacao_status,
           tipo_resultado, valor_resultado,
-          arquivo_declaracao_url, arquivo_declaracao_nome, em_processamento,
+          arquivo_declaracao_url, arquivo_declaracao_nome, em_processamento, status_processamento_rfb,
           clientes(nome, cpf),
           declaracao_notas_internas(conteudo)
         `)
@@ -214,7 +214,7 @@ export default function Declaracoes() {
                           )}
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
-                          <ProcessamentoSwitch declaracaoId={d.id} emProcessamento={!!d.em_processamento} />
+                          <ProcessamentoSwitch declaracaoId={d.id} status={d.status_processamento_rfb || 'aguardando'} />
                         </TableCell>
                       </TableRow>
                     );
