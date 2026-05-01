@@ -63,6 +63,13 @@ export function EnviarDeclaracaoModal({ open, onOpenChange, declaracao, contador
       
       await onSendChat(fullMessage);
 
+      if (declaracao?.id) {
+        await supabase
+          .from('declaracoes')
+          .update({ declaracao_enviada_em: new Date().toISOString() })
+          .eq('id', declaracao.id);
+      }
+
       toast.success('Declaração enviada com sucesso!');
       handleClose();
     } catch (err) {
