@@ -179,7 +179,7 @@ export default function Configuracoes() {
           </TabsContent>
 
           <TabsContent value="mensagens">
-            <WhatsAppConfigTab />
+            <MensagensTab />
           </TabsContent>
 
           <TabsContent value="automacoes">
