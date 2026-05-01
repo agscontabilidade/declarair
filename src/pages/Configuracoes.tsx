@@ -136,7 +136,7 @@ export default function Configuracoes() {
             <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
             <TabsTrigger value="marca" className="gap-2"><Palette className="h-4 w-4" /> Marca</TabsTrigger>
             <TabsTrigger value="notificacoes" className="gap-2"><Bell className="h-4 w-4" /> Notificações</TabsTrigger>
-            <TabsTrigger value="comunicacao" className="gap-2"><Phone className="h-4 w-4" /> Comunicação</TabsTrigger>
+            <TabsTrigger value="mensagens" className="gap-2"><MessageSquare className="h-4 w-4" /> Mensagens</TabsTrigger>
             <TabsTrigger value="automacoes" className="gap-2"><MessageSquare className="h-4 w-4" /> Automações</TabsTrigger>
             <TabsTrigger value="plano" className="gap-2"><CreditCard className="h-4 w-4" /> Plano</TabsTrigger>
             <TabsTrigger value="integracoes" className="gap-2"><Puzzle className="h-4 w-4" /> Integrações</TabsTrigger>
