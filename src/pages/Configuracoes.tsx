@@ -178,7 +178,7 @@ export default function Configuracoes() {
             <NotificacoesTab escritorioId={escritorioId} isDono={isDono} />
           </TabsContent>
 
-          <TabsContent value="comunicacao">
+          <TabsContent value="mensagens">
             <WhatsAppConfigTab />
           </TabsContent>
 
