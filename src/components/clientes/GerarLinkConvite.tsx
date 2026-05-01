@@ -14,7 +14,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Copy, Link2, Mail, MessageCircle, Info } from 'lucide-react';
+import { Copy, Link2, Mail, MessageCircle, Info, Save } from 'lucide-react';
 import { maskCPF, validateCPF } from '@/lib/formatters';
 import { getErrorMessage } from '@/lib/errors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -23,6 +23,7 @@ export default function GerarLinkConvite() {
   const { profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const [linkGerado, setLinkGerado] = useState('');
   const [escritorio, setEscritorio] = useState<{ nome: string } | null>(null);
 
@@ -36,6 +37,23 @@ export default function GerarLinkConvite() {
     'Olá {nome}!\n\nSou o seu contador. Para iniciar sua declaração de Imposto de Renda, preparamos um portal exclusivo para você.\n\nPor favor, acesse o link abaixo para completar seu cadastro e enviar os documentos necessários:\n\n{link}\n\nQualquer dúvida, estou à disposição!'
   );
 
+  useEffect(() => {
+    const fetchTemplate = async () => {
+      if (!profile?.escritorioId || !open) return;
+      const { data } = await supabase
+        .from('templates_mensagem')
+        .select('corpo')
+        .eq('escritorio_id', profile.escritorioId)
+        .eq('nome', 'Convite Cliente')
+        .maybeSingle();
+      
+      if (data?.corpo) {
+        setMensagemTemplate(data.corpo);
+      }
+    };
+    fetchTemplate();
+  }, [open, profile?.escritorioId]);
+
   const carregarDadosEscritorio = async () => {
     if (!profile?.escritorioId) return;
     const { data } = await supabase
@@ -46,6 +64,42 @@ export default function GerarLinkConvite() {
     if (data) setEscritorio(data);
   };
 
+  const salvarTemplate = async () => {
+    if (!profile?.escritorioId) return;
+    setSavingTemplate(true);
+    try {
+      // Find existing or insert new
+      const { data: existing } = await supabase
+        .from('templates_mensagem')
+        .select('id')
+        .eq('escritorio_id', profile.escritorioId)
+        .eq('nome', 'Convite Cliente')
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from('templates_mensagem')
+          .update({ corpo: mensagemTemplate })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('templates_mensagem')
+          .insert({
+            escritorio_id: profile.escritorioId,
+            nome: 'Convite Cliente',
+            canal: 'whatsapp',
+            corpo: mensagemTemplate,
+            ativo: true
+          });
+      }
+      toast({ title: 'Template de convite salvo!' });
+    } catch (error) {
+      toast({ title: 'Erro ao salvar template', variant: 'destructive' });
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
   const handleGerar = async () => {
     if (!profile?.escritorioId) return;
     if (formData.cpf_sugerido && !validateCPF(formData.cpf_sugerido)) {
@@ -54,6 +108,9 @@ export default function GerarLinkConvite() {
     }
     setLoading(true);
     try {
+      // Also save the template if it was changed
+      await salvarTemplate();
+
       const token = crypto.randomUUID() + '-' + Date.now().toString(36);
 
       const { error } = await supabase
@@ -178,7 +235,7 @@ export default function GerarLinkConvite() {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label>Mensagem de Convite</Label>
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                   <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-secondary-foreground">{'{nome}'}</span>
                   <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-secondary-foreground">{'{link}'}</span>
                 </div>
@@ -190,16 +247,28 @@ export default function GerarLinkConvite() {
                 rows={6}
                 className="text-sm font-sans"
               />
-              <Alert variant="default" className="py-2">
-                <Info className="h-3 w-3" />
-                <AlertDescription className="text-[10px]">
-                  Use {'{nome}'} e {'{link}'} como variáveis. O link será gerado automaticamente.
-                </AlertDescription>
-              </Alert>
+              <div className="flex justify-between items-center">
+                <Alert variant="default" className="py-1 border-none bg-transparent flex-1">
+                  <Info className="h-3 w-3" />
+                  <AlertDescription className="text-[10px]">
+                    Use {'{nome}'} e {'{link}'} como variáveis.
+                  </AlertDescription>
+                </Alert>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={salvarTemplate} 
+                  disabled={savingTemplate}
+                  className="h-7 text-[10px] gap-1"
+                >
+                  <Save className="h-3 w-3" />
+                  Salvar como Padrão
+                </Button>
+              </div>
             </div>
 
             <Button onClick={handleGerar} disabled={loading} className="w-full">
-              {loading ? 'Gerando...' : 'Gerar Link'}
+              {loading ? 'Gerando...' : 'Gerar Link e Persistir Template'}
             </Button>
           </div>
         ) : (
