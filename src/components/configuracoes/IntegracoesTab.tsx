@@ -378,26 +378,12 @@ function ContaAzulSection({ escritorioId, isDono }: { escritorioId: string | nul
     const code = params.get('code');
     const isCallback = params.get('ca_callback');
     if (code && isCallback && escritorioId) {
-      const redirectUri = `${window.location.origin}/configuracoes?ca_callback=1`;
-      supabase.functions.invoke('contaazul-sync', {
-        body: {
-          acao: 'exchange_code',
-          escritorio_id: escritorioId,
-          code,
-          redirect_uri: redirectUri,
-        },
-      }).then(({ error }) => {
-        if (error) {
-          toast.error('Erro ao autorizar Conta Azul');
-        } else {
-          toast.success('Conta Azul conectada com sucesso!');
-          queryClient.invalidateQueries({ queryKey: ['integracao-contaazul', escritorioId] });
-        }
+...
         // Clean URL
         window.history.replaceState({}, '', '/configuracoes');
       });
     }
-  }, [escritorioId]);
+  }, [escritorioId, queryClient, toast]);
 
   const sincronizar = useMutation({
     mutationFn: async () => {

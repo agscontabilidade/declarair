@@ -38,9 +38,9 @@ export default function ConviteColaborador() {
       return;
     }
     carregarConvite();
-  }, [token]);
+  }, [token, carregarConvite]);
 
-  const carregarConvite = async () => {
+  const carregarConvite = useCallback(async () => {
     try {
       // Sign out any existing session first
       await supabase.auth.signOut();
@@ -78,7 +78,7 @@ export default function ConviteColaborador() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, navigate]);
 
   const handleAceitarConvite = async (e: React.FormEvent) => {
     e.preventDefault();

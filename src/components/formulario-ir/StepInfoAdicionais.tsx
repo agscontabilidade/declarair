@@ -26,7 +26,7 @@ export function StepInfoAdicionais({ data, onChange, confirmado, onConfirmChange
     } else if (val.length > 0) {
       setPixTipo('cpf');
     }
-  }, []);
+  }, [data.chave_pix_cliente]);
 
   const handlePixTipoChange = (tipo: string) => {
     setPixTipo(tipo as 'cpf' | 'banco');

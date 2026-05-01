@@ -62,9 +62,9 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
   useEffect(() => {
     if (!escritorioId) return;
     loadConfig();
-  }, [escritorioId]);
+  }, [escritorioId, loadConfig]);
 
-  async function loadConfig() {
+  const loadConfig = useCallback(async () => {
     const { data } = await supabase
       .from('configuracoes_escritorio')
       .select('chave, valor')

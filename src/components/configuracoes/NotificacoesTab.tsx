@@ -47,9 +47,9 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
   useEffect(() => {
     if (!escritorioId) return;
     loadConfig();
-  }, [escritorioId]);
+  }, [escritorioId, loadConfig]);
 
-  async function loadConfig() {
+  const loadConfig = useCallback(async () => {
     const { data } = await supabase
       .from('configuracoes_escritorio')
       .select('chave, valor')
@@ -77,7 +77,7 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
       ...prev,
       [etapa]: { ...prev[etapa], [canal]: !prev[etapa]?.[canal] },
     }));
-  }
+  }, [escritorioId]);
 
   async function handleSave() {
     if (!escritorioId || !isDono) return;
