@@ -53,6 +53,7 @@ export function useDashboardData(anoBase: number) {
       };
     },
     enabled: !!escritorioId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const declaracoes = useQuery({
@@ -104,13 +105,14 @@ export function useDashboardData(anoBase: number) {
       });
     },
     enabled: !!escritorioId,
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
   useEffect(() => {
     if (!escritorioId) return;
     const channel = supabase
       .channel('dashboard-declaracoes-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'declaracoes' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'declaracoes', filter: `escritorio_id=eq.${escritorioId}` }, () => {
         queryClient.invalidateQueries({ queryKey: ['dashboard-kpis', escritorioId, anoBase] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes', escritorioId, anoBase] });
       })
