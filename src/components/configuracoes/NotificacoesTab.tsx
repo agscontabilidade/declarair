@@ -70,14 +70,14 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
     });
 
     setConfig(cfg);
-  }
+  }, [escritorioId, CANAIS]);
 
   function toggle(etapa: string, canal: string) {
     setConfig(prev => ({
       ...prev,
       [etapa]: { ...prev[etapa], [canal]: !prev[etapa]?.[canal] },
     }));
-  }, [escritorioId]);
+  }
 
   async function handleSave() {
     if (!escritorioId || !isDono) return;

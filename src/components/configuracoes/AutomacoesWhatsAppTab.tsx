@@ -91,7 +91,7 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
     });
 
     setConfig(cfg);
-  }
+  }, [escritorioId]);
 
   async function handleSave() {
     if (!escritorioId || !isDono) return;
