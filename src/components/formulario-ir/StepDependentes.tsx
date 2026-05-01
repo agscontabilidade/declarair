@@ -9,7 +9,7 @@ import type { FormularioData } from '@/hooks/useFormularioIR';
 
 interface Props {
   data: FormularioData;
-  onChange: (field: keyof FormularioData, value: FormularioData[keyof FormularioData]) => void;
+  onChange: (field: keyof FormularioData, value: unknown) => void;
 }
 
 const PARENTESCOS = ['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Companheiro(a)', 'Pai/Mãe', 'Avô/Avó', 'Outro'];

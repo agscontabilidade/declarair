@@ -29,7 +29,7 @@ const PARENTESCOS = ['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Companheiro(a)', 'Pa
 
 interface Props {
   data: FormularioData;
-  onChange: (field: keyof FormularioData, value: FormularioData[keyof FormularioData]) => void;
+  onChange: (field: keyof FormularioData, value: unknown) => void;
 }
 
 export function StepDadosPessoais({ data, onChange }: Props) {
