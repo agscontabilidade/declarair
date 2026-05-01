@@ -1,17 +1,18 @@
 import { useState, useMemo, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FolderOpen, FileText, Search, Download, ChevronRight, Image, File } from 'lucide-react';
+import { FolderOpen, FileText, Search, Download, ChevronRight, Image as ImageIcon, File, Eye } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCPF } from '@/lib/formatters';
 import { toast } from 'sonner';
+import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
 
 interface DocWithDeclaracao {
   id: string;
@@ -27,19 +28,6 @@ interface DocWithDeclaracao {
   } | null;
 }
 
-interface TreeNode {
-  ano: number;
-  clientes: {
-    id: string;
-    nome: string;
-    cpf: string;
-    categorias: {
-      categoria: string;
-      docs: DocWithDeclaracao[];
-    }[];
-  }[];
-}
-
 export default function Drive() {
   const { profile } = useAuth();
   const escritorioId = profile.escritorioId;
@@ -47,6 +35,7 @@ export default function Drive() {
   const [anoFiltro, setAnoFiltro] = useState(String(new Date().getFullYear()));
   const [expandedCliente, setExpandedCliente] = useState<string | null>(null);
   const [expandedCategoria, setExpandedCategoria] = useState<string | null>(null);
+  const [viewerState, setViewerState] = useState<{ files: ViewerFile[]; currentId: string | null }>({ files: [], currentId: null });
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ['drive-docs', escritorioId, anoFiltro],
@@ -85,10 +74,10 @@ export default function Drive() {
 
   const totalDocs = docs.length;
 
-  const getFileIcon = (name: string) => {
+  const getFileIcon = (name: string | null) => {
     if (!name) return File;
     const ext = name.split('.').pop()?.toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'webp'].includes(ext || '')) return Image;
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(ext || '')) return ImageIcon;
     if (ext === 'pdf') return FileText;
     return File;
   };
@@ -101,6 +90,13 @@ export default function Drive() {
     } catch {
       toast.error('Erro ao baixar arquivo');
     }
+  }, []);
+
+  const openViewer = useCallback((docs: DocWithDeclaracao[], docId: string) => {
+    const files: ViewerFile[] = docs
+      .filter(d => d.arquivo_url && d.arquivo_nome)
+      .map(d => ({ id: d.id, arquivo_url: d.arquivo_url!, arquivo_nome: d.arquivo_nome! }));
+    setViewerState({ files, currentId: docId });
   }, []);
 
   return (
@@ -171,15 +167,39 @@ export default function Drive() {
                             {cat.docs.map(doc => {
                               const Icon = getFileIcon(doc.arquivo_nome);
                               return (
-                                <div key={doc.id} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-muted/30 text-sm">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <span className="truncate text-foreground">{doc.arquivo_nome || doc.nome_documento}</span>
-                                  </div>
+                                <div key={doc.id} className="flex items-center justify-between gap-2 py-1.5 px-2 rounded hover:bg-muted/30 text-sm group">
+                                  <button
+                                    type="button"
+                                    onClick={() => doc.arquivo_url && openViewer(cat.docs, doc.id)}
+                                    disabled={!doc.arquivo_url}
+                                    className="flex items-center gap-2 min-w-0 flex-1 text-left hover:text-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    <Icon className="h-4 w-4 text-muted-foreground shrink-0 group-hover:text-accent transition-colors" />
+                                    <span className="truncate text-foreground group-hover:text-accent transition-colors">
+                                      {doc.arquivo_nome || doc.nome_documento}
+                                    </span>
+                                  </button>
                                   {doc.arquivo_url && (
-                                    <Button variant="ghost" size="sm" className="h-7" onClick={() => handleDownload(doc.arquivo_url)}>
-                                      <Download className="h-3 w-3" />
-                                    </Button>
+                                    <div className="flex items-center gap-0.5 shrink-0">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 w-7 p-0"
+                                        onClick={() => openViewer(cat.docs, doc.id)}
+                                        title="Visualizar"
+                                      >
+                                        <Eye className="h-3.5 w-3.5" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 w-7 p-0"
+                                        onClick={() => handleDownload(doc.arquivo_url!)}
+                                        title="Baixar"
+                                      >
+                                        <Download className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
                                   )}
                                 </div>
                               );
@@ -195,6 +215,13 @@ export default function Drive() {
           </div>
         )}
       </div>
+
+      <FileViewerModal
+        files={viewerState.files}
+        currentId={viewerState.currentId}
+        onClose={() => setViewerState({ files: [], currentId: null })}
+        onChange={(id) => setViewerState(s => ({ ...s, currentId: id }))}
+      />
     </DashboardLayout>
   );
 }
