@@ -145,7 +145,8 @@ async function handleWebhook(req: Request): Promise<Response> {
   }
 
   // Verify signature + timestamp, then parse payload.
-  let payload: any
+  type EmailWebhookPayload = Awaited<ReturnType<typeof parseEmailWebhookPayload>>;
+  let payload: EmailWebhookPayload
   let run_id = ''
   try {
     const verified = await verifyWebhookRequest({
