@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import type { ClienteWithContador } from '@/types/domain';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
 export function useClientes() {
   const { profile } = useAuth();
@@ -17,7 +17,7 @@ export function useClientes() {
   const [page, setPage] = useState(0);
 
   useEffect(() => {
-    const t = setTimeout(() => { setDebouncedSearch(search); setPage(0); }, 300);
+    const t = setTimeout(() => { setDebouncedSearch(search); setPage(0); }, 400);
     return () => clearTimeout(t);
   }, [search]);
 
@@ -43,6 +43,7 @@ export function useClientes() {
       return { data: ((data as unknown) as ClienteWithContador[]) || [], total: count ?? 0 };
     },
     enabled: !!escritorioId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const contadores = useQuery({
@@ -57,6 +58,7 @@ export function useClientes() {
       return data || [];
     },
     enabled: !!escritorioId,
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 
   const createCliente = useMutation({
