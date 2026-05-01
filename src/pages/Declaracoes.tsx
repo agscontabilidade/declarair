@@ -39,6 +39,7 @@ const RESULTADO_META: Record<string, { label: string; cls: string }> = {
 export default function Declaracoes() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const escritorioId = profile.escritorioId;
 
   const [anoBase, setAnoBase] = useState('2026');
