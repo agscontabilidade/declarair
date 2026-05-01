@@ -88,22 +88,7 @@ export default function DeclaracaoDetalhe() {
     });
   };
 
-  // Fetch escritorio data for the capa
   const escritorioId = hook.declaracao?.escritorio_id;
-  const { data: escritorioData } = useQuery({
-    queryKey: ['escritorio-enviar', escritorioId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('escritorios')
-        .select('nome, email, telefone, logo_url')
-        .eq('id', escritorioId!)
-        .single();
-      if (error) throw error;
-      return { nome: data.nome, email: data.email, telefone: data.telefone, logoUrl: data.logo_url };
-    },
-    enabled: !!escritorioId,
-  });
-
   const contadorNome = hook.declaracao?.usuarios?.nome || profile.nome || '';
 
   const handleSendChat = async (message: string) => {
@@ -239,7 +224,6 @@ export default function DeclaracaoDetalhe() {
           open={enviarModalOpen}
           onOpenChange={setEnviarModalOpen}
           declaracao={hook.declaracao}
-          escritorioData={escritorioData || null}
           contadorNome={contadorNome}
           onSendChat={handleSendChat}
         />

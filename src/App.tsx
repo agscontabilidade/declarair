@@ -15,7 +15,7 @@ import RedefinirSenha from "./pages/RedefinirSenha";
 import Dashboard from "./pages/Dashboard";
 import Clientes from "./pages/Clientes";
 import Cobrancas from "./pages/Cobrancas";
-import Mensagens from "./pages/Mensagens";
+
 import Configuracoes from "./pages/Configuracoes";
 import Declaracoes from "./pages/Declaracoes";
 // Capa removed
@@ -117,12 +117,12 @@ const App = () => (
               <Route path="/declaracoes" element={<ProtectedRoute allowedType="contador"><BillingGate><Declaracoes /></BillingGate></ProtectedRoute>} />
               <Route path="/clientes" element={<ProtectedRoute allowedType="contador"><BillingGate><Clientes /></BillingGate></ProtectedRoute>} />
               <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><BillingGate><Cobrancas /></BillingGate></ProtectedRoute>} />
-              <Route path="/mensagens" element={<ProtectedRoute allowedType="contador"><BillingGate><Mensagens /></BillingGate></ProtectedRoute>} />
+              <Route path="/mensagens" element={<Navigate to="/configuracoes?tab=mensagens" replace />} />
               {/* Capa removed */}
               {/* MalhaFina route removed */}
               <Route path="/drive" element={<ProtectedRoute allowedType="contador"><BillingGate><Drive /></BillingGate></ProtectedRoute>} />
               <Route path="/addons" element={<ProtectedRoute allowedType="contador"><BillingGate><Addons /></BillingGate></ProtectedRoute>} />
-              <Route path="/whatsapp" element={<Navigate to="/configuracoes?tab=comunicacao" replace />} />
+              <Route path="/whatsapp" element={<Navigate to="/configuracoes?tab=mensagens" replace />} />
               <Route path="/relatorios" element={<ProtectedRoute allowedType="contador"><BillingGate><Relatorios /></BillingGate></ProtectedRoute>} />
               <Route path="/webhooks" element={<ProtectedRoute allowedType="contador"><BillingGate><WebhooksPage /></BillingGate></ProtectedRoute>} />
 

@@ -9,14 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Settings, Users, CreditCard, Puzzle, Palette, Bell, MessageSquare, Phone, Key, ExternalLink } from 'lucide-react';
+import { Settings, Users, CreditCard, Puzzle, Palette, Bell, MessageSquare, Phone, Key, ExternalLink, Mail } from 'lucide-react';
 import { buscarCNPJ } from '@/lib/apiBrasil';
 import { IntegracoesTab } from '@/components/configuracoes/IntegracoesTab';
 import AbaEquipe from '@/components/configuracoes/AbaEquipe';
 import { WhitelabelTab } from '@/components/configuracoes/WhitelabelTab';
 import { NotificacoesTab } from '@/components/configuracoes/NotificacoesTab';
 import { AutomacoesWhatsAppTab } from '@/components/configuracoes/AutomacoesWhatsAppTab';
-import { WhatsAppConfigTab } from '@/components/configuracoes/WhatsAppConfigTab';
+import { MensagensTab } from '@/components/configuracoes/MensagensTab';
 import { FeatureGate, PlanGate } from '@/components/billing/BillingGate';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissoes } from '@/hooks/usePermissoes';
@@ -136,7 +136,7 @@ export default function Configuracoes() {
             <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
             <TabsTrigger value="marca" className="gap-2"><Palette className="h-4 w-4" /> Marca</TabsTrigger>
             <TabsTrigger value="notificacoes" className="gap-2"><Bell className="h-4 w-4" /> Notificações</TabsTrigger>
-            <TabsTrigger value="comunicacao" className="gap-2"><Phone className="h-4 w-4" /> Comunicação</TabsTrigger>
+            <TabsTrigger value="mensagens" className="gap-2"><MessageSquare className="h-4 w-4" /> Mensagens</TabsTrigger>
             <TabsTrigger value="automacoes" className="gap-2"><MessageSquare className="h-4 w-4" /> Automações</TabsTrigger>
             <TabsTrigger value="plano" className="gap-2"><CreditCard className="h-4 w-4" /> Plano</TabsTrigger>
             <TabsTrigger value="integracoes" className="gap-2"><Puzzle className="h-4 w-4" /> Integrações</TabsTrigger>
@@ -178,8 +178,8 @@ export default function Configuracoes() {
             <NotificacoesTab escritorioId={escritorioId} isDono={isDono} />
           </TabsContent>
 
-          <TabsContent value="comunicacao">
-            <WhatsAppConfigTab />
+          <TabsContent value="mensagens">
+            <MensagensTab />
           </TabsContent>
 
           <TabsContent value="automacoes">
