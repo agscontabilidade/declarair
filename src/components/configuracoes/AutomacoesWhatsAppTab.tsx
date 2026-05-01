@@ -136,7 +136,7 @@ export function AutomacoesWhatsAppTab({ escritorioId, isDono }: Props) {
         <CardContent className="py-12 text-center">
           <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-muted-foreground mb-3">Conecte e escaneie seu WhatsApp primeiro para configurar automações.</p>
-          <Button asChild><Link to="/whatsapp">Conectar WhatsApp</Link></Button>
+          <Button asChild><Link to="/configuracoes?tab=comunicacao">Conectar WhatsApp</Link></Button>
         </CardContent>
       </Card>
     );
