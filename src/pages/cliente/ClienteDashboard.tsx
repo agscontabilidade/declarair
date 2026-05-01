@@ -363,6 +363,20 @@ export default function ClienteDashboard() {
                             <h4 className="text-xl font-bold mb-2">{tutorialSteps[currentTutorialStep].title}</h4>
                             <p className="text-muted-foreground mb-6">{tutorialSteps[currentTutorialStep].description}</p>
                             
+                            {tutorialSteps[currentTutorialStep].image && (
+                              <div className="mb-4 rounded-xl overflow-hidden border border-border bg-muted/30 shadow-sm">
+                                <img
+                                  src={tutorialSteps[currentTutorialStep].image as string}
+                                  alt={tutorialSteps[currentTutorialStep].title}
+                                  className="w-full h-auto object-contain max-h-[360px] mx-auto"
+                                  loading="lazy"
+                                />
+                                <p className="text-xs text-muted-foreground text-center py-2 px-3 border-t border-border bg-background/50">
+                                  {tutorialSteps[currentTutorialStep].description}
+                                </p>
+                              </div>
+                            )}
+
                             <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                               {tutorialSteps[currentTutorialStep].content}
                             </div>
