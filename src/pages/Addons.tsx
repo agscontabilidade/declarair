@@ -281,11 +281,17 @@ export default function Addons() {
                       </div>
                       <Button
                         className="w-full gap-2"
+                        variant={!isPro ? 'outline' : 'default'}
                         disabled={comprarDeclaracao.isPending}
                         onClick={() => handleComprarExtras(pacote.qtd)}
                       >
                         {comprarDeclaracao.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : !isPro ? (
+                          <>
+                            <Crown className="h-4 w-4 text-amber-500" />
+                            Upgrade necessário
+                          </>
                         ) : (
                           <>
                             <ShoppingCart className="h-4 w-4" />
