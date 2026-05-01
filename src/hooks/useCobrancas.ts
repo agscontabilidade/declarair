@@ -64,14 +64,19 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
 
   const marcarPago = useMutation({
     mutationFn: async (id: string) => {
+      const { data: current } = await supabase.from('cobrancas').select('status').eq('id', id).single();
+      const isPaid = current?.status === 'pago';
+      
       const { error } = await supabase
         .from('cobrancas')
-        .update({ status: 'pago', data_pagamento: new Date().toISOString().split('T')[0] })
+        .update({ 
+          status: isPaid ? 'pendente' : 'pago', 
+          data_pagamento: isPaid ? null : new Date().toISOString().split('T')[0] 
+        })
         .eq('id', id);
       if (error) throw error;
 
-      // Create notification
-      if (escritorioId) {
+      if (!isPaid && escritorioId) {
         try {
           await supabase.from('notificacoes').insert({
             escritorio_id: escritorioId,
@@ -80,10 +85,11 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
           });
         } catch { /* best-effort */ }
       }
+      return !isPaid;
     },
-    onSuccess: () => {
+    onSuccess: (isNowPaid) => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] });
-      toast.success('Cobrança marcada como paga');
+      toast.success(isNowPaid ? 'Cobrança marcada como paga' : 'Pagamento estornado com sucesso');
     },
     onError: () => toast.error('Erro ao atualizar cobrança'),
   });
