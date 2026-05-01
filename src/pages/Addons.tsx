@@ -56,11 +56,15 @@ const PACOTES = [
 
 export default function Addons() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const defaultTab = searchParams.get('tab') === 'declaracoes' ? 'declaracoes' : 'addons';
 
+  const { planoAtual } = useBilling();
   const { catalog, myAddons, isLoading } = useAddons();
   const toggle = useToggleAddon();
   const { comprarDeclaracao } = useDeclaracoesExtras();
+
+  const isPro = planoAtual.toLowerCase() === 'pro' || planoAtual.toLowerCase() === 'profissional';
 
   const [confirmAddon, setConfirmAddon] = useState<{ id: string; nome: string; preco: number; isActive: boolean } | null>(null);
 
@@ -75,6 +79,10 @@ export default function Addons() {
     .reduce((sum, a) => sum + a.preco, 0);
 
   function handleToggleClick(addon: { id: string; nome: string; preco: number }, isActive: boolean) {
+    if (!isPro) {
+      navigate('/meus-planos');
+      return;
+    }
     setConfirmAddon({ id: addon.id, nome: addon.nome, preco: addon.preco, isActive });
   }
 
@@ -88,12 +96,16 @@ export default function Addons() {
   }
 
   function handleComprarExtras(qtd: number) {
+    if (!isPro) {
+      navigate('/meus-planos');
+      return;
+    }
     comprarDeclaracao.mutate(qtd);
   }
 
   return (
     <DashboardLayout>
-      <PlanGate requiredPlan="pro" featureName="Recursos Extras">
+
       <div className="space-y-8 max-w-5xl mx-auto">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Recursos Extras</h1>
