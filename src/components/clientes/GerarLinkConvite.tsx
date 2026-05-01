@@ -190,7 +190,7 @@ export default function GerarLinkConvite() {
                 rows={6}
                 className="text-sm font-sans"
               />
-              <Alert variant="secondary" className="py-2">
+              <Alert variant="default" className="py-2">
                 <Info className="h-3 w-3" />
                 <AlertDescription className="text-[10px]">
                   Use {'{nome}'} e {'{link}'} como variáveis. O link será gerado automaticamente.
