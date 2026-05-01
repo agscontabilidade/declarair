@@ -223,3 +223,48 @@ function buildContext(declaracao: { ano_base: number; status: string; tipo_resul
 
   return ctx;
 }
+
+// Constrói mensagem multimodal anexando o PDF da declaração para análise de caixa.
+// O Gemini aceita PDFs diretamente via input do tipo file/document através de URL pública assinada.
+async function buildAnaliseCaixaMessage(
+  supabase: ReturnType<typeof createClient>,
+  arquivoPath: string,
+  context: string,
+): Promise<unknown> {
+  // Gera URL assinada (válida por 10 min) para o Gemini conseguir baixar o PDF
+  const { data: signed, error: signErr } = await supabase.storage
+    .from("documentos-clientes")
+    .createSignedUrl(arquivoPath, 600);
+
+  if (signErr || !signed?.signedUrl) {
+    console.error("Erro ao gerar signed URL para análise de caixa:", signErr);
+    return `${context}\n\n⚠️ Não foi possível acessar o PDF da declaração. Faça a análise apenas com base no contexto acima.`;
+  }
+
+  // Baixa o PDF e converte para base64 (formato multimodal aceito pelo gateway)
+  try {
+    const pdfRes = await fetch(signed.signedUrl);
+    if (!pdfRes.ok) throw new Error(`HTTP ${pdfRes.status}`);
+    const buffer = await pdfRes.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    const base64 = btoa(binary);
+
+    return [
+      {
+        type: "text",
+        text:
+          `${context}\n\n## Tarefa\nAnalise o PDF anexo da declaração de IRPF deste contribuinte. ` +
+          `Identifique estouro de caixa, evolução patrimonial e riscos antes da transmissão à RFB.`,
+      },
+      {
+        type: "image_url",
+        image_url: { url: `data:application/pdf;base64,${base64}` },
+      },
+    ];
+  } catch (e) {
+    console.error("Erro ao baixar/codificar PDF para análise de caixa:", e);
+    return `${context}\n\n⚠️ Falha ao processar o PDF. Faça a análise apenas com base no contexto acima.`;
+  }
+}
