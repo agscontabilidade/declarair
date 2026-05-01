@@ -83,18 +83,30 @@ export default function Declaracoes() {
           id, status, ano_base, ultima_atualizacao_status,
           tipo_resultado, valor_resultado,
           arquivo_declaracao_url, arquivo_declaracao_nome, em_processamento, status_processamento_rfb,
-          clientes(nome, cpf),
-          declaracao_notas_internas(conteudo)
+          clientes(nome, cpf)
         `)
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', Number(anoBase))
         .order('ultima_atualizacao_status', { ascending: false });
       if (error) throw error;
+
+      const ids = (data || []).map((d: any) => d.id);
+      const notasMap = new Map<string, string>();
+      if (ids.length > 0) {
+        const { data: notas } = await supabase
+          .from('declaracao_notas_internas')
+          .select('declaracao_id, conteudo')
+          .in('declaracao_id', ids);
+        (notas || []).forEach((n: any) => {
+          if (n.conteudo?.trim()) notasMap.set(n.declaracao_id, n.conteudo);
+        });
+      }
+
       return (data || []).map((d: any) => ({
         ...d,
         clienteNome: d.clientes?.nome || '—',
         clienteCpf: d.clientes?.cpf || '',
-        observacoes: d.declaracao_notas_internas?.[0]?.conteudo || '',
+        observacoes: notasMap.get(d.id) || '',
       }));
     },
     enabled: !!escritorioId,
