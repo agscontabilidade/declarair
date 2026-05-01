@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquare } from 'lucide-react';
 
 interface Props {
-  mensagens: any[];
+  mensagens: MensagemEnviadaRow[];
   isLoading: boolean;
 }
 

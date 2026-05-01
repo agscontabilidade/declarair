@@ -25,7 +25,7 @@ const formStatusColors: Record<string, string> = {
 };
 
 interface Props {
-  declaracoes: any[];
+  declaracoes: DeclaracaoComContador[];
   isLoading: boolean;
   contadores: { id: string; nome: string }[];
   onCriarDeclaracao: (input: { ano_base: number; contador_id: string | null }) => void;

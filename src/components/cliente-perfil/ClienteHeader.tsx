@@ -13,7 +13,7 @@ import { Send, Copy, MessageCircle, Mail, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
-  cliente: any;
+  cliente: ClienteRow | null | undefined;
   isLoading: boolean;
   onEnviarConvite: (mode: 'auto' | 'copy' | 'email' | 'whatsapp-manual') => void;
   enviandoConvite: boolean;

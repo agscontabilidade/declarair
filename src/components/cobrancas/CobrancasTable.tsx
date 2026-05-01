@@ -23,10 +23,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 interface CobrancasTableProps {
-  cobrancas: any[];
+  cobrancas: CobrancaComCliente[];
   isLoading: boolean;
   onMarcarPago: (id: string) => void;
-  onEditar: (cobranca: any) => void;
+  onEditar: (cobranca: CobrancaComCliente) => void;
   onCancelar: (id: string) => void;
   onExcluir: (id: string) => void;
   interAtivo?: boolean;
@@ -34,7 +34,7 @@ interface CobrancasTableProps {
 
 export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, onCancelar, onExcluir, interAtivo = false }: CobrancasTableProps) {
   const { podeExcluirCobranca } = usePermissoes();
-  const [gerarModal, setGerarModal] = useState<any>(null);
+  const [gerarModal, setGerarModal] = useState<CobrancaComCliente | null>(null);
   const [qrModal, setQrModal] = useState<{ pixQrcode: string; pixQrcodeUrl?: string } | null>(null);
   const [boletoModal, setBoletoModal] = useState<{ linhaDigitavel: string; codigoBarras?: string; pdfUrl?: string } | null>(null);
 
@@ -70,7 +70,7 @@ export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, o
           </TableRow>
         </TableHeader>
         <TableBody>
-          {cobrancas.map((c: any) => (
+          {cobrancas.map((c) => (
             <TableRow key={c.id}>
               <TableCell className="font-medium">{c.clientes?.nome || '—'}</TableCell>
               <TableCell>{c.descricao}</TableCell>
