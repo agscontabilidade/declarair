@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { TablesInsert } from '@/integrations/supabase/types';
+import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
 const PAGE_SIZE = 10;
 
@@ -26,7 +26,7 @@ export function useClientes() {
       if (!escritorioId) return { data: [], total: 0 };
       let q = supabase
         .from('clientes')
-        .select('id, escritorio_id, contador_responsavel_id, nome, cpf, email, telefone, data_nascimento, status_onboarding, created_at, auth_user_id, conta_azul_id, usuarios!clientes_contador_responsavel_id_fkey(nome)', { count: 'exact' })
+        .select('id, escritorio_id, contador_responsavel_id, nome, cpf, email, telefone, data_nascimento, status_onboarding, created_at, auth_user_id, conta_azul_id, procuracao_ecac, procuracao_ecac_validade, usuarios!clientes_contador_responsavel_id_fkey(nome)', { count: 'exact' })
         .eq('escritorio_id', escritorioId)
         .order('nome');
 
@@ -94,6 +94,32 @@ export function useClientes() {
     },
   });
 
+  const updateCliente = useMutation({
+    mutationFn: async ({ id, ...input }: { id: string } & TablesUpdate<'clientes'>) => {
+      const { error } = await supabase
+        .from('clientes')
+        .update(input)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clientes', escritorioId] });
+    },
+  });
+
+  const deleteCliente = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('clientes').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clientes', escritorioId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracoes'] });
+    },
+  });
+
   const totalPages = Math.ceil((query.data?.total ?? 0) / PAGE_SIZE);
 
   return {
@@ -108,5 +134,7 @@ export function useClientes() {
     totalPages,
     contadores: contadores.data ?? [],
     createCliente,
+    updateCliente,
+    deleteCliente,
   };
 }

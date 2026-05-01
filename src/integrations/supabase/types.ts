@@ -320,6 +320,8 @@ export type Database = {
           escritorio_id: string
           id: string
           nome: string
+          procuracao_ecac: boolean
+          procuracao_ecac_validade: string | null
           status_onboarding: string
           telefone: string | null
           token_convite: string | null
@@ -336,6 +338,8 @@ export type Database = {
           escritorio_id: string
           id?: string
           nome: string
+          procuracao_ecac?: boolean
+          procuracao_ecac_validade?: string | null
           status_onboarding?: string
           telefone?: string | null
           token_convite?: string | null
@@ -352,6 +356,8 @@ export type Database = {
           escritorio_id?: string
           id?: string
           nome?: string
+          procuracao_ecac?: boolean
+          procuracao_ecac_validade?: string | null
           status_onboarding?: string
           telefone?: string | null
           token_convite?: string | null
@@ -2389,6 +2395,8 @@ export type Database = {
           escritorio_id: string
           id: string
           nome: string
+          procuracao_ecac: boolean
+          procuracao_ecac_validade: string | null
           status_onboarding: string
           telefone: string | null
           token_convite: string | null

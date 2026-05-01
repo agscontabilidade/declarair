@@ -1,26 +1,25 @@
-import { Eye, MessageCircle, DollarSign } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCPF } from '@/lib/formatters';
+import { WhatsAppIcon } from './WhatsAppIcon';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
-interface Cliente {
+export interface ClienteRow {
   id: string;
   nome: string;
   cpf: string;
   email: string | null;
   telefone: string | null;
   status_onboarding: string;
+  procuracao_ecac?: boolean | null;
+  procuracao_ecac_validade?: string | null;
 }
-
-const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-  nao_iniciado: { label: 'Não Iniciado', variant: 'secondary' },
-  convite_enviado: { label: 'Convite Enviado', variant: 'outline' },
-  em_andamento: { label: 'Em Andamento', variant: 'default' },
-  concluido: { label: 'Concluído', variant: 'default' },
-};
 
 function formatTelefone(tel: string | null) {
   if (!tel) return '—';
@@ -30,12 +29,20 @@ function formatTelefone(tel: string | null) {
   return tel;
 }
 
-export function ClientesTable({ clientes, isLoading }: { clientes: Cliente[]; isLoading: boolean }) {
-  const navigate = useNavigate();
+interface Props {
+  clientes: ClienteRow[];
+  isLoading: boolean;
+  onView: (cliente: ClienteRow) => void;
+  onEdit: (cliente: ClienteRow) => void;
+  onDelete: (cliente: ClienteRow) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
+}
 
+export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, canEdit = true, canDelete = true }: Props) {
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 p-3">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-14 w-full" />
         ))}
@@ -56,50 +63,107 @@ export function ClientesTable({ clientes, isLoading }: { clientes: Cliente[]; is
     <div className="overflow-x-auto -mx-4 sm:mx-0">
       <div className="inline-block min-w-full align-middle">
         <div className="overflow-hidden sm:border sm:rounded-lg">
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Nome</TableHead>
-          <TableHead>CPF</TableHead>
-          <TableHead className="hidden md:table-cell">Email</TableHead>
-          <TableHead className="hidden md:table-cell">Telefone</TableHead>
-          <TableHead>Onboarding</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {clientes.map((c) => {
-          const st = statusMap[c.status_onboarding] ?? statusMap.nao_iniciado;
-          const tel = c.telefone?.replace(/\D/g, '');
-          return (
-            <TableRow key={c.id}>
-              <TableCell className="font-medium">{c.nome}</TableCell>
-              <TableCell className="tabular-nums">{formatCPF(c.cpf)}</TableCell>
-              <TableCell className="hidden md:table-cell">{c.email ?? '—'}</TableCell>
-              <TableCell className="hidden md:table-cell tabular-nums">{formatTelefone(c.telefone)}</TableCell>
-              <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  <Button size="icon" variant="ghost" onClick={() => navigate(`/clientes/${c.id}`)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  {tel && (
-                    <Button size="icon" variant="ghost" asChild>
-                      <a href={`https://wa.me/55${tel}`} target="_blank" rel="noopener noreferrer">
-                        <MessageCircle className="h-4 w-4" />
-                      </a>
-                    </Button>
-                  )}
-                  <Button size="icon" variant="ghost" onClick={() => navigate('/cobrancas')}>
-                    <DollarSign className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>CPF</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead className="hidden sm:table-cell">WhatsApp</TableHead>
+                <TableHead>Procuração e-CAC</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {clientes.map((c) => {
+                const tel = c.telefone?.replace(/\D/g, '');
+                const procAtiva = !!c.procuracao_ecac;
+                return (
+                  <TableRow
+                    key={c.id}
+                    className="cursor-pointer hover:bg-muted/40"
+                    onClick={() => onView(c)}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onView(c);
+                      }
+                    }}
+                  >
+                    <TableCell className="tabular-nums">{formatCPF(c.cpf)}</TableCell>
+                    <TableCell className="font-medium">{c.nome}</TableCell>
+                    <TableCell className="hidden sm:table-cell tabular-nums">{formatTelefone(c.telefone)}</TableCell>
+                    <TableCell>
+                      {procAtiva ? (
+                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Ativa</Badge>
+                      ) : (
+                        <Badge variant="secondary">Pendente</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
+                        {tel && (
+                          <Button size="icon" variant="ghost" asChild aria-label="Abrir WhatsApp">
+                            <a
+                              href={`https://wa.me/55${tel}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <WhatsAppIcon className="h-4 w-4 text-emerald-600" />
+                            </a>
+                          </Button>
+                        )}
+                        {canEdit && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label="Editar cliente"
+                            onClick={(e) => { e.stopPropagation(); onEdit(c); }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                aria-label="Excluir cliente"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir cliente</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Excluir definitivamente o cliente <strong>{c.nome}</strong>?
+                                  Todos os dados vinculados (declarações, documentos, cobranças, mensagens) serão removidos.
+                                  Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => onDelete(c)}
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>

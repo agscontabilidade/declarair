@@ -6,16 +6,25 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
 import GerarLinkConvite from '@/components/clientes/GerarLinkConvite';
 import { useClientes } from '@/hooks/useClientes';
-import { ClientesTable } from '@/components/clientes/ClientesTable';
+import { ClientesTable, type ClienteRow } from '@/components/clientes/ClientesTable';
 import { ClienteModal } from '@/components/clientes/ClienteModal';
+import { ClienteViewModal } from '@/components/clientes/ClienteViewModal';
 import { QueryError } from '@/components/ui/QueryError';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Clientes() {
-  const { clientes, isLoading, isError, error, refetch, search, setSearch, page, setPage, totalPages, contadores, createCliente } = useClientes();
-  const [modalOpen, setModalOpen] = useState(false);
+  const {
+    clientes, isLoading, isError, error, refetch,
+    search, setSearch, page, setPage, totalPages,
+    contadores, createCliente, updateCliente, deleteCliente,
+  } = useClientes();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [viewCliente, setViewCliente] = useState<ClienteRow | null>(null);
+  const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
   const { podeVerClientes, podeCriarClientes, isDono } = usePermissoes();
+  const { toast } = useToast();
 
   if (!podeVerClientes) {
     return (
@@ -43,6 +52,20 @@ export default function Clientes() {
     );
   }
 
+  const handleDelete = async (cliente: ClienteRow) => {
+    try {
+      await deleteCliente.mutateAsync(cliente.id);
+      toast({ title: 'Cliente excluído com sucesso' });
+    } catch (err: any) {
+      toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const handleEditFromView = (c: any) => {
+    setViewCliente(null);
+    setEditCliente(c);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -51,7 +74,7 @@ export default function Clientes() {
           <div className="flex gap-2">
             {isDono && <GerarLinkConvite />}
             {podeCriarClientes && (
-              <Button className="gap-2" onClick={() => setModalOpen(true)}>
+              <Button className="gap-2" onClick={() => setCreateOpen(true)}>
                 <Plus className="h-4 w-4" />
                 Novo Cliente
               </Button>
@@ -71,7 +94,15 @@ export default function Clientes() {
 
         <Card className="shadow-sm">
           <CardContent className="p-0">
-            <ClientesTable clientes={clientes} isLoading={isLoading} />
+            <ClientesTable
+              clientes={clientes as ClienteRow[]}
+              isLoading={isLoading}
+              onView={(c) => setViewCliente(c)}
+              onEdit={(c) => setEditCliente(c)}
+              onDelete={handleDelete}
+              canEdit={podeCriarClientes}
+              canDelete={podeCriarClientes}
+            />
           </CardContent>
         </Card>
 
@@ -91,10 +122,27 @@ export default function Clientes() {
       </div>
 
       <ClienteModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
         contadores={contadores}
         onSave={(data) => createCliente.mutateAsync(data)}
+        mode="create"
+      />
+
+      <ClienteModal
+        open={!!editCliente}
+        onOpenChange={(o) => !o && setEditCliente(null)}
+        contadores={contadores}
+        onSave={(data) => updateCliente.mutateAsync(data)}
+        mode="edit"
+        cliente={editCliente}
+      />
+
+      <ClienteViewModal
+        open={!!viewCliente}
+        onOpenChange={(o) => !o && setViewCliente(null)}
+        cliente={viewCliente as any}
+        onEdit={handleEditFromView}
       />
     </DashboardLayout>
   );
