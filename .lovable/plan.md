@@ -1,62 +1,65 @@
-# Correção definitiva: `Cannot find module 'tests/playwright-fixture'`
+## Visualizador de Arquivos no Drive
 
-## Diagnóstico
+Hoje no módulo **Drive de Documentos**, o contador só consegue **baixar** os arquivos enviados pelos clientes. A proposta é adicionar um **visualizador integrado** (modal em tela cheia) que abre o arquivo direto no sistema, sem download, suportando os tipos mais comuns enviados na rotina de IRPF.
 
-Os 4 specs e2e (`auth/login`, `navigation/rotas-protegidas`, `navigation/rotas-publicas`, `ui/responsividade`) importam de `'../../playwright-fixture'`, ou seja, esperam o arquivo **`tests/playwright-fixture.ts`** — que **não existe** no repositório. Só existem:
+### O que vai mudar para o usuário
 
-- `tests/example.spec.ts`
-- `tests/e2e/helpers/auth.ts` (helpers de login)
+- Ao clicar no nome do arquivo (ou em um novo botão de "olho" 👁️), abre um modal grande com o documento renderizado.
+- Botões no topo do visualizador: **Baixar**, **Abrir em nova aba**, **Fechar**, e navegação **Anterior / Próximo** entre os arquivos da mesma pasta do cliente.
+- Indicador de tipo de arquivo e nome no cabeçalho.
+- Botão de **download** atual continua funcionando (não vamos remover).
 
-Resultado: `playwright test` falha em todos os 4 arquivos com `Cannot find module`, e o job `bun run test:e2e` morre com exit code 1 no GitHub Actions.
+### Tipos de arquivo suportados
 
-Além disso, o `playwright.config.ts` tem `baseURL: http://localhost:8080` mas **não inicia o dev server** (`webServer` ausente). Mesmo corrigindo o fixture, os testes continuariam falhando no CI por não ter app rodando.
+| Tipo | Como será exibido |
+|---|---|
+| **PDF** | Renderizado nativamente em `<iframe>` com URL assinada (zoom, scroll, busca do navegador) |
+| **Imagens** (JPG, JPEG, PNG, WEBP, GIF, BMP) | Tag `<img>` com zoom (clique para 100%/ajustar) |
+| **Texto / CSV / JSON / XML** | `<pre>` com fonte mono e scroll |
+| **Word / Excel / PowerPoint** (DOCX, XLSX, PPTX, DOC, XLS, PPT) | Renderizado via **Microsoft Office Online Viewer** (iframe público da Microsoft que aceita URL assinada) — não exige login, funciona para escritórios |
+| **Outros** (ZIP, RAR, etc.) | Mensagem amigável: "Pré-visualização não disponível para este formato" + botão Baixar |
 
-## Plano de correção
+### Como funcionará tecnicamente
 
-### 1. Criar `tests/playwright-fixture.ts`
-
-Fixture mínima que reexporta `test` e `expect` do Playwright, pronta para futuras extensões (ex.: usuário autenticado, contexto multi-tenant). Conteúdo:
-
-```ts
-import { test as base, expect } from '@playwright/test';
-
-// Espaço para fixtures customizadas (auth, escritorio, etc.)
-export const test = base.extend({});
-export { expect };
+```text
+[Drive.tsx]
+   │ clica em arquivo
+   ▼
+[FileViewerModal]
+   │ detecta extensão → escolhe renderer
+   ▼
+ ┌─────────────┬─────────────┬──────────────┬──────────────┐
+ │ PdfViewer   │ ImageViewer │ TextViewer   │ OfficeViewer │
+ │ <iframe>    │ <img>       │ fetch+<pre>  │ MS iframe    │
+ └─────────────┴─────────────┴──────────────┴──────────────┘
 ```
 
-Isso resolve imediatamente os 4 erros de import sem alterar nenhum spec.
+- Continua usando **`createSignedUrl`** do bucket privado `documentos-clientes` (TTL 1h) — segurança preservada, RLS intacto.
+- Para Office, a URL assinada é passada como parâmetro para `https://view.officeapps.live.com/op/embed.aspx?src=<URL>` — é um serviço gratuito da Microsoft, não envia dados pessoais para terceiros além da própria Microsoft (mesmo modelo já usado pelo Outlook/SharePoint).
+- Texto puro é baixado via `fetch` da URL assinada e mostrado dentro do modal.
 
-### 2. Ajustar `playwright.config.ts` para o CI
+### Arquivos a criar / alterar
 
-- Adicionar bloco `webServer` que sobe o Vite antes dos testes:
-  ```ts
-  webServer: {
-    command: 'bun run dev',
-    url: 'http://localhost:8080',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  }
-  ```
-- Restringir `testDir` para `./tests/e2e` (evita rodar `tests/example.spec.ts` solto e qualquer arquivo futuro fora de e2e).
+1. **Criar** `src/components/drive/FileViewerModal.tsx` — componente principal com Dialog (shadcn), navegação entre arquivos, header com ações.
+2. **Criar** `src/components/drive/viewers/` com sub-componentes:
+   - `PdfViewer.tsx`
+   - `ImageViewer.tsx`
+   - `TextViewer.tsx`
+   - `OfficeViewer.tsx`
+   - `UnsupportedViewer.tsx`
+3. **Criar** `src/lib/file-types.ts` — função utilitária `getFileType(nomeArquivo)` que retorna `'pdf' | 'image' | 'text' | 'office' | 'unsupported'`.
+4. **Alterar** `src/pages/Drive.tsx`:
+   - Adicionar estado `viewerFile` e lista achatada de arquivos da pasta atual (para navegação anterior/próximo).
+   - Adicionar botão 👁️ ao lado do botão de download em cada arquivo.
+   - Tornar o nome do arquivo clicável (abre o viewer).
+   - Renderizar `<FileViewerModal />` no fim da página.
 
-### 3. Garantir que o workflow do GitHub instale browsers
+### Pontos de atenção
 
-Verificar `.github/workflows/*.yml` e, se necessário, adicionar antes do `bun run test:e2e`:
-```
-- run: bunx playwright install --with-deps chromium
-```
-(só edito se o passo não existir; sem isso o Playwright também falha no runner.)
+- **Sem download forçado**: o `<iframe>` para PDF usa `#toolbar=1&navpanes=0` para evitar baixar automaticamente.
+- **Imagens grandes**: aplicar `max-h-[85vh] object-contain` para caber no modal.
+- **Atalhos de teclado**: `←` / `→` para navegar, `Esc` para fechar (já vem do Dialog).
+- **Mobile**: modal full-screen em telas pequenas (`sm:max-w-5xl` no desktop, `w-full h-full` no mobile).
+- **Sem dependências novas**: usa só shadcn Dialog + iframe nativo + Office Online Viewer público. Não precisa instalar `react-pdf`, `pdfjs`, `mammoth`, etc.
 
-### 4. Validação local (após aprovação)
-
-- `bun run lint` continua verde (sem novos `any`).
-- `bunx playwright test --list` deve listar todos os specs sem erro de módulo.
-
-## Arquivos a alterar
-
-- **criar** `tests/playwright-fixture.ts`
-- **editar** `playwright.config.ts` (adiciona `webServer`, ajusta `testDir`)
-- **editar** `.github/workflows/<ci>.yml` apenas se faltar `playwright install`
-
-Sem mudanças em specs, helpers, ou código de aplicação.
+Posso prosseguir com a implementação?
