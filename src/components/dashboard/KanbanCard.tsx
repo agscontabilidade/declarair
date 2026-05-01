@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
@@ -26,7 +27,7 @@ interface Props {
   isOverlay?: boolean;
 }
 
-export function KanbanCard({ item, isOverlay }: Props) {
+export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
   const navigate = useNavigate();
   const nome = item.clientes?.nome ?? 'Cliente';
   const cpf = item.clientes?.cpf ?? '';
@@ -108,4 +109,4 @@ export function KanbanCard({ item, isOverlay }: Props) {
       </div>
     </div>
   );
-}
+});
