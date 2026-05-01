@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { PlanGate } from '@/components/billing/BillingGate';
+import { useBilling } from '@/hooks/useBilling';
 import { useAddons, useToggleAddon } from '@/hooks/useAddons';
 import { useDeclaracoesExtras } from '@/hooks/useDeclaracoesExtras';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, Brain, ShieldCheck, Palette, Zap, Check, Loader2, ShoppingCart, FileText } from 'lucide-react';
+import { MessageCircle, Brain, ShieldCheck, Palette, Zap, Check, Loader2, ShoppingCart, FileText, Crown, Lock } from 'lucide-react';
 import { formatarPreco, PRECOS } from '@/lib/constants/planos';
 import { formatCurrency } from '@/lib/formatters';
 
@@ -56,11 +56,15 @@ const PACOTES = [
 
 export default function Addons() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const defaultTab = searchParams.get('tab') === 'declaracoes' ? 'declaracoes' : 'addons';
 
+  const { planoAtual } = useBilling();
   const { catalog, myAddons, isLoading } = useAddons();
   const toggle = useToggleAddon();
   const { comprarDeclaracao } = useDeclaracoesExtras();
+
+  const isPro = planoAtual.toLowerCase() === 'pro' || planoAtual.toLowerCase() === 'profissional';
 
   const [confirmAddon, setConfirmAddon] = useState<{ id: string; nome: string; preco: number; isActive: boolean } | null>(null);
 
@@ -75,6 +79,10 @@ export default function Addons() {
     .reduce((sum, a) => sum + a.preco, 0);
 
   function handleToggleClick(addon: { id: string; nome: string; preco: number }, isActive: boolean) {
+    if (!isPro) {
+      navigate('/meus-planos');
+      return;
+    }
     setConfirmAddon({ id: addon.id, nome: addon.nome, preco: addon.preco, isActive });
   }
 
@@ -88,12 +96,16 @@ export default function Addons() {
   }
 
   function handleComprarExtras(qtd: number) {
+    if (!isPro) {
+      navigate('/meus-planos');
+      return;
+    }
     comprarDeclaracao.mutate(qtd);
   }
 
   return (
     <DashboardLayout>
-      <PlanGate requiredPlan="pro" featureName="Recursos Extras">
+
       <div className="space-y-8 max-w-5xl mx-auto">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Recursos Extras</h1>
@@ -138,12 +150,21 @@ export default function Addons() {
                   return (
                     <Card
                       key={addon.id}
-                      className={`relative overflow-hidden transition-all ${isActive ? 'border-primary/40 shadow-md' : 'hover:shadow-sm'}`}
+                      className={`relative overflow-hidden transition-all ${isActive ? 'border-primary/40 shadow-md' : 'hover:shadow-sm'} ${!isPro ? 'opacity-90' : ''}`}
                     >
                       {isActive && (
                         <div className="absolute top-3 right-3">
                           <Badge className="bg-primary/10 text-primary border-primary/20">
                             <Check className="h-3 w-3 mr-1" /> Ativo
+                          </Badge>
+                        </div>
+                      )}
+
+                      {!isPro && (
+                        <div className="absolute top-3 right-3">
+                          <Badge variant="secondary" className="gap-1.5">
+                            <Crown className="h-3 w-3 text-amber-500" />
+                            Pro
                           </Badge>
                         </div>
                       )}
@@ -154,7 +175,9 @@ export default function Addons() {
                             <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
                           </div>
                           <div>
-                            <CardTitle className="text-lg">{addon.nome}</CardTitle>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              {addon.nome}
+                            </CardTitle>
                             <p className="text-lg font-bold text-foreground mt-0.5">
                               {formatCurrency(addon.preco)}<span className="text-xs font-normal text-muted-foreground">/mês</span>
                             </p>
@@ -178,13 +201,18 @@ export default function Addons() {
 
                       <CardFooter>
                         <Button
-                          className="w-full"
-                          variant={isActive ? 'outline' : 'default'}
+                          className="w-full gap-2"
+                          variant={!isPro ? 'outline' : isActive ? 'outline' : 'default'}
                           disabled={toggle.isPending}
                           onClick={() => handleToggleClick(addon, isActive)}
                         >
                           {toggle.isPending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : !isPro ? (
+                            <>
+                              <Crown className="h-4 w-4 text-amber-500" />
+                              Upgrade para Contratar
+                            </>
                           ) : isActive ? (
                             'Desativar'
                           ) : (
@@ -253,11 +281,17 @@ export default function Addons() {
                       </div>
                       <Button
                         className="w-full gap-2"
+                        variant={!isPro ? 'outline' : 'default'}
                         disabled={comprarDeclaracao.isPending}
                         onClick={() => handleComprarExtras(pacote.qtd)}
                       >
                         {comprarDeclaracao.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : !isPro ? (
+                          <>
+                            <Crown className="h-4 w-4 text-amber-500" />
+                            Upgrade necessário
+                          </>
                         ) : (
                           <>
                             <ShoppingCart className="h-4 w-4" />
@@ -300,7 +334,6 @@ export default function Addons() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </PlanGate>
     </DashboardLayout>
   );
 }
