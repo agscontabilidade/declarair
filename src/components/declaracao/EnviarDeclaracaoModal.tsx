@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  declaracao: { id?: string; ano_base?: number; escritorio_id?: string; clientes?: { id?: string; nome?: string; cpf?: string; email?: string } | null } | null | undefined;
+  declaracao: { id?: string; ano_base?: number; escritorio_id?: string; declaracao_enviada_em?: string | null; clientes?: { id?: string; nome?: string; cpf?: string; email?: string } | null } | null | undefined;
   contadorNome: string;
   onSendChat: (message: string) => Promise<void>;
 }
