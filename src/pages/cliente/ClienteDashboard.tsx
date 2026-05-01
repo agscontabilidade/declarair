@@ -7,16 +7,110 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useClientePortal } from '@/hooks/useClientePortal';
 import { StatusStepper } from '@/components/cliente-portal/StatusStepper';
 import { ChatFlutuante } from '@/components/cliente-portal/ChatFlutuante';
-import { FileText, ClipboardList, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { FileText, ClipboardList, Upload, AlertCircle, CheckCircle2, ShieldCheck, ExternalLink, ChevronRight, ChevronLeft } from 'lucide-react';
 import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '@/hooks/useChat';
 import { QueryError } from '@/components/ui/QueryError';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useState } from 'react';
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
   const { declaracao, checklist, formulario, statusStep, pendentes, isLoading, isError, error, refetch } = useClientePortal();
   const navigate = useNavigate();
+  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+
+  const tutorialSteps = [
+    {
+      title: "Passo 1: Acesso ao Portal e-CAC",
+      description: "Acesse o Portal e-CAC da Receita Federal utilizando sua conta gov.br (nível Prata ou Ouro).",
+      content: (
+        <div className="space-y-4">
+          <p>Para começar, acesse o link oficial do e-CAC:</p>
+          <a 
+            href="https://cav.receita.fazenda.gov.br/autenticacao/login" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline flex items-center gap-2 font-medium"
+          >
+            Acessar Portal e-CAC <ExternalLink className="h-4 w-4" />
+          </a>
+          <div className="bg-muted p-4 rounded-lg text-sm border border-border">
+            <strong>Dica:</strong> Utilize o botão "Entrar com gov.br" para um acesso mais seguro e completo.
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Passo 2: Localizar Senhas e Procurações",
+      description: "No menu superior ou lateral, localize a opção de Procurações.",
+      content: (
+        <div className="space-y-4">
+          <p>Dentro do portal, procure pela aba <strong>"Senhas e Procurações"</strong>.</p>
+          <p>Em seguida, clique na opção <strong>"Cadastro, Consulta e Cancelamento - Procuração para e-CAC"</strong>.</p>
+          <div className="aspect-video bg-muted rounded-md flex items-center justify-center border border-dashed border-border">
+            <ShieldCheck className="h-12 w-12 text-muted-foreground/20" />
+            <span className="text-xs text-muted-foreground ml-2">Imagem ilustrativa do menu</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Passo 3: Cadastrar Procuração",
+      description: "Inicie o processo de cadastramento informando os dados do procurador.",
+      content: (
+        <div className="space-y-4">
+          <p>Selecione a opção <strong>"Cadastrar Procuração"</strong>.</p>
+          <p>Você precisará informar o CPF ou CNPJ do seu contador/escritório que será o procurador.</p>
+          <div className="bg-yellow-50 dark:bg-yellow-950/20 p-4 rounded-lg text-sm border border-yellow-200 dark:border-yellow-900">
+            <p className="text-yellow-800 dark:text-yellow-200">
+              <strong>Importante:</strong> Verifique com seu contador qual o CPF/CNPJ correto para o cadastro da procuração.
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Passo 4: Definir Poderes e Prazo",
+      description: "Selecione os serviços que o procurador poderá acessar e a validade.",
+      content: (
+        <div className="space-y-4">
+          <p>Marque a opção <strong>"Todos os serviços com relação de processos"</strong> ou selecione especificamente os serviços de <strong>"Imposto de Renda"</strong>.</p>
+          <p>Defina um prazo de validade (recomendamos 5 anos para evitar renovações anuais).</p>
+          <p>Clique em <strong>"Cadastrar Procuração"</strong> ao final da página.</p>
+        </div>
+      )
+    },
+    {
+      title: "Passo 5: Assinar e Finalizar",
+      description: "Assine digitalmente para confirmar a autorização.",
+      content: (
+        <div className="space-y-4">
+          <p>O sistema solicitará a assinatura digital através do portal gov.br.</p>
+          <p>Confirme os dados e siga as instruções na tela para concluir.</p>
+          <div className="bg-success/10 p-4 rounded-lg text-sm border border-success/20">
+            <p className="text-success-foreground">
+              <strong>Pronto!</strong> Após concluído, seu contador poderá acompanhar sua declaração em tempo real e resolver pendências com agilidade.
+            </p>
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  const handleNextTutorial = () => {
+    if (currentTutorialStep < tutorialSteps.length - 1) {
+      setCurrentTutorialStep(prev => prev + 1);
+    }
+  };
+
+  const handlePrevTutorial = () => {
+    if (currentTutorialStep > 0) {
+      setCurrentTutorialStep(prev => prev - 1);
+    }
+  };
 
   const { unreadCount } = useChat(
     declaracao?.id,
@@ -157,6 +251,96 @@ export default function ClienteDashboard() {
               </Card>
             </div>
 
+
+            {/* Card de Procuração Eletrônica */}
+            <Card className="shadow-sm border-primary/20 bg-primary/5 overflow-hidden">
+              <div className="md:flex items-center">
+                <div className="p-6 md:p-8 flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <ShieldCheck className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-bold">Procuração Eletrônica e-CAC</h3>
+                  </div>
+                  <p className="text-muted-foreground text-sm max-w-2xl">
+                    Cadastre uma procuração eletrônica na Receita Federal através do portal e-CAC usando sua senha <strong>gov.br</strong>. 
+                    Isso permite que seu contador acompanhe sua declaração em tempo real e resolva qualquer pendência de forma muito mais ágil.
+                  </p>
+                </div>
+                <div className="px-6 pb-6 md:pb-0 md:pr-8">
+                  <Dialog onOpenChange={(open) => !open && setCurrentTutorialStep(0)}>
+                    <DialogTrigger asChild>
+                      <Button className="w-full md:w-auto shadow-md">
+                        Ver Passo a Passo
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-2xl">
+                          <ShieldCheck className="h-6 w-6 text-primary" />
+                          Tutorial de Procuração e-CAC
+                        </DialogTitle>
+                      </DialogHeader>
+                      
+                      <div className="mt-6">
+                        {/* Progress Bar */}
+                        <div className="flex justify-between mb-8 gap-1">
+                          {tutorialSteps.map((_, i) => (
+                            <div 
+                              key={i} 
+                              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                                i <= currentTutorialStep ? 'bg-primary' : 'bg-muted'
+                              }`}
+                            />
+                          ))}
+                        </div>
+
+                        {/* Step Content */}
+                        <div className="min-h-[300px] flex flex-col">
+                          <div className="flex-1">
+                            <h4 className="text-xl font-bold mb-2">{tutorialSteps[currentTutorialStep].title}</h4>
+                            <p className="text-muted-foreground mb-6">{tutorialSteps[currentTutorialStep].description}</p>
+                            
+                            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                              {tutorialSteps[currentTutorialStep].content}
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between items-center mt-8 pt-4 border-t border-border">
+                            <Button 
+                              variant="outline" 
+                              onClick={handlePrevTutorial}
+                              disabled={currentTutorialStep === 0}
+                            >
+                              <ChevronLeft className="h-4 w-4 mr-2" />
+                              Anterior
+                            </Button>
+                            
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Passo {currentTutorialStep + 1} de {tutorialSteps.length}
+                            </span>
+
+                            {currentTutorialStep < tutorialSteps.length - 1 ? (
+                              <Button onClick={handleNextTutorial}>
+                                Próximo
+                                <ChevronRight className="h-4 w-4 ml-2" />
+                              </Button>
+                            ) : (
+                              <DialogClose asChild>
+                                <Button className="bg-success hover:bg-success/90">
+                                  Entendi, vou cadastrar!
+                                </Button>
+                              </DialogClose>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+            </Card>
 
             {/* Floating chat */}
             {profile.clienteId && (
