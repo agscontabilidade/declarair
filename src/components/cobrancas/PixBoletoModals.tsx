@@ -7,7 +7,7 @@ import { formatCurrency, formatDate } from '@/lib/formatters';
 interface GerarBoletoModalProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  cobranca: any;
+  cobranca: { clientes?: { nome?: string; cpf?: string } | null; valor: number | string; data_vencimento: string } | null;
 }
 
 export function GerarBoletoModal({ open, onOpenChange, cobranca }: GerarBoletoModalProps) {
