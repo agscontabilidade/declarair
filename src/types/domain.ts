@@ -1,24 +1,33 @@
-import { Database } from "@/integrations/supabase/types";
+/**
+ * Tipos compartilhados de domínio derivados das tabelas Supabase.
+ * Use estes tipos no lugar de `any` em props de componentes e maps.
+ */
+import type { Database } from '@/integrations/supabase/types';
 
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
-export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T];
+type Tables = Database['public']['Tables'];
 
-// Domain Aliases
-export type Cliente = Tables<'clientes'>;
-export type Declaracao = Tables<'declaracoes'>;
-export type Cobranca = Tables<'cobrancas'>;
-export type Usuario = Tables<'usuarios'>;
-export type Escritorio = Tables<'escritorios'>;
-export type FormularioIR = Tables<'formulario_ir'>;
-export type Addon = Tables<'addons'>;
-export type Notificacao = Tables<'notificacoes'>;
-export type AtividadeAuditoria = Tables<'auditoria_atividades'>;
+// Linhas básicas
+export type ClienteRow = Tables['clientes']['Row'];
+export type DeclaracaoRow = Tables['declaracoes']['Row'];
+export type CobrancaRow = Tables['cobrancas']['Row'];
+export type MensagemEnviadaRow = Tables['mensagens_enviadas']['Row'];
+export type ChecklistDocumentoRow = Tables['checklist_documentos']['Row'];
+export type FormularioIRRow = Tables['formulario_ir']['Row'];
+export type TemplateMensagemRow = Tables['templates_mensagem']['Row'];
 
-// Extended types with relationships (common patterns)
-export interface ClienteWithContador extends Cliente {
-  usuarios?: { nome: string } | null;
-}
+// Joins comuns
+export type CobrancaComCliente = CobrancaRow & {
+  clientes?: Pick<ClienteRow, 'nome' | 'cpf' | 'email' | 'telefone'> | null;
+};
 
-export interface DeclaracaoWithCliente extends Declaracao {
-  clientes?: { nome: string; cpf: string } | null;
-}
+export type DeclaracaoComCliente = DeclaracaoRow & {
+  clientes?: Pick<ClienteRow, 'nome' | 'cpf' | 'email' | 'telefone'> | null;
+};
+
+export type DeclaracaoComContador = DeclaracaoRow & {
+  contador?: { nome: string } | null;
+};
+
+// Formulário payload genérico (JSONB do Supabase)
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type JsonRecord = Record<string, Json | undefined>;
