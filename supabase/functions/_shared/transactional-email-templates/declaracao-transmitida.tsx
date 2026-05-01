@@ -71,7 +71,7 @@ const DeclaracaoTransmitidaEmail = ({ nomeCliente, nomeEscritorio, anoBase, nume
 
 export const template = {
   component: DeclaracaoTransmitidaEmail,
-  subject: (data: Record<string, any>) => `🎉 Declaração IRPF ${data.anoBase || '2025'} transmitida com sucesso!`,
+  subject: (data: Record<string, unknown>) => `🎉 Declaração IRPF ${data.anoBase || '2025'} transmitida com sucesso!`,
   displayName: 'Declaração transmitida',
   previewData: { nomeCliente: 'João Silva', nomeEscritorio: 'Contabilidade ABC', anoBase: '2025', numeroRecibo: '1234.5678.9012-34', tipoResultado: 'restituicao', valorResultado: '2.350,00', linkPortal: 'https://declarair.com.br/cliente/dashboard' },
 } satisfies TemplateEntry

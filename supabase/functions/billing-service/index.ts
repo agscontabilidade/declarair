@@ -1,6 +1,17 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 
+interface EscritorioBilling {
+  id: string;
+  nome: string;
+  cnpj: string | null;
+  email: string | null;
+  telefone: string | null;
+  stripe_customer_id: string | null;
+  plano: string | null;
+}
+type AdminClient = SupabaseClient;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -55,7 +66,7 @@ async function authenticateUser(req: Request) {
 }
 
 // ── Ensure Stripe customer ──
-async function ensureStripeCustomer(escritorio: any, admin: SupabaseClient) {
+async function ensureStripeCustomer(escritorio: EscritorioBilling, admin: AdminClient) {
   if (escritorio.stripe_customer_id) {
     return escritorio.stripe_customer_id;
   }
@@ -87,7 +98,7 @@ const ADDON_PRICES: Record<string, { amount: number; name: string }> = {
 
 // ── Create subscription ──
 async function createSubscription(
-  escritorio: any,
+  escritorio: EscritorioBilling,
   admin: SupabaseClient,
   body: { plano: string; paymentMethod: string }
 ) {
@@ -122,7 +133,7 @@ async function createSubscription(
     items: [{ price: price.id }],
     payment_behavior: "default_incomplete",
     payment_settings: {
-      payment_method_types: paymentMethodTypes as any,
+      payment_method_types: paymentMethodTypes as Stripe.SubscriptionCreateParams.PaymentSettings.PaymentMethodType[],
       save_default_payment_method: "on_subscription",
     },
     expand: ["latest_invoice.payment_intent"],
@@ -158,7 +169,7 @@ async function createSubscription(
 }
 
 // ── Cancel subscription ──
-async function cancelSubscription(escritorio: any, admin: SupabaseClient) {
+async function cancelSubscription(escritorio: EscritorioBilling, admin: AdminClient) {
   const { data: assinatura } = await admin
     .from("assinaturas")
     .select("*")
@@ -186,7 +197,7 @@ async function cancelSubscription(escritorio: any, admin: SupabaseClient) {
 }
 
 // ── Get subscription ──
-async function getSubscription(escritorio: any, admin: SupabaseClient) {
+async function getSubscription(escritorio: EscritorioBilling, admin: AdminClient) {
   const { data: assinatura } = await admin
     .from("assinaturas")
     .select("*")
@@ -197,7 +208,7 @@ async function getSubscription(escritorio: any, admin: SupabaseClient) {
 }
 
 // ── Get payments ──
-async function getPayments(escritorio: any, admin: SupabaseClient) {
+async function getPayments(escritorio: EscritorioBilling, admin: AdminClient) {
   const { data: pagamentos } = await admin
     .from("pagamentos_assinatura")
     .select("*")
@@ -210,7 +221,7 @@ async function getPayments(escritorio: any, admin: SupabaseClient) {
 
 // ── Activate addon ──
 async function activateAddon(
-  escritorio: any,
+  escritorio: EscritorioBilling,
   admin: SupabaseClient,
   body: { addonSlug: string }
 ) {
@@ -292,7 +303,7 @@ async function activateAddon(
 
 // ── Deactivate addon ──
 async function deactivateAddon(
-  escritorio: any,
+  escritorio: EscritorioBilling,
   admin: SupabaseClient,
   body: { addonSlug: string }
 ) {
@@ -333,7 +344,7 @@ async function deactivateAddon(
 }
 
 // ── Create customer portal session ──
-async function createPortalSession(escritorio: any) {
+async function createPortalSession(escritorio: EscritorioBilling) {
   const customerId = escritorio.stripe_customer_id;
   if (!customerId) throw new Error("Customer não encontrado");
 
@@ -347,7 +358,7 @@ async function createPortalSession(escritorio: any) {
 
 // ── Buy extra declarations ──
 async function buyExtraDeclaracoes(
-  escritorio: any,
+  escritorio: EscritorioBilling,
   admin: SupabaseClient,
   body: { quantidade: number }
 ) {

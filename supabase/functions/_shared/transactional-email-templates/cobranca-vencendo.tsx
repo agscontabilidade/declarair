@@ -66,7 +66,7 @@ const CobrancaVencendoEmail = ({ nomeCliente, nomeEscritorio, descricao, valor, 
 
 export const template = {
   component: CobrancaVencendoEmail,
-  subject: (data: Record<string, any>) => `Lembrete: cobrança de R$ ${data.valor || '0,00'} vencendo em ${data.dataVencimento || 'breve'}`,
+  subject: (data: Record<string, unknown>) => `Lembrete: cobrança de R$ ${data.valor || '0,00'} vencendo em ${data.dataVencimento || 'breve'}`,
   displayName: 'Cobrança vencendo',
   previewData: { nomeCliente: 'João Silva', nomeEscritorio: 'Contabilidade ABC', descricao: 'Declaração IRPF 2025', valor: '350,00', dataVencimento: '15/04/2025', linkPagamento: 'https://declarair.com.br/cliente/dashboard' },
 } satisfies TemplateEntry

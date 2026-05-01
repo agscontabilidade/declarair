@@ -63,7 +63,7 @@ const ConviteColaboradorEmail = ({ nome, escritorio, convidadoPor, papel, linkCo
 
 export const template = {
   component: ConviteColaboradorEmail,
-  subject: (data: Record<string, any>) => `${data.escritorio || 'Escritório'} — Convite para a equipe`,
+  subject: (data: Record<string, unknown>) => `${data.escritorio || 'Escritório'} — Convite para a equipe`,
   displayName: 'Convite de colaborador',
   previewData: { nome: 'Maria Souza', escritorio: 'Contabilidade ABC', convidadoPor: 'Carlos Lima', papel: 'Profissional Contábil', linkConvite: 'https://declarair.com.br/convite/abc123' },
 } satisfies TemplateEntry

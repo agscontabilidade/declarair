@@ -15,6 +15,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+interface Webhook {
+  id: string;
+  escritorio_id: string;
+  url: string;
+  eventos: string[];
+  secret: string;
+  created_at?: string;
+  ativo?: boolean;
+}
+
 const EVENTOS_DISPONIVEIS = [
   { value: 'declaracao.criada', label: 'Declaração criada' },
   { value: 'declaracao.status_alterado', label: 'Status da declaração alterado' },
@@ -40,12 +50,12 @@ export default function WebhooksPage() {
     queryKey: ['webhooks', escritorioId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('webhooks' as any)
+        .from('webhooks' as never)
         .select('*')
         .eq('escritorio_id', escritorioId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as any[];
+      return (data ?? []) as unknown as Webhook[];
     },
     enabled: !!escritorioId,
   });
@@ -54,13 +64,13 @@ export default function WebhooksPage() {
     mutationFn: async () => {
       const secret = `whsec_${crypto.randomUUID().replace(/-/g, '')}`;
       const { error } = await supabase
-        .from('webhooks' as any)
+        .from('webhooks' as never)
         .insert({
           escritorio_id: escritorioId!,
           url,
           eventos: selectedEventos,
           secret,
-        } as any);
+        } as never);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -75,7 +85,7 @@ export default function WebhooksPage() {
 
   const deletarWebhook = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('webhooks' as any).delete().eq('id', id);
+      const { error } = await supabase.from('webhooks' as never).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -167,7 +177,7 @@ export default function WebhooksPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {webhooks.map((wh: any) => (
+                      {webhooks.map((wh: Webhook) => (
                         <TableRow key={wh.id}>
                           <TableCell className="font-mono text-xs max-w-[200px] truncate">{wh.url}</TableCell>
                           <TableCell>

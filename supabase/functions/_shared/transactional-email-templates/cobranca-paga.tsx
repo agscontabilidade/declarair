@@ -57,7 +57,7 @@ const CobrancaPagaEmail = ({ nomeCliente, nomeEscritorio, descricao, valor, data
 
 export const template = {
   component: CobrancaPagaEmail,
-  subject: (data: Record<string, any>) => `✅ Pagamento de R$ ${data.valor || '0,00'} confirmado`,
+  subject: (data: Record<string, unknown>) => `✅ Pagamento de R$ ${data.valor || '0,00'} confirmado`,
   displayName: 'Cobrança paga',
   previewData: { nomeCliente: 'João Silva', nomeEscritorio: 'Contabilidade ABC', descricao: 'Declaração IRPF 2025', valor: '350,00', dataPagamento: '10/04/2025' },
 } satisfies TemplateEntry

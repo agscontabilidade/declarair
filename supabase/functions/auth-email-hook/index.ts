@@ -26,7 +26,10 @@ const EMAIL_SUBJECTS: Record<string, string> = {
 }
 
 // Template mapping
-const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
+// React component props vary per template; using a permissive prop type is acceptable here
+// because each template enforces its own props internally via interface.
+type EmailComponent = React.ComponentType<Record<string, unknown>>;
+const EMAIL_TEMPLATES: Record<string, EmailComponent> = {
   signup: SignupEmail,
   invite: InviteEmail,
   magiclink: MagicLinkEmail,
@@ -142,7 +145,8 @@ async function handleWebhook(req: Request): Promise<Response> {
   }
 
   // Verify signature + timestamp, then parse payload.
-  let payload: any
+  type EmailWebhookPayload = Awaited<ReturnType<typeof parseEmailWebhookPayload>>;
+  let payload: EmailWebhookPayload
   let run_id = ''
   try {
     const verified = await verifyWebhookRequest({

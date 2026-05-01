@@ -126,7 +126,7 @@ Considere divergências comuns como: rendimentos vs DIRF, bens incompatíveis co
 5. Orientações para o próximo ano`;
 }
 
-function buildContext(declaracao: { ano_base: number; status: string; tipo_resultado?: string; valor_resultado?: number; clientes: { nome: string } }, formulario: any): string {
+function buildContext(declaracao: { ano_base: number; status: string; tipo_resultado?: string; valor_resultado?: number; clientes: { nome: string } }, formulario: Record<string, unknown> | null | undefined): string {
   const cliente = declaracao.clientes;
   let ctx = `## Dados do Contribuinte\n- Nome: ${cliente?.nome || "N/I"}\n- Ano-base: ${declaracao.ano_base}\n`;
 

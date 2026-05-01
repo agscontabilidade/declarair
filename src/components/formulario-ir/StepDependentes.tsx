@@ -1,3 +1,4 @@
+import type { Dependente, Alimentando } from '@/lib/schemas/formulario-ir';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +9,7 @@ import type { FormularioData } from '@/hooks/useFormularioIR';
 
 interface Props {
   data: FormularioData;
-  onChange: (field: keyof FormularioData, value: any) => void;
+  onChange: (field: keyof FormularioData, value: unknown) => void;
 }
 
 const PARENTESCOS = ['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Companheiro(a)', 'Pai/Mãe', 'Avô/Avó', 'Outro'];
@@ -26,21 +27,21 @@ export function StepDependentes({ data, onChange }: Props) {
   };
 
   const updateDep = (i: number, field: string, value: string) => {
-    const updated = deps.map((d: any, idx: number) => idx === i ? { ...d, [field]: value } : d);
+    const updated = deps.map((d: Dependente, idx: number) => idx === i ? { ...d, [field]: value } : d);
     onChange('dependentes', updated);
   };
 
   const updateAli = (i: number, field: string, value: string) => {
-    const updated = alimentandos.map((a: any, idx: number) => idx === i ? { ...a, [field]: value } : a);
+    const updated = alimentandos.map((a: Alimentando, idx: number) => idx === i ? { ...a, [field]: value } : a);
     onChange('alimentandos', updated);
   };
 
   const removeDep = (i: number) => {
-    onChange('dependentes', deps.filter((_: any, idx: number) => idx !== i));
+    onChange('dependentes', deps.filter((_: unknown, idx: number) => idx !== i));
   };
 
   const removeAli = (i: number) => {
-    onChange('alimentandos', alimentandos.filter((_: any, idx: number) => idx !== i));
+    onChange('alimentandos', alimentandos.filter((_: unknown, idx: number) => idx !== i));
   };
 
   const isValidCPF = (cpf: string) => validateCPF(cpf);
@@ -56,7 +57,7 @@ export function StepDependentes({ data, onChange }: Props) {
         ⚠️ A Receita Federal exige CPF para todos os dependentes. Certifique-se de preencher corretamente.
       </div>
 
-      {deps.map((dep: any, i: number) => (
+      {deps.map((dep: Dependente, i: number) => (
         <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Dependente {i + 1}</span>
@@ -107,7 +108,7 @@ export function StepDependentes({ data, onChange }: Props) {
           <p className="text-sm text-muted-foreground">Adicione os beneficiários de pensão alimentícia (alimentandos).</p>
         </div>
 
-        {alimentandos.map((ali: any, i: number) => (
+        {alimentandos.map((ali: Alimentando, i: number) => (
           <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Beneficiário {i + 1}</span>

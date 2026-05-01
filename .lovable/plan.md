@@ -1,94 +1,110 @@
-## Auditoria — o ChatGPT está certo?
 
-**Sim, no diagnóstico raiz: está correto.** Reproduzi `bun run lint` localmente e o pipeline quebra exatamente pelo motivo descrito. Mas ele errou em alguns pontos importantes que mudam o plano:
+# Plano definitivo: zerar `any`, blindar o CI
 
-### Confirmado
-- O CI executa `bun run lint` (workflow `.github/workflows/ci.yml`, etapa "Verificar Lint").
-- A regra `@typescript-eslint/no-explicit-any` está ativa via `tseslint.configs.recommended` em `eslint.config.js`.
-- ESLint retorna exit code ≠ 0 → workflow inteiro quebra antes de testes/build.
+## Diagnóstico (verificado agora, não suposição)
 
-### Onde o ChatGPT errou
-1. **Não é só `no-explicit-any`.** O total real é **258 problemas (237 erros, 21 warnings)** distribuídos em **88 arquivos**, com 6 regras diferentes:
-   - 221 × `@typescript-eslint/no-explicit-any`
-   - 15 × `react-refresh/only-export-components` (warnings)
-   - 12 × `prefer-const`
-   - 6 × `react-hooks/exhaustive-deps` (warnings)
-   - 2 × `@typescript-eslint/no-empty-object-type`
-   - 1 × `@typescript-eslint/no-require-imports` (`tailwind.config.ts`)
+- `eslint.config.js` já está com `no-explicit-any: "warn"` (Fase 1 feita).
+- `bun run lint` retorna **0 erros + 213 warnings**, exit 0.
+- `package.json` tem `"lint": "eslint . --max-warnings 213"` — **margem zero**. Qualquer novo `any` quebra o CI.
+- Distribuição: 69 warnings em `src/`, 14 em `supabase/functions/` (Stripe, Inter, PDF — alto risco financeiro).
+- `ci.yml` ainda usa `actions/checkout@v4` (Node 20, deprecação anunciada para 2026 — não bloqueia hoje).
+- Não existe `src/types/` centralizado — tipagem está inline e duplicada.
 
-2. **A maior concentração de `any` está nas Edge Functions Supabase** (`stripe-checkout`, `stripe-webhook`, `billing-service`, `ia-fiscal`, `processar-pdf-declaracao`, `auth-email-hook`, `send-transactional-email`), não só nos componentes do print. Cerca de ~95 dos 221 `any` estão em `supabase/functions/**`.
+A análise do GPT identifica corretamente o sintoma estrutural (falta de domínio tipado), mas a "solução rápida" dele já foi aplicada. O caminho agora é eliminar a dívida, não adiá-la.
 
-3. **Os arquivos do print do usuário (ReportBugModal, AbaCobrancas, ClienteModal, etc.) realmente têm `any`**, mas representam uma fração menor do problema total.
+## Estratégia: ratchet decrescente
 
-4. **A config NÃO foi "ativada recentemente".** O `eslint.config.js` sempre estendeu `tseslint.configs.recommended` — o que mudou foi a quantidade de código com `any` crescer e ultrapassar o limiar de tolerância (e provavelmente o CI passou a rodar `lint` como gate obrigatório agora).
+Em vez de um big-bang arriscado em produção, vamos zerar warnings em **lotes priorizados por risco**, baixando `--max-warnings` a cada lote. Isso garante que:
+- O CI nunca regride (lote concluído = teto novo, mais baixo).
+- Bugs financeiros silenciosos são eliminados primeiro.
+- A revisão humana fica gerenciável (lotes de 30–50 warnings).
 
-5. **A sugestão dele de jogar tudo para `unknown` é perigosa**: muitos casos no nosso código são tipos do Supabase/Stripe que já têm tipagem própria disponível (`Database` em `src/integrations/supabase/types.ts`, `Stripe.Event`, etc.). Trocar por `unknown` cria dívida em vez de resolver.
+## Fases
 
----
+### Fase A — Tipagem central (fundação)
+Criar `src/types/` com contratos compartilhados, alimentados por `src/integrations/supabase/types.ts` (gerado pelo Supabase) e Zod:
 
-## Plano de resolução em 4 fases
+```text
+src/types/
+  cliente.ts        // Cliente, ClienteComContador, StatusOnboarding
+  declaracao.ts     // Declaracao, StatusDeclaracao, TipoResultado
+  cobranca.ts       // Cobranca, StatusCobranca, payloads Inter/Stripe
+  formulario-ir.ts  // FormularioIR + JSONB inferidos de Zod schemas
+  pdf.ts            // payloads de processar-pdf-declaracao
+  stripe.ts         // re-export de Stripe.* + tipos de webhook locais
+  inter.ts          // contratos da API Inter (token, boleto, webhook)
+  index.ts          // barrel
+```
 
-### Fase 1 — Destravar CI imediatamente (sem comprometer qualidade futura)
+Padrão: derivar de `Database["public"]["Tables"][...]["Row"]` quando possível; usar `z.infer<typeof schema>` para JSONB.
 
-Ajustar `eslint.config.js` para:
-- Manter `no-explicit-any` ativo, mas como **`warn`** temporariamente (CI volta a passar).
-- Corrigir os 12 `prefer-const` (são auto-fixáveis com `--fix`, custo zero).
-- Corrigir o único `no-require-imports` em `tailwind.config.ts` (trocar `require("tailwindcss-animate")` por `import`).
-- Corrigir os 2 `no-empty-object-type` (interfaces vazias em `command.tsx` e `textarea.tsx` do shadcn — trocar por `type X = ComponentProps<...>`).
-- Manter `react-refresh` e `exhaustive-deps` como `warn` (já são warnings, não quebram CI).
+### Fase B — Backend financeiro (14 warnings, prioridade máxima)
+Edge functions onde `any` é risco direto de bug financeiro:
 
-Adicionar um **teto duro** ao lint via flag `--max-warnings` configurável: começar com `--max-warnings 250` e ir baixando a cada PR. Isso impede que o problema volte a crescer.
+- `supabase/functions/stripe-webhook/index.ts` — usar `Stripe.Event`, `Stripe.Invoice`, `Stripe.Subscription`.
+- `supabase/functions/billing-service/index.ts`
+- `supabase/functions/stripe-checkout/index.ts`
+- `supabase/functions/inter-*` (boleto, webhook, token mTLS)
+- `supabase/functions/processar-pdf-declaracao/index.ts` — tipar payload de OCR/extração.
 
-### Fase 2 — Eliminar `any` nas Edge Functions (maior ganho)
+Ao final: `--max-warnings 199`.
 
-Estes são os hotspots e têm tipos prontos disponíveis:
+### Fase C — Frontend de domínio crítico (~30 warnings)
+Componentes que tocam dinheiro, status legal e dados sensíveis:
 
-- **`stripe-checkout`, `stripe-webhook`, `billing-service`**: usar tipos oficiais `Stripe.Checkout.Session`, `Stripe.Event`, `Stripe.Subscription`, `Stripe.Invoice` do pacote `stripe`. Substitui ~95 ocorrências.
-- **`ia-fiscal`, `processar-pdf-declaracao`**: criar interfaces locais para o payload da Lovable AI (`LovableAIResponse`, `ExtracaoFiscal`) em um `_shared/types.ts`.
-- **`auth-email-hook`, `send-transactional-email`**: tipar payloads do Auth Hook do Supabase (`AuthHookPayload`) e do registry de templates.
+- `src/pages/Declaracoes.tsx`, `src/pages/Cobrancas.tsx`, `src/pages/Clientes.tsx`
+- `src/components/declaracoes/*` (incluindo `AnexarDeclaracaoButton.tsx`)
+- `src/components/cobrancas/*`
+- Hooks: `useDashboardData`, `useDeclaracoes`, `useCobrancas`
 
-### Fase 3 — Eliminar `any` no frontend
+Ao final: `--max-warnings ~170`.
 
-Atacar por categoria:
+### Fase D — Frontend operacional (~25 warnings)
+Mensagens, templates, comunicação, configurações, capa PDF.
+Ao final: `--max-warnings ~145`.
 
-- **Componentes de listagem (`AbaCobrancas`, `CobrancasTable`, `ClienteModal`, etc.)**: derivar tipos de `Database['public']['Tables']['<tabela>']['Row']` que já existe em `src/integrations/supabase/types.ts`. Criar `src/types/domain.ts` reexportando aliases legíveis (`Cobranca`, `Cliente`, `Declaracao`).
-- **Hooks (`useClientes`, `useCobrancas`, `useDeclaracao`)**: tipar retornos com esses aliases.
-- **Handlers de form (React Hook Form + Zod)**: usar `z.infer<typeof schema>` em vez de `any` nos `onSubmit`.
-- **Eventos React**: trocar `e: any` por `React.ChangeEvent<HTMLInputElement>` etc.
+### Fase E — Frontend auxiliar e UI (~14 warnings)
+Componentes de UI, formulários secundários, utilitários.
+Ao final: `--max-warnings 0`.
 
-Estratégia: corrigir em lotes de ~20 arquivos por PR para revisão viável.
-
-### Fase 4 — Endurecer regra e prevenir regressão
-
-Quando contagem de `any` chegar a zero:
-- Voltar `@typescript-eslint/no-explicit-any` para **`error`**.
-- Adicionar `--max-warnings 0` no script `lint` do `package.json`.
-- Adicionar regra `@typescript-eslint/no-unsafe-*` (gradual) para garantir que `unknown` seja tratado com narrowing.
-- Ativar `tsc --noEmit` como step separado no CI (hoje só roda lint, não typecheck — `tsconfig.json` tem `noImplicitAny: false` e `strictNullChecks: false`, o que mascara muito problema).
-- Documentar no `README.md` a política: PRs novos não podem introduzir `any`.
-
----
+### Fase F — Hardening permanente
+1. `eslint.config.js`: voltar `no-explicit-any` para `"error"`.
+2. `package.json`: remover `--max-warnings`, adicionar:
+   - `"typecheck": "tsc --noEmit"`
+   - `"lint": "eslint ."`
+3. `.github/workflows/ci.yml`:
+   - Adicionar step `bun run typecheck` antes de `lint`.
+   - Atualizar `actions/checkout@v4` → manter (já é v4, ok). Adicionar `actions/setup-node@v4` só se necessário.
+   - Adicionar cache de dependências do bun para acelerar.
+4. Documentar em `.lovable/plan.md` que `any` é proibido — usar `unknown` + narrowing ou tipo concreto.
 
 ## Detalhes técnicos
 
-**Por que não desligar a regra (sugestão 3 do ChatGPT) é má ideia:** desligar `no-explicit-any` permite a dívida crescer indefinidamente. A Fase 1 (rebaixar para `warn` + `--max-warnings`) preserva visibilidade e cria um cliquet (ratchet) descendente.
+**Substituições padrão:**
+- `(payload: any)` → `(payload: unknown)` + Zod parse, ou tipo do domínio.
+- `catch (e: any)` → `catch (e: unknown)` + `e instanceof Error ? e.message : String(e)`.
+- `Record<string, any>` JSONB → `z.infer<typeof schema>` da Fase A.
+- Eventos Stripe: `Stripe.Event` + discriminated union em `event.type`.
+- Respostas Supabase: usar tipos gerados, nunca `any` em `.from(...).select()`.
 
-**Por que não usar `unknown` indiscriminadamente (sugestão 2):** força narrowing em toda chamada subsequente, gera ruído. Só vale quando o tipo é genuinamente desconhecido (ex.: parsing JSON externo). Para Supabase/Stripe temos tipos oficiais.
+**Riscos e mitigações:**
+- *Risco:* mudança de tipo expõe bug latente (ex: campo opcional acessado sem guard).
+- *Mitigação:* cada fase é um commit separado; rodar `bun run test` + revisão visual no preview entre fases.
+- *Risco:* tipos do Supabase desatualizados quebram Fase A.
+- *Mitigação:* `src/integrations/supabase/types.ts` é regenerado automaticamente; validar antes da Fase A começar.
 
-**Por que tipar Edge Functions primeiro:** lidam com webhook payloads e transações financeiras. `any` aqui é risco real de bug em produção, não só estético.
+**Não tocar:**
+- `src/integrations/supabase/client.ts` e `types.ts` (auto-gerados).
+- Schema do banco (produção estável).
+- RLS policies.
 
-**Custo estimado:**
-- Fase 1: ~15 min (1 PR pequeno).
-- Fase 2: ~2-3h (1 PR médio focado em Edge Functions).
-- Fase 3: ~4-6h (3-4 PRs em lotes).
-- Fase 4: ~30 min (config + doc).
+## Entregável final
 
----
+- 0 errors, 0 warnings, `no-explicit-any: error`.
+- `tsc --noEmit` rodando no CI.
+- `src/types/` como única fonte de verdade dos contratos de domínio.
+- Pipeline GitHub Actions verde e à prova de regressões.
 
-## O que NÃO está no plano
+## Execução proposta
 
-- Não vou tocar em `src/integrations/supabase/types.ts` (auto-gerado).
-- Não vou tocar em `src/components/ui/**` além das 2 interfaces vazias (shadcn pristine).
-- Não vou alterar lógica de negócio — só tipagem.
-
-Aprove para eu executar a Fase 1 (destravar CI hoje). As fases seguintes podem ser feitas em PRs separados depois, conforme prioridade.
+Começo pela **Fase A + Fase B** num único commit (fundação + backend financeiro), depois cada fase seguinte em commits separados para revisão incremental. Aprove e eu sigo.

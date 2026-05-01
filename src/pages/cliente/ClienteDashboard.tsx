@@ -27,6 +27,9 @@ import passo9Img from '@/assets/ecac/passo-9.jpg';
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
   const { declaracao, checklist, formulario, statusStep, pendentes, isLoading, isError, error, refetch } = useClientePortal();
+  // Supabase generated types may not yet expose `status_documentos`; cast through a typed shape.
+  type DeclaracaoExtra = { status_documentos?: string | null; status?: string | null };
+  const decl = declaracao as (typeof declaracao & DeclaracaoExtra) | null | undefined;
   const navigate = useNavigate();
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
 
@@ -260,11 +263,11 @@ export default function ClienteDashboard() {
 
               {/* Envio de Documentos (Originalmente pendentes) */}
               <Card 
-                className={`shadow-sm transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${(declaracao as any)?.status_documentos === 'enviado' ? 'border-success/30 bg-success/5' : ''}`}
+                className={`shadow-sm transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${decl?.status_documentos === 'enviado' ? 'border-success/30 bg-success/5' : ''}`}
                 onClick={() => navigate('/cliente/documentos')}
               >
                 <CardContent className="flex flex-col items-center py-8 text-center">
-                  <Upload className={`h-10 w-10 mb-3 ${(declaracao as any)?.status_documentos === 'enviado' ? 'text-success' : 'text-primary'}`} />
+                  <Upload className={`h-10 w-10 mb-3 ${decl?.status_documentos === 'enviado' ? 'text-success' : 'text-primary'}`} />
                   <p className="font-medium">Envio de Documentos</p>
                   
                   <div className="w-full max-w-[140px] mt-3">
@@ -272,21 +275,21 @@ export default function ClienteDashboard() {
                       <span>Documentos</span>
                       <span>{checklist.length}</span>
                     </div>
-                    <Progress value={(declaracao as any)?.status_documentos === 'enviado' ? 100 : checklist.length > 0 ? 50 : 0} className="h-1.5" />
+                    <Progress value={decl?.status_documentos === 'enviado' ? 100 : checklist.length > 0 ? 50 : 0} className="h-1.5" />
                   </div>
 
                   <Badge className={`mt-3 ${
-                    statusStep === 2 && (declaracao as any)?.status === 'documentacao_recebida'
+                    statusStep === 2 && decl?.status === 'documentacao_recebida'
                       ? 'bg-destructive/15 text-destructive hover:bg-destructive/20'
-                      : (declaracao as any)?.status_documentos === 'enviado' || (declaracao as any)?.status === 'documentacao_recebida' || (declaracao as any)?.status === 'declaracao_pronta' || (declaracao as any)?.status === 'transmitida'
+                      : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
                       ? 'bg-success/15 text-success hover:bg-success/20' 
                       : checklist.length > 0 
                       ? 'bg-primary/15 text-primary hover:bg-primary/20' 
                       : 'bg-warning/15 text-warning hover:bg-warning/20'
                   }`}>
-                    {statusStep === 2 && (declaracao as any)?.status === 'documentacao_recebida'
+                    {statusStep === 2 && decl?.status === 'documentacao_recebida'
                       ? 'Pendente de Reenvio'
-                      : (declaracao as any)?.status_documentos === 'enviado' || (declaracao as any)?.status === 'documentacao_recebida' || (declaracao as any)?.status === 'declaracao_pronta' || (declaracao as any)?.status === 'transmitida'
+                      : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
                       ? 'Enviado ao Contador' 
                       : checklist.length > 0 
                       ? 'Pronto para Enviar' 
