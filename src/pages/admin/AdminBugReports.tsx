@@ -11,7 +11,7 @@ interface BugReport {
   reportado_por_nome?: string | null;
   reportado_por_email?: string | null;
   resposta_admin?: string | null;
-  screenshots?: string[] | null;
+  screenshots?: unknown;
   created_at: string;
   updated_at?: string;
 }
