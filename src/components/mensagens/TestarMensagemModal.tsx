@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 interface TestarMensagemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  template: { id: string; nome: string; canal: string; assunto?: string | null; corpo: string } | null;
+  template: { id: string; nome?: string; canal: string; assunto?: string | null; corpo: string } | null;
   onEnviar: (clienteId: string, conteudo: string) => void;
 }
 

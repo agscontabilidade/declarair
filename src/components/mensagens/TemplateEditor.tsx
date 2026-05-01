@@ -24,9 +24,9 @@ const TONS_DE_VOZ = [
 interface TemplateEditorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: any) => void;
+  onSave: (data: { nome: string; canal: string; assunto: string; corpo: string }) => void;
   loading?: boolean;
-  editData?: any;
+  editData?: { id?: string; nome?: string; canal?: string; assunto?: string | null; corpo?: string } | null;
 }
 
 export function TemplateEditor({ open, onOpenChange, onSave, loading, editData }: TemplateEditorProps) {

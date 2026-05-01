@@ -71,7 +71,7 @@ function NotificacoesBell() {
           {notificacoes.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhuma notificação</p>
           ) : (
-            notificacoes.slice(0, 10).map((n: { id: string; titulo?: string; mensagem?: string; lida?: boolean; created_at?: string; tipo?: string }) => (
+            notificacoes.slice(0, 10).map((n: { id: string; titulo?: string; mensagem?: string; lida?: boolean; created_at?: string; tipo?: string; link_destino?: string | null }) => (
               <button
                 key={n.id}
                 className={`w-full text-left p-3 hover:bg-muted/50 transition-colors border-b last:border-0 ${!n.lida ? 'bg-accent/5' : ''}`}

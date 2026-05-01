@@ -93,7 +93,7 @@ export function AnexarDeclaracaoButton({
       }
       queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
     },
-    onError: (e: any) => toast.error(e.message || 'Erro ao enviar arquivo'),
+    onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao enviar arquivo')),
     onSettled: () => setProcessandoTipo(null),
   });
 

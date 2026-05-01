@@ -80,7 +80,7 @@ export function ProcessamentoSwitch({ declaracaoId, status }: Props) {
       });
       return { prev };
     },
-    onError: (_e, _v, ctx: any) => {
+    onError: (_e, _v, ctx: unknown) => {
       const c = ctx as { prev?: Array<[unknown, unknown]> } | undefined;
       c?.prev?.forEach(([key, val]) => queryClient.setQueryData(key as readonly unknown[], val));
       toast.error('Erro ao atualizar processamento');

@@ -5,13 +5,22 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Edit, Trash2, MessageSquare } from 'lucide-react';
 
+interface TemplateItem {
+  id: string;
+  nome: string;
+  canal: string;
+  assunto?: string | null;
+  corpo: string;
+  ativo: boolean;
+}
+
 interface TemplateListProps {
-  templates: any[];
+  templates: TemplateItem[];
   isLoading: boolean;
-  onEdit: (template: any) => void;
+  onEdit: (template: TemplateItem) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string, ativo: boolean) => void;
-  onTest: (template: any) => void;
+  onTest: (template: TemplateItem) => void;
 }
 
 export function TemplateList({ templates, isLoading, onEdit, onDelete, onToggle, onTest }: TemplateListProps) {
@@ -30,7 +39,7 @@ export function TemplateList({ templates, isLoading, onEdit, onDelete, onToggle,
 
   return (
     <div className="space-y-3">
-      {templates.map((t: any) => (
+      {templates.map((t) => (
         <Card key={t.id} className={`shadow-sm transition-opacity ${!t.ativo ? 'opacity-60' : ''}`}>
           <CardContent className="p-4 flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
