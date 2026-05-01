@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Check if is contador
-      const { data: usuario } = await supabase
+      const { data: usuario, error: errorUsuario } = await supabase
         .from('usuarios')
         .select('escritorio_id, papel, nome')
         .eq('id', currentUser.id)
@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Check if is cliente
-      const { data: cliente } = await supabase
+      const { data: cliente, error: errorCliente } = await supabase
         .from('clientes')
         .select('id, nome')
         .eq('auth_user_id', currentUser.id)
@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserType('cliente');
         setProfile({
           escritorioId: null,
-          papel: null,
+          papel: 'cliente',
           nome: cliente.nome,
           clienteId: cliente.id,
           onboardingCompleto: null,
