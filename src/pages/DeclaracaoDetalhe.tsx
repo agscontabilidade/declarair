@@ -88,7 +88,7 @@ export default function DeclaracaoDetalhe() {
     });
   };
 
-
+  const escritorioId = hook.declaracao?.escritorio_id;
   const contadorNome = hook.declaracao?.usuarios?.nome || profile.nome || '';
 
   const handleSendChat = async (message: string) => {
