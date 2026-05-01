@@ -21,10 +21,9 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
-      // Phase 1: temporarily downgraded to warn to unblock CI.
-      // Goal is to bring count to 0 and re-enable as "error" (see .lovable/plan.md).
-      // Phase 4: Restored to error as planned.
-      "@typescript-eslint/no-explicit-any": "warn",
+      // Fase F (Hardening): no-explicit-any agora bloqueia builds.
+      // Toda nova ocorrência de `any` falha o lint e o CI.
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
   {
