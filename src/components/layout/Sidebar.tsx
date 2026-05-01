@@ -49,9 +49,9 @@ export function AppSidebar() {
     <ShadcnSidebar collapsible="icon" className="border-r-0 bg-sidebar">
       <div className="flex h-16 items-center gap-3 px-4 border-b border-sidebar-border">
         {collapsed ? (
-          <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10 shrink-0" />
+          <img src={logoIcon} alt="DeclaraIR" className="h-10 w-10 shrink-0 brightness-0 invert" />
         ) : (
-          <img src={logoFull} alt="DeclaraIR" className="h-10 w-auto object-contain" />
+          <img src={logoFull} alt="DeclaraIR" className="h-10 w-auto object-contain brightness-0 invert" />
         )}
       </div>
 
