@@ -178,6 +178,10 @@ export default function Configuracoes() {
             <NotificacoesTab escritorioId={escritorioId} isDono={isDono} />
           </TabsContent>
 
+          <TabsContent value="comunicacao">
+            <WhatsAppConfigTab />
+          </TabsContent>
+
           <TabsContent value="automacoes">
             <PlanGate requiredPlan="pro" featureName="Automações WhatsApp">
               <FeatureGate feature="whatsapp">
