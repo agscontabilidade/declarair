@@ -201,13 +201,18 @@ export default function Addons() {
 
                       <CardFooter>
                         <Button
-                          className="w-full"
-                          variant={isActive ? 'outline' : 'default'}
+                          className="w-full gap-2"
+                          variant={!isPro ? 'outline' : isActive ? 'outline' : 'default'}
                           disabled={toggle.isPending}
                           onClick={() => handleToggleClick(addon, isActive)}
                         >
                           {toggle.isPending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : !isPro ? (
+                            <>
+                              <Crown className="h-4 w-4 text-amber-500" />
+                              Upgrade para Contratar
+                            </>
                           ) : isActive ? (
                             'Desativar'
                           ) : (
