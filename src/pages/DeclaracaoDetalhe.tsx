@@ -63,12 +63,6 @@ export default function DeclaracaoDetalhe() {
     });
   };
 
-  const handleSaveResultado = (data: { tipo_resultado: string; valor_resultado: number | null; numero_recibo: string }) => {
-    hook.saveResultado.mutate(data, {
-      onSuccess: () => toast.success('Resultado salvo!'),
-      onError: () => toast.error('Erro ao salvar resultado'),
-    });
-  };
 
   const handleSaveNotas = (text: string) => {
     hook.saveNotas.mutate(text);
