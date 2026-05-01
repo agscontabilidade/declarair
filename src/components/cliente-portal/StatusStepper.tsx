@@ -1,14 +1,15 @@
-import { Check, FileText, FolderOpen, FileCheck, Send } from 'lucide-react';
+import { Check, ClipboardList, Upload, FileText, FileCheck, Send } from 'lucide-react';
 
 const STEPS = [
-  { label: 'Aguardando Documentos', icon: FolderOpen },
+  { label: 'Dados Cadastrais', icon: ClipboardList },
+  { label: 'Enviar Documentos', icon: Upload },
   { label: 'Documentação Recebida', icon: FileText },
   { label: 'Declaração Pronta', icon: FileCheck },
   { label: 'Transmitida', icon: Send },
 ];
 
 interface StatusStepperProps {
-  currentStep: number; // 1-4
+  currentStep: number; // 1-5
 }
 
 export function StatusStepper({ currentStep }: StatusStepperProps) {
