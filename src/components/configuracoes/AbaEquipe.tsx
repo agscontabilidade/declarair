@@ -165,19 +165,32 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                     </TableCell>
                     {isDono && (
                       <TableCell>
-                        {u.papel !== 'dono' && u.ativo && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (confirm('Tem certeza que deseja desativar este profissional?')) {
-                                removerColaborador.mutate(u.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {u.papel !== 'dono' && u.ativo && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleAbrirEditPermissoes(u)}
+                                title="Gerenciar Permissões"
+                              >
+                                <ShieldCheck className="h-4 w-4 text-primary" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm('Tem certeza que deseja desativar este profissional?')) {
+                                    removerColaborador.mutate(u.id);
+                                  }
+                                }}
+                                title="Desativar"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
