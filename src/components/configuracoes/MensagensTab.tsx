@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone, User, Calendar, Plus } from 'lucide-react';
+import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone, User, Calendar, Plus, Zap, FileText, Info } from 'lucide-react';
 import {
   useWhatsAppStatus,
   useCreateInstance,
@@ -22,6 +22,10 @@ import { Link } from 'react-router-dom';
 import { useMensagens } from '@/hooks/useMensagens';
 import { TemplateList } from '@/components/mensagens/TemplateList';
 import { TemplateEditor } from '@/components/mensagens/TemplateEditor';
+import { AutomacoesWhatsAppTab } from '@/components/configuracoes/AutomacoesWhatsAppTab';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePermissoes } from '@/hooks/usePermissoes';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 function formatWhatsAppPhone(phone: string | null | undefined): string {
   if (!phone) return '—';
