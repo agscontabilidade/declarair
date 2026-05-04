@@ -106,10 +106,10 @@ export default function Index() {
                   Seu cliente manda tudo certo. Sem te incomodar.
                 </h3>
                 <p className="mt-4 text-base text-primary-foreground/60 leading-relaxed">
-                  Chega de "manda de novo", "faltou esse", "mandou no grupo errado". O portal guia o cliente, e você recebe tudo organizado.
+                  Chega de "manda de novo", "faltou esse", "mandou no grupo errado". O portal guia o cliente, organiza os arquivos em pastas automáticas e te avisa no WhatsApp.
                 </p>
                 <ul className="mt-6 space-y-3">
-                  {['Upload direto pelo celular com câmera', 'Checklist gerado pelo perfil fiscal', 'Cliente acompanha o status em tempo real'].map(b => (
+                  {['Pastas "Enviadas pelo cliente" e "Enviados pelo contador" automáticas', 'Upload direto pelo celular com câmera', 'Notificações automáticas via WhatsApp ao mudar status'].map(b => (
                     <li key={b} className="flex items-start gap-2.5 text-sm text-primary-foreground/70">
                       <CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
                       <span>{b}</span>
