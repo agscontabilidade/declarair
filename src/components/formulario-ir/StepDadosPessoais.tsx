@@ -380,6 +380,38 @@ export function StepDadosPessoais({ data, onChange }: Props) {
 
       <section className="space-y-4">
         <div>
+          <h2 className="font-display text-lg font-semibold">Restituição via PIX</h2>
+          <p className="text-sm text-muted-foreground">Informe sua chave PIX para facilitar o recebimento da sua restituição</p>
+        </div>
+
+        <div className="p-4 rounded-xl border bg-primary/5 border-primary/10 space-y-4 animate-in fade-in duration-500">
+          <div className="flex items-start gap-3">
+            <div className="mt-1 p-2 rounded-lg bg-primary/10 text-primary">
+              <Wallet className="h-5 w-5" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Chave PIX (CPF)</p>
+              <p className="text-xs text-muted-foreground">
+                Se a sua chave PIX for o seu <strong>CPF</strong>, pedimos que informe abaixo. 
+                Isso é fundamental para que você receba sua restituição do Imposto de Renda com prioridade.
+              </p>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="chave-pix">Informe sua chave PIX</Label>
+            <Input 
+              id="chave-pix"
+              value={data.chave_pix_cliente || ''} 
+              onChange={(e) => onChange('chave_pix_cliente', e.target.value)} 
+              placeholder="Ex: seu CPF ou outra chave" 
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div>
           <h2 className="font-display text-lg font-semibold">Ocupação Profissional</h2>
           <p className="text-sm text-muted-foreground">Informe sua atividade principal (padrão Receita Federal)</p>
         </div>
