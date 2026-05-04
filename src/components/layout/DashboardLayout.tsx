@@ -25,6 +25,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <header className="h-16 flex items-center border-b bg-card px-4 gap-4 shrink-0">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="flex-1" />
+            <ThemeToggle />
             {isContador && <NotificacoesBell />}
           </header>
           {isContador && <BillingBanner />}
