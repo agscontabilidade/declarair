@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { maskCPF, validateCPF, maskCEP } from '@/lib/formatters';
 import type { FormularioData } from '@/hooks/useFormularioIR';
 import { toast } from 'sonner';
-import { Loader2, Search, Check, ChevronsUpDown, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Search, Check, ChevronsUpDown, Plus, Trash2, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
