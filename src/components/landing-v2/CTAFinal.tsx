@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 export default function CTAFinal() {
   return (
-    <section className="py-24 lg:py-28 bg-[hsl(var(--lv2-slate-50))]">
+    <section className="py-24 lg:py-28 bg-[hsl(var(--lv2-slate-950))]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="relative rounded-[2rem] overflow-hidden"
