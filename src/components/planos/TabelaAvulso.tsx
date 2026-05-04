@@ -7,10 +7,10 @@ export function TabelaAvulso() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center space-y-3">
-        <h3 className="text-2xl md:text-3xl font-bold text-[hsl(var(--lv2-slate-950))]">
+        <h3 className="text-2xl md:text-3xl font-bold text-white">
           Pague apenas pelo que usar
         </h3>
-        <p className="text-[hsl(var(--lv2-slate-500))] max-w-xl mx-auto">
+        <p className="text-[hsl(var(--lv2-slate-400))] max-w-xl mx-auto">
           Sem mínimo, sem contrato. Compre declarações extras sob demanda.
         </p>
       </div>
