@@ -506,6 +506,7 @@ export type Database = {
           id: string
           nome: string
           papel: string
+          permissoes: Json | null
           token: string
           usado: boolean
           usado_em: string | null
@@ -519,6 +520,7 @@ export type Database = {
           id?: string
           nome: string
           papel?: string
+          permissoes?: Json | null
           token: string
           usado?: boolean
           usado_em?: string | null
@@ -532,6 +534,7 @@ export type Database = {
           id?: string
           nome?: string
           papel?: string
+          permissoes?: Json | null
           token?: string
           usado?: boolean
           usado_em?: string | null
