@@ -130,6 +130,7 @@ export default function Index() {
       <LandingFAQ />
       <LandingCTA />
       <LandingFooter />
+      <CookieConsent />
     </div>
   );
 }
