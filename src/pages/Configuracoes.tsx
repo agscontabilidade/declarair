@@ -181,13 +181,7 @@ export default function Configuracoes() {
             <MensagensTab />
           </TabsContent>
 
-          <TabsContent value="automacoes">
-            <PlanGate requiredPlan="pro" featureName="Automações WhatsApp">
-              <FeatureGate feature="whatsapp">
-                <AutomacoesWhatsAppTab escritorioId={escritorioId} isDono={isDono} />
-              </FeatureGate>
-            </PlanGate>
-          </TabsContent>
+          {/* Automações foram movidas para dentro da aba WhatsApp como sub-aba */}
 
           <TabsContent value="plano">
             <Card className="shadow-sm">
