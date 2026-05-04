@@ -10,11 +10,11 @@ export const painPoints = [
 ];
 
 export const beforeAfter = [
-  { before: 'Caos no WhatsApp', after: 'Fluxo organizado e automático' },
-  { before: 'Cliente perdido sem saber o que enviar', after: 'Cliente guiado com checklist inteligente' },
-  { before: 'Retrabalho a cada declaração', after: 'Processo previsível e escalável' },
-  { before: 'Correria desesperada no prazo', after: 'Controle total — sem surpresas' },
-  { before: 'Trabalhar mais, faturar igual', after: 'Trabalhar menos, faturar mais' },
+  { before: 'Caos no WhatsApp e e-mail', after: 'Fluxo centralizado e automático' },
+  { before: 'Cliente perdido sem saber o que enviar', after: 'Checklist inteligente baseado no perfil' },
+  { before: 'Retrabalho organizando pastas no PC', after: 'Drive automático: Enviado por Cliente vs Contador' },
+  { before: 'Cobrança manual de documentos', after: 'WhatsApp avisa o cliente sozinho 24/7' },
+  { before: 'Correria desesperada no prazo', after: 'Gestão visual por Kanban — controle total' },
 ];
 
 export const featuresTranslated = [
@@ -27,9 +27,9 @@ export const featuresTranslated = [
 ];
 
 export const testimonials = [
-  { name: 'Carlos Silva', role: 'Contador — SP', text: 'Reduzi pela metade o tempo por cliente. Antes eu perdia 3 dias organizando documento. Agora chega tudo pronto.', stars: 5, avatar: '/assets/avatar-carlos.jpg' },
-  { name: 'Ana Beatriz', role: 'Escritório ContaFácil — MG', text: 'Consegui atender 40% mais clientes sem contratar ninguém. O sistema faz o trabalho pesado.', stars: 5, avatar: '/assets/avatar-ana.jpg' },
-  { name: 'Roberto Mendes', role: 'Contador autônomo — RJ', text: 'Minha vida mudou. Menos estresse, mais controle, mais faturamento. Não volto pra planilha nunca mais.', stars: 5, avatar: '/assets/avatar-roberto.jpg' },
+  { name: 'Carlos Silva', role: 'Contador — SP', text: 'Reduzi pela metade o tempo por cliente. Antes eu perdia 3 dias organizando documento. Agora chega tudo pronto e organizado.', stars: 5, avatar: '/assets/avatar-carlos.jpg' },
+  { name: 'Ana Beatriz', role: 'Escritório ContaFácil — MG', text: 'Consegui atender 40% mais clientes sem contratar ninguém. O sistema de WhatsApp automático cobrando documentos é o que faltava.', stars: 5, avatar: '/assets/avatar-ana.jpg' },
+  { name: 'Roberto Mendes', role: 'Contador autônomo — RJ', text: 'Minha vida mudou. Menos estresse, mais controle, mais faturamento. O Drive organizado automaticamente poupa horas de renomear arquivo.', stars: 5, avatar: '/assets/avatar-roberto.jpg' },
 ];
 
 export const objections = [
@@ -40,10 +40,10 @@ export const objections = [
 ];
 
 export const faqs = [
-  { q: 'Como funciona o plano gratuito?', a: 'O plano Free libera 1 declaração completa com chat, kanban e 500 MB de armazenamento — ideal para conhecer a plataforma sem compromisso.' },
-  { q: 'Qual a diferença entre Free e Pro?', a: 'O Pro (R$ 49,90/mês) inclui 3 declarações, até 5 usuários simultâneos, armazenamento ilimitado, calculadora de IR e suporte prioritário. Declarações adicionais custam apenas R$ 4,90 cada.' },
-  { q: 'Meus dados e os dos meus clientes estão seguros?', a: 'Sim. Utilizamos criptografia de ponta a ponta, banco de dados isolado por escritório e conformidade total com a LGPD.' },
-  { q: 'Meus clientes precisam instalar algo?', a: 'Não. O portal do cliente é 100% web e responsivo — funciona em qualquer celular ou computador. Basta enviar o link de convite.' },
-  { q: 'O que são os Recursos Extras?', a: 'Módulos opcionais para quem quer escalar: WhatsApp Automático (R$ 19,90), Portal Cliente Completo (R$ 14,90), API Pública (R$ 29,90) e Whitelabel (R$ 9,90).' },
-  { q: 'Existe contrato de fidelidade?', a: 'Zero fidelidade. A cobrança é mensal e você pode cancelar a qualquer momento com um clique, sem multas.' },
+  { q: 'Como funciona o WhatsApp Automático?', a: 'O sistema detecta pendências e avisa seu cliente automaticamente via WhatsApp. Ele recebe um link direto para o portal, onde faz o upload e o arquivo já cai na pasta certa. Você não precisa cobrar ninguém manualmente.' },
+  { q: 'O Drive é realmente organizado sozinho?', a: 'Sim! Ao criar um cliente, o sistema cria a estrutura: "Enviadas pelo cliente" e "Enviados pelo contador". Cada documento enviado pelo portal vai direto para a pasta correta, já nomeado.' },
+  { q: 'O Portal do Cliente é seguro?', a: 'Segurança bancária. Todos os dados são criptografados (SSL/TLS), seguimos a LGPD à risca e os servidores contam com backups diários automáticos.' },
+  { q: 'Como funciona o suporte?', a: 'Temos suporte via chat em tempo real dentro da plataforma e uma central de ajuda completa. Clientes Pro têm prioridade máxima de atendimento.' },
+  { q: 'Meus clientes precisam instalar algo?', a: 'Não. O portal do cliente é 100% web e responsivo — funciona perfeitamente no celular. O cliente só clica no link e anexa os documentos.' },
+  { q: 'Existe contrato de fidelidade?', a: 'Zero fidelidade. A cobrança é mensal e você pode cancelar a qualquer momento com um clique, sem multas ou pegadinhas.' },
 ];
