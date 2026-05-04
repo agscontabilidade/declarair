@@ -121,7 +121,7 @@ export default function Configuracoes() {
   }, [escritorio]);
 
   async function handleSave() {
-    if (!escritorioId || !isDono) return;
+    if (!escritorioId || !podeAlterarEscritorio) return;
     setSaving(true);
     const { error } = await supabase.from('escritorios').update({ nome, email, telefone, cnpj }).eq('id', escritorioId);
     if (error) toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
