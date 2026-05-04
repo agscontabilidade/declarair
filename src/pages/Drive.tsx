@@ -54,21 +54,24 @@ export default function Drive() {
   });
 
   const tree = useMemo(() => {
-    const clienteMap = new Map<string, { id: string; nome: string; cpf: string; catMap: Map<string, DocWithDeclaracao[]> }>();
+    const clienteMap = new Map<string, { id: string; nome: string; cpf: string; cliente: DocWithDeclaracao[]; contador: DocWithDeclaracao[] }>();
     for (const doc of docs as DocWithDeclaracao[]) {
       const cl = doc.declaracoes?.clientes;
       if (!cl) continue;
       if (busca && !cl.nome?.toLowerCase().includes(busca.toLowerCase()) && !cl.cpf?.includes(busca.replace(/\D/g, ''))) continue;
       if (!clienteMap.has(cl.id)) {
-        clienteMap.set(cl.id, { id: cl.id, nome: cl.nome, cpf: cl.cpf, catMap: new Map() });
+        clienteMap.set(cl.id, { id: cl.id, nome: cl.nome, cpf: cl.cpf, cliente: [], contador: [] });
       }
       const c = clienteMap.get(cl.id)!;
-      if (!c.catMap.has(doc.categoria)) c.catMap.set(doc.categoria, []);
-      c.catMap.get(doc.categoria)!.push(doc);
+      if (doc.categoria === 'contador') c.contador.push(doc);
+      else c.cliente.push(doc);
     }
     return Array.from(clienteMap.values()).map(c => ({
       ...c,
-      categorias: Array.from(c.catMap.entries()).map(([cat, d]) => ({ categoria: cat, docs: d })),
+      pastas: [
+        { key: 'cliente', label: 'Enviados pelo cliente', docs: c.cliente },
+        { key: 'contador', label: 'Enviados pelo contador', docs: c.contador },
+      ].filter(p => p.docs.length > 0),
     }));
   }, [docs, busca]);
 
