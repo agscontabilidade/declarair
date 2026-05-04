@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import { BillingBanner } from '@/components/billing/BillingBanner';
 import { UsageBanner } from '@/components/billing/UsageBanner';
 import { ReportBugModal } from '@/components/bug-report/ReportBugModal';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userType } = useAuth();
@@ -24,6 +25,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <header className="h-16 flex items-center border-b bg-card px-4 gap-4 shrink-0">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="flex-1" />
+            <ThemeToggle />
             {isContador && <NotificacoesBell />}
           </header>
           {isContador && <BillingBanner />}
