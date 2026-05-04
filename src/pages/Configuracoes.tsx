@@ -30,7 +30,7 @@ export default function Configuracoes() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabParam || 'escritorio');
-  const { isDono } = usePermissoes();
+  const { isDono, podeAlterarEscritorio, podeGerenciarUsuarios } = usePermissoes();
   const escritorioId = profile.escritorioId;
   const { toast } = useToast();
   const queryClient = useQueryClient();
