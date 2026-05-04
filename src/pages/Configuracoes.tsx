@@ -137,7 +137,15 @@ export default function Configuracoes() {
   async function handleSave() {
     if (!escritorioId || !podeAlterarEscritorio) return;
     setSaving(true);
-    const { error } = await supabase.from('escritorios').update({ nome, email, telefone, cnpj }).eq('id', escritorioId);
+    const { error } = await supabase.from('escritorios').update({ 
+      nome, 
+      email, 
+      telefone, 
+      cnpj,
+      responsavel_nome: responsavelNome,
+      responsavel_cpf: responsavelCpf,
+      responsavel_crc: responsavelCrc
+    }).eq('id', escritorioId);
     if (error) toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
     else {
       toast({ title: 'Dados salvos com sucesso!' });
