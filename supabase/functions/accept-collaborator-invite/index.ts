@@ -79,6 +79,24 @@ Deno.serve(async (req) => {
       console.error('Error adding role:', roleError);
     }
 
+    // Assign permissions if present in the invite
+    if (convite.permissoes && Array.isArray(convite.permissoes) && convite.permissoes.length > 0) {
+      console.log('Assigning permissions from invite:', convite.permissoes);
+      const permissoesToInsert = convite.permissoes.map((pId: string) => ({
+        user_id,
+        permissao_id: pId,
+        escritorio_id
+      }));
+
+      const { error: permError } = await supabaseAdmin
+        .from('usuario_permissoes')
+        .insert(permissoesToInsert);
+      
+      if (permError) {
+        console.error('Error assigning permissions:', permError);
+      }
+    }
+
     // Mark invite as used
     await supabaseAdmin
       .from('colaborador_convites')
