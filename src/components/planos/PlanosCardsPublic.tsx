@@ -59,10 +59,10 @@ export function PlanosCardsPublic() {
         return (
           <div
             key={plano.id}
-            className={`relative flex flex-col rounded-2xl p-8 transition-all duration-300 ${
+            className={`relative flex flex-col rounded-3xl p-8 transition-all duration-500 ${
               plano.destaque
-                ? 'border-2 border-[hsl(var(--lv2-emerald)/0.4)] bg-white shadow-2xl shadow-[hsl(var(--lv2-emerald)/0.08)] scale-[1.02]'
-                : 'border border-[hsl(var(--lv2-slate-200))] bg-white shadow-md hover:shadow-xl hover:-translate-y-1'
+                ? 'border-2 border-accent/40 bg-white shadow-[0_32px_64px_-16px_rgba(20,184,166,0.15)] scale-[1.05] z-10'
+                : 'border border-border bg-white shadow-sm hover:shadow-xl hover:-translate-y-2'
             }`}
           >
             {plano.badge && (
