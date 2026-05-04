@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Flame, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Flame, CheckCircle2, Zap } from 'lucide-react';
 import heroStressed from '@/assets/hero-stressed-person.jpg';
 
 export function LandingHero() {
