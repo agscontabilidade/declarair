@@ -98,22 +98,33 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                     Convidar Profissional
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Convidar Novo Profissional Contábil</DialogTitle>
                     <DialogDescription>
-                      Envie um convite para adicionar um novo membro à equipe
+                      Envie um convite para adicionar um novo membro à equipe com permissões específicas
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleEnviarConvite} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Nome</Label>
-                      <Input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Nome completo" required />
+                  <form onSubmit={handleEnviarConvite} className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Nome</Label>
+                        <Input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Nome completo" required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input type="email" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} placeholder="email@exemplo.com" required />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Email</Label>
-                      <Input type="email" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} placeholder="email@exemplo.com" required />
+
+                    <div className="space-y-4">
+                      <Label className="text-base font-semibold">Permissões do Usuário</Label>
+                      <SeletorPermissoes 
+                        permissoesSelecionadas={permissoesSelecionadas} 
+                        onChange={setPermissoesSelecionadas} 
+                      />
                     </div>
+
                     <Button type="submit" className="w-full" disabled={enviarConvite.isPending}>
                       {enviarConvite.isPending ? 'Enviando...' : 'Enviar Convite'}
                     </Button>
