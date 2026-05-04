@@ -24,7 +24,7 @@ import featureMobile from '@/assets/feature-mobile.jpg';
 
 export default function Index() {
   return (
-    <div className="dark min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <LandingHeader />
       <div className="h-16" />
       <LandingHero />
