@@ -19,7 +19,7 @@ import { CookieConsent } from '@/components/landing/CookieConsent';
 
 export default function LandingV2() {
   return (
-    <div className="landing-v2 dark min-h-screen overflow-x-hidden">
+    <div className="landing-v2 min-h-screen overflow-x-hidden">
       <NavBar />
       <HeroSection />
       <StorytellingBand />
