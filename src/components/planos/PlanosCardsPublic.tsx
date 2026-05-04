@@ -61,8 +61,8 @@ export function PlanosCardsPublic() {
             key={plano.id}
             className={`relative flex flex-col rounded-3xl p-8 transition-all duration-500 ${
               plano.destaque
-                ? 'border-2 border-accent/40 bg-white shadow-[0_32px_64px_-16px_rgba(20,184,166,0.15)] scale-[1.05] z-10'
-                : 'border border-border bg-white shadow-sm hover:shadow-xl hover:-translate-y-2'
+                ? 'border-2 border-accent/40 bg-[hsl(var(--lv2-slate-900))] shadow-[0_32px_64px_-16px_rgba(20,184,166,0.15)] scale-[1.05] z-10'
+                : 'border border-[hsl(var(--lv2-slate-800))] bg-[hsl(var(--lv2-slate-900))] shadow-sm hover:shadow-xl hover:-translate-y-2'
             }`}
           >
             {plano.badge && (
