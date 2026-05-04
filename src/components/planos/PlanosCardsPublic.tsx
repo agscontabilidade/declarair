@@ -96,7 +96,7 @@ export function PlanosCardsPublic() {
                   ) : (
                     <X className="h-4 w-4 text-[hsl(var(--lv2-slate-300))] shrink-0 mt-0.5" />
                   )}
-                  <span className={b.disponivel ? 'text-[hsl(var(--lv2-slate-700))] font-medium' : 'text-[hsl(var(--lv2-slate-300))]'}>
+                  <span className={b.disponivel ? 'text-[hsl(var(--lv2-slate-200))] font-medium' : 'text-[hsl(var(--lv2-slate-500))]'}>
                     {b.texto}
                   </span>
                 </div>
