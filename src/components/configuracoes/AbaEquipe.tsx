@@ -26,12 +26,16 @@ interface AbaEquipeProps {
 }
 
 export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers }: AbaEquipeProps) {
-  const { convitesPendentes, enviarConvite, cancelarConvite, removerColaborador } =
+  const { convitesPendentes, enviarConvite, cancelarConvite, removerColaborador, atualizarPermissoes } =
     useColaboradores(escritorioId || '');
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [novoEmail, setNovoEmail] = useState('');
   const [novoNome, setNovoNome] = useState('');
+  const [permissoesSelecionadas, setPermissoesSelecionadas] = useState<string[]>([]);
+  const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
+  const [editPermissoesOpen, setEditPermissoesOpen] = useState(false);
+  const [permissoesEditando, setPermissoesEditando] = useState<string[]>([]);
 
   const handleEnviarConvite = async (e: React.FormEvent) => {
     e.preventDefault();
