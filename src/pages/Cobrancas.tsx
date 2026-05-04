@@ -14,6 +14,9 @@ import { ConfirmModal } from '@/components/cobrancas/ConfirmModal';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueryError } from '@/components/ui/QueryError';
+import { usePermissoes } from '@/hooks/usePermissoes';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShieldAlert } from 'lucide-react';
 
 export default function Cobrancas() {
   const [statusFilter, setStatusFilter] = useState('todos');
