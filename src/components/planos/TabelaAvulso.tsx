@@ -26,10 +26,10 @@ export function TabelaAvulso() {
           <div className="flex justify-center">
             <div className="text-center p-8 rounded-2xl border-2 border-[hsl(var(--lv2-emerald)/0.2)] bg-[hsl(var(--lv2-emerald)/0.03)] max-w-xs w-full">
               <p className="text-sm font-semibold text-[hsl(var(--lv2-slate-400))] uppercase tracking-wide">Por declaração</p>
-              <p className="text-5xl font-bold text-[hsl(var(--lv2-slate-950))] mt-3">
+              <p className="text-5xl font-bold text-white mt-3">
                 R$ {PRECOS.DECLARACAO_EXTRA.preco.toFixed(2).replace('.', ',')}
               </p>
-              <p className="text-sm text-[hsl(var(--lv2-slate-500))] mt-2">
+              <p className="text-sm text-[hsl(var(--lv2-slate-400))] mt-2">
                 cada declaração extra
               </p>
             </div>
