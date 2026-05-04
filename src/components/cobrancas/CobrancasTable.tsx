@@ -35,7 +35,7 @@ interface CobrancasTableProps {
 }
 
 export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, onCancelar, onExcluir, interAtivo = false }: CobrancasTableProps) {
-  const { podeExcluirCobranca } = usePermissoes();
+  const { podeExcluirCobranca, podeEditarCobrancas } = usePermissoes();
   const [gerarModal, setGerarModal] = useState<CobrancaComCliente | null>(null);
   const [qrModal, setQrModal] = useState<{ pixQrcode: string; pixQrcodeUrl?: string } | null>(null);
   const [boletoModal, setBoletoModal] = useState<{ linhaDigitavel: string; codigoBarras?: string; pdfUrl?: string } | null>(null);
