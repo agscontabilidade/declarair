@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import { BillingBanner } from '@/components/billing/BillingBanner';
 import { UsageBanner } from '@/components/billing/UsageBanner';
 import { ReportBugModal } from '@/components/bug-report/ReportBugModal';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userType } = useAuth();
