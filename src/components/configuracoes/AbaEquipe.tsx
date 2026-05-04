@@ -39,10 +39,40 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
 
   const handleEnviarConvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    await enviarConvite.mutateAsync({ email: novoEmail, nome: novoNome });
+    await enviarConvite.mutateAsync({ 
+      email: novoEmail, 
+      nome: novoNome,
+      permissoes: permissoesSelecionadas 
+    });
     setDialogOpen(false);
     setNovoEmail('');
     setNovoNome('');
+    setPermissoesSelecionadas([]);
+  };
+
+  const handleAbrirEditPermissoes = async (u: Usuario) => {
+    setUsuarioEditando(u);
+    setEditPermissoesOpen(true);
+    
+    // Buscar permissões atuais do usuário
+    const { data } = await supabase
+      .from('usuario_permissoes')
+      .select('permissao_id')
+      .eq('user_id', u.id);
+    
+    if (data) {
+      setPermissoesEditando(data.map(p => p.permissao_id));
+    }
+  };
+
+  const handleSalvarPermissoes = async () => {
+    if (!usuarioEditando) return;
+    await atualizarPermissoes.mutateAsync({
+      usuarioId: usuarioEditando.id,
+      permissoesIds: permissoesEditando
+    });
+    setEditPermissoesOpen(false);
+    setUsuarioEditando(null);
   };
 
   const copiarLink = (token: string) => {
