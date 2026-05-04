@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { XCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { XCircle, CheckCircle2, ArrowRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Section } from './LandingSection';
