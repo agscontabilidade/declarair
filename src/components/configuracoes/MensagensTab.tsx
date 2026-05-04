@@ -44,7 +44,7 @@ export function MensagensTab() {
   const disconnectInstance = useDisconnectInstance();
   const deleteInstance = useDeleteInstance();
   const { myAddons, catalog } = useAddons();
-  const { profile } = useAuth();
+  const { profile: authProfile } = useAuth();
   const { isDono } = usePermissoes();
   const [confirmDelete, setConfirmDelete] = useState(false);
   
