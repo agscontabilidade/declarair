@@ -14,14 +14,14 @@ export function LandingHero() {
               <Flame className="h-3.5 w-3.5 mr-1.5" /> A temporada de IR não espera
             </Badge>
 
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.12] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-              O problema não é IRPF.
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-[4rem] font-bold text-foreground leading-[1.05] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+              O problema não é o IRPF.
               <br />
-              <span className="bg-gradient-to-r from-accent to-[hsl(170,60%,50%)] bg-clip-text text-transparent">É o seu processo desorganizado!</span>
+              <span className="bg-gradient-to-r from-accent to-[hsl(170,60%,50%)] bg-clip-text text-transparent">É o seu processo arcaico!</span>
             </h1>
 
-            <p className="text-lg text-muted-foreground leading-relaxed max-w-md animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
-              Organize tudo, elimine retrabalho e entregue declarações em <span className="text-foreground font-semibold">metade do tempo</span>.
+            <p className="text-xl text-muted-foreground leading-relaxed max-w-md animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+              Elimine o caos do WhatsApp, automatize a coleta de documentos e entregue declarações em <span className="text-foreground font-bold border-b-2 border-accent/30">metade do tempo</span>.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start gap-3 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
