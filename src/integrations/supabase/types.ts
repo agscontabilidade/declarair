@@ -1105,6 +1105,9 @@ export type Database = {
           plano: string | null
           plano_expira_em: string | null
           razao_social: string | null
+          responsavel_cpf: string | null
+          responsavel_crc: string | null
+          responsavel_nome: string | null
           storage_limite_mb: number | null
           stripe_customer_id: string | null
           telefone: string | null
@@ -1140,6 +1143,9 @@ export type Database = {
           plano?: string | null
           plano_expira_em?: string | null
           razao_social?: string | null
+          responsavel_cpf?: string | null
+          responsavel_crc?: string | null
+          responsavel_nome?: string | null
           storage_limite_mb?: number | null
           stripe_customer_id?: string | null
           telefone?: string | null
@@ -1175,6 +1181,9 @@ export type Database = {
           plano?: string | null
           plano_expira_em?: string | null
           razao_social?: string | null
+          responsavel_cpf?: string | null
+          responsavel_crc?: string | null
+          responsavel_nome?: string | null
           storage_limite_mb?: number | null
           stripe_customer_id?: string | null
           telefone?: string | null
