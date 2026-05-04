@@ -10,8 +10,8 @@ const objections = [
 
 export default function ObjectionsSection() {
   return (
-    <section className="py-28 lg:py-36 bg-[hsl(var(--lv2-slate-50))] relative">
-      <div className="section-divider absolute top-0 left-0 right-0" />
+    <section className="py-28 lg:py-36 bg-[hsl(var(--lv2-slate-950))] relative">
+      <div className="section-divider absolute top-0 left-0 right-0 opacity-20" />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -25,7 +25,7 @@ export default function ObjectionsSection() {
             <MessageCircleQuestion className="h-3.5 w-3.5" />
             Sem desculpa
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[hsl(var(--lv2-slate-950))]">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
             "Mas eu já…" — Calma. Lê isso aqui.
           </h2>
         </motion.div>
@@ -34,14 +34,14 @@ export default function ObjectionsSection() {
           {objections.map((obj, i) => (
             <motion.div
               key={obj.objection}
-              className="group relative rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-white p-8 transition-colors duration-300 hover:border-[hsl(var(--lv2-emerald)/0.3)] hover:shadow-xl hover:shadow-[hsl(var(--lv2-emerald)/0.06)] overflow-hidden"
+              className="group relative rounded-2xl border border-[hsl(var(--lv2-slate-800))] bg-[hsl(var(--lv2-slate-900))] p-8 transition-colors duration-300 hover:border-[hsl(var(--lv2-emerald)/0.3)] hover:shadow-xl hover:shadow-[hsl(var(--lv2-emerald)/0.06)] overflow-hidden"
               initial={{ opacity: 0, y: 30, scale: 0.97 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ delay: i * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
             >
-              <span className="absolute -top-4 -right-2 font-mono text-[120px] font-bold leading-none text-[hsl(var(--lv2-slate-100))] select-none group-hover:text-[hsl(var(--lv2-emerald)/0.06)] transition-colors">
+              <span className="absolute -top-4 -right-2 font-mono text-[120px] font-bold leading-none text-white/5 select-none group-hover:text-[hsl(var(--lv2-emerald)/0.06)] transition-colors">
                 {String(i + 1).padStart(2, '0')}
               </span>
 
@@ -51,7 +51,7 @@ export default function ObjectionsSection() {
                 </span>
                 <div className="flex items-start gap-3">
                   <ArrowRight className="h-4 w-4 text-[hsl(var(--lv2-emerald))] shrink-0 mt-1" />
-                  <p className="text-[15px] text-[hsl(var(--lv2-slate-600))] leading-relaxed">{obj.answer}</p>
+                  <p className="text-[15px] text-white/50 leading-relaxed">{obj.answer}</p>
                 </div>
               </div>
             </motion.div>

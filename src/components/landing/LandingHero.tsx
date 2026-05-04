@@ -6,7 +6,7 @@ import heroStressed from '@/assets/hero-stressed-person.jpg';
 
 export function LandingHero() {
   return (
-    <section className="relative dot-grid bg-gradient-to-b from-background to-secondary/30">
+    <section className="relative dot-grid bg-gradient-to-b from-background to-background/50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 lg:pt-28 lg:pb-28">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
           <div className="flex-1 text-center lg:text-left space-y-6">
@@ -31,7 +31,7 @@ export function LandingHero() {
                 </Button>
               </Link>
               <a href="#precos" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full text-base px-8 h-14 font-semibold hover:bg-secondary/50 transition-colors">
+                <Button size="lg" variant="outline" className="w-full text-base px-8 h-14 font-semibold hover:bg-white/5 border-white/10 transition-colors">
                   Ver Planos e Preços
                 </Button>
               </a>
@@ -67,7 +67,7 @@ export function LandingHero() {
           <div className="flex-1 w-full max-w-lg lg:max-w-xl animate-fade-in-up" style={{ animationDelay: '1.3s' }}>
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-r from-accent/50 to-primary/50 rounded-2xl blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-              <div className="relative rounded-2xl overflow-hidden border border-border/50 shadow-2xl bg-card">
+              <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-card">
                 <img
                   src={heroStressed}
                   alt="Gestão de IRPF automatizada"
@@ -75,7 +75,7 @@ export function LandingHero() {
                   width={1024}
                   height={1024}
                 />
-                <div className="absolute bottom-4 left-4 right-4 p-4 bg-background/80 backdrop-blur-md rounded-xl border border-white/10 shadow-lg">
+                <div className="absolute bottom-4 left-4 right-4 p-4 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 shadow-lg">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-success/20 flex items-center justify-center">
                       <Zap className="h-5 w-5 text-success animate-pulse" />

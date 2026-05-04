@@ -6,7 +6,7 @@ import { Section } from './LandingSection';
 import { beforeAfter } from './LandingData';
 
 export const LandingBeforeAfter = () => (
-  <Section className="py-20 lg:py-28 bg-secondary/20">
+  <Section className="py-20 lg:py-28 bg-background/50">
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-14">
         <Badge variant="outline" className="mb-4 text-xs px-3 py-1 font-medium bg-accent/10 text-accent border-accent/20">Estudo de Caso</Badge>
@@ -66,7 +66,7 @@ export const LandingBeforeAfter = () => (
         </div>
       </div>
 
-      <div className="mt-16 bg-accent/5 rounded-3xl p-8 border border-accent/10 flex flex-col md:flex-row items-center gap-8 shadow-sm">
+      <div className="mt-16 bg-white/5 rounded-3xl p-8 border border-white/10 flex flex-col md:flex-row items-center gap-8 shadow-sm">
         <div className="flex-1 space-y-4">
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map(i => <Star key={i} className="h-4 w-4 fill-accent text-accent" />)}

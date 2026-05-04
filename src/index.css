@@ -11,23 +11,23 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
 
     --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 222 47% 12%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 222 47% 12%;
+    --muted-foreground: 215 16% 70%;
 
     --accent: 160 84% 39%;
     --accent-foreground: 0 0% 100%;
@@ -42,8 +42,8 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
     --ring: 160 84% 39%;
 
     --radius: 0.75rem;
@@ -149,7 +149,7 @@
 }
 
 .glass-navbar {
-  background: hsla(0, 0%, 100%, 0.85);
+  background: hsla(222, 47%, 6%, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid hsl(var(--border));
@@ -249,7 +249,8 @@ button, a, [role="button"] {
   --lv2-red: 0 72% 51%;
   font-family: 'DM Sans', sans-serif;
   color: hsl(var(--lv2-slate-950));
-  background: hsl(var(--lv2-slate-50));
+  background: hsl(var(--lv2-slate-950));
+  color: hsl(var(--lv2-slate-50));
 }
 .landing-v2 h1, .landing-v2 h2, .landing-v2 h3, .landing-v2 h4,
 .landing-v2 .font-heading {

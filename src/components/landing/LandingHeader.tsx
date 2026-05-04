@@ -16,7 +16,7 @@ export function LandingHeader() {
           <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
         </nav>
         <div className="flex items-center gap-3">
-          <Link to="/login"><Button variant="ghost" size="sm" className="text-sm font-semibold hover:bg-accent/5">Entrar</Button></Link>
+          <Link to="/login"><Button variant="ghost" size="sm" className="text-sm font-semibold hover:bg-white/5 text-foreground">Entrar</Button></Link>
           <Link to="/cadastro"><Button size="sm" variant="gradient" className="text-sm px-6 font-bold shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all">Começar Grátis</Button></Link>
         </div>
       </div>

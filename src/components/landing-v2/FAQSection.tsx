@@ -13,8 +13,8 @@ const faqs = [
 
 export default function FAQSection() {
   return (
-    <section id="faq" className="py-28 lg:py-36 bg-white relative">
-      <div className="section-divider absolute top-0 left-0 right-0" />
+    <section id="faq" className="py-28 lg:py-36 bg-[hsl(var(--lv2-slate-950))] relative">
+      <div className="section-divider absolute top-0 left-0 right-0 opacity-20" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-[1fr,1.5fr] gap-16 lg:gap-20">
@@ -26,14 +26,14 @@ export default function FAQSection() {
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-slate-800))] text-[hsl(var(--lv2-slate-400))] text-xs font-semibold uppercase tracking-wide">
               <HelpCircle className="h-3.5 w-3.5" /> FAQ
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[hsl(var(--lv2-slate-950))] leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
               Perguntas diretas,<br />
               <span className="gradient-text">respostas diretas</span>
             </h2>
-            <p className="text-[hsl(var(--lv2-slate-500))] leading-relaxed">
+            <p className="text-white/40 leading-relaxed">
               Sem enrolação. Se sua dúvida não estiver aqui, fale com a gente no chat.
             </p>
           </motion.div>
@@ -50,12 +50,12 @@ export default function FAQSection() {
               >
                 <AccordionItem
                   value={`faq-${i}`}
-                  className="rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-[hsl(var(--lv2-slate-50))] px-7 data-[state=open]:border-[hsl(var(--lv2-emerald)/0.3)] data-[state=open]:bg-white data-[state=open]:shadow-lg data-[state=open]:shadow-[hsl(var(--lv2-emerald)/0.06)] transition-all duration-300"
+                  className="rounded-2xl border border-[hsl(var(--lv2-slate-800))] bg-[hsl(var(--lv2-slate-900))] px-7 data-[state=open]:border-[hsl(var(--lv2-emerald)/0.3)] data-[state=open]:bg-[hsl(var(--lv2-slate-900))] data-[state=open]:shadow-lg data-[state=open]:shadow-[hsl(var(--lv2-emerald)/0.06)] transition-all duration-300"
                 >
-                  <AccordionTrigger className="text-left text-base font-semibold text-[hsl(var(--lv2-slate-950))] hover:no-underline py-6">
+                  <AccordionTrigger className="text-left text-base font-semibold text-white hover:no-underline py-6">
                     {f.q}
                   </AccordionTrigger>
-                  <AccordionContent className="text-[15px] text-[hsl(var(--lv2-slate-500))] pb-6 leading-relaxed">
+                  <AccordionContent className="text-[15px] text-white/50 pb-6 leading-relaxed">
                     {f.a}
                   </AccordionContent>
                 </AccordionItem>
