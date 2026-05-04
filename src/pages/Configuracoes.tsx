@@ -168,7 +168,7 @@ export default function Configuracoes() {
           </TabsContent>
 
           <TabsContent value="usuarios">
-            <AbaEquipe escritorioId={escritorioId} isDono={isDono} usuarios={usuarios} loadingUsers={loadingUsers} />
+            <AbaEquipe escritorioId={escritorioId} isDono={podeGerenciarUsuarios} usuarios={usuarios} loadingUsers={loadingUsers} />
           </TabsContent>
 
           <TabsContent value="marca">
