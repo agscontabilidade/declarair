@@ -18,12 +18,12 @@ export const beforeAfter = [
 ];
 
 export const featuresTranslated = [
-  { icon: Layout, title: 'Veja quem está pendente agora', desc: 'Pare de correr atrás no último dia. O dashboard mostra exatamente quem falta, quem travou e onde está o gargalo — em tempo real.' },
-  { icon: Smartphone, title: 'Cliente envia tudo certo, no lugar certo', desc: 'Sem te travar no WhatsApp. O portal guia o cliente a enviar cada documento no formato correto, automaticamente.' },
-  // Malha Fina removed
-  { icon: Zap, title: 'Simule o resultado do IR em segundos', desc: 'Compare Simplificada vs Completa instantaneamente. Mostre pro cliente o cenário ideal e feche o serviço mais rápido.' },
-  { icon: Palette, title: 'Cobre mais com uma experiência profissional', desc: 'Whitelabel com sua marca no portal. Seu cliente vê o seu nome, não o nosso. Isso é percepção de valor — e valor se cobra.' },
-  { icon: Receipt, title: 'Cobre via Pix e cartão sem sair da plataforma', desc: 'Gere cobranças, acompanhe pagamentos e pare de perseguir cliente inadimplente. Tudo integrado.' },
+  { icon: Layout, title: 'Gestão Visual e Kanban', desc: 'Pare de correr atrás no último dia. O dashboard mostra exatamente quem falta, quem travou e onde está o gargalo — em tempo real com cards inteligentes.' },
+  { icon: Smartphone, title: 'Portal do Cliente Guiado', desc: 'Sem te travar no WhatsApp. O portal guia o cliente a enviar cada documento no formato correto, com checklist baseado no perfil fiscal.' },
+  { icon: Zap, title: 'WhatsApp Automático', desc: 'Não é apenas chat. São notificações inteligentes que avisam o cliente quando o status da declaração muda ou quando faltam documentos.' },
+  { icon: Shield, title: 'Drive Organizado por Natureza', desc: 'Documentos separados automaticamente em pastas "Enviadas pelo cliente" e "Enviados pelo contador". Entrega profissional e sem bagunça.' },
+  { icon: Palette, title: 'Sua Marca, Sua Valorização', desc: 'Whitelabel com sua marca e cores no portal. O cliente vê o seu nome, não o nosso. Valorize seu serviço e cobre o que ele realmente vale.' },
+  { icon: Receipt, title: 'Pagamento em 1 Clique', desc: 'Gere cobranças via Pix e cartão, acompanhe pagamentos e elimine a inadimplência. Tudo integrado ao fluxo da declaração.' },
 ];
 
 export const testimonials = [
@@ -41,9 +41,9 @@ export const objections = [
 
 export const faqs = [
   { q: 'Como funciona o plano gratuito?', a: 'O plano Free libera 1 declaração completa com chat, kanban e 500 MB de armazenamento — ideal para conhecer a plataforma sem compromisso.' },
-  { q: 'Qual a diferença entre Free e Pro?', a: 'O Pro (R$ 49,90/mês) inclui 3 declarações, até 5 usuários, armazenamento ilimitado, calculadora de IR e suporte prioritário. Declarações adicionais custam R$ 4,90 cada.' },
-  { q: 'Meus dados e os dos meus clientes estão seguros?', a: 'Sim. Utilizamos criptografia, banco de dados isolado por escritório e controle de acesso em nível de linha (RLS) em todas as tabelas, em conformidade com a LGPD.' },
-  { q: 'Meus clientes precisam instalar algo?', a: 'Não. O portal do cliente é 100% web — funciona em qualquer celular ou computador. Basta enviar o link de convite.' },
-  { q: 'O que são os Recursos Extras?', a: 'Módulos opcionais que ampliam a plataforma: integração com WhatsApp (R$ 19,90/mês), API Pública (R$ 29,90/mês) e Whitelabel com sua marca (R$ 49,90/mês).' },
-  { q: 'Existe contrato de fidelidade?', a: 'Não. A cobrança é mensal e você pode cancelar a qualquer momento, sem multa e sem burocracia.' },
+  { q: 'Qual a diferença entre Free e Pro?', a: 'O Pro (R$ 49,90/mês) inclui 3 declarações, até 5 usuários simultâneos, armazenamento ilimitado, calculadora de IR e suporte prioritário. Declarações adicionais custam apenas R$ 4,90 cada.' },
+  { q: 'Meus dados e os dos meus clientes estão seguros?', a: 'Sim. Utilizamos criptografia de ponta a ponta, banco de dados isolado por escritório e conformidade total com a LGPD.' },
+  { q: 'Meus clientes precisam instalar algo?', a: 'Não. O portal do cliente é 100% web e responsivo — funciona em qualquer celular ou computador. Basta enviar o link de convite.' },
+  { q: 'O que são os Recursos Extras?', a: 'Módulos opcionais para quem quer escalar: WhatsApp Automático (R$ 19,90), Portal Cliente Completo (R$ 14,90), API Pública (R$ 29,90) e Whitelabel (R$ 9,90).' },
+  { q: 'Existe contrato de fidelidade?', a: 'Zero fidelidade. A cobrança é mensal e você pode cancelar a qualquer momento com um clique, sem multas.' },
 ];

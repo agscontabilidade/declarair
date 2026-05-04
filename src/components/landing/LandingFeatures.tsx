@@ -19,12 +19,13 @@ export const LandingFeatures = () => (
       </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {featuresTranslated.map((f) => (
-          <div key={f.title} className="rounded-2xl border border-border bg-card p-6 hover:border-accent/30 hover:shadow-md transition-all duration-200 group">
-            <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/15 transition-colors">
-              <f.icon className="h-5 w-5 text-accent" />
+          <div key={f.title} className="rounded-2xl border border-border bg-card p-8 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5 transition-all duration-300 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-bl-[100px] -mr-8 -mt-8 group-hover:bg-accent/10 transition-colors" />
+            <div className="h-12 w-12 rounded-2xl bg-accent/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <f.icon className="h-6 w-6 text-accent" />
             </div>
-            <h3 className="font-display font-bold text-foreground">{f.title}</h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+            <h3 className="font-display text-lg font-bold text-foreground group-hover:text-accent transition-colors">{f.title}</h3>
+            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
           </div>
         ))}
       </div>
