@@ -4,6 +4,7 @@ import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
 import { formatarPapel } from '@/lib/formatters';
+import { usePermissoes } from '@/hooks/usePermissoes';
 import { useUsageStatus } from '@/hooks/useUsageStatus';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
