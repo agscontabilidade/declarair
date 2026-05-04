@@ -37,6 +37,7 @@ export default function LandingV2() {
       <FAQSection />
       <CTAFinal />
       <Footer />
+      <CookieConsent />
     </div>
   );
 }
