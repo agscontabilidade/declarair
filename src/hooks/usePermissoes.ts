@@ -49,9 +49,9 @@ export function usePermissoes() {
     podeCancelarCobranca: temPermissao('cobrancas.edit'),
     // Configurações
     podeVerConfiguracoes: temPermissao('configuracoes.view'),
-    podeAlterarEscritorio: temPermissao('configuracoes.edit'),
-    // Outros (mantidos para compatibilidade)
-    podeGerenciarUsuarios: isDono,
-    podeGerenciarTemplates: temPermissao('configuracoes.edit'),
+    podeAlterarEscritorio: temPermissao('escritorio.edit') || temPermissao('configuracoes.edit'),
+    // Outros
+    podeGerenciarUsuarios: temPermissao('usuarios.manage'),
+    podeGerenciarTemplates: temPermissao('templates.manage'),
   };
 }
