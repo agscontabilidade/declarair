@@ -40,9 +40,9 @@ export default function Index() {
                 <Badge variant="outline" className="mb-2 border-accent/30 bg-accent/10 text-accent text-xs px-4 py-1.5 font-medium rounded-full">
                   <Zap className="h-3.5 w-3.5 mr-1.5" /> Conheça o DeclaraIR
                 </Badge>
-                <h2 className="font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-white leading-[1.15] tracking-tight">
+                <h2 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.05] tracking-tight">
                   O sistema que transforma o caos do IR em um{' '}
-                  <span className="bg-gradient-to-r from-accent to-[hsl(170,60%,50%)] bg-clip-text text-transparent">processo previsível e lucrativo</span>.
+                  <span className="bg-gradient-to-r from-accent to-[hsl(170,60%,50%)] bg-clip-text text-transparent">centro de lucro automatizado</span>.
                 </h2>
                 <p className="text-white/50 text-lg leading-relaxed max-w-lg">
                   Você não precisa trabalhar mais. Precisa trabalhar organizado.
