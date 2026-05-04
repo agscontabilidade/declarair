@@ -251,6 +251,37 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={editPermissoesOpen} onOpenChange={setEditPermissoesOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gerenciar Permissões</DialogTitle>
+            <DialogDescription>
+              Ajuste as permissões de acesso para <strong>{usuarioEditando?.nome}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <SeletorPermissoes 
+              permissoesSelecionadas={permissoesEditando} 
+              onChange={setPermissoesEditando} 
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setEditPermissoesOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSalvarPermissoes} 
+              disabled={atualizarPermissoes.isPending}
+            >
+              {atualizarPermissoes.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
