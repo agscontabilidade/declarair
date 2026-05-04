@@ -61,8 +61,8 @@ export function PlanosCardsPublic() {
             key={plano.id}
             className={`relative flex flex-col rounded-3xl p-8 transition-all duration-500 ${
               plano.destaque
-                ? 'border-2 border-accent/40 bg-white shadow-[0_32px_64px_-16px_rgba(20,184,166,0.15)] scale-[1.05] z-10'
-                : 'border border-border bg-white shadow-sm hover:shadow-xl hover:-translate-y-2'
+                ? 'border-2 border-accent/40 bg-[hsl(var(--lv2-slate-900))] shadow-[0_32px_64px_-16px_rgba(20,184,166,0.15)] scale-[1.05] z-10'
+                : 'border border-[hsl(var(--lv2-slate-800))] bg-[hsl(var(--lv2-slate-900))] shadow-sm hover:shadow-xl hover:-translate-y-2'
             }`}
           >
             {plano.badge && (
@@ -77,13 +77,13 @@ export function PlanosCardsPublic() {
               <div className={`h-14 w-14 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
                 plano.destaque
                   ? 'bg-[hsl(var(--lv2-emerald)/0.1)] border border-[hsl(var(--lv2-emerald)/0.2)]'
-                  : 'bg-[hsl(var(--lv2-slate-100))]'
+                  : 'bg-[hsl(var(--lv2-slate-800))]'
               }`}>
-                <Icon className={`h-7 w-7 ${plano.destaque ? 'text-[hsl(var(--lv2-emerald))]' : 'text-[hsl(var(--lv2-slate-400))]'}`} />
+                <Icon className={`h-7 w-7 ${plano.destaque ? 'text-[hsl(var(--lv2-emerald))]' : 'text-[hsl(var(--lv2-slate-300))]'}`} />
               </div>
-              <h3 className="text-lg font-bold text-[hsl(var(--lv2-slate-950))]">{plano.nome}</h3>
+              <h3 className="text-lg font-bold text-white">{plano.nome}</h3>
               <div className="mt-4">
-                <span className="text-4xl font-bold text-[hsl(var(--lv2-slate-950))]">{plano.precoLabel}</span>
+                <span className="text-4xl font-bold text-white">{plano.precoLabel}</span>
                 <span className="text-[hsl(var(--lv2-slate-400))] text-sm ml-1">{plano.periodo}</span>
               </div>
             </div>
@@ -96,7 +96,7 @@ export function PlanosCardsPublic() {
                   ) : (
                     <X className="h-4 w-4 text-[hsl(var(--lv2-slate-300))] shrink-0 mt-0.5" />
                   )}
-                  <span className={b.disponivel ? 'text-[hsl(var(--lv2-slate-700))] font-medium' : 'text-[hsl(var(--lv2-slate-300))]'}>
+                  <span className={b.disponivel ? 'text-[hsl(var(--lv2-slate-200))] font-medium' : 'text-[hsl(var(--lv2-slate-500))]'}>
                     {b.texto}
                   </span>
                 </div>
@@ -117,7 +117,7 @@ export function PlanosCardsPublic() {
                 </Button>
               </Link>
               {plano.destaque && (
-                <Button variant="ghost" size="sm" className="w-full text-[hsl(var(--lv2-slate-400))] hover:text-[hsl(var(--lv2-slate-600))] hover:bg-[hsl(var(--lv2-slate-50))]" asChild>
+                <Button variant="ghost" size="sm" className="w-full text-[hsl(var(--lv2-slate-400))] hover:text-white hover:bg-[hsl(var(--lv2-slate-800))]" asChild>
                   <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
                     Falar com consultor
