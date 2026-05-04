@@ -107,8 +107,8 @@ export default function Clientes() {
               onEdit={(c) => setEditCliente(c)}
               onDelete={handleDelete}
               onCobranca={(c) => setCobrancaCliente(c)}
-              canEdit={podeCriarClientes}
-              canDelete={podeCriarClientes}
+              canEdit={podeEditarClientes}
+              canDelete={podeExcluirCliente}
             />
           </CardContent>
         </Card>
