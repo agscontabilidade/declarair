@@ -38,7 +38,7 @@ export function TabelaAvulso() {
           <div className="mt-8 flex flex-col items-center gap-5">
             <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[hsl(var(--lv2-emerald)/0.06)] border border-[hsl(var(--lv2-emerald)/0.15)]">
               <ShieldCheck className="h-4 w-4 text-[hsl(var(--lv2-emerald))]" />
-              <span className="text-sm font-semibold text-[hsl(var(--lv2-slate-700))]">
+              <span className="text-sm font-semibold text-[hsl(var(--lv2-slate-200))]">
                 Você só paga pelas declarações que realmente fizer
               </span>
             </div>
