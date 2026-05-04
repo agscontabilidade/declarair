@@ -83,7 +83,7 @@ export function PlanosCardsPublic() {
               </div>
               <h3 className="text-lg font-bold text-white">{plano.nome}</h3>
               <div className="mt-4">
-                <span className="text-4xl font-bold text-[hsl(var(--lv2-slate-950))]">{plano.precoLabel}</span>
+                <span className="text-4xl font-bold text-white">{plano.precoLabel}</span>
                 <span className="text-[hsl(var(--lv2-slate-400))] text-sm ml-1">{plano.periodo}</span>
               </div>
             </div>
