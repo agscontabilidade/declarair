@@ -324,6 +324,7 @@ export type Database = {
           procuracao_ecac_validade: string | null
           status_onboarding: string
           telefone: string | null
+          tema_preferido: string
           token_convite: string | null
           token_convite_expira_em: string | null
         }
@@ -342,6 +343,7 @@ export type Database = {
           procuracao_ecac_validade?: string | null
           status_onboarding?: string
           telefone?: string | null
+          tema_preferido?: string
           token_convite?: string | null
           token_convite_expira_em?: string | null
         }
@@ -360,6 +362,7 @@ export type Database = {
           procuracao_ecac_validade?: string | null
           status_onboarding?: string
           telefone?: string | null
+          tema_preferido?: string
           token_convite?: string | null
           token_convite_expira_em?: string | null
         }
@@ -1950,6 +1953,7 @@ export type Database = {
           papel: string
           preferencias_notificacao: Json | null
           telefone: string | null
+          tema_preferido: string
         }
         Insert: {
           ativo?: boolean
@@ -1962,6 +1966,7 @@ export type Database = {
           papel?: string
           preferencias_notificacao?: Json | null
           telefone?: string | null
+          tema_preferido?: string
         }
         Update: {
           ativo?: boolean
@@ -1974,6 +1979,7 @@ export type Database = {
           papel?: string
           preferencias_notificacao?: Json | null
           telefone?: string | null
+          tema_preferido?: string
         }
         Relationships: [
           {
@@ -2444,6 +2450,7 @@ export type Database = {
           procuracao_ecac_validade: string | null
           status_onboarding: string
           telefone: string | null
+          tema_preferido: string
           token_convite: string | null
           token_convite_expira_em: string | null
         }[]
