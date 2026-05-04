@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone, User, Calendar, Plus } from 'lucide-react';
+import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone, User, Calendar, Plus, Zap, FileText, Info } from 'lucide-react';
 import {
   useWhatsAppStatus,
   useCreateInstance,
@@ -22,6 +22,10 @@ import { Link } from 'react-router-dom';
 import { useMensagens } from '@/hooks/useMensagens';
 import { TemplateList } from '@/components/mensagens/TemplateList';
 import { TemplateEditor } from '@/components/mensagens/TemplateEditor';
+import { AutomacoesWhatsAppTab } from '@/components/configuracoes/AutomacoesWhatsAppTab';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePermissoes } from '@/hooks/usePermissoes';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 function formatWhatsAppPhone(phone: string | null | undefined): string {
   if (!phone) return '—';
@@ -40,6 +44,8 @@ export function MensagensTab() {
   const disconnectInstance = useDisconnectInstance();
   const deleteInstance = useDeleteInstance();
   const { myAddons, catalog } = useAddons();
+  const { profile: authProfile } = useAuth();
+  const { isDono } = usePermissoes();
   const [confirmDelete, setConfirmDelete] = useState(false);
   
   // Template states
@@ -83,18 +89,41 @@ export function MensagensTab() {
 
   return (
     <div className="space-y-6">
+      {/* Header explicativo da seção */}
+      <div className="rounded-lg border bg-muted/30 p-4 flex items-start gap-3">
+        <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-foreground">
+            Comunicação com clientes via WhatsApp
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Aqui você conecta o WhatsApp do escritório, cria modelos de mensagens prontas
+            e configura disparos automáticos quando algo acontece (ex: cliente cadastrado,
+            cobrança vencida). <strong>Não é o chat interno do sistema</strong> — são
+            mensagens reais enviadas para o WhatsApp dos seus clientes.
+          </p>
+        </div>
+      </div>
+
       <Tabs defaultValue="conexao" className="w-full">
-        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
-          <TabsTrigger value="conexao">Conexão WhatsApp</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
+        <TabsList className="grid w-full max-w-[600px] grid-cols-3">
+          <TabsTrigger value="conexao" className="gap-2">
+            <Phone className="h-4 w-4" /> Conexão
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="gap-2">
+            <FileText className="h-4 w-4" /> Modelos
+          </TabsTrigger>
+          <TabsTrigger value="automacoes" className="gap-2">
+            <Zap className="h-4 w-4" /> Disparos automáticos
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="conexao" className="mt-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-display text-xl font-bold text-foreground">Status da Conexão</h2>
+              <h2 className="font-display text-xl font-bold text-foreground">Conexão do WhatsApp</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Gerencie sua instância WhatsApp para envios reais
+                Vincule o número do escritório ao sistema para enviar mensagens reais aos clientes
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
@@ -234,15 +263,16 @@ export function MensagensTab() {
         </TabsContent>
 
         <TabsContent value="templates" className="mt-4 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h2 className="font-display text-xl font-bold text-foreground">Templates de Mensagens</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Personalize as mensagens enviadas aos seus clientes
+              <h2 className="font-display text-xl font-bold text-foreground">Modelos de mensagem</h2>
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                Crie textos prontos (com variáveis como nome do cliente e ano-base) para
+                reutilizar nos disparos manuais e automáticos via WhatsApp ou e-mail.
               </p>
             </div>
             <Button size="sm" onClick={() => { setEditData(null); setEditorOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" /> Novo Template
+              <Plus className="h-4 w-4 mr-2" /> Novo modelo
             </Button>
           </div>
 
@@ -254,10 +284,22 @@ export function MensagensTab() {
                 onEdit={(t) => { setEditData(t); setEditorOpen(true); }}
                 onDelete={(id) => setDeleteTemplateId(id)}
                 onToggle={(id, ativo) => toggleTemplate.mutate({ id, ativo })}
-                onTest={() => {}} // Disabled here to keep it simple or implement later
+                onTest={() => {}}
               />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="automacoes" className="mt-4 space-y-4">
+          <div>
+            <h2 className="font-display text-xl font-bold text-foreground">Disparos automáticos</h2>
+            <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+              Defina quais modelos serão enviados automaticamente quando algo acontece no
+              sistema — por exemplo, quando uma cobrança vence ou um novo cliente é
+              cadastrado. Requer WhatsApp conectado e modelos criados.
+            </p>
+          </div>
+          <AutomacoesWhatsAppTab escritorioId={authProfile.escritorioId} isDono={isDono} />
         </TabsContent>
       </Tabs>
 

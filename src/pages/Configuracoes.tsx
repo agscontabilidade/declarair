@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Settings, Users, CreditCard, Puzzle, Palette, Bell, MessageSquare, Phone, Key, ExternalLink, Mail } from 'lucide-react';
+import { Settings, Users, CreditCard, Puzzle, Palette, Bell, MessageSquare, Phone, Key, ExternalLink, Mail, Smartphone } from 'lucide-react';
 import { buscarCNPJ } from '@/lib/apiBrasil';
 import { IntegracoesTab } from '@/components/configuracoes/IntegracoesTab';
 import AbaEquipe from '@/components/configuracoes/AbaEquipe';
@@ -36,10 +36,16 @@ export default function Configuracoes() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // Redirect old "automacoes" tab to consolidated "mensagens" (WhatsApp) tab
+    if (tabParam === 'automacoes') {
+      setSearchParams({ tab: 'mensagens' });
+      setActiveTab('mensagens');
+      return;
+    }
     if (tabParam && tabParam !== activeTab) {
       setActiveTab(tabParam);
     }
-  }, [tabParam, activeTab]);
+  }, [tabParam, activeTab, setSearchParams]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -131,13 +137,12 @@ export default function Configuracoes() {
       <div className="space-y-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Configurações</h1>
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="escritorio" className="gap-2"><Settings className="h-4 w-4" /> Escritório</TabsTrigger>
             <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
             <TabsTrigger value="marca" className="gap-2"><Palette className="h-4 w-4" /> Marca</TabsTrigger>
             <TabsTrigger value="notificacoes" className="gap-2"><Bell className="h-4 w-4" /> Notificações</TabsTrigger>
-            <TabsTrigger value="mensagens" className="gap-2"><MessageSquare className="h-4 w-4" /> Mensagens</TabsTrigger>
-            <TabsTrigger value="automacoes" className="gap-2"><MessageSquare className="h-4 w-4" /> Automações</TabsTrigger>
+            <TabsTrigger value="mensagens" className="gap-2"><Smartphone className="h-4 w-4" /> WhatsApp</TabsTrigger>
             <TabsTrigger value="plano" className="gap-2"><CreditCard className="h-4 w-4" /> Plano</TabsTrigger>
             <TabsTrigger value="integracoes" className="gap-2"><Puzzle className="h-4 w-4" /> Integrações</TabsTrigger>
           </TabsList>
@@ -182,13 +187,7 @@ export default function Configuracoes() {
             <MensagensTab />
           </TabsContent>
 
-          <TabsContent value="automacoes">
-            <PlanGate requiredPlan="pro" featureName="Automações WhatsApp">
-              <FeatureGate feature="whatsapp">
-                <AutomacoesWhatsAppTab escritorioId={escritorioId} isDono={isDono} />
-              </FeatureGate>
-            </PlanGate>
-          </TabsContent>
+          {/* Automações foram movidas para dentro da aba WhatsApp como sub-aba */}
 
           <TabsContent value="plano">
             <Card className="shadow-sm">
