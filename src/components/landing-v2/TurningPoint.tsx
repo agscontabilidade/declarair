@@ -23,7 +23,7 @@ export default function TurningPoint() {
           <Target className="h-9 w-9 text-[hsl(var(--lv2-emerald))]" />
         </motion.div>
         <motion.h2
-          className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[hsl(var(--lv2-slate-950))] leading-tight"
+          className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
