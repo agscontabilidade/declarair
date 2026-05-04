@@ -18,12 +18,12 @@ export const beforeAfter = [
 ];
 
 export const featuresTranslated = [
-  { icon: Layout, title: 'Veja quem está pendente agora', desc: 'Pare de correr atrás no último dia. O dashboard mostra exatamente quem falta, quem travou e onde está o gargalo — em tempo real.' },
-  { icon: Smartphone, title: 'Cliente envia tudo certo, no lugar certo', desc: 'Sem te travar no WhatsApp. O portal guia o cliente a enviar cada documento no formato correto, automaticamente.' },
-  // Malha Fina removed
-  { icon: Zap, title: 'Simule o resultado do IR em segundos', desc: 'Compare Simplificada vs Completa instantaneamente. Mostre pro cliente o cenário ideal e feche o serviço mais rápido.' },
-  { icon: Palette, title: 'Cobre mais com uma experiência profissional', desc: 'Whitelabel com sua marca no portal. Seu cliente vê o seu nome, não o nosso. Isso é percepção de valor — e valor se cobra.' },
-  { icon: Receipt, title: 'Cobre via Pix e cartão sem sair da plataforma', desc: 'Gere cobranças, acompanhe pagamentos e pare de perseguir cliente inadimplente. Tudo integrado.' },
+  { icon: Layout, title: 'Gestão Visual e Kanban', desc: 'Pare de correr atrás no último dia. O dashboard mostra exatamente quem falta, quem travou e onde está o gargalo — em tempo real com cards inteligentes.' },
+  { icon: Smartphone, title: 'Portal do Cliente Guiado', desc: 'Sem te travar no WhatsApp. O portal guia o cliente a enviar cada documento no formato correto, com checklist baseado no perfil fiscal.' },
+  { icon: Zap, title: 'WhatsApp Automático', desc: 'Não é apenas chat. São notificações inteligentes que avisam o cliente quando o status da declaração muda ou quando faltam documentos.' },
+  { icon: Shield, title: 'Drive Organizado por Natureza', desc: 'Documentos separados automaticamente em pastas "Enviadas pelo cliente" e "Enviados pelo contador". Entrega profissional e sem bagunça.' },
+  { icon: Palette, title: 'Sua Marca, Sua Valorização', desc: 'Whitelabel com sua marca e cores no portal. O cliente vê o seu nome, não o nosso. Valorize seu serviço e cobre o que ele realmente vale.' },
+  { icon: Receipt, title: 'Pagamento em 1 Clique', desc: 'Gere cobranças via Pix e cartão, acompanhe pagamentos e elimine a inadimplência. Tudo integrado ao fluxo da declaração.' },
 ];
 
 export const testimonials = [
