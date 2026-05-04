@@ -15,11 +15,11 @@ export function TabelaAvulso() {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-white overflow-hidden shadow-lg">
-        <div className="bg-gradient-to-r from-[hsl(var(--lv2-slate-50))] to-[hsl(var(--lv2-emerald)/0.04)] px-6 py-5 border-b border-[hsl(var(--lv2-slate-100))]">
+      <div className="rounded-2xl border border-[hsl(var(--lv2-slate-800))] bg-[hsl(var(--lv2-slate-900))] overflow-hidden shadow-lg">
+        <div className="bg-gradient-to-r from-[hsl(var(--lv2-slate-800))] to-[hsl(var(--lv2-emerald)/0.04)] px-6 py-5 border-b border-[hsl(var(--lv2-slate-800))]">
           <div className="flex items-center justify-center gap-2">
             <FileText className="h-5 w-5 text-[hsl(var(--lv2-emerald))]" />
-            <h4 className="text-lg font-bold text-[hsl(var(--lv2-slate-950))]">Declarações Avulsas</h4>
+            <h4 className="text-lg font-bold text-white">Declarações Avulsas</h4>
           </div>
         </div>
         <div className="p-8">
