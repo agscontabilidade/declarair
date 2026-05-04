@@ -54,21 +54,24 @@ export default function Drive() {
   });
 
   const tree = useMemo(() => {
-    const clienteMap = new Map<string, { id: string; nome: string; cpf: string; catMap: Map<string, DocWithDeclaracao[]> }>();
+    const clienteMap = new Map<string, { id: string; nome: string; cpf: string; cliente: DocWithDeclaracao[]; contador: DocWithDeclaracao[] }>();
     for (const doc of docs as DocWithDeclaracao[]) {
       const cl = doc.declaracoes?.clientes;
       if (!cl) continue;
       if (busca && !cl.nome?.toLowerCase().includes(busca.toLowerCase()) && !cl.cpf?.includes(busca.replace(/\D/g, ''))) continue;
       if (!clienteMap.has(cl.id)) {
-        clienteMap.set(cl.id, { id: cl.id, nome: cl.nome, cpf: cl.cpf, catMap: new Map() });
+        clienteMap.set(cl.id, { id: cl.id, nome: cl.nome, cpf: cl.cpf, cliente: [], contador: [] });
       }
       const c = clienteMap.get(cl.id)!;
-      if (!c.catMap.has(doc.categoria)) c.catMap.set(doc.categoria, []);
-      c.catMap.get(doc.categoria)!.push(doc);
+      if (doc.categoria === 'contador') c.contador.push(doc);
+      else c.cliente.push(doc);
     }
     return Array.from(clienteMap.values()).map(c => ({
       ...c,
-      categorias: Array.from(c.catMap.entries()).map(([cat, d]) => ({ categoria: cat, docs: d })),
+      pastas: [
+        { key: 'cliente', label: 'Enviados pelo cliente', docs: c.cliente },
+        { key: 'contador', label: 'Enviados pelo contador', docs: c.contador },
+      ].filter(p => p.docs.length > 0),
     }));
   }, [docs, busca]);
 
@@ -146,31 +149,31 @@ export default function Drive() {
                     <span className="font-medium text-foreground">{cliente.nome}</span>
                     <span className="text-xs text-muted-foreground font-mono">{formatCPF(cliente.cpf)}</span>
                   </div>
-                  <Badge variant="secondary">{cliente.categorias.reduce((s, c) => s + c.docs.length, 0)} docs</Badge>
+                  <Badge variant="secondary">{cliente.pastas.reduce((s, c) => s + c.docs.length, 0)} docs</Badge>
                 </button>
 
                 {expandedCliente === cliente.id && (
                   <div className="border-t px-4 pb-4">
-                    {cliente.categorias.map(cat => (
-                      <div key={cat.categoria} className="mt-2">
+                    {cliente.pastas.map(pasta => (
+                      <div key={pasta.key} className="mt-2">
                         <button
                           className="w-full flex items-center gap-2 py-2 px-2 rounded hover:bg-muted/50 text-sm text-left"
-                          onClick={() => setExpandedCategoria(expandedCategoria === `${cliente.id}-${cat.categoria}` ? null : `${cliente.id}-${cat.categoria}`)}
+                          onClick={() => setExpandedCategoria(expandedCategoria === `${cliente.id}-${pasta.key}` ? null : `${cliente.id}-${pasta.key}`)}
                         >
-                          <ChevronRight className={`h-3 w-3 text-muted-foreground transition-transform ${expandedCategoria === `${cliente.id}-${cat.categoria}` ? 'rotate-90' : ''}`} />
-                          <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                          <span className="capitalize text-foreground">{cat.categoria}</span>
-                          <Badge variant="outline" className="ml-auto text-xs">{cat.docs.length}</Badge>
+                          <ChevronRight className={`h-3 w-3 text-muted-foreground transition-transform ${expandedCategoria === `${cliente.id}-${pasta.key}` ? 'rotate-90' : ''}`} />
+                          <FolderOpen className={`h-4 w-4 ${pasta.key === 'contador' ? 'text-sidebar-primary' : 'text-muted-foreground'}`} />
+                          <span className="text-foreground">{pasta.label}</span>
+                          <Badge variant="outline" className="ml-auto text-xs">{pasta.docs.length}</Badge>
                         </button>
-                        {expandedCategoria === `${cliente.id}-${cat.categoria}` && (
+                        {expandedCategoria === `${cliente.id}-${pasta.key}` && (
                           <div className="ml-8 mt-1 space-y-1">
-                            {cat.docs.map(doc => {
+                            {pasta.docs.map(doc => {
                               const Icon = getFileIcon(doc.arquivo_nome);
                               return (
                                 <div key={doc.id} className="flex items-center justify-between gap-2 py-1.5 px-2 rounded hover:bg-muted/30 text-sm group">
                                   <button
                                     type="button"
-                                    onClick={() => doc.arquivo_url && openViewer(cat.docs, doc.id)}
+                                    onClick={() => doc.arquivo_url && openViewer(pasta.docs, doc.id)}
                                     disabled={!doc.arquivo_url}
                                     className="flex items-center gap-2 min-w-0 flex-1 text-left hover:text-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
@@ -185,7 +188,7 @@ export default function Drive() {
                                         variant="ghost"
                                         size="sm"
                                         className="h-7 w-7 p-0"
-                                        onClick={() => openViewer(cat.docs, doc.id)}
+                                        onClick={() => openViewer(pasta.docs, doc.id)}
                                         title="Visualizar"
                                       >
                                         <Eye className="h-3.5 w-3.5" />
