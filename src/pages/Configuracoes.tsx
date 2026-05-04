@@ -99,7 +99,7 @@ export default function Configuracoes() {
 
   async function handleBuscarCnpj() {
     const clean = cnpj.replace(/\D/g, '');
-    if (clean.length !== 14 || !isDono) return;
+    if (clean.length !== 14 || !podeAlterarEscritorio) return;
     setBuscandoCnpj(true);
     const dados = await buscarCNPJ(clean);
     if (dados) {
