@@ -117,7 +117,7 @@ export function PlanosCardsPublic() {
                 </Button>
               </Link>
               {plano.destaque && (
-                <Button variant="ghost" size="sm" className="w-full text-[hsl(var(--lv2-slate-400))] hover:text-[hsl(var(--lv2-slate-600))] hover:bg-[hsl(var(--lv2-slate-50))]" asChild>
+                <Button variant="ghost" size="sm" className="w-full text-[hsl(var(--lv2-slate-400))] hover:text-white hover:bg-[hsl(var(--lv2-slate-800))]" asChild>
                   <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
                     Falar com consultor
