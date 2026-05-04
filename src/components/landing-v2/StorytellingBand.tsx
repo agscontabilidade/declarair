@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 export default function StorytellingBand() {
   return (
     <section className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--lv2-slate-950))] via-[hsl(var(--lv2-slate-900))] to-[hsl(var(--lv2-slate-50))]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--lv2-slate-950))] via-[hsl(var(--lv2-slate-900))] to-[hsl(var(--lv2-slate-950))]" />
 
       <div className="relative py-32 lg:py-44">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">

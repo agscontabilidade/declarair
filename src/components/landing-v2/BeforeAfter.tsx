@@ -13,8 +13,8 @@ const items = [
 
 export default function BeforeAfter() {
   return (
-    <section className="py-28 lg:py-36 bg-[hsl(var(--lv2-slate-50))] relative">
-      <div className="section-divider absolute top-0 left-0 right-0" />
+    <section className="py-28 lg:py-36 bg-[hsl(var(--lv2-slate-950))] relative">
+      <div className="section-divider absolute top-0 left-0 right-0 opacity-20" />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -27,7 +27,7 @@ export default function BeforeAfter() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide mb-6">
             Transformação
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[hsl(var(--lv2-slate-950))]">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
             Veja a diferença com os próprios olhos
           </h2>
         </motion.div>
@@ -35,7 +35,7 @@ export default function BeforeAfter() {
         <div className="grid md:grid-cols-2 gap-6">
           {/* Before */}
           <motion.div
-            className="rounded-2xl border-2 border-[hsl(var(--lv2-red)/0.15)] bg-white p-8 lg:p-10 space-y-5"
+            className="rounded-2xl border-2 border-[hsl(var(--lv2-red)/0.15)] bg-[hsl(var(--lv2-slate-900))] p-8 lg:p-10 space-y-5"
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-80px' }}
@@ -57,14 +57,14 @@ export default function BeforeAfter() {
                 transition={{ delay: 0.1 + i * 0.08, duration: 0.4 }}
               >
                 <XCircle className="h-5 w-5 text-[hsl(var(--lv2-red)/0.35)] shrink-0" />
-                <span className="text-[hsl(var(--lv2-slate-500))]">{item.before}</span>
+                <span className="text-white/40 italic line-through">{item.before}</span>
               </motion.div>
             ))}
           </motion.div>
 
           {/* After */}
           <motion.div
-            className="rounded-2xl border-2 border-[hsl(var(--lv2-emerald)/0.25)] bg-white p-8 lg:p-10 space-y-5 relative overflow-hidden"
+            className="rounded-2xl border-2 border-[hsl(var(--lv2-emerald)/0.25)] bg-[hsl(var(--lv2-slate-900))] p-8 lg:p-10 space-y-5 relative overflow-hidden"
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-80px' }}
@@ -89,7 +89,7 @@ export default function BeforeAfter() {
                   transition={{ delay: 0.2 + i * 0.08, duration: 0.4 }}
                 >
                   <CheckCircle2 className="h-5 w-5 text-[hsl(var(--lv2-emerald)/0.5)] shrink-0" />
-                  <span className="text-[hsl(var(--lv2-slate-950))] font-medium">{item.after}</span>
+                  <span className="text-white font-medium">{item.after}</span>
                 </motion.div>
               ))}
             </div>
@@ -103,7 +103,7 @@ export default function BeforeAfter() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <p className="text-2xl font-bold text-[hsl(var(--lv2-slate-950))]">
+          <p className="text-2xl font-bold text-white">
             "Você não trabalha mais. Você trabalha melhor — e{' '}
             <span className="gradient-text">fatura mais</span>."
           </p>

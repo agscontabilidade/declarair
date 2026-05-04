@@ -5,10 +5,10 @@ import { motion } from 'framer-motion';
 
 export default function TurningPoint() {
   return (
-    <section className="relative py-28 lg:py-36 overflow-hidden bg-white">
-      <div className="section-divider absolute top-0 left-0 right-0" />
-      <div className="absolute inset-0 opacity-[0.02]" style={{
-        backgroundImage: 'radial-gradient(hsl(var(--lv2-slate-950)) 1px, transparent 1px)',
+    <section className="relative py-28 lg:py-36 overflow-hidden bg-[hsl(var(--lv2-slate-950))]">
+      <div className="section-divider absolute top-0 left-0 right-0 opacity-20" />
+      <div className="absolute inset-0 opacity-[0.05]" style={{
+        backgroundImage: 'radial-gradient(white 1px, transparent 1px)',
         backgroundSize: '20px 20px',
       }} />
 
@@ -32,7 +32,7 @@ export default function TurningPoint() {
           O problema nunca foi o volume de declarações.
         </motion.h2>
         <motion.p
-          className="text-xl lg:text-2xl text-[hsl(var(--lv2-slate-500))] leading-relaxed max-w-xl mx-auto"
+          className="text-xl lg:text-2xl text-white/50 leading-relaxed max-w-xl mx-auto"
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -42,7 +42,7 @@ export default function TurningPoint() {
           <span className="gradient-text font-semibold">organize o jogo pra você</span>.
         </motion.p>
         <motion.p
-          className="text-[hsl(var(--lv2-slate-950))] font-bold text-2xl"
+          className="text-white font-bold text-2xl"
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
