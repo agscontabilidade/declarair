@@ -30,9 +30,10 @@ const PARENTESCOS = ['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Companheiro(a)', 'Pa
 interface Props {
   data: FormularioData;
   onChange: (field: keyof FormularioData, value: unknown) => void;
+  clientCPF: string;
 }
 
-export function StepDadosPessoais({ data, onChange }: Props) {
+export function StepDadosPessoais({ data, onChange, clientCPF }: Props) {
   const [loadingCep, setLoadingCep] = useState(false);
   const [openNatureza, setOpenNatureza] = useState(false);
   const [openOcupacao, setOpenOcupacao] = useState(false);
@@ -381,7 +382,7 @@ export function StepDadosPessoais({ data, onChange }: Props) {
       <section className="space-y-4">
         <div>
           <h2 className="font-display text-lg font-semibold">Restituição via PIX</h2>
-          <p className="text-sm text-muted-foreground">Informe sua chave PIX para facilitar o recebimento da sua restituição</p>
+          <p className="text-sm text-muted-foreground">A prioridade na restituição é dada para quem utiliza o CPF como chave PIX</p>
         </div>
 
         <div className="p-4 rounded-xl border bg-primary/5 border-primary/10 space-y-4 animate-in fade-in duration-500">
@@ -389,26 +390,30 @@ export function StepDadosPessoais({ data, onChange }: Props) {
             <div className="mt-1 p-2 rounded-lg bg-primary/10 text-primary">
               <Wallet className="h-5 w-5" />
             </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Chave PIX (CPF)</p>
-              <p className="text-xs text-muted-foreground">
-                Se a sua chave PIX for o seu <strong>CPF</strong>, pedimos que informe abaixo. 
-                Isso é fundamental para o recebimento da sua restituição do Imposto de Renda. 
-                <span className="block mt-1 font-medium text-primary/80 italic">
-                  * A chave será utilizada apenas se houver restituição a receber.
-                </span>
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Usar meu CPF como chave PIX</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Chave: {!!data.chave_pix_cliente ? clientCPF : 'Não selecionada'}
+                  </p>
+                </div>
+                <Switch 
+                  id="pix-cpf-toggle"
+                  checked={!!data.chave_pix_cliente}
+                  onCheckedChange={(checked) => {
+                    onChange('chave_pix_cliente', checked ? clientCPF : '');
+                  }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-primary/10">
+                A Receita Federal só aceita a chave <strong>CPF</strong> para prioridade no pagamento da restituição. 
+                Outras chaves (e-mail, telefone ou chave aleatória) não são permitidas para este fim.
+              </p>
+              <p className="text-xs font-medium text-primary/80 italic mt-2">
+                * Estas informações só serão utilizadas caso você tenha restituição a receber.
               </p>
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="chave-pix">Informe sua chave PIX</Label>
-            <Input 
-              id="chave-pix"
-              value={data.chave_pix_cliente || ''} 
-              onChange={(e) => onChange('chave_pix_cliente', e.target.value)} 
-              placeholder="Ex: seu CPF ou outra chave" 
-            />
           </div>
         </div>
       </section>

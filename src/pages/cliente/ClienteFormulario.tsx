@@ -21,7 +21,7 @@ interface StepDef {
 }
 
 export default function ClienteFormulario() {
-  const { formData, updateField, declaracao, isLoading, saving, lastSaved, finalizar } = useFormularioIR();
+  const { formData, updateField, declaracao, isLoading, saving, lastSaved, finalizar, clientCPF } = useFormularioIR();
   const { profile } = useAuth();
   const [step, setStep] = useState(0);
   const [confirmado, setConfirmado] = useState(false);
@@ -155,7 +155,7 @@ export default function ClienteFormulario() {
 
         <Card className="shadow-sm">
           <CardContent className="p-6">
-            <StepDadosPessoais data={formData} onChange={updateField} />
+            <StepDadosPessoais data={formData} onChange={updateField} clientCPF={clientCPF} />
           </CardContent>
         </Card>
 
