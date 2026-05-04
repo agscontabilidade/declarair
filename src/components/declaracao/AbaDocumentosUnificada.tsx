@@ -58,7 +58,6 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
     () => items.filter(i => i.arquivo_url && !i.arquivo_url.includes('/_analise_caixa/')),
     [items]
   );
-  const pendentes = useMemo(() => items.filter(i => i.status === 'pendente' && !i.arquivo_url), [items]);
   const obrigatorios = useMemo(() => items.filter(i => i.obrigatorio), [items]);
   const recebidos = obrigatorios.filter(i => i.status === 'recebido').length;
   const progressPct = obrigatorios.length > 0 ? (recebidos / obrigatorios.length) * 100 : 0;
