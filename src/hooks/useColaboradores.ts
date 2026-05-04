@@ -50,7 +50,7 @@ export const useColaboradores = (escritorioId: string) => {
   });
 
   const enviarConvite = useMutation({
-    mutationFn: async (dados: { email: string; nome: string; papel?: string }) => {
+    mutationFn: async (dados: { email: string; nome: string; papel?: string; permissoes?: string[] }) => {
       const token = crypto.randomUUID();
       const expiraEm = new Date();
       expiraEm.setDate(expiraEm.getDate() + 7);
@@ -67,6 +67,7 @@ export const useColaboradores = (escritorioId: string) => {
           token,
           expira_em: expiraEm.toISOString(),
           enviado_por: userId,
+          permissoes: dados.permissoes || [],
         })
         .select()
         .single();
