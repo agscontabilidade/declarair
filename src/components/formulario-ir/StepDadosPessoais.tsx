@@ -30,9 +30,10 @@ const PARENTESCOS = ['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Companheiro(a)', 'Pa
 interface Props {
   data: FormularioData;
   onChange: (field: keyof FormularioData, value: unknown) => void;
+  clientCPF: string;
 }
 
-export function StepDadosPessoais({ data, onChange }: Props) {
+export function StepDadosPessoais({ data, onChange, clientCPF }: Props) {
   const [loadingCep, setLoadingCep] = useState(false);
   const [openNatureza, setOpenNatureza] = useState(false);
   const [openOcupacao, setOpenOcupacao] = useState(false);
