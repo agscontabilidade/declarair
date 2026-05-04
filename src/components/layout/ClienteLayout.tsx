@@ -82,6 +82,7 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
               <span className="hidden sm:inline">{item.title}</span>
             </NavLink>
           ))}
+          <ThemeToggle />
           <button
             onClick={signOut}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm ml-2"
