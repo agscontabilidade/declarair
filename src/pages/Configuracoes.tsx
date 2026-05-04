@@ -36,10 +36,16 @@ export default function Configuracoes() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // Redirect old "automacoes" tab to consolidated "mensagens" (WhatsApp) tab
+    if (tabParam === 'automacoes') {
+      setSearchParams({ tab: 'mensagens' });
+      setActiveTab('mensagens');
+      return;
+    }
     if (tabParam && tabParam !== activeTab) {
       setActiveTab(tabParam);
     }
-  }, [tabParam, activeTab]);
+  }, [tabParam, activeTab, setSearchParams]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
