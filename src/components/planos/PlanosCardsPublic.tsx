@@ -77,11 +77,11 @@ export function PlanosCardsPublic() {
               <div className={`h-14 w-14 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
                 plano.destaque
                   ? 'bg-[hsl(var(--lv2-emerald)/0.1)] border border-[hsl(var(--lv2-emerald)/0.2)]'
-                  : 'bg-[hsl(var(--lv2-slate-100))]'
+                  : 'bg-[hsl(var(--lv2-slate-800))]'
               }`}>
-                <Icon className={`h-7 w-7 ${plano.destaque ? 'text-[hsl(var(--lv2-emerald))]' : 'text-[hsl(var(--lv2-slate-400))]'}`} />
+                <Icon className={`h-7 w-7 ${plano.destaque ? 'text-[hsl(var(--lv2-emerald))]' : 'text-[hsl(var(--lv2-slate-300))]'}`} />
               </div>
-              <h3 className="text-lg font-bold text-[hsl(var(--lv2-slate-950))]">{plano.nome}</h3>
+              <h3 className="text-lg font-bold text-white">{plano.nome}</h3>
               <div className="mt-4">
                 <span className="text-4xl font-bold text-[hsl(var(--lv2-slate-950))]">{plano.precoLabel}</span>
                 <span className="text-[hsl(var(--lv2-slate-400))] text-sm ml-1">{plano.periodo}</span>
