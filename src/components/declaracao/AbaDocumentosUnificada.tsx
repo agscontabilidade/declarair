@@ -3,11 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileText, Download, Eye, User, Briefcase, Plus, ListChecks } from 'lucide-react';
+import { FileText, Download, Eye, User, Briefcase, Plus } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
@@ -60,7 +58,6 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
     () => items.filter(i => i.arquivo_url && !i.arquivo_url.includes('/_analise_caixa/')),
     [items]
   );
-  const pendentes = useMemo(() => items.filter(i => i.status === 'pendente' && !i.arquivo_url), [items]);
   const obrigatorios = useMemo(() => items.filter(i => i.obrigatorio), [items]);
   const recebidos = obrigatorios.filter(i => i.status === 'recebido').length;
   const progressPct = obrigatorios.length > 0 ? (recebidos / obrigatorios.length) * 100 : 0;
@@ -197,35 +194,6 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
           )}
         </CardContent>
       </Card>
-
-      {pendentes.length > 0 && (
-        <Card>
-          <CardContent className="pt-4">
-            <Accordion type="single" collapsible>
-              <AccordionItem value="pendentes" className="border-0">
-                <AccordionTrigger className="py-2 hover:no-underline">
-                  <div className="flex items-center gap-2 text-sm">
-                    <ListChecks className="h-4 w-4 text-amber-600" />
-                    <span className="font-medium">Itens pendentes do checklist</span>
-                    <Badge variant="outline" className="text-[10px]">{pendentes.length}</Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <ul className="space-y-1.5 mt-2">
-                    {pendentes.map(p => (
-                      <li key={p.id} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                        {p.nome_documento}
-                        {p.obrigatorio && <Badge variant="outline" className="text-[9px] py-0 px-1">obrigatório</Badge>}
-                      </li>
-                    ))}
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </CardContent>
-        </Card>
-      )}
 
       <FileViewerModal
         files={viewerFiles}
