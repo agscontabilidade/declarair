@@ -393,7 +393,10 @@ export function StepDadosPessoais({ data, onChange }: Props) {
               <p className="text-sm font-medium">Chave PIX (CPF)</p>
               <p className="text-xs text-muted-foreground">
                 Se a sua chave PIX for o seu <strong>CPF</strong>, pedimos que informe abaixo. 
-                Isso é fundamental para que você receba sua restituição do Imposto de Renda com prioridade.
+                Isso é fundamental para o recebimento da sua restituição do Imposto de Renda. 
+                <span className="block mt-1 font-medium text-primary/80 italic">
+                  * A chave será utilizada apenas se houver restituição a receber.
+                </span>
               </p>
             </div>
           </div>
