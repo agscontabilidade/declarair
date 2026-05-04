@@ -15,6 +15,7 @@ import UrgencyBand from '@/components/landing-v2/UrgencyBand';
 import FAQSection from '@/components/landing-v2/FAQSection';
 import CTAFinal from '@/components/landing-v2/CTAFinal';
 import Footer from '@/components/landing-v2/Footer';
+import { CookieConsent } from '@/components/landing/CookieConsent';
 
 export default function LandingV2() {
   return (
@@ -36,6 +37,7 @@ export default function LandingV2() {
       <FAQSection />
       <CTAFinal />
       <Footer />
+      <CookieConsent />
     </div>
   );
 }

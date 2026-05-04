@@ -13,6 +13,7 @@ import { LandingFAQ } from '@/components/landing/LandingFAQ';
 import { LandingCTA } from '@/components/landing/LandingCTA';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { Section } from '@/components/landing/LandingSection';
+import { CookieConsent } from '@/components/landing/CookieConsent';
 import { Badge } from '@/components/ui/badge';
 import { Zap, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -129,6 +130,7 @@ export default function Index() {
       <LandingFAQ />
       <LandingCTA />
       <LandingFooter />
+      <CookieConsent />
     </div>
   );
 }
