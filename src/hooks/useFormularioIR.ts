@@ -303,15 +303,30 @@ export function useFormularioIR() {
     }
   }, [formulario?.id, clienteId, declaracao, queryClient, formData]);
 
+  const { data: clientInfo } = useQuery({
+    queryKey: ['client-info', clienteId],
+    queryFn: async () => {
+      if (!clienteId) return null;
+      const { data } = await supabase
+        .from('clientes')
+        .select('cpf')
+        .eq('id', clienteId)
+        .single();
+      return data;
+    },
+    enabled: !!clienteId,
+  });
+
   return {
     formData,
     updateField,
     formulario,
     declaracao,
-    isLoading,
+    isLoading: isLoading || !clientInfo,
     saving,
     lastSaved,
     finalizar,
     validationErrors,
+    clientCPF: clientInfo?.cpf || '',
   };
 }
