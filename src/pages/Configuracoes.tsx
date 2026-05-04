@@ -30,7 +30,7 @@ export default function Configuracoes() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabParam || 'escritorio');
-  const { isDono } = usePermissoes();
+  const { isDono, podeAlterarEscritorio, podeGerenciarUsuarios } = usePermissoes();
   const escritorioId = profile.escritorioId;
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -99,7 +99,7 @@ export default function Configuracoes() {
 
   async function handleBuscarCnpj() {
     const clean = cnpj.replace(/\D/g, '');
-    if (clean.length !== 14 || !isDono) return;
+    if (clean.length !== 14 || !podeAlterarEscritorio) return;
     setBuscandoCnpj(true);
     const dados = await buscarCNPJ(clean);
     if (dados) {
@@ -121,7 +121,7 @@ export default function Configuracoes() {
   }, [escritorio]);
 
   async function handleSave() {
-    if (!escritorioId || !isDono) return;
+    if (!escritorioId || !podeAlterarEscritorio) return;
     setSaving(true);
     const { error } = await supabase.from('escritorios').update({ nome, email, telefone, cnpj }).eq('id', escritorioId);
     if (error) toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
@@ -155,12 +155,12 @@ export default function Configuracoes() {
                   <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
                 ) : (
                   <div className="space-y-4 max-w-lg">
-                    <div className="space-y-2"><Label>Nome</Label><Input value={nome} onChange={e => setNome(e.target.value)} readOnly={!isDono} /></div>
-                    <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} readOnly={!isDono} /></div>
-                    <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} readOnly={!isDono} /></div>
-                    <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} readOnly={!isDono} disabled={buscandoCnpj} placeholder="00.000.000/0000-00" maxLength={18} /></div>
-                    {!isDono && <p className="text-sm text-muted-foreground">Apenas o dono pode alterar os dados do escritório.</p>}
-                    <Button onClick={handleSave} disabled={saving || !isDono}>{saving ? 'Salvando...' : 'Salvar Alterações'}</Button>
+                    <div className="space-y-2"><Label>Nome</Label><Input value={nome} onChange={e => setNome(e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
+                    <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
+                    <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
+                    <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} readOnly={!podeAlterarEscritorio} disabled={buscandoCnpj} placeholder="00.000.000/0000-00" maxLength={18} /></div>
+                    {!podeAlterarEscritorio && <p className="text-sm text-muted-foreground">Você não tem permissão para alterar os dados do escritório.</p>}
+                    <Button onClick={handleSave} disabled={saving || !podeAlterarEscritorio}>{saving ? 'Salvando...' : 'Salvar Alterações'}</Button>
                   </div>
                 )}
               </CardContent>
@@ -168,7 +168,7 @@ export default function Configuracoes() {
           </TabsContent>
 
           <TabsContent value="usuarios">
-            <AbaEquipe escritorioId={escritorioId} isDono={isDono} usuarios={usuarios} loadingUsers={loadingUsers} />
+            <AbaEquipe escritorioId={escritorioId} isDono={podeGerenciarUsuarios} usuarios={usuarios} loadingUsers={loadingUsers} />
           </TabsContent>
 
           <TabsContent value="marca">

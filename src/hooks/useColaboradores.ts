@@ -50,7 +50,7 @@ export const useColaboradores = (escritorioId: string) => {
   });
 
   const enviarConvite = useMutation({
-    mutationFn: async (dados: { email: string; nome: string; papel?: string }) => {
+    mutationFn: async (dados: { email: string; nome: string; papel?: string; permissoes?: string[] }) => {
       const token = crypto.randomUUID();
       const expiraEm = new Date();
       expiraEm.setDate(expiraEm.getDate() + 7);
@@ -67,6 +67,7 @@ export const useColaboradores = (escritorioId: string) => {
           token,
           expira_em: expiraEm.toISOString(),
           enviado_por: userId,
+          permissoes: dados.permissoes || [],
         })
         .select()
         .single();
@@ -119,6 +120,38 @@ export const useColaboradores = (escritorioId: string) => {
     },
   });
 
+  const atualizarPermissoes = useMutation({
+    mutationFn: async ({ usuarioId, permissoesIds }: { usuarioId: string; permissoesIds: string[] }) => {
+      // Remover permissões atuais
+      await supabase
+        .from('usuario_permissoes')
+        .delete()
+        .eq('user_id', usuarioId);
+
+      if (permissoesIds.length > 0) {
+        // Inserir novas permissões
+        const { error } = await supabase
+          .from('usuario_permissoes')
+          .insert(
+            permissoesIds.map(permissaoId => ({
+              user_id: usuarioId,
+              permissao_id: permissaoId,
+              escritorio_id: escritorioId
+            }))
+          );
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success('Permissões atualizadas com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['usuario-permissoes'] });
+    },
+    onError: (error: any) => {
+      console.error('Erro ao atualizar permissões:', error);
+      toast.error('Erro ao atualizar permissões');
+    }
+  });
+
   return {
     colaboradores,
     convitesPendentes,
@@ -126,5 +159,6 @@ export const useColaboradores = (escritorioId: string) => {
     enviarConvite,
     cancelarConvite,
     removerColaborador,
+    atualizarPermissoes,
   };
 };

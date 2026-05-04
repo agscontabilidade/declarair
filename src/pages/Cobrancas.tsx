@@ -14,6 +14,9 @@ import { ConfirmModal } from '@/components/cobrancas/ConfirmModal';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueryError } from '@/components/ui/QueryError';
+import { usePermissoes } from '@/hooks/usePermissoes';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShieldAlert } from 'lucide-react';
 
 export default function Cobrancas() {
   const [statusFilter, setStatusFilter] = useState('todos');
@@ -23,6 +26,22 @@ export default function Cobrancas() {
   const { profile } = useAuth();
 
   const { cobrancas, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
+  const { podeVerCobrancas, podeCriarCobrancas, podeExcluirCobranca } = usePermissoes();
+
+  if (!podeVerCobrancas) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <h1 className="font-display text-2xl font-bold text-foreground">Cobranças</h1>
+          <Alert variant="destructive" className="max-w-md">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Acesso negado</AlertTitle>
+            <AlertDescription>Você não tem permissão para visualizar cobranças.</AlertDescription>
+          </Alert>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   // Check if Inter is configured
   const { data: interAtivo } = useQuery({
@@ -57,9 +76,11 @@ export default function Cobrancas() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-2xl font-bold text-foreground">Cobranças</h1>
-          <Button className="active:scale-[0.98]" onClick={() => { setEditData(null); setModalOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" /> Nova Cobrança
-          </Button>
+          {podeCriarCobrancas && (
+            <Button className="active:scale-[0.98]" onClick={() => { setEditData(null); setModalOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" /> Nova Cobrança
+            </Button>
+          )}
         </div>
 
         {isError ? (

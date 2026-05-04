@@ -22,6 +22,9 @@ function formatDateTime(value: string | null | undefined) {
 }
 import { AnexarDeclaracaoButton } from '@/components/declaracoes/AnexarDeclaracaoButton';
 import { ProcessamentoSwitch, type StatusProcessamentoRfb } from '@/components/declaracoes/ProcessamentoSwitch';
+import { usePermissoes } from '@/hooks/usePermissoes';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShieldAlert } from 'lucide-react';
 
 const STATUS_COLORS: Record<string, string> = {
   aguardando_documentos: 'bg-amber-100 text-amber-800',
@@ -49,11 +52,27 @@ export default function Declaracoes() {
 
   const [docsTarget, setDocsTarget] = useState<{ id: string; nome: string } | null>(null);
   const [obsTarget, setObsTarget] = useState<{ id: string; nome: string } | null>(null);
+  const { podeVerDeclaracoes } = usePermissoes();
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(t);
   }, [search]);
+
+  if (!podeVerDeclaracoes) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <h1 className="font-display text-2xl font-bold text-foreground">Declarações</h1>
+          <Alert variant="destructive" className="max-w-md">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Acesso negado</AlertTitle>
+            <AlertDescription>Você não tem permissão para visualizar declarações.</AlertDescription>
+          </Alert>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   // Realtime: invalida a lista a cada mudança em declaracoes do escritório
   useEffect(() => {

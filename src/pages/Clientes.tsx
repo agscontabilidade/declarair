@@ -29,7 +29,7 @@ export default function Clientes() {
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
   const [cobrancaCliente, setCobrancaCliente] = useState<ClienteRow | null>(null);
   const { criar: criarCobranca } = useCobrancas('todos');
-  const { podeVerClientes, podeCriarClientes, isDono } = usePermissoes();
+  const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente, isDono } = usePermissoes();
   const { toast } = useToast();
 
   if (!podeVerClientes) {
@@ -107,8 +107,8 @@ export default function Clientes() {
               onEdit={(c) => setEditCliente(c)}
               onDelete={handleDelete}
               onCobranca={(c) => setCobrancaCliente(c)}
-              canEdit={podeCriarClientes}
-              canDelete={podeCriarClientes}
+              canEdit={podeEditarClientes}
+              canDelete={podeExcluirCliente}
             />
           </CardContent>
         </Card>

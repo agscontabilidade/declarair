@@ -8,10 +8,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { UserPlus, Copy, Trash2 } from 'lucide-react';
+import { UserPlus, Copy, Trash2, ShieldCheck, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 import { formatarPapel } from '@/lib/formatters';
+import { SeletorPermissoes } from './SeletorPermissoes';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 type Usuario = Tables<'usuarios'>;
 
@@ -23,19 +26,53 @@ interface AbaEquipeProps {
 }
 
 export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers }: AbaEquipeProps) {
-  const { convitesPendentes, enviarConvite, cancelarConvite, removerColaborador } =
+  const { convitesPendentes, enviarConvite, cancelarConvite, removerColaborador, atualizarPermissoes } =
     useColaboradores(escritorioId || '');
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [novoEmail, setNovoEmail] = useState('');
   const [novoNome, setNovoNome] = useState('');
+  const [permissoesSelecionadas, setPermissoesSelecionadas] = useState<string[]>([]);
+  const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
+  const [editPermissoesOpen, setEditPermissoesOpen] = useState(false);
+  const [permissoesEditando, setPermissoesEditando] = useState<string[]>([]);
 
   const handleEnviarConvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    await enviarConvite.mutateAsync({ email: novoEmail, nome: novoNome });
+    await enviarConvite.mutateAsync({ 
+      email: novoEmail, 
+      nome: novoNome,
+      permissoes: permissoesSelecionadas 
+    });
     setDialogOpen(false);
     setNovoEmail('');
     setNovoNome('');
+    setPermissoesSelecionadas([]);
+  };
+
+  const handleAbrirEditPermissoes = async (u: Usuario) => {
+    setUsuarioEditando(u);
+    setEditPermissoesOpen(true);
+    
+    // Buscar permissões atuais do usuário
+    const { data } = await supabase
+      .from('usuario_permissoes')
+      .select('permissao_id')
+      .eq('user_id', u.id);
+    
+    if (data) {
+      setPermissoesEditando(data.map(p => p.permissao_id));
+    }
+  };
+
+  const handleSalvarPermissoes = async () => {
+    if (!usuarioEditando) return;
+    await atualizarPermissoes.mutateAsync({
+      usuarioId: usuarioEditando.id,
+      permissoesIds: permissoesEditando
+    });
+    setEditPermissoesOpen(false);
+    setUsuarioEditando(null);
   };
 
   const copiarLink = (token: string) => {
@@ -61,22 +98,33 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                     Convidar Profissional
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Convidar Novo Profissional Contábil</DialogTitle>
                     <DialogDescription>
-                      Envie um convite para adicionar um novo membro à equipe
+                      Envie um convite para adicionar um novo membro à equipe com permissões específicas
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleEnviarConvite} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Nome</Label>
-                      <Input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Nome completo" required />
+                  <form onSubmit={handleEnviarConvite} className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Nome</Label>
+                        <Input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Nome completo" required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input type="email" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} placeholder="email@exemplo.com" required />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Email</Label>
-                      <Input type="email" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} placeholder="email@exemplo.com" required />
+
+                    <div className="space-y-4">
+                      <Label className="text-base font-semibold">Permissões do Usuário</Label>
+                      <SeletorPermissoes 
+                        permissoesSelecionadas={permissoesSelecionadas} 
+                        onChange={setPermissoesSelecionadas} 
+                      />
                     </div>
+
                     <Button type="submit" className="w-full" disabled={enviarConvite.isPending}>
                       {enviarConvite.isPending ? 'Enviando...' : 'Enviar Convite'}
                     </Button>
@@ -117,19 +165,32 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                     </TableCell>
                     {isDono && (
                       <TableCell>
-                        {u.papel !== 'dono' && u.ativo && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (confirm('Tem certeza que deseja desativar este profissional?')) {
-                                removerColaborador.mutate(u.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {u.papel !== 'dono' && u.ativo && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleAbrirEditPermissoes(u)}
+                                title="Gerenciar Permissões"
+                              >
+                                <ShieldCheck className="h-4 w-4 text-primary" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm('Tem certeza que deseja desativar este profissional?')) {
+                                    removerColaborador.mutate(u.id);
+                                  }
+                                }}
+                                title="Desativar"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
@@ -190,6 +251,37 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={editPermissoesOpen} onOpenChange={setEditPermissoesOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gerenciar Permissões</DialogTitle>
+            <DialogDescription>
+              Ajuste as permissões de acesso para <strong>{usuarioEditando?.nome}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <SeletorPermissoes 
+              permissoesSelecionadas={permissoesEditando} 
+              onChange={setPermissoesEditando} 
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setEditPermissoesOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSalvarPermissoes} 
+              disabled={atualizarPermissoes.isPending}
+            >
+              {atualizarPermissoes.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

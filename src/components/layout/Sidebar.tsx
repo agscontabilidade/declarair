@@ -4,6 +4,7 @@ import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
 import { formatarPapel } from '@/lib/formatters';
+import { usePermissoes } from '@/hooks/usePermissoes';
 import { useUsageStatus } from '@/hooks/useUsageStatus';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
@@ -38,6 +39,20 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const atrasadas = useCobrancasAtrasadas();
   const { percentual, level, usadas, limite } = useUsageStatus();
+  const { 
+    podeVerClientes, 
+    podeVerDeclaracoes, 
+    podeVerCobrancas, 
+    podeVerConfiguracoes 
+  } = usePermissoes();
+
+  const filteredNavItems = navItems.filter(item => {
+    if (item.url === '/clientes' && !podeVerClientes) return false;
+    if (item.url === '/declaracoes' && !podeVerDeclaracoes) return false;
+    if (item.url === '/cobrancas' && !podeVerCobrancas) return false;
+    if (item.url === '/configuracoes' && !podeVerConfiguracoes) return false;
+    return true;
+  });
 
   const initials = profile.nome?.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?';
   const papel = formatarPapel(profile.papel || 'colaborador');
@@ -56,7 +71,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {filteredNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink

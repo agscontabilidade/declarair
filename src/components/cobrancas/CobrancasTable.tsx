@@ -35,7 +35,7 @@ interface CobrancasTableProps {
 }
 
 export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, onCancelar, onExcluir, interAtivo = false }: CobrancasTableProps) {
-  const { podeExcluirCobranca } = usePermissoes();
+  const { podeExcluirCobranca, podeEditarCobrancas } = usePermissoes();
   const [gerarModal, setGerarModal] = useState<CobrancaComCliente | null>(null);
   const [qrModal, setQrModal] = useState<{ pixQrcode: string; pixQrcodeUrl?: string } | null>(null);
   const [boletoModal, setBoletoModal] = useState<{ linhaDigitavel: string; codigoBarras?: string; pdfUrl?: string } | null>(null);
@@ -107,10 +107,12 @@ export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, o
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
-                  <Button size="icon" variant="ghost" className={cn("h-8 w-8", c.status === 'pago' ? "text-amber-600" : "text-emerald-600")} onClick={() => onMarcarPago(c.id)} title={c.status === 'pago' ? "Estornar (voltar para pendente)" : "Marcar como pago"}>
-                    {c.status === 'pago' ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-                  </Button>
-                  {c.status !== 'cancelado' && (
+                  {podeEditarCobrancas && (
+                    <Button size="icon" variant="ghost" className={cn("h-8 w-8", c.status === 'pago' ? "text-amber-600" : "text-emerald-600")} onClick={() => onMarcarPago(c.id)} title={c.status === 'pago' ? "Estornar (voltar para pendente)" : "Marcar como pago"}>
+                      {c.status === 'pago' ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                    </Button>
+                  )}
+                  {c.status !== 'cancelado' && podeEditarCobrancas && (
                     <>
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEditar(c)} title="Editar">
                         <Edit className="h-4 w-4" />
