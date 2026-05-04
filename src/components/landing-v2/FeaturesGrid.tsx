@@ -25,7 +25,7 @@ const cardVariants = {
 
 export default function FeaturesGrid() {
   return (
-    <section id="features" className="py-28 lg:py-36 bg-[hsl(var(--lv2-slate-50))]">
+    <section id="features" className="py-28 lg:py-36 bg-[hsl(var(--lv2-slate-950))]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-16"
@@ -34,14 +34,14 @@ export default function FeaturesGrid() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-slate-200))] text-[hsl(var(--lv2-slate-500))] text-xs font-semibold uppercase tracking-wide mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[hsl(var(--lv2-slate-800))] text-[hsl(var(--lv2-slate-400))] text-xs font-semibold uppercase tracking-wide mb-6">
             Na prática
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[hsl(var(--lv2-slate-950))]">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
             Cada funcionalidade é um<br />
             <span className="gradient-text">problema a menos</span>
           </h2>
-          <p className="mt-6 text-lg text-[hsl(var(--lv2-slate-500))] max-w-lg mx-auto">
+          <p className="mt-6 text-lg text-white/50 max-w-lg mx-auto">
             Nada de feature bonita que não resolve. Aqui cada botão economiza tempo ou gera dinheiro.
           </p>
         </motion.div>
@@ -59,15 +59,15 @@ export default function FeaturesGrid() {
                 whileInView="show"
                 viewport={{ once: true, margin: '-60px' }}
                 whileHover={{ y: -8, transition: { duration: 0.25 } }}
-                className={`group relative rounded-2xl border border-[hsl(var(--lv2-slate-200))] bg-white p-8 transition-colors duration-300 hover:border-[hsl(var(${accentVar})/0.3)] hover:shadow-xl hover:shadow-[hsl(var(${accentVar})/0.08)] overflow-hidden ${f.span}`}
+                className={`group relative rounded-2xl border border-[hsl(var(--lv2-slate-800))] bg-[hsl(var(--lv2-slate-900))] p-8 transition-colors duration-300 hover:border-[hsl(var(${accentVar})/0.3)] hover:shadow-xl hover:shadow-[hsl(var(${accentVar})/0.08)] overflow-hidden ${f.span}`}
               >
                 <div className={`absolute -top-12 -right-12 w-32 h-32 bg-[hsl(var(${accentVar})/0.06)] rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity`} />
                 <div className="relative">
                   <div className={`h-13 w-13 rounded-2xl bg-[hsl(var(${accentVar})/0.08)] flex items-center justify-center mb-6 group-hover:bg-[hsl(var(${accentVar})/0.15)] transition-colors`}>
                     <f.icon className={`h-6 w-6 text-[hsl(var(${accentVar}))]`} />
                   </div>
-                  <h3 className="font-bold text-xl text-[hsl(var(--lv2-slate-950))] mb-3">{f.title}</h3>
-                  <p className="text-[15px] text-[hsl(var(--lv2-slate-500))] leading-relaxed">{f.desc}</p>
+                   <h3 className="font-bold text-xl text-white mb-3">{f.title}</h3>
+                  <p className="text-[15px] text-white/50 leading-relaxed">{f.desc}</p>
                 </div>
               </motion.div>
             );
