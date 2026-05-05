@@ -380,3 +380,224 @@ export function VisualIAFiscal({ resultado }: Props) {
     </div>
   );
 }
+
+// ===== Sub-componente: Análise Técnica Visual =====
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  user: User, wallet: Wallet, trending: TrendingUp, shield: ShieldAlert,
+  receipt: Receipt, building: Building, scale: Scale,
+};
+
+const STATUS_CONFIG = {
+  ok: { 
+    label: 'Conforme', icon: CheckCircle2, 
+    border: 'border-emerald-200', bg: 'bg-emerald-50/40 dark:bg-emerald-950/20',
+    iconColor: 'text-emerald-600', badgeBg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+    accent: 'bg-emerald-500'
+  },
+  atencao: { 
+    label: 'Atenção', icon: AlertCircle, 
+    border: 'border-amber-200', bg: 'bg-amber-50/40 dark:bg-amber-950/20',
+    iconColor: 'text-amber-600', badgeBg: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+    accent: 'bg-amber-500'
+  },
+  critico: { 
+    label: 'Crítico', icon: XCircle, 
+    border: 'border-destructive/30', bg: 'bg-destructive/5',
+    iconColor: 'text-destructive', badgeBg: 'bg-destructive/10 text-destructive',
+    accent: 'bg-destructive'
+  },
+};
+
+const PRIORIDADE_CONFIG = {
+  alta: { color: 'text-destructive', bg: 'bg-destructive/10 border-destructive/30', label: 'Prioridade Alta', emoji: '🔴' },
+  media: { color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200 dark:bg-amber-950/20', label: 'Prioridade Média', emoji: '🟡' },
+  baixa: { color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200 dark:bg-blue-950/20', label: 'Prioridade Baixa', emoji: '🔵' },
+};
+
+const VEREDITO_CONFIG = {
+  transmitir: { 
+    label: 'Pronto para Transmissão', icon: CheckCircle2, 
+    bg: 'from-emerald-500/10 to-emerald-500/5 border-emerald-200', 
+    iconColor: 'text-emerald-600', textColor: 'text-emerald-700 dark:text-emerald-400'
+  },
+  ajustar: { 
+    label: 'Ajustes Necessários', icon: AlertTriangle, 
+    bg: 'from-amber-500/10 to-amber-500/5 border-amber-200', 
+    iconColor: 'text-amber-600', textColor: 'text-amber-700 dark:text-amber-400'
+  },
+  nao_transmitir: { 
+    label: 'Não Transmitir', icon: XCircle, 
+    bg: 'from-destructive/10 to-destructive/5 border-destructive/30', 
+    iconColor: 'text-destructive', textColor: 'text-destructive'
+  },
+};
+
+interface AnaliseTecnicaVisualProps {
+  secoes?: VisualData['secoes_analise'];
+  recomendacoes?: VisualData['recomendacoes'];
+  conclusao?: VisualData['conclusao'];
+  detalhes?: VisualData['detalhes'];
+  textualFallback: string;
+}
+
+function AnaliseTecnicaVisual({ secoes, recomendacoes, conclusao, detalhes, textualFallback }: AnaliseTecnicaVisualProps) {
+  const hasStructured = (secoes && secoes.length > 0) || (recomendacoes && recomendacoes.length > 0) || conclusao;
+
+  if (!hasStructured) {
+    // Fallback para análises antigas que não têm estrutura
+    return (
+      <div className="space-y-4">
+        <h4 className="text-sm font-semibold flex items-center gap-2 px-1">
+          <ListChecks className="h-4 w-4 text-primary" /> Análise Técnica e Recomendações
+          <InfoTooltip content={detalhes?.analise_tecnica || "Diagnóstico detalhado da IA."} />
+        </h4>
+        <Card className="border-none bg-accent/5">
+          <CardContent className="pt-6">
+            <div className="prose prose-sm max-w-none dark:prose-invert">
+              <ReactMarkdown>{textualFallback}</ReactMarkdown>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <h4 className="text-sm font-semibold flex items-center gap-2 px-1">
+        <ListChecks className="h-4 w-4 text-primary" /> Análise Técnica e Recomendações
+        <InfoTooltip content={detalhes?.analise_tecnica || "Diagnóstico estruturado por temas, com recomendações priorizadas e veredito final da IA."} />
+      </h4>
+
+      {/* Cards de Seções por Tema */}
+      {secoes && secoes.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {secoes.map((secao, idx) => {
+            const cfg = STATUS_CONFIG[secao.status] || STATUS_CONFIG.ok;
+            const Icon = ICON_MAP[secao.icone || ''] || FileCheck2;
+            const StatusIcon = cfg.icon;
+            return (
+              <motion.div
+                key={secao.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <Card className={`relative overflow-hidden border ${cfg.border} ${cfg.bg} h-full`}>
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.accent}`} />
+                  <CardHeader className="pb-2 pl-5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Icon className={`h-4 w-4 shrink-0 ${cfg.iconColor}`} />
+                        <CardTitle className="text-sm font-semibold truncate">{secao.titulo}</CardTitle>
+                        {secao.tooltip && <InfoTooltip content={secao.tooltip} />}
+                      </div>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 ${cfg.badgeBg} shrink-0`}>
+                        <StatusIcon className="h-3 w-3" /> {cfg.label}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pl-5 space-y-3">
+                    <p className="text-xs text-muted-foreground leading-relaxed">{secao.resumo}</p>
+                    {secao.pontos && secao.pontos.length > 0 && (
+                      <ul className="space-y-1.5">
+                        {secao.pontos.map((p, i) => (
+                          <li key={i} className="text-xs flex items-start gap-2">
+                            <span className={`mt-1 h-1.5 w-1.5 rounded-full shrink-0 ${cfg.accent}`} />
+                            <span className="text-foreground/80">{p}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Recomendações Priorizadas */}
+      {recomendacoes && recomendacoes.length > 0 && (
+        <Card className="border-primary/10 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-primary" /> Plano de Ação Recomendado
+              <InfoTooltip content="Lista priorizada das ações que o contador deve tomar antes de transmitir a declaração." />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {recomendacoes.map((rec, i) => {
+              const cfg = PRIORIDADE_CONFIG[rec.prioridade] || PRIORIDADE_CONFIG.media;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className={`p-3 rounded-lg border ${cfg.bg} flex items-start gap-3`}
+                >
+                  <div className="flex flex-col items-center gap-0.5 shrink-0 pt-0.5">
+                    <Target className={`h-4 w-4 ${cfg.color}`} />
+                    <span className="text-[9px] font-bold uppercase">{rec.prioridade}</span>
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-sm font-medium text-foreground leading-snug">{rec.acao}</p>
+                    {rec.motivo && (
+                      <p className="text-xs text-muted-foreground leading-relaxed">{rec.motivo}</p>
+                    )}
+                    {rec.base_legal && (
+                      <p className="text-[10px] text-muted-foreground/70 italic">📖 {rec.base_legal}</p>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Veredito Final */}
+      {conclusao && (() => {
+        const cfg = VEREDITO_CONFIG[conclusao.veredito] || VEREDITO_CONFIG.ajustar;
+        const Icon = cfg.icon;
+        return (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className={`bg-gradient-to-r ${cfg.bg} border`}>
+              <CardContent className="pt-5 pb-5 flex items-center gap-4">
+                <div className={`h-12 w-12 rounded-full bg-background flex items-center justify-center shrink-0 ${cfg.iconColor}`}>
+                  <Icon className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-bold uppercase tracking-wider ${cfg.textColor}`}>Veredito Final da IA</p>
+                  <p className={`text-base font-bold ${cfg.textColor}`}>{cfg.label}</p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{conclusao.mensagem}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        );
+      })()}
+
+      {/* Texto adicional (cálculos detalhados) - colapsado dentro de um card discreto */}
+      {textualFallback && textualFallback.trim().length > 100 && (
+        <details className="group">
+          <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary flex items-center gap-1.5 px-1">
+            <Info className="h-3 w-3" /> Ver detalhamento técnico completo
+          </summary>
+          <Card className="border-none bg-accent/5 mt-2">
+            <CardContent className="pt-4">
+              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground">
+                <ReactMarkdown>{textualFallback}</ReactMarkdown>
+              </div>
+            </CardContent>
+          </Card>
+        </details>
+      )}
+    </div>
+  );
+}
