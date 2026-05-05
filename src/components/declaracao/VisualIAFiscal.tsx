@@ -130,8 +130,9 @@ export function VisualIAFiscal({ resultado, jsonOverride }: Props) {
     );
   }
 
-  // Se for Análise de Caixa
-  if (jsonData.resumo && jsonData.patrimonio) {
+  // Se for Análise de Caixa — render tolerante: basta UMA das chaves estar presente
+  const hasCaixaData = !!(jsonData.resumo || jsonData.patrimonio || jsonData.riscos_count || (jsonData.origens && jsonData.origens.length));
+  if (hasCaixaData && !jsonData.comparativo) {
     const { resumo, origens, aplicacoes, patrimonio, riscos_count, detalhes } = jsonData;
     return (
       <motion.div 
