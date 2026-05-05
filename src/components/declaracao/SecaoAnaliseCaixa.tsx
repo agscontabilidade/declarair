@@ -449,7 +449,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {historicoAnalises.map((analise) => {
+                {historicoAnalises.map((analise, index) => {
                   const resumo = analise.resumo_visual as any;
                   const isSelected = analiseSelecionadaId === analise.id || (analiseSelecionadaId === null && analiseRecenteId === null && index === 0);
                   const veredito = analise.veredito;
