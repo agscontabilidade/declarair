@@ -397,7 +397,7 @@ function ContaAzulSection({ escritorioId, isDono }: { escritorioId: string | nul
         window.history.replaceState({}, '', '/configuracoes');
       });
     }
-  }, [escritorioId, queryClient, toast]);
+  }, [escritorioId, queryClient]);
 
   const sincronizar = useMutation({
     mutationFn: async () => {
