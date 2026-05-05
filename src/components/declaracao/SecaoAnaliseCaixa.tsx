@@ -137,26 +137,78 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
       if (file.size > MAX_SIZE) throw new Error('Arquivo muito grande (máx. 18MB)');
       if (file.type !== 'application/pdf') throw new Error('Apenas PDF é aceito');
 
-      const path = `${declaracao.escritorio_id}/${declaracao.cliente_id}/_analise_caixa/${declaracaoId}.pdf`;
+      const finalPath = `${declaracao.escritorio_id}/${declaracao.cliente_id}/_analise_caixa/${declaracaoId}.pdf`;
+      const tempPath = `${declaracao.escritorio_id}/${declaracao.cliente_id}/_analise_caixa/_pending/${declaracaoId}-${Date.now()}.pdf`;
+
+      // 1. Upload temporário
       const { error: upErr } = await supabase.storage
         .from('documentos-clientes')
-        .upload(path, file, { upsert: true, contentType: 'application/pdf' });
+        .upload(tempPath, file, { upsert: true, contentType: 'application/pdf' });
       if (upErr) throw upErr;
+
+      // 2. Validação via IA (extrai CPF do PDF e compara)
+      const { data: validation, error: valErr } = await supabase.functions.invoke('ia-fiscal', {
+        body: { declaracao_id: declaracaoId, tipo: 'validate_owner', arquivo_path: tempPath },
+      });
+
+      if (valErr || !validation) {
+        await supabase.storage.from('documentos-clientes').remove([tempPath]);
+        throw new Error(valErr?.message || 'Falha ao validar PDF');
+      }
+
+      if (!validation.ok) {
+        await supabase.storage.from('documentos-clientes').remove([tempPath]);
+        return { ok: false as const, ...validation };
+      }
+
+      // 3. Move para path final
+      const { error: moveErr } = await supabase.storage
+        .from('documentos-clientes')
+        .move(tempPath, finalPath);
+      if (moveErr) {
+        // Fallback: copia via download/upload
+        const { data: blob } = await supabase.storage.from('documentos-clientes').download(tempPath);
+        if (blob) {
+          await supabase.storage.from('documentos-clientes').upload(finalPath, blob, { upsert: true, contentType: 'application/pdf' });
+        }
+        await supabase.storage.from('documentos-clientes').remove([tempPath]);
+      }
 
       const { error: updErr } = await supabase
         .from('declaracoes')
         .update({
-          arquivo_analise_caixa_url: path,
+          arquivo_analise_caixa_url: finalPath,
           arquivo_analise_caixa_uploaded_at: new Date().toISOString(),
         })
         .eq('id', declaracaoId);
       if (updErr) throw updErr;
+
+      return { ok: true as const };
     },
-    onSuccess: () => {
-      toast.success('PDF carregado para análise');
-      queryClient.invalidateQueries({ queryKey: ['decl-analise-caixa', declaracaoId] });
+    onSuccess: (result) => {
+      if (result?.ok) {
+        setValidationError(null);
+        toast.success('PDF validado e carregado para análise');
+        queryClient.invalidateQueries({ queryKey: ['decl-analise-caixa', declaracaoId] });
+      } else if (result && !result.ok) {
+        setValidationError({
+          motivo: result.motivo,
+          cpf_pdf: result.cpf_pdf,
+          nome_pdf: result.nome_pdf,
+          cpf_esperado: result.cpf_esperado,
+          nome_esperado: result.nome_esperado,
+        });
+        toast.error(
+          result.motivo === 'mismatch'
+            ? 'PDF rejeitado: pertence a outro contribuinte'
+            : 'Não foi possível identificar o CPF no PDF'
+        );
+      }
     },
-    onError: (e) => toast.error(getErrorMessage(e)),
+    onError: (e) => {
+      setValidationError(null);
+      toast.error(getErrorMessage(e));
+    },
   });
 
   const remove = useMutation({
