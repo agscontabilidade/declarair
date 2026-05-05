@@ -593,18 +593,18 @@ function AnaliseTecnicaVisual({ secoes, recomendacoes, conclusao, detalhes, text
 
       {/* Texto adicional (cálculos detalhados) - colapsado dentro de um card discreto */}
       {textualFallback && textualFallback.trim().length > 100 && (
-        <details className="group">
-          <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary flex items-center gap-1.5 px-1">
-            <Info className="h-3 w-3" /> Ver detalhamento técnico completo
-          </summary>
-          <Card className="border-none bg-accent/5 mt-2">
+        <div className="mt-8 space-y-3">
+          <h4 className="text-xs font-semibold flex items-center gap-2 px-1 text-muted-foreground uppercase tracking-wider">
+            <Info className="h-3 w-3" /> Detalhamento Técnico Completo
+          </h4>
+          <Card className="border-none bg-accent/5">
             <CardContent className="pt-4">
               <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground">
                 <ReactMarkdown>{textualFallback}</ReactMarkdown>
               </div>
             </CardContent>
           </Card>
-        </details>
+        </div>
       )}
     </div>
   );

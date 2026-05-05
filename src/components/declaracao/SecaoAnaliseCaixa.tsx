@@ -97,7 +97,8 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
   });
 
   const analiseAtual = historicoAnalises?.find(a => a.id === analiseSelecionadaId) || 
-                       historicoAnalises?.find(a => a.id === analiseRecenteId);
+                       historicoAnalises?.find(a => a.id === analiseRecenteId) ||
+                       (historicoAnalises && historicoAnalises.length > 0 ? historicoAnalises[0] : null);
 
   const detaleRef = useRef<HTMLDivElement>(null);
 
@@ -395,11 +396,24 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
       {historicoAnalises && historicoAnalises.length > 0 && (
         <Card className="overflow-hidden">
           <CardHeader className="pb-3 flex flex-row items-center justify-between bg-muted/30">
-            <div className="space-y-1">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <History className="h-4 w-4 text-primary" /> Histórico de Análises
-              </CardTitle>
-              <p className="text-[10px] text-muted-foreground">Últimas verificações técnicas realizadas pela IA</p>
+            <div className="flex items-center gap-4">
+              <div className="space-y-1">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <History className="h-4 w-4 text-primary" /> Histórico de Análises
+                </CardTitle>
+                <p className="text-[10px] text-muted-foreground">Últimas verificações técnicas realizadas pela IA</p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-[10px] gap-1.5 ml-2"
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ['analise-caixa-historico', declaracaoId] });
+                  toast.success('Lista de análises atualizada');
+                }}
+              >
+                <RotateCcw className="h-3 w-3" /> Atualizar Lista
+              </Button>
             </div>
             <Badge variant="outline" className="font-normal">{historicoAnalises.length} {historicoAnalises.length === 1 ? 'análise' : 'análises'}</Badge>
           </CardHeader>
@@ -410,25 +424,25 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
                   <TableHead className="w-[180px] text-[11px] uppercase font-bold">
                     <div className="flex items-center gap-1">
                       Data e Hora
-                      <HeaderInfo content="Data da execução desta análise." />
+                      <HeaderInfo content="Data e hora exata em que a análise foi processada pela nossa inteligência artificial." />
                     </div>
                   </TableHead>
                   <TableHead className="text-[11px] uppercase font-bold">
                     <div className="flex items-center gap-1">
                       Veredito
-                      <HeaderInfo content="Recomendação da IA sobre a transmissão da declaração (Transmitir, Ajustar ou Bloqueado)." />
+                      <HeaderInfo content="Parecer conclusivo da IA. 'Transmitir' indica fluxo de caixa coerente. 'Ajustar' sugere revisão de valores. 'Bloqueado' indica inconsistência grave que geraria malha fiscal imediata." />
                     </div>
                   </TableHead>
                   <TableHead className="text-[11px] uppercase font-bold text-right">
                     <div className="flex items-center justify-end gap-1">
                       Saldo de Caixa
-                      <HeaderInfo content="Saldo final calculado entre Origens e Aplicações. Valores negativos indicam estouro de caixa." />
+                      <HeaderInfo content="Diferença entre Origens e Aplicações. Exemplo: Se você ganhou R$ 100k (Origem) mas gastou/investiu R$ 120k (Aplicação), o saldo será negativo de -R$ 20k (Estouro), o que é um risco alto de malha fina." />
                     </div>
                   </TableHead>
                   <TableHead className="text-[11px] uppercase font-bold text-center">
                     <div className="flex items-center justify-center gap-1">
                       Riscos
-                      <HeaderInfo content="Círculos indicam o nível de risco detectado: Vermelho (Crítico), Amarelo (Alerta) e Verde (Conforme)." />
+                      <HeaderInfo content="Nível de criticidade dos alertas. Vermelho: Erros estruturais ou patrimoniais. Amarelo: Alertas de inconsistência leve ou cruzamento de dados. Verde: Dados dentro dos parâmetros de normalidade da Receita." />
                     </div>
                   </TableHead>
                   <TableHead className="w-[100px] text-[11px] uppercase font-bold text-right pr-4">Ação</TableHead>
@@ -437,7 +451,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
               <TableBody>
                 {historicoAnalises.map((analise) => {
                   const resumo = analise.resumo_visual as any;
-                  const isSelected = analiseSelecionadaId === analise.id;
+                  const isSelected = analiseSelecionadaId === analise.id || (analiseSelecionadaId === null && analiseRecenteId === null && index === 0);
                   const veredito = analise.veredito;
                   
                   const formatCurrency = (value: number) => {
