@@ -196,21 +196,30 @@ async function saveAnalysis(supabase: any, data: { declaracao_id: string; escrit
     }
   }
 
+  // Extrai veredito e resumo para listagem
+  const veredito = jsonResult?.conclusao?.veredito || jsonResult?.tipo || data.tipo;
+  const resumo_visual = jsonResult ? {
+    saldo: jsonResult.resumo?.saldo,
+    estouro: jsonResult.resumo?.estouro,
+    riscos: jsonResult.riscos_count,
+    veredito_msg: jsonResult.conclusao?.mensagem
+  } : null;
+
+  // Agora inserimos em vez de upsert para manter o histórico
   const { error } = await supabase
     .from("declaracao_analises")
-    .upsert({
+    .insert({
       declaracao_id: data.declaracao_id,
       escritorio_id: data.escritorio_id,
       tipo: data.tipo,
       resultado_texto: data.resultado_texto,
       resultado_json: jsonResult,
+      veredito,
+      resumo_visual,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'declaracao_id, tipo' });
+    });
 
   if (error) console.error("Database error saving analysis:", error);
-
-  // Lógica de Memória: Se houver recomendações críticas ou perfil novo, poderíamos salvar em cliente_memorias aqui.
-  // Por enquanto, a persistência da análise já serve como memória se recuperarmos no início da função.
 }
 
 
