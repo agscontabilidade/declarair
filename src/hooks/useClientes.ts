@@ -151,6 +151,7 @@ export function useClientes() {
     page, setPage,
     totalPages,
     contadores: contadores.data ?? [],
+    clientesComCobranca: cobrancasPorCliente.data ?? new Set<string>(),
     createCliente,
     updateCliente,
     deleteCliente,
