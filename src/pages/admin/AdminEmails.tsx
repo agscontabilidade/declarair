@@ -37,10 +37,7 @@ export default function AdminEmails() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('email_send_log')
-        .select(`
-          *,
-          usuario:usuarios!recipient_email(nome, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
