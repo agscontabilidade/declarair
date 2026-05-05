@@ -739,8 +739,10 @@ export type Database = {
           id: string
           resultado_json: Json | null
           resultado_texto: string | null
+          resumo_visual: Json | null
           tipo: string
           updated_at: string | null
+          veredito: string | null
         }
         Insert: {
           created_at?: string | null
@@ -749,8 +751,10 @@ export type Database = {
           id?: string
           resultado_json?: Json | null
           resultado_texto?: string | null
+          resumo_visual?: Json | null
           tipo: string
           updated_at?: string | null
+          veredito?: string | null
         }
         Update: {
           created_at?: string | null
@@ -759,8 +763,10 @@ export type Database = {
           id?: string
           resultado_json?: Json | null
           resultado_texto?: string | null
+          resumo_visual?: Json | null
           tipo?: string
           updated_at?: string | null
+          veredito?: string | null
         }
         Relationships: [
           {
