@@ -305,7 +305,7 @@ Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem texto extra:
 });
 
 // Tenta reparar JSON truncado/corrompido oriundo do streaming.
-function repairTruncatedJson(raw: string): any {
+function repairTruncatedJson(raw: string): unknown {
   for (let end = raw.length; end > 50; end--) {
     const ch = raw[end - 1];
     if (ch !== ',' && ch !== '}' && ch !== ']' && ch !== '"' && ch !== ' ' && ch !== '\n') continue;
