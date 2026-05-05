@@ -114,6 +114,7 @@ const App = () => (
               <Route path="/admin/assinaturas" element={<ProtectedRoute allowedType="admin"><AdminAssinaturas /></ProtectedRoute>} />
               <Route path="/admin/bugs" element={<ProtectedRoute allowedType="admin"><AdminBugReports /></ProtectedRoute>} />
               <Route path="/admin/logs" element={<ProtectedRoute allowedType="admin"><AdminLogs /></ProtectedRoute>} />
+              <Route path="/admin/emails" element={<ProtectedRoute allowedType="admin"><AdminEmails /></ProtectedRoute>} />
 
               {/* Contador routes - billing gated */}
               <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><BillingGate><Dashboard /></BillingGate></ProtectedRoute>} />
