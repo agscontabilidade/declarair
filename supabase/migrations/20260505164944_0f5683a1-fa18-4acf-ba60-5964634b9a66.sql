@@ -1,0 +1,1 @@
+ALTER TABLE public.declaracao_analises ADD CONSTRAINT declaracao_analises_declaracao_id_tipo_key UNIQUE (declaracao_id, tipo);

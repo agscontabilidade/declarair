@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Wallet, Upload, FileCheck, Loader2, Lock, Brain, ScanSearch, Eye, Trash2 } from 'lucide-react';
+import { Wallet, Upload, FileCheck, Loader2, Lock, Brain, ScanSearch, Eye, Trash2, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +29,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
 
   const [resultado, setResultado] = useState('');
   const [loading, setLoading] = useState(false);
+  const [ultimaAtualizacao, setUltimaAtualizacao] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -45,6 +46,28 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
       return data;
     },
   });
+
+  // Busca análise persistida
+  const { data: analisePersistida, isLoading: carregandoAnalise } = useQuery({
+    queryKey: ['analise-caixa-persistida', declaracaoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('declaracao_analises')
+        .select('resultado_texto, updated_at')
+        .eq('declaracao_id', declaracaoId)
+        .eq('tipo', 'analise_caixa')
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (analisePersistida) {
+      setResultado(analisePersistida.resultado_texto);
+      setUltimaAtualizacao(analisePersistida.updated_at);
+    }
+  }, [analisePersistida]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -84,16 +107,24 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
         .from('declaracoes')
         .update({ arquivo_analise_caixa_url: null, arquivo_analise_caixa_uploaded_at: null })
         .eq('id', declaracaoId);
+      
+      await supabase
+        .from('declaracao_analises')
+        .delete()
+        .eq('declaracao_id', declaracaoId)
+        .eq('tipo', 'analise_caixa');
     },
     onSuccess: () => {
-      toast.success('PDF removido');
+      toast.success('PDF e análise removidos');
       setResultado('');
+      setUltimaAtualizacao(null);
       queryClient.invalidateQueries({ queryKey: ['decl-analise-caixa', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['analise-caixa-persistida', declaracaoId] });
     },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
-  async function executarAnalise() {
+  async function executarAnalise(force = false) {
     setLoading(true);
     setResultado('');
     abortRef.current?.abort();
@@ -109,7 +140,11 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ declaracao_id: declaracaoId, tipo: 'analise_caixa' }),
+        body: JSON.stringify({ 
+          declaracao_id: declaracaoId, 
+          tipo: 'analise_caixa',
+          force_refresh: force 
+        }),
         signal: abortRef.current.signal,
       });
 
@@ -117,6 +152,17 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
         const err = await resp.json().catch(() => ({ error: 'Erro desconhecido' }));
         throw new Error(err.error || `Erro ${resp.status}`);
       }
+
+      const contentType = resp.headers.get('Content-Type');
+      if (contentType?.includes('application/json')) {
+        const data = await resp.json();
+        if (data.choices?.[0]?.delta?.content) {
+          setResultado(data.choices[0].delta.content);
+          setUltimaAtualizacao(data.updated_at);
+          return;
+        }
+      }
+
       if (!resp.body) throw new Error('Stream não disponível');
 
       const reader = resp.body.getReader();
@@ -126,7 +172,11 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          queryClient.invalidateQueries({ queryKey: ['analise-caixa-persistida', declaracaoId] });
+          setUltimaAtualizacao(new Date().toISOString());
+          break;
+        }
         buffer += decoder.decode(value, { stream: true });
         let nl: number;
         while ((nl = buffer.indexOf('\n')) !== -1) {
@@ -187,17 +237,24 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Wallet className="h-5 w-5 text-accent" />
-            Análise de Caixa
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Suba a declaração antes de transmitir. A IA do DeclaraIR irá ler, interpretar e identificar
-            estouro de caixa, evolução patrimonial incompatível e divergências de rendimentos.
-            <br />
-            <span className="text-amber-600 font-medium">Este PDF não é compartilhado com o Drive nem com o cliente.</span>
-          </p>
+        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wallet className="h-5 w-5 text-accent" />
+              Análise de Caixa
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Suba a declaração antes de transmitir. A IA do DeclaraIR irá ler, interpretar e identificar
+              estouro de caixa e inconsistências.
+              <br />
+              <span className="text-amber-600 font-medium">Este PDF não é compartilhado com o Drive nem com o cliente.</span>
+            </p>
+          </div>
+          {ultimaAtualizacao && (
+            <Badge variant="secondary" className="text-[10px] h-5">
+              Última análise: {new Date(ultimaAtualizacao).toLocaleDateString('pt-BR')}
+            </Badge>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           <input
@@ -249,25 +306,39 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
             </div>
           )}
 
-          <Button
-            className="gap-2 w-full"
-            onClick={executarAnalise}
-            disabled={loading || !temPdf}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanSearch className="h-4 w-4" />}
-            {loading ? 'Analisando...' : 'Executar Análise de Caixa'}
-          </Button>
+          <div className="flex gap-2">
+            {!resultado ? (
+              <Button
+                className="gap-2 w-full"
+                onClick={() => executarAnalise(false)}
+                disabled={loading || !temPdf}
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanSearch className="h-4 w-4" />}
+                {loading ? 'Analisando...' : 'Executar Análise de Caixa'}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="gap-2 w-full border-accent/20 hover:bg-accent/5"
+                onClick={() => executarAnalise(true)}
+                disabled={loading || !temPdf}
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4 text-accent" />}
+                Atualizar Análise (IA)
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      {(loading || resultado) && (
+      {(loading || resultado || carregandoAnalise) && (
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="gap-1">
                 <Brain className="h-3 w-3" /> Análise de Caixa
               </Badge>
-              {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              {(loading || carregandoAnalise) && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
             </div>
           </CardHeader>
           <Separator />
@@ -275,7 +346,9 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
             {resultado ? (
               <VisualIAFiscal resultado={resultado} />
             ) : (
-              <span className="text-muted-foreground animate-pulse">Lendo declaração e cruzando com o cadastro...</span>
+              <span className="text-muted-foreground animate-pulse">
+                {carregandoAnalise ? 'Recuperando análise anterior...' : 'Lendo declaração e cruzando com o cadastro...'}
+              </span>
             )}
           </CardContent>
         </Card>
