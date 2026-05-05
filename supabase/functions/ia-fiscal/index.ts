@@ -46,6 +46,8 @@ serve(async (req) => {
         .select("*")
         .eq("declaracao_id", declaracao_id)
         .eq("tipo", tipo || "analise")
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (existing) {
@@ -196,21 +198,43 @@ async function saveAnalysis(supabase: any, data: { declaracao_id: string; escrit
     }
   }
 
+  // Extrai veredito e resumo para listagem
+  const veredito = jsonResult?.conclusao?.veredito || jsonResult?.tipo || data.tipo;
+  const resumo_visual = jsonResult ? {
+    saldo: jsonResult.resumo?.saldo,
+    estouro: jsonResult.resumo?.estouro,
+    riscos: jsonResult.riscos_count,
+    veredito_msg: jsonResult.conclusao?.mensagem
+  } : null;
+
+  // Agora inserimos em vez de upsert para manter o histórico
   const { error } = await supabase
     .from("declaracao_analises")
-    .upsert({
+    .insert({
       declaracao_id: data.declaracao_id,
       escritorio_id: data.escritorio_id,
       tipo: data.tipo,
       resultado_texto: data.resultado_texto,
       resultado_json: jsonResult,
+      veredito,
+      resumo_visual,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'declaracao_id, tipo' });
+    });
 
   if (error) console.error("Database error saving analysis:", error);
 
-  // Lógica de Memória: Se houver recomendações críticas ou perfil novo, poderíamos salvar em cliente_memorias aqui.
-  // Por enquanto, a persistência da análise já serve como memória se recuperarmos no início da função.
+  // Lógica de Memória Evolutiva: Salva o veredito como memória para o cliente
+  if (jsonResult?.conclusao?.mensagem) {
+    const { data: decl } = await supabase.from("declaracoes").select("cliente_id").eq("id", data.declaracao_id).single();
+    if (decl?.cliente_id) {
+      await supabase.from("cliente_memorias").insert({
+        cliente_id: decl.cliente_id,
+        escritorio_id: data.escritorio_id,
+        categoria: 'fiscal_analysis',
+        conteudo: `[${data.tipo}] Veredito: ${jsonResult.conclusao.veredito}. ${jsonResult.conclusao.mensagem}`
+      });
+    }
+  }
 }
 
 
