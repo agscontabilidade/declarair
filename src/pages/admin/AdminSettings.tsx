@@ -126,6 +126,22 @@ export default function AdminSettings() {
     });
   };
 
+  const handleReveal = (id: string) => {
+    if (!isDono) {
+      toast.error('Apenas Super Admins podem revelar chaves sensíveis.');
+      return;
+    }
+    setConfirmRevealId(id);
+  };
+
+  const confirmReveal = () => {
+    if (confirmRevealId) {
+      setRevealedConfigs(prev => [...prev, confirmRevealId]);
+      setConfirmRevealId(null);
+      toast.success('Valor revelado temporariamente.');
+    }
+  };
+
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'system': return <Shield className="h-4 w-4" />;
@@ -134,6 +150,19 @@ export default function AdminSettings() {
       case 'api': return <Key className="h-4 w-4" />;
       default: return <Settings className="h-4 w-4" />;
     }
+  };
+
+  const isSensitive = (config: any) => {
+    const sensitiveKeywords = ['key', 'secret', 'token', 'password', 'api', 'stripe', 'asaas', 'conta_azul'];
+    return config.category === 'api' || 
+           sensitiveKeywords.some(keyword => config.key.toLowerCase().includes(keyword));
+  };
+
+  const maskValue = (value: any) => {
+    if (typeof value === 'object') return '******** (Objeto Protegido)';
+    const str = String(value);
+    if (str.length <= 8) return '********';
+    return `${str.substring(0, 4)}...${str.substring(str.length - 4)}`;
   };
 
   const filteredConfigs = configs?.filter(c => {
