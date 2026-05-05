@@ -395,7 +395,7 @@ export function StepDadosPessoais({ data, onChange, clientCPF }: Props) {
                 <div>
                   <p className="text-sm font-medium">Usar meu CPF como chave PIX</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Chave: {!!data.chave_pix_cliente ? clientCPF : 'Não selecionada'}
+                    Chave: {data.chave_pix_cliente ? clientCPF : 'Não selecionada'}
                   </p>
                 </div>
                 <Switch 
