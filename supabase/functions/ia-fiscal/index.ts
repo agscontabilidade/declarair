@@ -282,7 +282,7 @@ Regras para os cálculos:
 - **Aplicações**: Δ Bens (Ano Atual - Ano Anterior, se positivo) + Despesas pagas + Imposto pago + Dívidas quitadas.
 - **Saldo**: Origens - Aplicações. Se Saldo < 0, então estouro = true.
 
-Siga rigorosamente a base legal e as tabelas de 2026 fornecidas.`;,search:
+Siga rigorosamente a base legal e as tabelas de 2026 fornecidas.`;
   }
 
   // tipo padrão: "analise" (geral)
