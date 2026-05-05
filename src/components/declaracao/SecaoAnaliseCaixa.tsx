@@ -31,6 +31,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
   const [loading, setLoading] = useState(false);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [analiseSelecionadaId, setAnaliseSelecionadaId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -47,27 +48,29 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     },
   });
 
-  // Busca análise persistida
-  const { data: analisePersistida, isLoading: carregandoAnalise } = useQuery({
-    queryKey: ['analise-caixa-persistida', declaracaoId],
+  // Busca histórico de análises
+  const { data: historicoAnalises, isLoading: carregandoHistorico } = useQuery({
+    queryKey: ['analise-caixa-historico', declaracaoId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('declaracao_analises')
-        .select('resultado_texto, updated_at')
+        .select('id, resultado_texto, veredito, resumo_visual, updated_at, created_at')
         .eq('declaracao_id', declaracaoId)
         .eq('tipo', 'analise_caixa')
-        .maybeSingle();
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
+  const analiseAtual = historicoAnalises?.find(a => a.id === analiseSelecionadaId) || historicoAnalises?.[0];
+
   useEffect(() => {
-    if (analisePersistida) {
-      setResultado(analisePersistida.resultado_texto);
-      setUltimaAtualizacao(analisePersistida.updated_at);
+    if (analiseAtual) {
+      setResultado(analiseAtual.resultado_texto);
+      setUltimaAtualizacao(analiseAtual.updated_at);
     }
-  }, [analisePersistida]);
+  }, [analiseAtual]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
