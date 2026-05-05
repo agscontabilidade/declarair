@@ -394,6 +394,32 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
             }}
           />
 
+          {validationError && (
+            <Alert variant="destructive" className="border-destructive/50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="space-y-2">
+                {validationError.motivo === 'mismatch' ? (
+                  <>
+                    <p className="font-semibold">PDF não pertence a este cliente</p>
+                    <p className="text-xs">
+                      O CPF identificado no PDF é <b>{validationError.cpf_pdf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</b>
+                      {validationError.nome_pdf && <> ({validationError.nome_pdf})</>}, mas o cliente desta declaração é{' '}
+                      <b>{validationError.nome_esperado}</b> — CPF{' '}
+                      <b>{validationError.cpf_esperado?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</b>.
+                    </p>
+                    <p className="text-xs">O upload foi cancelado e a análise não será gerada. Verifique se o arquivo correto foi selecionado.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold">Não foi possível identificar o CPF do declarante</p>
+                    <p className="text-xs">Verifique se o PDF é uma declaração IRPF válida e legível. O upload foi cancelado.</p>
+                  </>
+                )}
+                <Button size="sm" variant="outline" onClick={() => setValidationError(null)}>Fechar</Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {temPdf ? (
             <div className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3">
               <div className="flex items-start gap-3 min-w-0">
