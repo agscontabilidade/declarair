@@ -92,6 +92,22 @@ export default function Cobrancas() {
           )}
         </div>
 
+        {clienteIdFiltro && (
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="gap-2 py-1 px-3">
+              Filtrando por cliente{nomeClienteFiltro ? `: ${nomeClienteFiltro}` : ''}
+              <button
+                type="button"
+                aria-label="Limpar filtro"
+                onClick={() => { searchParams.delete('cliente'); setSearchParams(searchParams); }}
+                className="hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          </div>
+        )}
+
         {isError ? (
           <QueryError message={error?.message} onRetry={() => refetch()} />
         ) : (
