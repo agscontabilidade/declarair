@@ -222,6 +222,19 @@ async function saveAnalysis(supabase: any, data: { declaracao_id: string; escrit
     });
 
   if (error) console.error("Database error saving analysis:", error);
+
+  // Lógica de Memória Evolutiva: Salva o veredito como memória para o cliente
+  if (jsonResult?.conclusao?.mensagem) {
+    const { data: decl } = await supabase.from("declaracoes").select("cliente_id").eq("id", data.declaracao_id).single();
+    if (decl?.cliente_id) {
+      await supabase.from("cliente_memorias").insert({
+        cliente_id: decl.cliente_id,
+        escritorio_id: data.escritorio_id,
+        categoria: 'fiscal_analysis',
+        conteudo: `[${data.tipo}] Veredito: ${jsonResult.conclusao.veredito}. ${jsonResult.conclusao.mensagem}`
+      });
+    }
+  }
 }
 
 
