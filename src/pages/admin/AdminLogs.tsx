@@ -4,13 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { 
   Search, 
-  Calendar as CalendarIcon, 
   Filter, 
   History, 
-  User, 
   Building, 
-  Info,
-  ArrowUpDown
+  Info
 } from 'lucide-react';
 import { 
   Table, 
