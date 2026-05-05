@@ -30,9 +30,10 @@ interface Props {
   onCobranca?: (cliente: ClienteRow) => void;
   canEdit?: boolean;
   canDelete?: boolean;
+  clientesComCobranca?: Set<string>;
 }
 
-export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, canEdit = true, canDelete = true }: Props) {
+export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, canEdit = true, canDelete = true, clientesComCobranca }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-3 p-3">
@@ -63,6 +64,7 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                 <TableHead>Nome</TableHead>
                 <TableHead className="hidden sm:table-cell">WhatsApp</TableHead>
                 <TableHead>Procuração e-CAC</TableHead>
+                <TableHead>Cobrança</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -91,6 +93,13 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                         <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Ativa</Badge>
                       ) : (
                         <Badge variant="secondary">Pendente</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {clientesComCobranca?.has(c.id) ? (
+                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Gerada</Badge>
+                      ) : (
+                        <Badge variant="secondary">Não gerada</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>

@@ -46,6 +46,21 @@ export function useClientes() {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  const cobrancasPorCliente = useQuery({
+    queryKey: ['cobrancas-por-cliente', escritorioId],
+    queryFn: async () => {
+      if (!escritorioId) return new Set<string>();
+      const { data, error } = await supabase
+        .from('cobrancas')
+        .select('cliente_id')
+        .eq('escritorio_id', escritorioId);
+      if (error) throw error;
+      return new Set<string>((data || []).map((r) => r.cliente_id));
+    },
+    enabled: !!escritorioId,
+    staleTime: 1000 * 60 * 2,
+  });
+
   const contadores = useQuery({
     queryKey: ['contadores', escritorioId],
     queryFn: async () => {
@@ -136,6 +151,7 @@ export function useClientes() {
     page, setPage,
     totalPages,
     contadores: contadores.data ?? [],
+    clientesComCobranca: cobrancasPorCliente.data ?? new Set<string>(),
     createCliente,
     updateCliente,
     deleteCliente,
