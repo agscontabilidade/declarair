@@ -88,7 +88,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('declaracao_analises')
-        .select('id, resultado_texto, veredito, resumo_visual, updated_at, created_at')
+        .select('id, resultado_texto, resultado_json, veredito, resumo_visual, updated_at, created_at')
         .eq('declaracao_id', declaracaoId)
         .eq('tipo', 'analise_caixa')
         .order('created_at', { ascending: false });
