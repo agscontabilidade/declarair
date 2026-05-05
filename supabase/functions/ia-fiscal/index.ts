@@ -134,11 +134,44 @@ serve(async (req) => {
           return;
         }
 
+        // Buffer SSE acumulado entre chunks para nunca quebrar uma linha JSON
+        let sseBuffer = "";
+
+        const processBuffer = (flush = false) => {
+          let nl: number;
+          while ((nl = sseBuffer.indexOf("\n")) !== -1) {
+            let line = sseBuffer.slice(0, nl);
+            sseBuffer = sseBuffer.slice(nl + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (!line.startsWith("data: ")) continue;
+            const payload = line.slice(6);
+            if (payload === "[DONE]") continue;
+            try {
+              const data = JSON.parse(payload);
+              const content = data.choices?.[0]?.delta?.content || "";
+              fullResponse += content;
+            } catch (_e) {
+              // Linha inválida — descarta sem corromper buffer
+            }
+          }
+          if (flush && sseBuffer.trim().startsWith("data: ")) {
+            const payload = sseBuffer.trim().slice(6);
+            if (payload && payload !== "[DONE]") {
+              try {
+                const data = JSON.parse(payload);
+                const content = data.choices?.[0]?.delta?.content || "";
+                fullResponse += content;
+              } catch (_e) { /* ignora */ }
+            }
+            sseBuffer = "";
+          }
+        };
+
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              // Quando o stream termina, salvamos no banco em background
+              processBuffer(true);
               if (fullResponse) {
                 saveAnalysis(supabase, {
                   declaracao_id,
@@ -151,22 +184,9 @@ serve(async (req) => {
               break;
             }
 
-            const chunk = decoder.decode(value);
             controller.enqueue(value);
-
-            // Tenta extrair o conteúdo do delta para compor a resposta completa
-            const lines = chunk.split("\n");
-            for (const line of lines) {
-              if (line.startsWith("data: ") && line !== "data: [DONE]") {
-                try {
-                  const data = JSON.parse(line.slice(6));
-                  const content = data.choices?.[0]?.delta?.content || "";
-                  fullResponse += content;
-                } catch (e) {
-                  // Ignore parse errors for partial chunks
-                }
-              }
-            }
+            sseBuffer += decoder.decode(value, { stream: true });
+            processBuffer(false);
           }
         } catch (e) {
           controller.error(e);

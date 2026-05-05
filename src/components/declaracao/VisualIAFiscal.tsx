@@ -130,8 +130,9 @@ export function VisualIAFiscal({ resultado, jsonOverride }: Props) {
     );
   }
 
-  // Se for Análise de Caixa
-  if (jsonData.resumo && jsonData.patrimonio) {
+  // Se for Análise de Caixa — render tolerante: basta UMA das chaves estar presente
+  const hasCaixaData = !!(jsonData.resumo || jsonData.patrimonio || jsonData.riscos_count || (jsonData.origens && jsonData.origens.length));
+  if (hasCaixaData && !jsonData.comparativo) {
     const { resumo, origens, aplicacoes, patrimonio, riscos_count, detalhes } = jsonData;
     return (
       <motion.div 
@@ -148,22 +149,22 @@ export function VisualIAFiscal({ resultado, jsonOverride }: Props) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className={`${resumo!.estouro ? 'border-destructive/30 bg-destructive/5' : 'border-emerald-200 bg-emerald-50/30'}`}>
+          <Card className={`${resumo?.estouro ? 'border-destructive/30 bg-destructive/5' : 'border-emerald-200 bg-emerald-50/30'}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   Saldo de Caixa
                   <InfoTooltip content={detalhes?.saldo || "Diferença entre tudo que entrou (Origens) e tudo que saiu ou foi investido (Aplicações). Se negativo, indica 'estouro de caixa'."} />
                 </span>
-                {resumo!.estouro ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                {resumo?.estouro ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${resumo!.estouro ? 'text-destructive' : 'text-emerald-700'}`}>
-                {formatCurrency(resumo!.saldo)}
+              <div className={`text-2xl font-bold ${resumo?.estouro ? 'text-destructive' : 'text-emerald-700'}`}>
+                {typeof resumo?.saldo === 'number' ? formatCurrency(resumo.saldo) : '—'}
               </div>
               <p className="text-[11px] text-muted-foreground mt-1">
-                {resumo!.estouro ? '⚠️ Estouro detectado!' : '✅ Caixa compatível.'}
+                {resumo?.estouro ? '⚠️ Estouro detectado!' : resumo ? '✅ Caixa compatível.' : 'Dado indisponível.'}
               </p>
             </CardContent>
           </Card>
@@ -176,16 +177,25 @@ export function VisualIAFiscal({ resultado, jsonOverride }: Props) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold flex items-baseline gap-2">
-                {formatCurrency(patrimonio!.atual)}
-                <span className={`text-xs font-medium flex items-center ${patrimonio!.variacao_perc >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
-                  {patrimonio!.variacao_perc >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-                  {Math.abs(patrimonio!.variacao_perc).toFixed(1)}%
-                </span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Anterior: {formatCurrency(patrimonio!.anterior)}
-              </p>
+              {patrimonio ? (
+                <>
+                  <div className="text-2xl font-bold flex items-baseline gap-2">
+                    {formatCurrency(patrimonio.atual)}
+                    <span className={`text-xs font-medium flex items-center ${patrimonio.variacao_perc >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                      {patrimonio.variacao_perc >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                      {Math.abs(patrimonio.variacao_perc).toFixed(1)}%
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Anterior: {formatCurrency(patrimonio.anterior)}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-muted-foreground">—</div>
+                  <p className="text-[11px] text-muted-foreground mt-1">Dado indisponível.</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -216,66 +226,71 @@ export function VisualIAFiscal({ resultado, jsonOverride }: Props) {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="shadow-sm">
-            <CardHeader className="pb-0">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-blue-500" /> Fluxo de Caixa
-                <InfoTooltip content={detalhes?.fluxo || "Comparação visual entre as suas fontes de recursos (Origens) e os seus gastos/investimentos (Aplicações)."} />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-[280px] pt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={[
-                  { name: 'Origens', valor: resumo!.total_origens, fill: '#3b82f6' },
-                  { name: 'Aplicações', valor: resumo!.total_aplicacoes, fill: resumo!.estouro ? '#ef4444' : '#10b981' }
-                ]}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" fontSize={11} axisLine={false} tickLine={false} />
-                  <YAxis fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${v/1000}k`} />
-                  <Tooltip 
-                    cursor={{fill: 'transparent'}}
-                    formatter={(v: number) => formatCurrency(v)}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  />
-                  <Bar dataKey="valor" radius={[6, 6, 0, 0]} barSize={50} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        {(resumo || (origens && origens.length > 0)) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {resumo && (
+              <Card className="shadow-sm">
+                <CardHeader className="pb-0">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-blue-500" /> Fluxo de Caixa
+                    <InfoTooltip content={detalhes?.fluxo || "Comparação visual entre as suas fontes de recursos (Origens) e os seus gastos/investimentos (Aplicações)."} />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-[280px] pt-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[
+                      { name: 'Origens', valor: resumo.total_origens, fill: '#3b82f6' },
+                      { name: 'Aplicações', valor: resumo.total_aplicacoes, fill: resumo.estouro ? '#ef4444' : '#10b981' }
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis dataKey="name" fontSize={11} axisLine={false} tickLine={false} />
+                      <YAxis fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${v/1000}k`} />
+                      <Tooltip 
+                        cursor={{fill: 'transparent'}}
+                        formatter={(v: number) => formatCurrency(v)}
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                      />
+                      <Bar dataKey="valor" radius={[6, 6, 0, 0]} barSize={50} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
 
-          <Card className="shadow-sm">
-            <CardHeader className="pb-0">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Wallet className="h-4 w-4 text-emerald-500" /> Fontes de Origem
-                <InfoTooltip content={detalhes?.origens || "Detalhamento de onde vieram os recursos declarados (Salários, Aluguéis, Isentos, etc.)."} />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-[280px] pt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={origens}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={85}
-                    paddingAngle={8}
-                    dataKey="valor"
-                    nameKey="label"
-                  >
-                    {origens!.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
+            {origens && origens.length > 0 && (
+              <Card className="shadow-sm">
+                <CardHeader className="pb-0">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Wallet className="h-4 w-4 text-emerald-500" /> Fontes de Origem
+                    <InfoTooltip content={detalhes?.origens || "Detalhamento de onde vieram os recursos declarados (Salários, Aluguéis, Isentos, etc.)."} />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-[280px] pt-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={origens}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={85}
+                        paddingAngle={8}
+                        dataKey="valor"
+                        nameKey="label"
+                      >
+                        {origens.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                      <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
         <Separator className="my-6" />
 
         <AnaliseTecnicaVisual 

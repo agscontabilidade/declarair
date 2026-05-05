@@ -26,11 +26,39 @@ const JSON_BLOCK_RE = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
 
 function tryJsonParse(raw: string): Record<string, unknown> | null {
   try { return JSON.parse(raw); } catch { /* ignore */ }
-  // Tentativas leves de reparo
   const cleaned = raw
-    .replace(/,\s*([}\]])/g, '$1') // trailing commas
-    .replace(/[\u201C\u201D]/g, '"'); // smart quotes
-  try { return JSON.parse(cleaned); } catch { return null; }
+    .replace(/,\s*([}\]])/g, '$1')
+    .replace(/[\u201C\u201D]/g, '"');
+  try { return JSON.parse(cleaned); } catch { /* ignore */ }
+  return repairTruncatedJson(cleaned);
+}
+
+function repairTruncatedJson(raw: string): Record<string, unknown> | null {
+  // Caminha do final pra trás, balanceia { } [ ] (ignorando conteúdo de strings)
+  // e tenta parsear progressivamente até obter um objeto válido.
+  for (let end = raw.length; end > 50; end--) {
+    const ch = raw[end - 1];
+    if (ch !== ',' && ch !== '}' && ch !== ']' && ch !== '"' && ch !== ' ' && ch !== '\n') continue;
+    let candidate = raw.slice(0, end).replace(/,\s*$/, '');
+    let inString = false, escape = false;
+    let openObj = 0, openArr = 0;
+    for (let i = 0; i < candidate.length; i++) {
+      const c = candidate[i];
+      if (escape) { escape = false; continue; }
+      if (c === '\\') { escape = true; continue; }
+      if (c === '"') { inString = !inString; continue; }
+      if (inString) continue;
+      if (c === '{') openObj++;
+      else if (c === '}') openObj--;
+      else if (c === '[') openArr++;
+      else if (c === ']') openArr--;
+    }
+    if (inString) candidate += '"';
+    while (openArr-- > 0) candidate += ']';
+    while (openObj-- > 0) candidate += '}';
+    try { return JSON.parse(candidate) as Record<string, unknown>; } catch { /* try shorter */ }
+  }
+  return null;
 }
 
 function extractNumber(text: string, key: string): number | null {
