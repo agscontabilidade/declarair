@@ -260,7 +260,7 @@ export default function AdminSettings() {
                   <Card key={i} className="animate-pulse h-48 bg-muted/50" />
                 ))
               ) : filteredConfigs?.map((config: any) => (
-                <Card key={config.id} className="relative overflow-hidden">
+                <Card key={config.id} className="relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-2">
                     <Badge variant="secondary" className="gap-1 capitalize">
                       {getCategoryIcon(config.category)}
@@ -268,14 +268,43 @@ export default function AdminSettings() {
                     </Badge>
                   </div>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-mono">{config.key}</CardTitle>
+                    <CardTitle className="text-lg font-mono flex items-center gap-2">
+                      {config.key}
+                      {isSensitive(config) && <Lock className="h-3 w-3 text-amber-500" title="Valor Sensível" />}
+                    </CardTitle>
                     <CardDescription>{config.description || 'Sem descrição'}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="bg-muted p-3 rounded-md overflow-hidden">
-                      <pre className="text-xs font-mono max-h-32 overflow-y-auto">
-                        {JSON.stringify(config.value, null, 2)}
+                    <div className="bg-muted p-3 rounded-md overflow-hidden relative">
+                      <pre className="text-xs font-mono max-h-32 overflow-y-auto pr-8">
+                        {isSensitive(config) && !revealedConfigs.includes(config.id) 
+                          ? maskValue(config.value)
+                          : JSON.stringify(config.value, null, 2)}
                       </pre>
+                      
+                      {isSensitive(config) && !revealedConfigs.includes(config.id) && (
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="absolute right-2 top-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleReveal(config.id)}
+                          title="Revelar valor"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      )}
+
+                      {isSensitive(config) && revealedConfigs.includes(config.id) && (
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="absolute right-2 top-2 h-6 w-6"
+                          onClick={() => setRevealedConfigs(prev => prev.filter(id => id !== config.id))}
+                          title="Esconder valor"
+                        >
+                          <EyeOff className="h-3 w-3 text-primary" />
+                        </Button>
+                      )}
                     </div>
                     <div className="flex items-center justify-between pt-2">
                       <span className="text-[10px] text-muted-foreground">
