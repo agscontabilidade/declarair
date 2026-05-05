@@ -29,22 +29,32 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
 
   const [resultado, setResultado] = useState('');
   const [loading, setLoading] = useState(false);
+  const [ultimaAtualizacao, setUltimaAtualizacao] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const { data: declaracao } = useQuery({
-    queryKey: ['decl-analise-caixa', declaracaoId],
+  // Busca análise persistida
+  const { data: analisePersistida, isLoading: carregandoAnalise } = useQuery({
+    queryKey: ['analise-caixa-persistida', declaracaoId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('declaracoes')
-        .select('id, escritorio_id, cliente_id, arquivo_analise_caixa_url, arquivo_analise_caixa_uploaded_at')
-        .eq('id', declaracaoId)
-        .single();
+        .from('declaracao_analises')
+        .select('resultado_texto, updated_at')
+        .eq('declaracao_id', declaracaoId)
+        .eq('tipo', 'analise_caixa')
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
+
+  useEffect(() => {
+    if (analisePersistida) {
+      setResultado(analisePersistida.resultado_texto);
+      setUltimaAtualizacao(analisePersistida.updated_at);
+    }
+  }, [analisePersistida]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -84,16 +94,25 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
         .from('declaracoes')
         .update({ arquivo_analise_caixa_url: null, arquivo_analise_caixa_uploaded_at: null })
         .eq('id', declaracaoId);
+      
+      // Também remove a análise persistida associada
+      await supabase
+        .from('declaracao_analises')
+        .delete()
+        .eq('declaracao_id', declaracaoId)
+        .eq('tipo', 'analise_caixa');
     },
     onSuccess: () => {
-      toast.success('PDF removido');
+      toast.success('PDF e análise removidos');
       setResultado('');
+      setUltimaAtualizacao(null);
       queryClient.invalidateQueries({ queryKey: ['decl-analise-caixa', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['analise-caixa-persistida', declaracaoId] });
     },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
-  async function executarAnalise() {
+  async function executarAnalise(force = false) {
     setLoading(true);
     setResultado('');
     abortRef.current?.abort();
@@ -109,7 +128,11 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ declaracao_id: declaracaoId, tipo: 'analise_caixa' }),
+        body: JSON.stringify({ 
+          declaracao_id: declaracaoId, 
+          tipo: 'analise_caixa',
+          force_refresh: force 
+        }),
         signal: abortRef.current.signal,
       });
 
@@ -117,6 +140,18 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
         const err = await resp.json().catch(() => ({ error: 'Erro desconhecido' }));
         throw new Error(err.error || `Erro ${resp.status}`);
       }
+
+      // Se for cacheado (JSON direto)
+      const contentType = resp.headers.get('Content-Type');
+      if (contentType?.includes('application/json')) {
+        const data = await resp.json();
+        if (data.choices?.[0]?.delta?.content) {
+          setResultado(data.choices[0].delta.content);
+          setUltimaAtualizacao(data.updated_at);
+          return;
+        }
+      }
+
       if (!resp.body) throw new Error('Stream não disponível');
 
       const reader = resp.body.getReader();
@@ -126,7 +161,12 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          // Invalida a query de persistência para garantir que os dados novos sejam refletidos se o usuário recarregar
+          queryClient.invalidateQueries({ queryKey: ['analise-caixa-persistida', declaracaoId] });
+          setUltimaAtualizacao(new Date().toISOString());
+          break;
+        }
         buffer += decoder.decode(value, { stream: true });
         let nl: number;
         while ((nl = buffer.indexOf('\n')) !== -1) {
@@ -158,6 +198,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
       setLoading(false);
     }
   }
+
 
   if (billingLoading) {
     return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
