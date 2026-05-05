@@ -73,7 +73,11 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        // Roteamento por tipo: Pro p/ tarefas com PDF + cálculo + raciocínio jurídico-fiscal,
+        // Flash p/ sugestões leves (deduções).
+        model: tipo === "deducoes"
+          ? "google/gemini-2.5-flash"
+          : "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
