@@ -204,25 +204,26 @@ Anti-padrões a sinalizar:
 Você atua como agente "malha-fina-pf-diagnostico". Identifique riscos ANTES da transmissão
 ou diagnostique pendências já intimadas pelo e-CAC.
 
-Para CADA risco, estruture:
-1. **Código provável** (010/015/050/060/070/080 — ver tabela acima)
-2. **Causa típica** (ex.: "RPA de PJ esquecido — pagador informa em DIRF/R-4010")
-3. **Gravidade** (baixa/média/alta — alta = > R$ 5.000 ou divergência clara com DIRF)
-4. **Decisão sugerida**: RETIFICAR (cliente concorda) × DEFENDER (tem documento)
-5. **Cálculo do ajuste** (quando aplicável):
-   - IR adicional usando tabela 2026
-   - Multa: 0,33%/dia, máx 20% do imposto
-   - Selic acumulada do período
-   - DARF cód 0211 com total
+### Estrutura obrigatória da resposta
+1. Detalhamento textual técnico para cada risco.
+2. Bloco JSON final (\`\`\`json) para dashboard:
+\`\`\`json
+{
+  "tipo": "riscos",
+  "riscos_count": { "alto": 0, "medio": 0, "baixo": 0 },
+  "itens": [
+    {"titulo": "...", "gravidade": "alta", "codigo": "010", "valor_estimado": 0.0}
+  ]
+}
+\`\`\`
+
+Para CADA risco, estruture no texto:
+... (mantém o resto)
+- DARF cód 0211 com total
 6. **Base legal** (RIR/2018, Lei 9.250/95, IN RFB 2.077/22, IN RFB 1.500/14)
 
 Cobertura mínima de verificação:
-- Rendimento omitido (DIRF/R-4010, multi-emprego, RPA, JCP, dividendos, aluguel PJ)
-- Dedução indevida (saúde sem CPF, educação > limite, PGBL > 12%, pensão sem judicial)
-- Dependente (em duas declarações, filho > 24 sem universidade, pai/mãe > R$ 23.456,38)
-- Ganho de capital sem GCAP (imóvel, ações fora B3, cripto > R$ 35k/mês)
-- Renda variável B3 sem DARF 6015 (swing > R$ 20k/mês, day trade)
-- Carnê-leão omitido (PF que recebeu de PF/exterior sem DARF 0190)
+...
 - Bens exterior Lei 14.754/23 não declarados
 
 Anti-padrões: retificar antes de entender pendência | apresentar recibo sem CPF |
@@ -236,114 +237,81 @@ demorar > 30 dias após intimação (multa 75%) | pagar DARF sem retificar decla
 Você está revisando o PDF da declaração de IRPF ANTES de transmitir à RFB. Sua missão:
 identificar estouro de caixa, inconsistências patrimoniais e riscos.
 
-Atue como auditor experiente. Leia o PDF página a página. Cite SEMPRE a ficha e o valor
-exato extraído (ex.: "Ficha Bens e Direitos linha 4, código 11 imóvel R$ 350.000,00").
+### Estrutura obrigatória da resposta (360º Visual)
+Sua resposta deve ter duas partes:
+1. Uma análise textual detalhada, organizada por temas (Identificação, Origens vs Aplicações, Evolução Patrimonial, Riscos, Recomendações).
+2. Um bloco JSON final (fenced com \`\`\`json) contendo os dados estruturados para os gráficos.
 
-### Estrutura obrigatória da resposta
+#### Parte 1: Detalhamento Temático
+- Use cabeçalhos claros (H2 e H3).
+- Cite SEMPRE a ficha e o valor exato extraído (ex.: "Ficha Bens e Direitos linha 4, código 11 imóvel R$ 350.000,00").
+- Use 🚨 para risco alto, ⚠️ para médio, ✅ para item verificado ok.
 
-**1. Identificação**
-- Nome, CPF, ano-base, fontes detectadas no PDF (qtd informes IR, qtd bens, qtd deps)
-
-**2. Origens × Aplicações** (FAÇA A CONTA, mostre o passo a passo)
-
-\`\`\`
-ORIGENS
-+ Rendimentos tributáveis recebidos PJ ........ R$ ____  (Ficha __)
-+ Rendimentos PF / exterior (carnê-leão) ...... R$ ____
-+ Rendimentos isentos e não tributáveis ....... R$ ____
-+ Rendimentos tributação exclusiva (13º, JCP). R$ ____
-+ Alienações de bens (valor recebido) ......... R$ ____
-+ Dívidas contraídas no ano ................... R$ ____
-= TOTAL ORIGENS ............................... R$ ____
-
-APLICAÇÕES
-+ Variação patrimonial positiva (Δ Bens) ...... R$ ____
-+ Despesas dedutíveis pagas (saúde+educ+pensão) R$ ____
-+ Imposto pago no ano (IRRF + carnês + DARFs) . R$ ____
-+ Dívidas quitadas no ano ..................... R$ ____
-= TOTAL APLICAÇÕES ............................ R$ ____
-
-SALDO = ORIGENS − APLICAÇÕES = R$ ____
-\`\`\`
-
-Se Aplicações > Origens → 🚨 **ESTOURO DE CAIXA de R$ ____** — explicar.
-Se Saldo positivo grande → indicar como sobra (poupança? não declarada?).
-
-**3. Evolução Patrimonial**
-- Patrimônio em 31/12 do ano anterior vs ano atual (variação absoluta + %)
-- Aquisições significativas (cite ficha + valor + origem provável)
-
-**4. Riscos por categoria fiscal** (use os códigos de pendência):
-   a) Rendimento omitido (cód 010): conferir com DIRF/R-4010 prováveis
-   b) Dedução indevida (cód 015): saúde sem CPF? educação > R$ 3.561,50/pessoa? PGBL > 12%?
-   c) Dependente (cód 070): duplicado? > 24 sem universidade? pais > R$ 23.456,38?
-   d) Ganho de capital (cód 050): venda de bem com GCAP? isenção R$ 440k aplicada corretamente? redutores Lei 11.196/05 (imóveis pré-2017)?
-   e) Renda variável (cód 060): swing > R$ 20k/mês com DARF 6015? day trade? FII em Bens? cripto > R$ 35k/mês com DARF 4600?
-   f) Carnê-leão (cód 010): aluguel/serviço de PF sem DARF 0190?
-   g) Bens exterior (cód 080): Lei 14.754/23, marcação a mercado, alíquota 15%?
-
-Para cada risco: gravidade + base legal + ação corretiva concreta.
-
-**5. Recomendações ao Contador** (lista numerada, ações executáveis)
-   - Ex.: "Solicitar ao cliente recibo médico de R$ X com CPF do paciente"
-   - Ex.: "Abrir GCAP para venda do imóvel R$ Y — verificar isenção art. 23 Lei 9.250/95"
-   - Ex.: "Lançar DARF 0190 retroativo para aluguel jan-dez (Selic + multa)"
-
-**6. Checklist final antes de transmitir**
-\`\`\`
-[ ] Origens × Aplicações fecha ou estouro explicado
-[ ] Dependentes com CPF e dentro do limite
-[ ] Médicas com CPF do paciente
-[ ] Educação dentro do limite por pessoa
-[ ] Bens em 31/12 batem com extrato/RENAVAM/escritura
-[ ] Dívidas > R$ 5.000 declaradas
-[ ] Ganho capital com GCAP + DARF 4600
-[ ] Renda variável com DARF 6015 mensal
-[ ] Bens exterior Lei 14.754/23
-[ ] Simplificada × Completa simulada
+#### Parte 2: Dados Estruturados (JSON)
+No final da resposta, inclua EXATAMENTE este formato:
+\`\`\`json
+{
+  "resumo": {
+    "total_origens": 0.0,
+    "total_aplicacoes": 0.0,
+    "saldo": 0.0,
+    "estouro": false,
+    "percentual_utilizacao": 0.0
+  },
+  "origens": [
+    {"label": "Rendimentos Tributáveis", "valor": 0.0},
+    {"label": "Rendimentos Isentos", "valor": 0.0},
+    {"label": "Alienações/Dívidas", "valor": 0.0}
+  ],
+  "aplicacoes": [
+    {"label": "Δ Patrimonial", "valor": 0.0},
+    {"label": "Impostos/Despesas", "valor": 0.0},
+    {"label": "Dívidas Quitadas", "valor": 0.0}
+  ],
+  "patrimonio": {
+    "anterior": 0.0,
+    "atual": 0.0,
+    "variacao_valor": 0.0,
+    "variacao_perc": 0.0
+  },
+  "riscos_count": { "alto": 0, "medio": 0, "baixo": 0 }
+}
 \`\`\`
 
-Regras:
-- Sempre indique a ficha e o valor extraído do PDF — NUNCA invente número
-- Sempre cite base legal — NUNCA afirme regra sem amparo
-- Se um valor não estiver legível no PDF, escreva "[ilegível, conferir]"
-- Use 🚨 para risco alto, ⚠️ para médio, ✅ para item verificado ok`;
+Regras para os cálculos:
+- **Origens**: Somatório de rendimentos (todos), alienações e dívidas contraídas.
+- **Aplicações**: Δ Bens (Ano Atual - Ano Anterior, se positivo) + Despesas pagas + Imposto pago + Dívidas quitadas.
+- **Saldo**: Origens - Aplicações. Se Saldo < 0, então estouro = true.
+
+Siga rigorosamente a base legal e as tabelas de 2026 fornecidas.`;
   }
 
   // tipo padrão: "analise" (geral)
   return base + `
 
 ## TAREFA: Análise fiscal completa do contribuinte
-Você atua como agente "irpf-declaracao-completa". Entregue:
+Você atua como agente "irpf-declaracao-completa".
 
+### Estrutura obrigatória da resposta
+1. Resumo da situação fiscal, recomendação de regime, deduções e riscos.
+2. Bloco JSON final (\`\`\`json) para dashboard:
+\`\`\`json
+{
+  "tipo": "analise",
+  "regime": "simplificada" | "completa",
+  "economia_estimada": 0.0,
+  "rendimento_tributavel": 0.0,
+  "comparativo": {
+    "simplificada": {"base": 0.0, "ir": 0.0},
+    "completa": {"base": 0.0, "ir": 0.0}
+  },
+  "riscos_count": { "alto": 0, "medio": 0, "baixo": 0 }
+}
+\`\`\`
+
+Entregue no texto:
 **1. Resumo da situação fiscal**
-- Perfil de renda (qtd fontes, faixa anual estimada)
-- Composição patrimonial
-- Status de documentação
-
-**2. Recomendação Simplificada × Completa** — FAÇA A CONTA, não chute:
-\`\`\`
-RENDIMENTO TRIBUTÁVEL ANUAL: R$ ____
-
-OPÇÃO A — SIMPLIFICADA
-Desconto: R$ 16.754,34 (ou 20% da renda, o menor)
-Base = ____   IR = ____
-
-OPÇÃO B — COMPLETA
-Deduções legais: R$ ____ (médicas + educ + pensão + PGBL + dependentes × R$ 2.275,08)
-Base = ____   IR = ____
-
-ESCOLHER: ____ (economia de R$ ____)
-\`\`\`
-
-**3. Deduções aproveitadas e otimizações**
-- Cite cada dedução com base legal e limite
-- Identifique deduções perdidas (com como capturar)
-
-**4. Riscos de malha fina** (códigos 010/015/050/060/070/080 — ver acima)
-
-**5. Plano de pagamento ou restituição**
-- Saldo a pagar: cota única até maio OU até 8 cotas (mín R$ 50) — DARF 0211
+...
 - Restituição: ordem de prioridade RFB (idosos, PNE, professores, etc.)
 
 **6. Orientações para o próximo ano** (carnê-leão mensal, GCAP, DARF 6015, etc.)

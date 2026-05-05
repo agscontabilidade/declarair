@@ -13,6 +13,7 @@ import { useBillingStatus } from '@/hooks/useBillingStatus';
 import { getErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
+import { VisualIAFiscal } from './VisualIAFiscal';
 
 interface Props {
   declaracaoId: string;
@@ -271,9 +272,11 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
           </CardHeader>
           <Separator />
           <CardContent className="pt-4">
-            <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap text-sm leading-relaxed">
-              {resultado || <span className="text-muted-foreground animate-pulse">Lendo declaração e cruzando com o cadastro...</span>}
-            </div>
+            {resultado ? (
+              <VisualIAFiscal resultado={resultado} />
+            ) : (
+              <span className="text-muted-foreground animate-pulse">Lendo declaração e cruzando com o cadastro...</span>
+            )}
           </CardContent>
         </Card>
       )}
