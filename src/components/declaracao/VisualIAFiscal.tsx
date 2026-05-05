@@ -47,7 +47,26 @@ interface VisualData {
     completa: { base: number; ir: number };
   };
   detalhes?: {
-    [key: string]: string; // Dicionário de tooltips para campos específicos
+    [key: string]: string;
+  };
+  secoes_analise?: {
+    id: string;
+    titulo: string;
+    icone?: string;
+    status: 'ok' | 'atencao' | 'critico';
+    resumo: string;
+    pontos: string[];
+    tooltip?: string;
+  }[];
+  recomendacoes?: {
+    prioridade: 'alta' | 'media' | 'baixa';
+    acao: string;
+    motivo?: string;
+    base_legal?: string;
+  }[];
+  conclusao?: {
+    veredito: 'transmitir' | 'ajustar' | 'nao_transmitir';
+    mensagem: string;
   };
 }
 
