@@ -138,6 +138,21 @@ export default function Declaracoes() {
     enabled: !!escritorioId,
   });
 
+  if (!podeVerDeclaracoes) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <h1 className="font-display text-2xl font-bold text-foreground">Declarações</h1>
+          <Alert variant="destructive" className="max-w-md">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Acesso negado</AlertTitle>
+            <AlertDescription>Você não tem permissão para visualizar declarações.</AlertDescription>
+          </Alert>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const filtered = declaracoes.filter((d: { status: string; clienteCpf: string; clienteNome: string }) => {
     if (statusFilter !== 'todos' && d.status !== statusFilter) return false;
     if (debouncedSearch) {
