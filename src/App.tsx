@@ -65,10 +65,10 @@ import LandingV2 from "./pages/LandingV2";
 const queryClient = new QueryClient();
 
 function RootRedirect() {
-  const { session, userType, loading } = useAuth();
-  const { isBlocked } = useBillingStatus();
+  const { session, userType, loading: authLoading } = useAuth();
+  const { isBlocked, loading: billingLoading } = useBillingStatus();
 
-  if (loading) {
+  if (authLoading || (session && userType === 'contador' && billingLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -87,6 +87,7 @@ function RootRedirect() {
   if (userType === 'cliente') return <Navigate to="/cliente/dashboard" replace />;
   return <LandingV2 />;
 }
+
 
 
 const App = () => (
