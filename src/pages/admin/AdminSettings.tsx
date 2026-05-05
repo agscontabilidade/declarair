@@ -259,7 +259,7 @@ export default function AdminSettings() {
                           <div className="p-2 bg-green-500/5 border border-green-500/10 rounded text-[10px] overflow-auto max-h-24">
                             <p className="font-bold mb-1 uppercase opacity-50">Novo</p>
                             <pre>
-                              {log.config && isSensitive({ key: log.config.key, category: '' })
+                              {log.config && isSensitive(log.config)
                                 ? maskValue(log.new_value)
                                 : JSON.stringify(log.new_value, null, 2)}
                             </pre>
