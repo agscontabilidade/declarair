@@ -5,12 +5,21 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
-import { Search, Building2 } from 'lucide-react';
+import { Search, Building2, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
+import { OfficeManagementDialog } from '@/components/admin/escritorios/OfficeManagementDialog';
+import { Button } from '@/components/ui/button';
 
 export default function AdminEscritorios() {
   const { data: escritorios, isLoading } = useAdminEscritorios();
   const [search, setSearch] = useState('');
+  const [selectedOffice, setSelectedOffice] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleOpenOffice = (esc: any) => {
+    setSelectedOffice(esc);
+    setIsDialogOpen(true);
+  };
 
   const filtered = (escritorios ?? []).filter(e =>
     e.nome.toLowerCase().includes(search.toLowerCase()) ||
@@ -47,11 +56,12 @@ export default function AdminEscritorios() {
                   <TableHead>CNPJ</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Criado em</TableHead>
+                  <TableHead className="w-10">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((esc) => (
-                  <TableRow key={esc.id}>
+                  <TableRow key={esc.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleOpenOffice(esc)}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -69,6 +79,11 @@ export default function AdminEscritorios() {
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(esc.created_at), 'dd/MM/yyyy')}
                     </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon">
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
@@ -83,6 +98,12 @@ export default function AdminEscritorios() {
           )}
         </div>
       </div>
+      
+      <OfficeManagementDialog 
+        office={selectedOffice} 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+      />
     </AdminLayout>
   );
 }
