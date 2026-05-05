@@ -141,8 +141,16 @@ export default function AdminSettings() {
   const confirmReveal = () => {
     if (confirmRevealId) {
       setRevealedConfigs(prev => [...prev, confirmRevealId]);
+      
+      // Se estávamos tentando editar, abre o editor agora
+      const config = configs?.find(c => c.id === confirmRevealId);
+      if (config) {
+        setEditingConfig(config);
+        setNewValue(typeof config.value === 'object' ? JSON.stringify(config.value, null, 2) : String(config.value));
+      }
+      
       setConfirmRevealId(null);
-      toast.success('Valor revelado temporariamente.');
+      toast.success('Valor revelado.');
     }
   };
 
