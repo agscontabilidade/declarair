@@ -88,7 +88,7 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
       return !isPaid;
     },
     onSuccess: (isNowPaid) => {
-      queryClient.invalidateQueries({ queryKey: ['cobrancas'] });
+      queryClient.invalidateQueries({ queryKey: ['cobrancas'] }); queryClient.invalidateQueries({ queryKey: ['cobrancas-por-cliente'] });
       toast.success(isNowPaid ? 'Cobrança marcada como paga' : 'Pagamento estornado com sucesso');
     },
     onError: () => toast.error('Erro ao atualizar cobrança'),
@@ -100,7 +100,7 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cobrancas'] });
+      queryClient.invalidateQueries({ queryKey: ['cobrancas'] }); queryClient.invalidateQueries({ queryKey: ['cobrancas-por-cliente'] });
       toast.success('Cobrança cancelada');
     },
     onError: () => toast.error('Erro ao cancelar cobrança'),
@@ -112,7 +112,7 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cobrancas'] });
+      queryClient.invalidateQueries({ queryKey: ['cobrancas'] }); queryClient.invalidateQueries({ queryKey: ['cobrancas-por-cliente'] });
       toast.success('Cobrança excluída');
     },
     onError: () => toast.error('Erro ao excluir cobrança'),
@@ -129,7 +129,7 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cobrancas'] });
+      queryClient.invalidateQueries({ queryKey: ['cobrancas'] }); queryClient.invalidateQueries({ queryKey: ['cobrancas-por-cliente'] });
       toast.success('Cobrança criada');
     },
     onError: () => toast.error('Erro ao criar cobrança'),
@@ -141,7 +141,7 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cobrancas'] });
+      queryClient.invalidateQueries({ queryKey: ['cobrancas'] }); queryClient.invalidateQueries({ queryKey: ['cobrancas-por-cliente'] });
       toast.success('Cobrança atualizada');
     },
     onError: () => toast.error('Erro ao atualizar cobrança'),

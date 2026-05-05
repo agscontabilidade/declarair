@@ -1,4 +1,5 @@
 import { Pencil, Trash2, DollarSign } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -95,9 +96,11 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                         <Badge variant="secondary">Pendente</Badge>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       {clientesComCobranca?.has(c.id) ? (
-                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Gerada</Badge>
+                        <Link to={`/cobrancas?cliente=${c.id}`} title="Ver cobranças deste cliente">
+                          <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 cursor-pointer">Gerada</Badge>
+                        </Link>
                       ) : (
                         <Badge variant="secondary">Não gerada</Badge>
                       )}
