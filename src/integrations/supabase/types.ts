@@ -308,6 +308,65 @@ export type Database = {
           },
         ]
       }
+      cliente_memorias: {
+        Row: {
+          categoria: string | null
+          cliente_id: string
+          conteudo: string
+          created_at: string | null
+          escritorio_id: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          cliente_id: string
+          conteudo: string
+          created_at?: string | null
+          escritorio_id: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          cliente_id?: string
+          conteudo?: string
+          created_at?: string | null
+          escritorio_id?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_memorias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cliente_memorias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cliente_memorias_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cliente_memorias_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           auth_user_id: string | null
@@ -668,6 +727,68 @@ export type Database = {
             columns: ["usado_por_cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      declaracao_analises: {
+        Row: {
+          created_at: string | null
+          declaracao_id: string
+          escritorio_id: string
+          id: string
+          resultado_json: Json | null
+          resultado_texto: string | null
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          declaracao_id: string
+          escritorio_id: string
+          id?: string
+          resultado_json?: Json | null
+          resultado_texto?: string | null
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          declaracao_id?: string
+          escritorio_id?: string
+          id?: string
+          resultado_json?: Json | null
+          resultado_texto?: string | null
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "declaracao_analises_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: false
+            referencedRelation: "declaracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracao_analises_declaracao_id_fkey"
+            columns: ["declaracao_id"]
+            isOneToOne: false
+            referencedRelation: "declaracoes_cliente_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracao_analises_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "declaracao_analises_escritorio_id_fkey"
+            columns: ["escritorio_id"]
+            isOneToOne: false
+            referencedRelation: "escritorios_safe"
             referencedColumns: ["id"]
           },
         ]
