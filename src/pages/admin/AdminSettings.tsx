@@ -351,6 +351,11 @@ export default function AdminSettings() {
             </DialogTitle>
             <DialogDescription>
               Atenção: Alterações aqui impactam o comportamento global do sistema.
+              {editingConfig && isSensitive(editingConfig) && (
+                <span className="block mt-2 text-amber-500 font-semibold flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4" /> Dado Sensível Protegido
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
