@@ -95,6 +95,13 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                         <Badge variant="secondary">Pendente</Badge>
                       )}
                     </TableCell>
+                    <TableCell>
+                      {clientesComCobranca?.has(c.id) ? (
+                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Gerada</Badge>
+                      ) : (
+                        <Badge variant="secondary">Não gerada</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         {onCobranca && (
