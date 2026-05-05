@@ -64,6 +64,7 @@ const queryClient = new QueryClient();
 
 function RootRedirect() {
   const { session, userType, loading } = useAuth();
+  const { isBlocked } = useBillingStatus();
 
   if (loading) {
     return (
@@ -75,10 +76,16 @@ function RootRedirect() {
 
   if (!session) return <LandingV2 />;
   if (userType === 'admin') return <Navigate to="/admin" replace />;
-  if (userType === 'contador') return <Navigate to="/dashboard" replace />;
+  
+  if (userType === 'contador') {
+    if (isBlocked) return <Navigate to="/checkout" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+  
   if (userType === 'cliente') return <Navigate to="/cliente/dashboard" replace />;
   return <LandingV2 />;
 }
+
 
 const App = () => (
   <ErrorBoundary>
