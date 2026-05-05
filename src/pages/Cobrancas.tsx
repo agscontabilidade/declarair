@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Plus, DollarSign, TrendingUp, AlertTriangle, X } from 'lucide-react';
 import { useCobrancas } from '@/hooks/useCobrancas';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -19,13 +21,20 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldAlert } from 'lucide-react';
 
 export default function Cobrancas() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const clienteIdFiltro = searchParams.get('cliente');
   const [statusFilter, setStatusFilter] = useState('todos');
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, unknown> | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
   const { profile } = useAuth();
 
-  const { cobrancas, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
+  const { cobrancas: cobrancasAll, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
+  const cobrancas = useMemo(
+    () => clienteIdFiltro ? cobrancasAll.filter(c => c.cliente_id === clienteIdFiltro) : cobrancasAll,
+    [cobrancasAll, clienteIdFiltro],
+  );
+  const nomeClienteFiltro = clienteIdFiltro ? cobrancas[0]?.clientes?.nome : null;
   const { podeVerCobrancas, podeCriarCobrancas, podeExcluirCobranca } = usePermissoes();
 
   if (!podeVerCobrancas) {
