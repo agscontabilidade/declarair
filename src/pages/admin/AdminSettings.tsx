@@ -35,11 +35,11 @@ export default function AdminSettings() {
     queryKey: ['admin-system-configs'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('system_configs')
+        .from('system_configs' as any)
         .select('*')
         .order('category', { ascending: true });
       if (error) throw error;
-      return data;
+      return data as any[];
     }
   });
 
