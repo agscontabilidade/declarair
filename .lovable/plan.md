@@ -1,59 +1,49 @@
-## Objetivo
+## Erros do CI no GitHub
 
-Quando o contador subir o PDF da declaração na aba **Análise de Caixa** (`/declaracoes/:id`), validar se o documento pertence ao cliente da declaração. Se o CPF/nome do PDF não bater com o cliente, exibir aviso, **não salvar o arquivo** e **não permitir gerar a análise**.
+O job `Verificar Lint` está quebrando porque o ESLint agora bloqueia builds com `@typescript-eslint/no-explicit-any` como erro (Fase F do hardening). Há 11 erros e 2 warnings. Plano:
 
-## Comportamento esperado
+### 1. Hooks chamados condicionalmente (rules-of-hooks)
 
-1. Usuário seleciona PDF → upload para Storage em path temporário.
-2. Edge Function `ia-fiscal` é chamada em modo `validate` → IA extrai CPF + nome do PDF.
-3. Compara com `clientes.cpf` e `clientes.nome` da declaração:
-   - **Match (CPF igual)**: arquivo é confirmado em `arquivo_analise_caixa_url`, fluxo segue normal.
-   - **Mismatch**: arquivo é removido do Storage, toast vermelho com mensagem clara ("Este PDF pertence a CPF X / Nome Y, diferente do cliente desta declaração (CPF/Nome Z). Upload cancelado."), botão de análise permanece desabilitado.
-4. Se a IA não conseguir extrair CPF (PDF ilegível / não é declaração IRPF), aviso amarelo: "Não foi possível identificar o CPF no PDF. Verifique se é uma declaração IRPF válida." e o arquivo também não é salvo.
+**`src/pages/Declaracoes.tsx`** — o early-return do `if (!podeVerDeclaracoes)` (linhas 62-75) está antes do `useEffect` (78) e do `useQuery` (115). Mover ambos os hooks para ANTES do early-return.
 
-## Mudanças técnicas
+**`src/pages/Cobrancas.tsx`** — mesma coisa: `useQuery` do `inter-ativo` (linha 56) precisa subir para antes do `if (!podeVerCobrancas)` (linha 40).
 
-### `supabase/functions/ia-fiscal/index.ts`
-- Adicionar novo `tipo: "validate_owner"`:
-  - Recebe `{ declaracao_id, arquivo_path }` (path temporário ainda não persistido em `declaracoes`).
-  - Carrega cliente (cpf, nome) via `declaracao_id`.
-  - Monta mensagem multimodal com o PDF (reusa `buildAnaliseCaixaMessage`).
-  - Prompt enxuto com `google/gemini-2.5-flash` (rápido/barato): "Extraia CPF (formato 000.000.000-00) e Nome do declarante na primeira página. Responda SOMENTE JSON: `{\"cpf\":\"...\",\"nome\":\"...\"}`. Se não encontrar, retorne null."
-  - Resposta JSON (não-stream): `{ ok: boolean, motivo?: 'mismatch'|'unreadable', cpf_pdf, nome_pdf, cpf_esperado, nome_esperado }`.
-  - Normaliza CPF removendo máscara antes de comparar.
+### 2. `any` proibido
 
-### `src/components/declaracao/SecaoAnaliseCaixa.tsx`
-- Refatorar mutation `upload`:
-  1. Subir PDF para path **temporário** `…/_analise_caixa/_pending/${declaracaoId}.pdf`.
-  2. Invocar `ia-fiscal` com `tipo: 'validate_owner'` e o path temporário.
-  3. Se `ok=true`: mover/copiar para path final, atualizar `arquivo_analise_caixa_url` + `_uploaded_at`, remover temporário, toast verde.
-  4. Se `ok=false`:
-     - Remover PDF temporário do Storage.
-     - Exibir `Alert` destrutivo persistente no card (não só toast efêmero) com CPF/Nome do PDF vs CPF/Nome esperado.
-     - Não atualizar `arquivo_analise_caixa_url`.
-- Novo state `validationError: { cpf_pdf, nome_pdf } | null` para o Alert.
-- Bloquear botão "Executar Análise" enquanto houver `validationError` (já fica bloqueado pois `temPdf=false`).
-- Acrescentar nota no header: "Validamos automaticamente o CPF do PDF para evitar análise cruzada entre clientes."
+**`src/components/configuracoes/SeletorPermissoes.tsx`** (linhas 47, 70) — tipar:
+- `acc: Record<string, Permissao[]>` no reduce
+- `(p: Permissao)` no map (definir interface `Permissao` com `id/categoria/nome/descricao`).
 
-### `src/components/declaracao/AbaDocumentosUnificada.tsx` (verificar)
-- Se houver upload de declaração via essa aba também, replicar a mesma validação. (A confirmar lendo o arquivo na implementação.)
+**`src/hooks/useColaboradores.ts`** (linha 149) — `onError: (error: Error)` (ou `unknown` + narrow).
 
-## Fluxo visual
+**`supabase/functions/ia-fiscal/index.ts`** (linhas 308, 342, 343):
+- `repairTruncatedJson(raw: string): unknown`
+- `saveAnalysis(supabase: SupabaseClient, ...)` importando o tipo de `@supabase/supabase-js`
+- `let jsonResult: unknown = null`
 
-```text
-[Upload PDF] → [Storage temp] → [ia-fiscal validate_owner]
-                                         │
-                  ┌──────────────────────┴──────────────────────┐
-                  ▼                                              ▼
-            ok=true                                         ok=false
-        confirma path final                          remove arquivo +
-        habilita análise                             Alert vermelho
-                                                     (CPF X ≠ CPF Y)
-```
+### 3. Outros erros
 
-## Pontos de atenção
+**`src/components/declaracao/VisualIAFiscal.tsx`** linha 117 — trocar `let textual` por `const textual` (não é reatribuído).
 
-- Comparação por **CPF normalizado** (apenas dígitos) é a fonte de verdade; nome é só informativo (variações de acento/sobrenome são aceitáveis).
-- Se `clientes.cpf` estiver vazio no banco, pular validação e logar warning (não bloquear o contador).
-- Custo: 1 chamada Flash extra por upload (~baixo). Cacheamos o resultado em memória do request, não persiste.
-- Não altera schema do banco.
+**`src/components/formulario-ir/StepDadosPessoais.tsx`** linha 398 — remover `!!`: `Chave: {data.chave_pix_cliente ? clientCPF : 'Não selecionada'}`.
+
+### 4. Warnings (não bloqueiam, mas vou limpar)
+
+- **`IntegracoesTab.tsx`** linha 400 — remover `toast` das deps do `useEffect`.
+- **`NotificacoesTab.tsx`** linha 41 — envolver `CANAIS` em `useMemo([isWhatsAppConnected])`.
+
+### Validação
+
+Rodar `bun run lint` localmente até passar com 0 erros. Os testes unitários e E2E já passam, então o CI deve ficar verde após esses ajustes.
+
+### Arquivos alterados
+
+- `src/pages/Declaracoes.tsx`
+- `src/pages/Cobrancas.tsx`
+- `src/components/configuracoes/SeletorPermissoes.tsx`
+- `src/hooks/useColaboradores.ts`
+- `supabase/functions/ia-fiscal/index.ts`
+- `src/components/declaracao/VisualIAFiscal.tsx`
+- `src/components/formulario-ir/StepDadosPessoais.tsx`
+- `src/components/configuracoes/IntegracoesTab.tsx`
+- `src/components/configuracoes/NotificacoesTab.tsx`
