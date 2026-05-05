@@ -66,6 +66,13 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
   const [analiseRecenteId, setAnaliseRecenteId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [analiseSelecionadaId, setAnaliseSelecionadaId] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<{
+    motivo: 'mismatch' | 'unreadable';
+    cpf_pdf?: string;
+    nome_pdf?: string;
+    cpf_esperado?: string;
+    nome_esperado?: string;
+  } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -130,26 +137,78 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
       if (file.size > MAX_SIZE) throw new Error('Arquivo muito grande (máx. 18MB)');
       if (file.type !== 'application/pdf') throw new Error('Apenas PDF é aceito');
 
-      const path = `${declaracao.escritorio_id}/${declaracao.cliente_id}/_analise_caixa/${declaracaoId}.pdf`;
+      const finalPath = `${declaracao.escritorio_id}/${declaracao.cliente_id}/_analise_caixa/${declaracaoId}.pdf`;
+      const tempPath = `${declaracao.escritorio_id}/${declaracao.cliente_id}/_analise_caixa/_pending/${declaracaoId}-${Date.now()}.pdf`;
+
+      // 1. Upload temporário
       const { error: upErr } = await supabase.storage
         .from('documentos-clientes')
-        .upload(path, file, { upsert: true, contentType: 'application/pdf' });
+        .upload(tempPath, file, { upsert: true, contentType: 'application/pdf' });
       if (upErr) throw upErr;
+
+      // 2. Validação via IA (extrai CPF do PDF e compara)
+      const { data: validation, error: valErr } = await supabase.functions.invoke('ia-fiscal', {
+        body: { declaracao_id: declaracaoId, tipo: 'validate_owner', arquivo_path: tempPath },
+      });
+
+      if (valErr || !validation) {
+        await supabase.storage.from('documentos-clientes').remove([tempPath]);
+        throw new Error(valErr?.message || 'Falha ao validar PDF');
+      }
+
+      if (!validation.ok) {
+        await supabase.storage.from('documentos-clientes').remove([tempPath]);
+        return { ok: false as const, ...validation };
+      }
+
+      // 3. Move para path final
+      const { error: moveErr } = await supabase.storage
+        .from('documentos-clientes')
+        .move(tempPath, finalPath);
+      if (moveErr) {
+        // Fallback: copia via download/upload
+        const { data: blob } = await supabase.storage.from('documentos-clientes').download(tempPath);
+        if (blob) {
+          await supabase.storage.from('documentos-clientes').upload(finalPath, blob, { upsert: true, contentType: 'application/pdf' });
+        }
+        await supabase.storage.from('documentos-clientes').remove([tempPath]);
+      }
 
       const { error: updErr } = await supabase
         .from('declaracoes')
         .update({
-          arquivo_analise_caixa_url: path,
+          arquivo_analise_caixa_url: finalPath,
           arquivo_analise_caixa_uploaded_at: new Date().toISOString(),
         })
         .eq('id', declaracaoId);
       if (updErr) throw updErr;
+
+      return { ok: true as const };
     },
-    onSuccess: () => {
-      toast.success('PDF carregado para análise');
-      queryClient.invalidateQueries({ queryKey: ['decl-analise-caixa', declaracaoId] });
+    onSuccess: (result) => {
+      if (result?.ok) {
+        setValidationError(null);
+        toast.success('PDF validado e carregado para análise');
+        queryClient.invalidateQueries({ queryKey: ['decl-analise-caixa', declaracaoId] });
+      } else if (result && !result.ok) {
+        setValidationError({
+          motivo: result.motivo,
+          cpf_pdf: result.cpf_pdf,
+          nome_pdf: result.nome_pdf,
+          cpf_esperado: result.cpf_esperado,
+          nome_esperado: result.nome_esperado,
+        });
+        toast.error(
+          result.motivo === 'mismatch'
+            ? 'PDF rejeitado: pertence a outro contribuinte'
+            : 'Não foi possível identificar o CPF no PDF'
+        );
+      }
     },
-    onError: (e) => toast.error(getErrorMessage(e)),
+    onError: (e) => {
+      setValidationError(null);
+      toast.error(getErrorMessage(e));
+    },
   });
 
   const remove = useMutation({
@@ -334,6 +393,32 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
               e.target.value = '';
             }}
           />
+
+          {validationError && (
+            <Alert variant="destructive" className="border-destructive/50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="space-y-2">
+                {validationError.motivo === 'mismatch' ? (
+                  <>
+                    <p className="font-semibold">PDF não pertence a este cliente</p>
+                    <p className="text-xs">
+                      O CPF identificado no PDF é <b>{validationError.cpf_pdf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</b>
+                      {validationError.nome_pdf && <> ({validationError.nome_pdf})</>}, mas o cliente desta declaração é{' '}
+                      <b>{validationError.nome_esperado}</b> — CPF{' '}
+                      <b>{validationError.cpf_esperado?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</b>.
+                    </p>
+                    <p className="text-xs">O upload foi cancelado e a análise não será gerada. Verifique se o arquivo correto foi selecionado.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold">Não foi possível identificar o CPF do declarante</p>
+                    <p className="text-xs">Verifique se o PDF é uma declaração IRPF válida e legível. O upload foi cancelado.</p>
+                  </>
+                )}
+                <Button size="sm" variant="outline" onClick={() => setValidationError(null)}>Fechar</Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {temPdf ? (
             <div className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3">

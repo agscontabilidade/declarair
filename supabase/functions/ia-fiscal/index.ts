@@ -26,7 +26,7 @@ serve(async (req) => {
     const { data: { user }, error: authErr } = await anonClient.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authErr || !user) throw new Error("Token inválido");
 
-    const { declaracao_id, tipo, force_refresh } = await req.json();
+    const { declaracao_id, tipo, force_refresh, arquivo_path } = await req.json();
 
     if (!declaracao_id) throw new Error("declaracao_id é obrigatório");
 
@@ -38,6 +38,104 @@ serve(async (req) => {
       .single();
 
     if (!usuario) throw new Error("Usuário não encontrado");
+
+    // ============= MODO: validate_owner =============
+    if (tipo === "validate_owner") {
+      if (!arquivo_path) throw new Error("arquivo_path é obrigatório");
+
+      const { data: decl } = await supabase
+        .from("declaracoes")
+        .select("clientes(nome, cpf)")
+        .eq("id", declaracao_id)
+        .eq("escritorio_id", usuario.escritorio_id)
+        .single();
+
+      if (!decl?.clientes) throw new Error("Declaração não encontrada");
+
+      const cpfEsperado = onlyDigits((decl.clientes as { cpf?: string }).cpf || "");
+      const nomeEsperado = (decl.clientes as { nome?: string }).nome || "";
+
+      if (!cpfEsperado || cpfEsperado.length !== 11) {
+        // Sem CPF cadastrado: não bloqueia
+        return new Response(JSON.stringify({
+          ok: true, skipped: true, motivo: "cliente_sem_cpf"
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const userMsg = await buildAnaliseCaixaMessage(
+        supabase,
+        arquivo_path,
+        `Cliente esperado: ${nomeEsperado} - CPF ${cpfEsperado}`
+      );
+
+      const validatePrompt = `Você é um extrator de dados de declarações IRPF. Analise o PDF anexo (primeira página) e extraia o CPF e o nome do declarante titular.
+Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem texto extra:
+{"cpf":"00000000000","nome":"NOME COMPLETO"}
+- CPF deve conter APENAS os 11 dígitos (sem pontos/traços).
+- Se não encontrar CPF do titular, retorne {"cpf":null,"nome":null}.
+- Não confunda CPF de dependentes/cônjuge com o do titular.`;
+
+      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: validatePrompt },
+            { role: "user", content: userMsg },
+          ],
+        }),
+      });
+
+      if (!aiResp.ok) {
+        const errTxt = await aiResp.text();
+        console.error("Validate AI error:", errTxt);
+        throw new Error("Falha ao validar PDF");
+      }
+
+      const aiData = await aiResp.json();
+      const content: string = aiData.choices?.[0]?.message?.content || "";
+      let extracted: { cpf?: string | null; nome?: string | null } = {};
+      try {
+        const cleaned = content.replace(/```json|```/g, "").trim();
+        extracted = JSON.parse(cleaned);
+      } catch {
+        extracted = {};
+      }
+
+      const cpfPdf = onlyDigits(extracted.cpf || "");
+      const nomePdf = (extracted.nome || "").trim();
+
+      if (!cpfPdf || cpfPdf.length !== 11) {
+        return new Response(JSON.stringify({
+          ok: false,
+          motivo: "unreadable",
+          cpf_esperado: cpfEsperado,
+          nome_esperado: nomeEsperado,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      if (cpfPdf !== cpfEsperado) {
+        return new Response(JSON.stringify({
+          ok: false,
+          motivo: "mismatch",
+          cpf_pdf: cpfPdf,
+          nome_pdf: nomePdf,
+          cpf_esperado: cpfEsperado,
+          nome_esperado: nomeEsperado,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      return new Response(JSON.stringify({
+        ok: true,
+        cpf_pdf: cpfPdf,
+        nome_pdf: nomePdf,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    // ============= FIM validate_owner =============
 
     // Check for existing analysis if not forcing refresh
     if (!force_refresh) {
@@ -235,6 +333,10 @@ function repairTruncatedJson(raw: string): any {
 
 function safeNumber(n: unknown): number | null {
   return typeof n === 'number' && Number.isFinite(n) ? n : null;
+}
+
+function onlyDigits(s: string): string {
+  return (s || "").replace(/\D/g, "");
 }
 
 async function saveAnalysis(supabase: any, data: { declaracao_id: string; escritorio_id: string; tipo: string; resultado_texto: string }) {
