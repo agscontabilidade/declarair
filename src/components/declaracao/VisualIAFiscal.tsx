@@ -591,15 +591,23 @@ function AnaliseTecnicaVisual({ secoes, recomendacoes, conclusao, detalhes, text
         );
       })()}
 
-      {/* Texto adicional (cálculos detalhados) - colapsado dentro de um card discreto */}
+      {/* Texto adicional (cálculos detalhados) - card legível e auto-explicativo */}
       {textualFallback && textualFallback.trim().length > 100 && (
         <div className="mt-8 space-y-3">
           <h4 className="text-xs font-semibold flex items-center gap-2 px-1 text-muted-foreground uppercase tracking-wider">
             <Info className="h-3 w-3" /> Detalhamento Técnico Completo
+            <InfoTooltip content="Texto técnico completo gerado pela IA. Útil para revisar os cálculos, fundamentos legais e rastros de cada conclusão." />
           </h4>
-          <Card className="border-none bg-accent/5">
-            <CardContent className="pt-4">
-              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground">
+          <Card className="border bg-card">
+            <CardContent className="pt-5 pb-5">
+              <div className="prose prose-sm max-w-none dark:prose-invert leading-relaxed
+                prose-headings:font-semibold prose-headings:text-foreground prose-headings:mt-4 prose-headings:mb-2
+                prose-h1:text-base prose-h2:text-base prose-h3:text-sm prose-h4:text-sm
+                prose-p:text-foreground/85 prose-p:my-2 prose-p:leading-relaxed
+                prose-li:text-foreground/85 prose-li:my-1 prose-li:leading-relaxed
+                prose-strong:text-foreground prose-strong:font-semibold
+                prose-ul:my-2 prose-ol:my-2
+                prose-hr:my-4">
                 <ReactMarkdown>{textualFallback}</ReactMarkdown>
               </div>
             </CardContent>
