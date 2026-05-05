@@ -527,6 +527,17 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
                   <Brain className="h-3 w-3" /> Análise Detalhada
                 </Badge>
                 {(loading || carregandoHistorico) && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                {!loading && !carregandoHistorico && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6 text-muted-foreground hover:text-primary"
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ['analise-caixa-historico', declaracaoId] })}
+                    title="Recarregar dados"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
               <Button variant="ghost" size="sm" onClick={() => {
                 setAnaliseSelecionadaId(null);
