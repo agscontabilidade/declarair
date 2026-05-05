@@ -66,6 +66,13 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
   const [analiseRecenteId, setAnaliseRecenteId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [analiseSelecionadaId, setAnaliseSelecionadaId] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<{
+    motivo: 'mismatch' | 'unreadable';
+    cpf_pdf?: string;
+    nome_pdf?: string;
+    cpf_esperado?: string;
+    nome_esperado?: string;
+  } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
