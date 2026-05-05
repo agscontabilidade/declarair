@@ -30,9 +30,10 @@ interface Props {
   onCobranca?: (cliente: ClienteRow) => void;
   canEdit?: boolean;
   canDelete?: boolean;
+  clientesComCobranca?: Set<string>;
 }
 
-export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, canEdit = true, canDelete = true }: Props) {
+export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, canEdit = true, canDelete = true, clientesComCobranca }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-3 p-3">
