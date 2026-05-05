@@ -7,7 +7,9 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BillingGate } from "@/components/billing/BillingGate";
+import { useBillingStatus } from "@/hooks/useBillingStatus";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -63,9 +65,10 @@ import LandingV2 from "./pages/LandingV2";
 const queryClient = new QueryClient();
 
 function RootRedirect() {
-  const { session, userType, loading } = useAuth();
+  const { session, userType, loading: authLoading } = useAuth();
+  const { isBlocked, loading: billingLoading } = useBillingStatus();
 
-  if (loading) {
+  if (authLoading || (session && userType === 'contador' && billingLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -75,10 +78,17 @@ function RootRedirect() {
 
   if (!session) return <LandingV2 />;
   if (userType === 'admin') return <Navigate to="/admin" replace />;
-  if (userType === 'contador') return <Navigate to="/dashboard" replace />;
+  
+  if (userType === 'contador') {
+    if (isBlocked) return <Navigate to="/checkout" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+  
   if (userType === 'cliente') return <Navigate to="/cliente/dashboard" replace />;
   return <LandingV2 />;
 }
+
+
 
 const App = () => (
   <ErrorBoundary>
