@@ -12,6 +12,7 @@ const navItems = [
   { label: 'Escritórios', icon: Building2, href: '/admin/escritorios' },
   { label: 'Usuários', icon: Users, href: '/admin/usuarios' },
   { label: 'Assinaturas', icon: CreditCard, href: '/admin/assinaturas' },
+  { label: 'Logs de Auditoria', icon: History, href: '/admin/logs' },
   { label: 'Bug Reports', icon: Bug, href: '/admin/bugs' },
 ];
 
