@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Settings, Save, RotateCcw, History, AlertTriangle, 
-  Info, Shield, Package, Bell, Search, Edit3, Key
+  Info, Shield, Package, Bell, Search, Edit3, Key, Eye, EyeOff, Lock
 } from 'lucide-react';
 import { 
   Card, CardContent, CardHeader, CardTitle, CardDescription 
@@ -23,14 +23,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { usePermissoes } from '@/hooks/usePermissoes';
 
 export default function AdminSettings() {
   const queryClient = useQueryClient();
+  const { isDono } = usePermissoes();
   const [editingConfig, setEditingConfig] = useState<any>(null);
   const [newValue, setNewValue] = useState('');
   const [changeReason, setChangeReason] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [revealedConfigs, setRevealedConfigs] = useState<string[]>([]);
+  const [confirmRevealId, setConfirmRevealId] = useState<string | null>(null);
 
   const { data: configs, isLoading } = useQuery({
     queryKey: ['admin-system-configs'],
@@ -49,7 +53,7 @@ export default function AdminSettings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('system_config_logs' as any)
-        .select('*, config:system_configs(key), user:usuarios(nome)')
+        .select('*, config:system_configs(key, category), user:usuarios(nome)')
         .order('changed_at', { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -97,6 +101,10 @@ export default function AdminSettings() {
   });
 
   const handleEdit = (config: any) => {
+    if (isSensitive(config) && !revealedConfigs.includes(config.id)) {
+      handleReveal(config.id);
+      return;
+    }
     setEditingConfig(config);
     setNewValue(typeof config.value === 'object' ? JSON.stringify(config.value, null, 2) : String(config.value));
   };
@@ -122,6 +130,30 @@ export default function AdminSettings() {
     });
   };
 
+  const handleReveal = (id: string) => {
+    if (!isDono) {
+      toast.error('Apenas Super Admins podem revelar chaves sensíveis.');
+      return;
+    }
+    setConfirmRevealId(id);
+  };
+
+  const confirmReveal = () => {
+    if (confirmRevealId) {
+      setRevealedConfigs(prev => [...prev, confirmRevealId]);
+      
+      // Se estávamos tentando editar, abre o editor agora
+      const config = configs?.find(c => c.id === confirmRevealId);
+      if (config) {
+        setEditingConfig(config);
+        setNewValue(typeof config.value === 'object' ? JSON.stringify(config.value, null, 2) : String(config.value));
+      }
+      
+      setConfirmRevealId(null);
+      toast.success('Valor revelado.');
+    }
+  };
+
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'system': return <Shield className="h-4 w-4" />;
@@ -130,6 +162,19 @@ export default function AdminSettings() {
       case 'api': return <Key className="h-4 w-4" />;
       default: return <Settings className="h-4 w-4" />;
     }
+  };
+
+  const isSensitive = (config: any) => {
+    const sensitiveKeywords = ['key', 'secret', 'token', 'password', 'api', 'stripe', 'asaas', 'conta_azul'];
+    return config.category === 'api' || 
+           sensitiveKeywords.some(keyword => config.key.toLowerCase().includes(keyword));
+  };
+
+  const maskValue = (value: any) => {
+    if (typeof value === 'object') return '******** (Objeto Protegido)';
+    const str = String(value);
+    if (str.length <= 8) return '********';
+    return `${str.substring(0, 4)}...${str.substring(str.length - 4)}`;
   };
 
   const filteredConfigs = configs?.filter(c => {
@@ -205,11 +250,19 @@ export default function AdminSettings() {
                         <div className="grid grid-cols-2 gap-2 mt-2">
                           <div className="p-2 bg-red-500/5 border border-red-500/10 rounded text-[10px] overflow-auto max-h-24">
                             <p className="font-bold mb-1 uppercase opacity-50">Anterior</p>
-                            <pre>{JSON.stringify(log.old_value, null, 2)}</pre>
+                            <pre>
+                              {log.config && isSensitive(log.config)
+                                ? maskValue(log.old_value)
+                                : JSON.stringify(log.old_value, null, 2)}
+                            </pre>
                           </div>
                           <div className="p-2 bg-green-500/5 border border-green-500/10 rounded text-[10px] overflow-auto max-h-24">
                             <p className="font-bold mb-1 uppercase opacity-50">Novo</p>
-                            <pre>{JSON.stringify(log.new_value, null, 2)}</pre>
+                            <pre>
+                              {log.config && isSensitive(log.config)
+                                ? maskValue(log.new_value)
+                                : JSON.stringify(log.new_value, null, 2)}
+                            </pre>
                           </div>
                         </div>
                       </div>
@@ -227,7 +280,7 @@ export default function AdminSettings() {
                   <Card key={i} className="animate-pulse h-48 bg-muted/50" />
                 ))
               ) : filteredConfigs?.map((config: any) => (
-                <Card key={config.id} className="relative overflow-hidden">
+                <Card key={config.id} className="relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-2">
                     <Badge variant="secondary" className="gap-1 capitalize">
                       {getCategoryIcon(config.category)}
@@ -235,14 +288,43 @@ export default function AdminSettings() {
                     </Badge>
                   </div>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-mono">{config.key}</CardTitle>
+                    <CardTitle className="text-lg font-mono flex items-center gap-2">
+                      {config.key}
+                      {isSensitive(config) && <Lock className="h-3 w-3 text-amber-500" />}
+                    </CardTitle>
                     <CardDescription>{config.description || 'Sem descrição'}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="bg-muted p-3 rounded-md overflow-hidden">
-                      <pre className="text-xs font-mono max-h-32 overflow-y-auto">
-                        {JSON.stringify(config.value, null, 2)}
+                    <div className="bg-muted p-3 rounded-md overflow-hidden relative">
+                      <pre className="text-xs font-mono max-h-32 overflow-y-auto pr-8">
+                        {isSensitive(config) && !revealedConfigs.includes(config.id) 
+                          ? maskValue(config.value)
+                          : JSON.stringify(config.value, null, 2)}
                       </pre>
+                      
+                      {isSensitive(config) && !revealedConfigs.includes(config.id) && (
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="absolute right-2 top-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleReveal(config.id)}
+                          title="Revelar valor"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      )}
+
+                      {isSensitive(config) && revealedConfigs.includes(config.id) && (
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="absolute right-2 top-2 h-6 w-6"
+                          onClick={() => setRevealedConfigs(prev => prev.filter(id => id !== config.id))}
+                          title="Esconder valor"
+                        >
+                          <EyeOff className="h-3 w-3 text-primary" />
+                        </Button>
+                      )}
                     </div>
                     <div className="flex items-center justify-between pt-2">
                       <span className="text-[10px] text-muted-foreground">
@@ -269,6 +351,11 @@ export default function AdminSettings() {
             </DialogTitle>
             <DialogDescription>
               Atenção: Alterações aqui impactam o comportamento global do sistema.
+              {editingConfig && isSensitive(editingConfig) && (
+                <span className="block mt-2 text-amber-500 font-semibold flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4" /> Dado Sensível Protegido
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -299,6 +386,26 @@ export default function AdminSettings() {
             >
               {updateConfig.isPending ? 'Salvando...' : <><Save className="h-4 w-4" /> Salvar Alteração</>}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Diálogo de Confirmação para Revelar Dados Sensíveis */}
+      <Dialog open={!!confirmRevealId} onOpenChange={() => setConfirmRevealId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Confirmar Revelação
+            </DialogTitle>
+            <DialogDescription>
+              Você está prestes a visualizar uma chave ou segredo sensível. 
+              Esta ação será registrada e deve ser feita apenas em ambiente seguro.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmRevealId(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmReveal}>Revelar Valor</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
