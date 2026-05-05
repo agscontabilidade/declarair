@@ -44,7 +44,8 @@ export function SeletorPermissoes({ permissoesSelecionadas, onChange }: SeletorP
   };
 
   // Group by category for better UX
-  const categorias = permissoes?.reduce((acc: any, p) => {
+  type Permissao = { id: string; categoria: string | null; descricao: string | null; nome?: string | null };
+  const categorias = (permissoes as Permissao[] | undefined)?.reduce((acc: Record<string, Permissao[]>, p) => {
     const cat = p.categoria || 'Outros';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(p);
@@ -67,7 +68,7 @@ export function SeletorPermissoes({ permissoesSelecionadas, onChange }: SeletorP
             {labelsMap[cat] || cat}
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-            {categorias[cat].map((p: any) => (
+            {categorias[cat].map((p) => (
               <div key={p.id} className="flex items-start space-x-3">
                 <Checkbox 
                   id={`perm-${p.id}`} 

@@ -114,7 +114,7 @@ export function VisualIAFiscal({ resultado, jsonOverride }: Props) {
   const { textualContent, jsonData } = useMemo(() => {
     const jsonRegex = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
     const matches = Array.from(resultado.matchAll(jsonRegex));
-    let textual = resultado.replace(jsonRegex, '').trim();
+    const textual = resultado.replace(jsonRegex, '').trim();
     let data: VisualData | null = jsonOverride ?? null;
 
     if (!data && matches.length > 0) {

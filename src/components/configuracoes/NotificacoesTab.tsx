@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -38,9 +38,12 @@ export function NotificacoesTab({ escritorioId, isDono }: Props) {
   const { toast } = useToast();
   const { data: whatsappStatus } = useWhatsAppStatus();
   const isWhatsAppConnected = whatsappStatus?.status === 'connected' && !!whatsappStatus?.phone;
-  const CANAIS = isWhatsAppConnected
-    ? [...BASE_CANAIS, { key: 'whatsapp', label: 'WhatsApp' }]
-    : BASE_CANAIS;
+  const CANAIS = useMemo(
+    () => isWhatsAppConnected
+      ? [...BASE_CANAIS, { key: 'whatsapp', label: 'WhatsApp' }]
+      : BASE_CANAIS,
+    [isWhatsAppConnected],
+  );
   const [config, setConfig] = useState<Record<string, Record<string, boolean>>>({});
   const [saving, setSaving] = useState(false);
 

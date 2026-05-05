@@ -305,7 +305,7 @@ Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem texto extra:
 });
 
 // Tenta reparar JSON truncado/corrompido oriundo do streaming.
-function repairTruncatedJson(raw: string): any {
+function repairTruncatedJson(raw: string): unknown {
   for (let end = raw.length; end > 50; end--) {
     const ch = raw[end - 1];
     if (ch !== ',' && ch !== '}' && ch !== ']' && ch !== '"' && ch !== ' ' && ch !== '\n') continue;
@@ -339,8 +339,8 @@ function onlyDigits(s: string): string {
   return (s || "").replace(/\D/g, "");
 }
 
-async function saveAnalysis(supabase: any, data: { declaracao_id: string; escritorio_id: string; tipo: string; resultado_texto: string }) {
-  let jsonResult: any = null;
+async function saveAnalysis(supabase: ReturnType<typeof createClient>, data: { declaracao_id: string; escritorio_id: string; tipo: string; resultado_texto: string }) {
+  let jsonResult: unknown = null;
   const jsonMatch = data.resultado_texto.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   if (jsonMatch) {
     const raw = jsonMatch[1];

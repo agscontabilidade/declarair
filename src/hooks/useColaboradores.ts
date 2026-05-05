@@ -146,7 +146,7 @@ export const useColaboradores = (escritorioId: string) => {
       toast.success('Permissões atualizadas com sucesso');
       queryClient.invalidateQueries({ queryKey: ['usuario-permissoes'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Erro ao atualizar permissões:', error);
       toast.error('Erro ao atualizar permissões');
     }
