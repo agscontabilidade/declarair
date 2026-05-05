@@ -334,14 +334,71 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
         </CardContent>
       </Card>
 
-      {(loading || resultado || carregandoAnalise) && (
+      {/* Lista de Histórico de Análises */}
+      {historicoAnalises && historicoAnalises.length > 0 && (
         <Card>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Brain className="h-4 w-4 text-primary" /> Histórico de Análises
+            </CardTitle>
+            <Badge variant="outline">{historicoAnalises.length} {historicoAnalises.length === 1 ? 'análise' : 'análises'}</Badge>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 gap-2">
+              {historicoAnalises.map((analise) => {
+                const resumo = analise.resumo_visual as any;
+                const isSelected = analiseSelecionadaId === analise.id || (!analiseSelecionadaId && analise.id === historicoAnalises[0].id);
+                
+                return (
+                  <div 
+                    key={analise.id}
+                    className={`p-3 rounded-lg border transition-all cursor-pointer hover:bg-muted/50 ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card'}`}
+                    onClick={() => setAnaliseSelecionadaId(analise.id)}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold">
+                            {new Date(analise.created_at || '').toLocaleDateString('pt-BR')} às {new Date(analise.created_at || '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          {resumo?.estouro && <Badge variant="destructive" className="h-4 text-[9px] uppercase">Estouro</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-1 italic">{resumo?.veredito_msg || 'Análise técnica de caixa'}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        {resumo?.riscos && (
+                          <div className="flex gap-1">
+                            {resumo.riscos.alto > 0 && <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" title="Risco Alto" />}
+                            {resumo.riscos.medio > 0 && <span className="h-2 w-2 rounded-full bg-amber-500" title="Risco Médio" />}
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" title="Concluido" />
+                          </div>
+                        )}
+                        <Button size="sm" variant={isSelected ? "default" : "outline"} className="h-7 text-[10px] px-2">
+                          {isSelected ? 'Visualizando' : 'Ver Detalhes'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {(loading || resultado || carregandoHistorico) && (
+        <Card id="analise-detalhada">
           <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="gap-1">
-                <Brain className="h-3 w-3" /> Análise de Caixa
-              </Badge>
-              {(loading || carregandoAnalise) && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="gap-1">
+                  <Brain className="h-3 w-3" /> Análise Detalhada
+                </Badge>
+                {(loading || carregandoHistorico) && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setResultado('')} className="h-6 text-xs text-muted-foreground">
+                Recolher
+              </Button>
             </div>
           </CardHeader>
           <Separator />
@@ -349,8 +406,8 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
             {resultado ? (
               <VisualIAFiscal resultado={resultado} />
             ) : (
-              <span className="text-muted-foreground animate-pulse">
-                {carregandoAnalise ? 'Recuperando análise anterior...' : 'Lendo declaração e cruzando com o cadastro...'}
+              <span className="text-muted-foreground animate-pulse text-sm">
+                {carregandoHistorico ? 'Recuperando histórico...' : 'Lendo declaração e cruzando com o cadastro...'}
               </span>
             )}
           </CardContent>
