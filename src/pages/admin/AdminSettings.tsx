@@ -101,6 +101,10 @@ export default function AdminSettings() {
   });
 
   const handleEdit = (config: any) => {
+    if (isSensitive(config) && !revealedConfigs.includes(config.id)) {
+      handleReveal(config.id);
+      return;
+    }
     setEditingConfig(config);
     setNewValue(typeof config.value === 'object' ? JSON.stringify(config.value, null, 2) : String(config.value));
   };
