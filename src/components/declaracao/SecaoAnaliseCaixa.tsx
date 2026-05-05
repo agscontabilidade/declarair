@@ -13,7 +13,7 @@ import { useBillingStatus } from '@/hooks/useBillingStatus';
 import { getErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
-import { VisualAnaliseCaixa } from './VisualAnaliseCaixa';
+import { VisualIAFiscal } from './VisualIAFiscal';
 
 interface Props {
   declaracaoId: string;
