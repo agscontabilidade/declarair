@@ -7,7 +7,9 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BillingGate } from "@/components/billing/BillingGate";
+import { useBillingStatus } from "@/hooks/useBillingStatus";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
