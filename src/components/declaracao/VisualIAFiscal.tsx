@@ -79,6 +79,21 @@ interface Props {
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
+// Pré-processa o texto da IA para garantir parágrafos espaçados e separação visual
+// entre subtemas, evitando "parede de texto" no markdown final.
+function prepareText(raw: string): string {
+  let t = raw.replace(/\r\n/g, '\n').trim();
+  // Garante linha em branco antes de marcadores comuns que a IA usa
+  t = t.replace(/(?<!\n)\n(🚨|⚠️|✅|🔴|🟡|🔵)/g, '\n\n$1');
+  // Adiciona quebra antes de "Risco" / "Aquisição" / "Patrimônio em" em linha
+  t = t.replace(/(?<!\n)\n(\*\*(?:Risco|Aquisição|Alienação|Patrimônio em|Variação|TOTAL|Saldo de|Resultado:|Origens|Aplicações))/g, '\n\n$1');
+  // Garante linha em branco antes de cabeçalhos
+  t = t.replace(/(?<!\n)\n(#{1,4}\s)/g, '\n\n$1');
+  // Colapsa múltiplas linhas em blocos consistentes
+  t = t.replace(/\n{3,}/g, '\n\n');
+  return t;
+}
+
 const InfoTooltip = ({ content }: { content?: string }) => {
   if (!content) return null;
   return (
