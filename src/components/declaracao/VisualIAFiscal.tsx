@@ -270,49 +270,13 @@ export function VisualIAFiscal({ resultado }: Props) {
 
         <Separator className="my-6" />
 
-        <div className="space-y-4">
-          <h4 className="text-sm font-semibold flex items-center gap-2 px-1">
-            <ListChecks className="h-4 w-4 text-primary" /> Análise Técnica e Recomendações
-            <InfoTooltip content={detalhes?.analise_tecnica || "Diagnóstico detalhado realizado pela IA sobre a consistência dos dados e passos necessários para evitar a malha fina."} />
-          </h4>
-          <Card className="border-none bg-accent/5 overflow-hidden">
-            <CardContent className="pt-6">
-              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-li:text-muted-foreground">
-                <ReactMarkdown
-                  components={{
-                    h2: ({node, ...props}) => <h2 className="text-base font-bold text-foreground flex items-center gap-2 mb-4 border-b pb-2" {...props} />,
-                    h3: ({node, ...props}) => <h3 className="text-sm font-bold text-foreground/90 mt-6 mb-3 flex items-center gap-2" {...props} />,
-                    p: ({node, children, ...props}) => {
-                      const text = String(children);
-                      if (text.includes('🚨 Risco Alto')) {
-                        return (
-                          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 my-4">
-                            <p className="m-0 font-medium text-destructive flex items-center gap-2">
-                              {children}
-                            </p>
-                          </div>
-                        );
-                      }
-                      if (text.includes('⚠️ Risco Médio')) {
-                        return (
-                          <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 my-4">
-                            <p className="m-0 font-medium text-amber-600 flex items-center gap-2">
-                              {children}
-                            </p>
-                          </div>
-                        );
-                      }
-                      return <p className="mb-4" {...props}>{children}</p>;
-                    },
-                    li: ({node, ...props}) => <li className="mb-1" {...props} />
-                  }}
-                >
-                  {textualContent}
-                </ReactMarkdown>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <AnaliseTecnicaVisual 
+          secoes={jsonData.secoes_analise} 
+          recomendacoes={jsonData.recomendacoes}
+          conclusao={jsonData.conclusao}
+          detalhes={detalhes}
+          textualFallback={textualContent}
+        />
       </motion.div>
     );
   }
