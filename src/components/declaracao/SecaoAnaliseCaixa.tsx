@@ -176,8 +176,8 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          queryClient.invalidateQueries({ queryKey: ['analise-caixa-persistida', declaracaoId] });
-          setUltimaAtualizacao(new Date().toISOString());
+          queryClient.invalidateQueries({ queryKey: ['analise-caixa-historico', declaracaoId] });
+          setAnaliseSelecionadaId(null); // Reseta para mostrar a mais nova automatically
           break;
         }
         buffer += decoder.decode(value, { stream: true });
