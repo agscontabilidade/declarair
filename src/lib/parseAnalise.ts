@@ -3,6 +3,13 @@
 
 export type Veredito = 'transmitir' | 'ajustar' | 'nao_transmitir';
 
+export interface PatrimonioParsed {
+  anterior: number | null;
+  atual: number | null;
+  variacao_valor: number | null;
+  variacao_perc: number | null;
+}
+
 export interface ParsedAnalise {
   veredito: Veredito | null;
   vereditoMensagem: string | null;
@@ -11,8 +18,9 @@ export interface ParsedAnalise {
   totalOrigens: number | null;
   totalAplicacoes: number | null;
   riscos: { alto: number; medio: number; baixo: number } | null;
+  patrimonio: PatrimonioParsed | null;
   jsonData: Record<string, unknown> | null;
-  textoLimpo: string; // resultado_texto sem o bloco ```json
+  textoLimpo: string;
 }
 
 interface AnaliseRow {
@@ -24,6 +32,9 @@ interface AnaliseRow {
 
 const JSON_BLOCK_RE = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
 
+const finite = (n: unknown): number | null =>
+  typeof n === 'number' && Number.isFinite(n) ? n : null;
+
 function tryJsonParse(raw: string): Record<string, unknown> | null {
   try { return JSON.parse(raw); } catch { /* ignore */ }
   const cleaned = raw
@@ -34,8 +45,6 @@ function tryJsonParse(raw: string): Record<string, unknown> | null {
 }
 
 function repairTruncatedJson(raw: string): Record<string, unknown> | null {
-  // Caminha do final pra trás, balanceia { } [ ] (ignorando conteúdo de strings)
-  // e tenta parsear progressivamente até obter um objeto válido.
   for (let end = raw.length; end > 50; end--) {
     const ch = raw[end - 1];
     if (ch !== ',' && ch !== '}' && ch !== ']' && ch !== '"' && ch !== ' ' && ch !== '\n') continue;
@@ -64,7 +73,9 @@ function repairTruncatedJson(raw: string): Record<string, unknown> | null {
 function extractNumber(text: string, key: string): number | null {
   const re = new RegExp(`"${key}"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)`, 'i');
   const m = text.match(re);
-  return m ? Number(m[1]) : null;
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) ? n : null;
 }
 
 function extractBool(text: string, key: string): boolean | null {
@@ -77,6 +88,20 @@ function extractString(text: string, key: string): string | null {
   const re = new RegExp(`"${key}"\\s*:\\s*"([^"]+)"`, 'i');
   const m = text.match(re);
   return m ? m[1] : null;
+}
+
+// Extrai patrimônio do texto bruto buscando o bloco "patrimonio": { ... }
+function extractPatrimonioFromRaw(raw: string): PatrimonioParsed | null {
+  const blockMatch = raw.match(/"patrimonio"\s*:\s*\{([\s\S]{0,400}?)\}/i);
+  const block = blockMatch ? blockMatch[1] : raw;
+  const anterior = extractNumber(block, 'anterior');
+  const atual = extractNumber(block, 'atual');
+  const variacao_valor = extractNumber(block, 'variacao_valor');
+  const variacao_perc = extractNumber(block, 'variacao_perc');
+  if (anterior === null && atual === null && variacao_valor === null && variacao_perc === null) {
+    return null;
+  }
+  return { anterior, atual, variacao_valor, variacao_perc };
 }
 
 function normalizeVeredito(v: string | null | undefined): Veredito | null {
@@ -92,12 +117,11 @@ export function parseAnalise(analise: AnaliseRow | null | undefined): ParsedAnal
   const empty: ParsedAnalise = {
     veredito: null, vereditoMensagem: null, saldo: null, estouro: null,
     totalOrigens: null, totalAplicacoes: null, riscos: null,
-    jsonData: null, textoLimpo: '',
+    patrimonio: null, jsonData: null, textoLimpo: '',
   };
   if (!analise) return empty;
 
   const texto = analise.resultado_texto || '';
-  // Extrai bloco JSON do texto
   const matches = Array.from(texto.matchAll(JSON_BLOCK_RE));
   let jsonRaw = '';
   let jsonData: Record<string, unknown> | null = null;
@@ -105,14 +129,12 @@ export function parseAnalise(analise: AnaliseRow | null | undefined): ParsedAnal
     jsonRaw = matches[matches.length - 1][1];
     jsonData = tryJsonParse(jsonRaw);
   }
-  // resultado_json salvo no banco tem precedência
   if (!jsonData && analise.resultado_json && typeof analise.resultado_json === 'object') {
     jsonData = analise.resultado_json as Record<string, unknown>;
   }
 
   const textoLimpo = texto.replace(JSON_BLOCK_RE, '').trim();
 
-  // resumo_visual fallback
   const resumoVisual = (analise.resumo_visual && typeof analise.resumo_visual === 'object')
     ? analise.resumo_visual as Record<string, unknown>
     : null;
@@ -124,14 +146,13 @@ export function parseAnalise(analise: AnaliseRow | null | undefined): ParsedAnal
   let totalAplicacoes: number | null = null;
   if (jsonData?.resumo && typeof jsonData.resumo === 'object') {
     const r = jsonData.resumo as Record<string, unknown>;
-    if (typeof r.saldo === 'number') saldo = r.saldo;
+    saldo = finite(r.saldo);
     if (typeof r.estouro === 'boolean') estouro = r.estouro;
-    if (typeof r.total_origens === 'number') totalOrigens = r.total_origens;
-    if (typeof r.total_aplicacoes === 'number') totalAplicacoes = r.total_aplicacoes;
+    totalOrigens = finite(r.total_origens);
+    totalAplicacoes = finite(r.total_aplicacoes);
   }
-  if (saldo === null && resumoVisual && typeof resumoVisual.saldo === 'number') saldo = resumoVisual.saldo;
+  if (saldo === null && resumoVisual) saldo = finite(resumoVisual.saldo);
   if (estouro === null && resumoVisual && typeof resumoVisual.estouro === 'boolean') estouro = resumoVisual.estouro;
-  // Fallback regex no texto bruto do JSON
   if (saldo === null && jsonRaw) saldo = extractNumber(jsonRaw, 'saldo');
   if (estouro === null && jsonRaw) estouro = extractBool(jsonRaw, 'estouro');
   if (totalOrigens === null && jsonRaw) totalOrigens = extractNumber(jsonRaw, 'total_origens');
@@ -141,9 +162,9 @@ export function parseAnalise(analise: AnaliseRow | null | undefined): ParsedAnal
   let riscos: { alto: number; medio: number; baixo: number } | null = null;
   const fromObj = (o: Record<string, unknown> | null | undefined) => {
     if (!o) return null;
-    const a = typeof o.alto === 'number' ? o.alto : null;
-    const m = typeof o.medio === 'number' ? o.medio : null;
-    const b = typeof o.baixo === 'number' ? o.baixo : null;
+    const a = finite(o.alto);
+    const m = finite(o.medio);
+    const b = finite(o.baixo);
     if (a !== null || m !== null || b !== null) {
       return { alto: a ?? 0, medio: m ?? 0, baixo: b ?? 0 };
     }
@@ -152,12 +173,52 @@ export function parseAnalise(analise: AnaliseRow | null | undefined): ParsedAnal
   riscos = fromObj(jsonData?.riscos_count as Record<string, unknown> | undefined)
         ?? fromObj((resumoVisual?.riscos as Record<string, unknown>) ?? undefined);
   if (!riscos && jsonRaw) {
-    // Tenta extrair do texto bruto
-    const a = extractNumber(jsonRaw, 'alto');
-    const m = extractNumber(jsonRaw, 'medio');
-    const b = extractNumber(jsonRaw, 'baixo');
-    if (a !== null || m !== null || b !== null) {
-      riscos = { alto: a ?? 0, medio: m ?? 0, baixo: b ?? 0 };
+    // procura especificamente o bloco riscos_count para evitar pegar "alto" de outro lugar
+    const block = jsonRaw.match(/"riscos_count"\s*:\s*\{([\s\S]{0,200}?)\}/i);
+    const target = block ? block[1] : '';
+    if (target) {
+      const a = extractNumber(target, 'alto');
+      const m = extractNumber(target, 'medio');
+      const b = extractNumber(target, 'baixo');
+      if (a !== null || m !== null || b !== null) {
+        riscos = { alto: a ?? 0, medio: m ?? 0, baixo: b ?? 0 };
+      }
+    }
+  }
+
+  // ============ PATRIMONIO ============
+  let patrimonio: PatrimonioParsed | null = null;
+  if (jsonData?.patrimonio && typeof jsonData.patrimonio === 'object') {
+    const p = jsonData.patrimonio as Record<string, unknown>;
+    const cand: PatrimonioParsed = {
+      anterior: finite(p.anterior),
+      atual: finite(p.atual),
+      variacao_valor: finite(p.variacao_valor),
+      variacao_perc: finite(p.variacao_perc),
+    };
+    if (cand.anterior !== null || cand.atual !== null || cand.variacao_perc !== null) {
+      patrimonio = cand;
+    }
+  }
+  if (!patrimonio && resumoVisual?.patrimonio && typeof resumoVisual.patrimonio === 'object') {
+    const p = resumoVisual.patrimonio as Record<string, unknown>;
+    patrimonio = {
+      anterior: finite(p.anterior),
+      atual: finite(p.atual),
+      variacao_valor: finite(p.variacao_valor),
+      variacao_perc: finite(p.variacao_perc),
+    };
+  }
+  if (!patrimonio && jsonRaw) {
+    patrimonio = extractPatrimonioFromRaw(jsonRaw);
+  }
+  // Recalcula valores derivados quando possível
+  if (patrimonio && patrimonio.atual !== null && patrimonio.anterior !== null) {
+    if (patrimonio.variacao_valor === null) {
+      patrimonio.variacao_valor = patrimonio.atual - patrimonio.anterior;
+    }
+    if (patrimonio.variacao_perc === null && patrimonio.anterior > 0) {
+      patrimonio.variacao_perc = ((patrimonio.atual - patrimonio.anterior) / patrimonio.anterior) * 100;
     }
   }
 
@@ -176,9 +237,34 @@ export function parseAnalise(analise: AnaliseRow | null | undefined): ParsedAnal
     vereditoMensagem = resumoVisual.veredito_msg;
   }
 
+  // Injeta dados reparados de volta no jsonData para o componente visual usar
+  if (jsonData) {
+    if (patrimonio && (!jsonData.patrimonio || typeof jsonData.patrimonio !== 'object')) {
+      jsonData.patrimonio = patrimonio as unknown as Record<string, unknown>;
+    } else if (jsonData.patrimonio && patrimonio) {
+      // Sobrescreve campos numéricos inválidos do jsonData com os valores reparados
+      const existing = jsonData.patrimonio as Record<string, unknown>;
+      jsonData.patrimonio = {
+        anterior: finite(existing.anterior) ?? patrimonio.anterior,
+        atual: finite(existing.atual) ?? patrimonio.atual,
+        variacao_valor: finite(existing.variacao_valor) ?? patrimonio.variacao_valor,
+        variacao_perc: finite(existing.variacao_perc) ?? patrimonio.variacao_perc,
+      } as unknown as Record<string, unknown>;
+    }
+    if (riscos && !jsonData.riscos_count) {
+      jsonData.riscos_count = riscos as unknown as Record<string, unknown>;
+    }
+    if (jsonData.resumo && typeof jsonData.resumo === 'object') {
+      const r = jsonData.resumo as Record<string, unknown>;
+      if (saldo !== null && finite(r.saldo) === null) r.saldo = saldo;
+      if (totalOrigens !== null && finite(r.total_origens) === null) r.total_origens = totalOrigens;
+      if (totalAplicacoes !== null && finite(r.total_aplicacoes) === null) r.total_aplicacoes = totalAplicacoes;
+    }
+  }
+
   return {
     veredito, vereditoMensagem, saldo, estouro,
-    totalOrigens, totalAplicacoes, riscos,
+    totalOrigens, totalAplicacoes, riscos, patrimonio,
     jsonData, textoLimpo,
   };
 }
