@@ -72,6 +72,8 @@ interface VisualData {
 
 interface Props {
   resultado: string;
+  /** Dados estruturados pré-parseados (preferenciais sobre o JSON inline) */
+  jsonOverride?: VisualData | null;
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
