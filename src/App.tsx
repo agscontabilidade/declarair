@@ -50,6 +50,7 @@ import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminAssinaturas from "./pages/admin/AdminAssinaturas";
 import AdminBugReports from "./pages/admin/AdminBugReports";
 import AdminLogs from "./pages/admin/AdminLogs";
+import AdminEmails from "./pages/admin/AdminEmails";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 import PoliticaLGPD from "./pages/PoliticaLGPD";
