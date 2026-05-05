@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Settings, Save, RotateCcw, History, AlertTriangle, 
-  Info, Shield, Package, Bell, Search, Edit3
+  Info, Shield, Package, Bell, Search, Edit3, Key
 } from 'lucide-react';
 import { 
   Card, CardContent, CardHeader, CardTitle, CardDescription 
@@ -126,6 +126,7 @@ export default function AdminSettings() {
       case 'system': return <Shield className="h-4 w-4" />;
       case 'plans': return <Package className="h-4 w-4" />;
       case 'notifications': return <Bell className="h-4 w-4" />;
+      case 'api': return <Key className="h-4 w-4" />;
       default: return <Settings className="h-4 w-4" />;
     }
   };
@@ -150,6 +151,7 @@ export default function AdminSettings() {
             <TabsTrigger value="all">Todas</TabsTrigger>
             <TabsTrigger value="system">Sistema</TabsTrigger>
             <TabsTrigger value="plans">Planos</TabsTrigger>
+            <TabsTrigger value="api">APIs</TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
               <History className="h-4 w-4" /> Histórico
             </TabsTrigger>
