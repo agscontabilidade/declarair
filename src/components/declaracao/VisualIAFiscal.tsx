@@ -94,16 +94,24 @@ const InfoTooltip = ({ content }: { content?: string }) => {
 
 export function VisualIAFiscal({ resultado }: Props) {
   const { textualContent, jsonData } = useMemo(() => {
-    const jsonMatch = resultado.match(/```json\s*([\s\S]*?)\s*```/);
+    // Regex aprimorada para capturar blocos JSON mesmo se mal formados no markdown
+    const jsonRegex = /```json\s*([\s\S]*?)\s*```/g;
+    const matches = Array.from(resultado.matchAll(jsonRegex));
+    
     let textual = resultado;
     let data: VisualData | null = null;
 
-    if (jsonMatch) {
+    if (matches.length > 0) {
+      // Pega o último bloco JSON (geralmente o que contém os dados estruturados)
+      const lastMatch = matches[matches.length - 1];
       try {
-        data = JSON.parse(jsonMatch[1]);
-        textual = resultado.replace(jsonMatch[0], '').trim();
+        data = JSON.parse(lastMatch[1]);
+        // Remove TODOS os blocos JSON do texto para exibição
+        textual = resultado.replace(jsonRegex, '').trim();
       } catch (e) {
         console.error("Erro ao parsear JSON da análise:", e);
+        // Se falhou o parse, removemos o bloco do texto assim mesmo para não poluir
+        textual = resultado.replace(jsonRegex, '').trim();
       }
     }
 
