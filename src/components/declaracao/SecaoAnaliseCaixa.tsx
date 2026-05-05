@@ -26,12 +26,32 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { HelpCircle } from 'lucide-react';
 
 interface Props {
   declaracaoId: string;
 }
 
 const MAX_SIZE = 18 * 1024 * 1024;
+
+const HeaderInfo = ({ content }: { content: string }) => (
+  <TooltipProvider>
+    <UITooltip>
+      <TooltipTrigger asChild>
+        <HelpCircle className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[200px] p-2 text-[10px] leading-tight">
+        {content}
+      </TooltipContent>
+    </UITooltip>
+  </TooltipProvider>
+);
 
 export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
   const navigate = useNavigate();
@@ -371,10 +391,30 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/10">
-                  <TableHead className="w-[180px] text-[11px] uppercase font-bold">Data e Hora</TableHead>
-                  <TableHead className="text-[11px] uppercase font-bold">Veredito</TableHead>
-                  <TableHead className="text-[11px] uppercase font-bold text-right">Saldo de Caixa</TableHead>
-                  <TableHead className="text-[11px] uppercase font-bold text-center">Riscos</TableHead>
+                  <TableHead className="w-[180px] text-[11px] uppercase font-bold">
+                    <div className="flex items-center gap-1">
+                      Data e Hora
+                      <HeaderInfo content="Data da execução desta análise." />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-[11px] uppercase font-bold">
+                    <div className="flex items-center gap-1">
+                      Veredito
+                      <HeaderInfo content="Recomendação da IA sobre a transmissão da declaração (Transmitir, Ajustar ou Bloqueado)." />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-[11px] uppercase font-bold text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      Saldo de Caixa
+                      <HeaderInfo content="Saldo final calculado entre Origens e Aplicações. Valores negativos indicam estouro de caixa." />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-[11px] uppercase font-bold text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      Riscos
+                      <HeaderInfo content="Círculos indicam o nível de risco detectado: Vermelho (Crítico), Amarelo (Alerta) e Verde (Conforme)." />
+                    </div>
+                  </TableHead>
                   <TableHead className="w-[100px] text-[11px] uppercase font-bold text-right pr-4">Ação</TableHead>
                 </TableRow>
               </TableHeader>
