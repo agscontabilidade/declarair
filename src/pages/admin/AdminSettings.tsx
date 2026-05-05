@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Settings, Save, RotateCcw, History, AlertTriangle, 
-  Info, Shield, Package, Bell, Search, Edit3
+  Info, Shield, Package, Bell, Search, Edit3, Key
 } from 'lucide-react';
 import { 
   Card, CardContent, CardHeader, CardTitle, CardDescription 
@@ -30,6 +30,7 @@ export default function AdminSettings() {
   const [newValue, setNewValue] = useState('');
   const [changeReason, setChangeReason] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: configs, isLoading } = useQuery({
     queryKey: ['admin-system-configs'],
@@ -126,11 +127,17 @@ export default function AdminSettings() {
       case 'system': return <Shield className="h-4 w-4" />;
       case 'plans': return <Package className="h-4 w-4" />;
       case 'notifications': return <Bell className="h-4 w-4" />;
+      case 'api': return <Key className="h-4 w-4" />;
       default: return <Settings className="h-4 w-4" />;
     }
   };
 
-  const filteredConfigs = configs?.filter(c => activeTab === 'all' || c.category === activeTab);
+  const filteredConfigs = configs?.filter(c => {
+    const matchesTab = activeTab === 'all' || c.category === activeTab;
+    const matchesSearch = c.key.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         (c.description?.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesTab && matchesSearch;
+  });
 
   return (
     <AdminLayout>
@@ -146,14 +153,29 @@ export default function AdminSettings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">Todas</TabsTrigger>
-            <TabsTrigger value="system">Sistema</TabsTrigger>
-            <TabsTrigger value="plans">Planos</TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
-              <History className="h-4 w-4" /> Histórico
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-2 rounded-lg border">
+            <TabsList className="bg-transparent border-none">
+              <TabsTrigger value="all">Todas</TabsTrigger>
+              <TabsTrigger value="system">Sistema</TabsTrigger>
+              <TabsTrigger value="plans">Planos</TabsTrigger>
+              <TabsTrigger value="api">APIs</TabsTrigger>
+              <TabsTrigger value="history" className="gap-2">
+                <History className="h-4 w-4" /> Histórico
+              </TabsTrigger>
+            </TabsList>
+
+            {activeTab !== 'history' && (
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar configuração..." 
+                  className="pl-9 h-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
 
           <TabsContent value="history">
             <Card>
