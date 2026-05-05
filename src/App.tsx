@@ -52,6 +52,7 @@ import AdminBugReports from "./pages/admin/AdminBugReports";
 import AdminLogs from "./pages/admin/AdminLogs";
 import AdminEmails from "./pages/admin/AdminEmails";
 import AdminWebhooks from "./pages/admin/AdminWebhooks";
+import AdminSettings from "./pages/admin/AdminSettings";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 import PoliticaLGPD from "./pages/PoliticaLGPD";
@@ -117,6 +118,7 @@ const App = () => (
               <Route path="/admin/logs" element={<ProtectedRoute allowedType="admin"><AdminLogs /></ProtectedRoute>} />
               <Route path="/admin/emails" element={<ProtectedRoute allowedType="admin"><AdminEmails /></ProtectedRoute>} />
               <Route path="/admin/webhooks" element={<ProtectedRoute allowedType="admin"><AdminWebhooks /></ProtectedRoute>} />
+              <Route path="/admin/configuracoes" element={<ProtectedRoute allowedType="admin"><AdminSettings /></ProtectedRoute>} />
 
               {/* Contador routes - billing gated */}
               <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><BillingGate><Dashboard /></BillingGate></ProtectedRoute>} />
