@@ -64,6 +64,7 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                 <TableHead>Nome</TableHead>
                 <TableHead className="hidden sm:table-cell">WhatsApp</TableHead>
                 <TableHead>Procuração e-CAC</TableHead>
+                <TableHead>Cobrança</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
