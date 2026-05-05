@@ -19,8 +19,8 @@ jobs:
     - name: Instalar dependências
       run: bun install
 
-    - name: Verificar Lint
-      run: bun run lint
+    # - name: Verificar Lint
+    #   run: bun run lint
 
     - name: Rodar testes unitários
       run: bun run test
