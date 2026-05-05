@@ -206,28 +206,75 @@ serve(async (req) => {
   }
 });
 
+// Tenta reparar JSON truncado/corrompido oriundo do streaming.
+function repairTruncatedJson(raw: string): any {
+  for (let end = raw.length; end > 50; end--) {
+    const ch = raw[end - 1];
+    if (ch !== ',' && ch !== '}' && ch !== ']' && ch !== '"' && ch !== ' ' && ch !== '\n') continue;
+    let candidate = raw.slice(0, end).replace(/,\s*$/, '');
+    let inString = false, escape = false;
+    let openObj = 0, openArr = 0;
+    for (let i = 0; i < candidate.length; i++) {
+      const c = candidate[i];
+      if (escape) { escape = false; continue; }
+      if (c === '\\') { escape = true; continue; }
+      if (c === '"') { inString = !inString; continue; }
+      if (inString) continue;
+      if (c === '{') openObj++;
+      else if (c === '}') openObj--;
+      else if (c === '[') openArr++;
+      else if (c === ']') openArr--;
+    }
+    if (inString) candidate += '"';
+    while (openArr-- > 0) candidate += ']';
+    while (openObj-- > 0) candidate += '}';
+    try { return JSON.parse(candidate); } catch { /* try shorter */ }
+  }
+  return null;
+}
+
+function safeNumber(n: unknown): number | null {
+  return typeof n === 'number' && Number.isFinite(n) ? n : null;
+}
+
 async function saveAnalysis(supabase: any, data: { declaracao_id: string; escritorio_id: string; tipo: string; resultado_texto: string }) {
-  // Extrai o JSON se existir na resposta
-  let jsonResult = null;
-  const jsonMatch = data.resultado_texto.match(/```json\n([\s\S]*?)\n```/);
+  let jsonResult: any = null;
+  const jsonMatch = data.resultado_texto.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   if (jsonMatch) {
+    const raw = jsonMatch[1];
     try {
-      jsonResult = JSON.parse(jsonMatch[1]);
-    } catch (e) {
-      console.warn("Could not parse JSON from AI response for saving");
+      jsonResult = JSON.parse(raw);
+    } catch {
+      try {
+        jsonResult = JSON.parse(raw.replace(/,\s*([}\]])/g, '$1'));
+      } catch {
+        jsonResult = repairTruncatedJson(raw);
+        if (jsonResult) console.warn("AI JSON was truncated; recovered via repair.");
+        else console.warn("Could not parse JSON from AI response for saving");
+      }
     }
   }
 
-  // Extrai veredito e resumo para listagem
   const veredito = jsonResult?.conclusao?.veredito || jsonResult?.tipo || data.tipo;
   const resumo_visual = jsonResult ? {
-    saldo: jsonResult.resumo?.saldo,
-    estouro: jsonResult.resumo?.estouro,
-    riscos: jsonResult.riscos_count,
-    veredito_msg: jsonResult.conclusao?.mensagem
+    saldo: safeNumber(jsonResult.resumo?.saldo),
+    estouro: typeof jsonResult.resumo?.estouro === 'boolean' ? jsonResult.resumo.estouro : null,
+    total_origens: safeNumber(jsonResult.resumo?.total_origens),
+    total_aplicacoes: safeNumber(jsonResult.resumo?.total_aplicacoes),
+    riscos: jsonResult.riscos_count ? {
+      alto: safeNumber(jsonResult.riscos_count.alto) ?? 0,
+      medio: safeNumber(jsonResult.riscos_count.medio) ?? 0,
+      baixo: safeNumber(jsonResult.riscos_count.baixo) ?? 0,
+    } : null,
+    patrimonio: jsonResult.patrimonio ? {
+      anterior: safeNumber(jsonResult.patrimonio.anterior),
+      atual: safeNumber(jsonResult.patrimonio.atual),
+      variacao_valor: safeNumber(jsonResult.patrimonio.variacao_valor),
+      variacao_perc: safeNumber(jsonResult.patrimonio.variacao_perc),
+    } : null,
+    veredito_msg: jsonResult.conclusao?.mensagem ?? null,
   } : null;
 
-  // Agora inserimos em vez de upsert para manter o histórico
   const { error } = await supabase
     .from("declaracao_analises")
     .insert({
@@ -243,7 +290,6 @@ async function saveAnalysis(supabase: any, data: { declaracao_id: string; escrit
 
   if (error) console.error("Database error saving analysis:", error);
 
-  // Lógica de Memória Evolutiva: Salva o veredito como memória para o cliente
   if (jsonResult?.conclusao?.mensagem) {
     const { data: decl } = await supabase.from("declaracoes").select("cliente_id").eq("id", data.declaracao_id).single();
     if (decl?.cliente_id) {
