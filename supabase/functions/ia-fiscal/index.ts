@@ -46,6 +46,8 @@ serve(async (req) => {
         .select("*")
         .eq("declaracao_id", declaracao_id)
         .eq("tipo", tipo || "analise")
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (existing) {
