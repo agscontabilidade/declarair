@@ -44,7 +44,8 @@ export function SeletorPermissoes({ permissoesSelecionadas, onChange }: SeletorP
   };
 
   // Group by category for better UX
-  const categorias = permissoes?.reduce((acc: any, p) => {
+  type Permissao = { id: string; categoria: string | null; descricao: string | null; nome?: string | null };
+  const categorias = (permissoes as Permissao[] | undefined)?.reduce((acc: Record<string, Permissao[]>, p) => {
     const cat = p.categoria || 'Outros';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(p);
