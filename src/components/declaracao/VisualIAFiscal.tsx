@@ -625,17 +625,26 @@ function AnaliseTecnicaVisual({ secoes, recomendacoes, conclusao, detalhes, text
             <InfoTooltip content="Texto técnico completo gerado pela IA. Útil para revisar os cálculos, fundamentos legais e rastros de cada conclusão." />
           </h4>
           <Card className="border bg-card">
-            <CardContent className="pt-5 pb-5">
-              <div className="prose prose-sm max-w-none dark:prose-invert leading-relaxed
-                prose-headings:font-semibold prose-headings:text-foreground prose-headings:mt-4 prose-headings:mb-2
-                prose-h1:text-base prose-h2:text-base prose-h3:text-sm prose-h4:text-sm
-                prose-p:text-foreground/85 prose-p:my-2 prose-p:leading-relaxed
-                prose-li:text-foreground/85 prose-li:my-1 prose-li:leading-relaxed
+            <CardContent className="pt-8 pb-8 px-6 md:px-10">
+              <article className="prose prose-base max-w-3xl mx-auto dark:prose-invert
+                prose-headings:font-bold prose-headings:text-foreground
+                prose-headings:tracking-tight prose-headings:scroll-mt-20
+                prose-h1:text-xl prose-h1:mt-0 prose-h1:mb-4 prose-h1:pb-2 prose-h1:border-b
+                prose-h2:text-lg prose-h2:mt-10 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-border/60
+                prose-h3:text-base prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-primary
+                prose-h4:text-sm prose-h4:mt-6 prose-h4:mb-2 prose-h4:uppercase prose-h4:tracking-wider prose-h4:text-muted-foreground
+                prose-p:text-foreground/90 prose-p:my-4 prose-p:leading-7
+                prose-li:text-foreground/90 prose-li:my-2 prose-li:leading-7 prose-li:marker:text-primary/60
+                prose-ul:my-4 prose-ul:space-y-1 prose-ol:my-4 prose-ol:space-y-1
                 prose-strong:text-foreground prose-strong:font-semibold
-                prose-ul:my-2 prose-ol:my-2
-                prose-hr:my-4">
-                <ReactMarkdown>{textualFallback}</ReactMarkdown>
-              </div>
+                prose-em:text-foreground/80
+                prose-hr:my-8 prose-hr:border-border/50
+                prose-code:text-primary prose-code:bg-primary/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
+                prose-blockquote:border-l-4 prose-blockquote:border-primary/40 prose-blockquote:bg-muted/30 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r prose-blockquote:not-italic">
+                <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+                  {prepareText(textualFallback)}
+                </ReactMarkdown>
+              </article>
             </CardContent>
           </Card>
         </div>
