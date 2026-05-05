@@ -18,6 +18,7 @@ import { getErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
 import { VisualIAFiscal } from './VisualIAFiscal';
+import { parseAnalise, type ParsedAnalise } from '@/lib/parseAnalise';
 import {
   Table,
   TableBody,
@@ -40,13 +41,13 @@ interface Props {
 
 const MAX_SIZE = 18 * 1024 * 1024;
 
-const HeaderInfo = ({ content }: { content: string }) => (
+const HeaderInfo = ({ content }: { content: React.ReactNode }) => (
   <TooltipProvider>
     <UITooltip>
       <TooltipTrigger asChild>
         <HelpCircle className="h-3 w-3 text-muted-foreground/50 cursor-help" />
       </TooltipTrigger>
-      <TooltipContent className="max-w-[200px] p-2 text-[10px] leading-tight">
+      <TooltipContent className="max-w-[300px] p-3 text-xs leading-relaxed">
         {content}
       </TooltipContent>
     </UITooltip>
@@ -87,7 +88,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('declaracao_analises')
-        .select('id, resultado_texto, veredito, resumo_visual, updated_at, created_at')
+        .select('id, resultado_texto, resultado_json, veredito, resumo_visual, updated_at, created_at')
         .eq('declaracao_id', declaracaoId)
         .eq('tipo', 'analise_caixa')
         .order('created_at', { ascending: false });
@@ -96,30 +97,30 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     },
   });
 
+  // null = mostrar a análise mais recente (default expandido)
+  // 'collapsed' = card detalhado fechado
+  // string = ID da análise selecionada
   const [activeAnaliseId, setActiveAnaliseId] = useState<string | null>(null);
 
-  const analiseAtual = activeAnaliseId === 'collapsed' ? null : (
-                       historicoAnalises?.find(a => a.id === activeAnaliseId) || 
-                       historicoAnalises?.find(a => a.id === analiseRecenteId) ||
-                       (historicoAnalises && historicoAnalises.length > 0 ? historicoAnalises[0] : null));
+  // Análise atualmente exibida no card detalhado
+  const analiseAtual = (() => {
+    if (activeAnaliseId === 'collapsed') return null;
+    if (loading) return null;
+    if (activeAnaliseId) return historicoAnalises?.find(a => a.id === activeAnaliseId) ?? null;
+    if (analiseRecenteId) return historicoAnalises?.find(a => a.id === analiseRecenteId) ?? null;
+    return historicoAnalises && historicoAnalises.length > 0 ? historicoAnalises[0] : null;
+  })();
+
+  // Parser tolerante: extrai veredito, saldo, riscos, JSON estruturado e texto limpo
+  const parsedAtual: ParsedAnalise | null = analiseAtual ? parseAnalise(analiseAtual) : null;
 
   const detaleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (analiseAtual) {
-      setResultado(analiseAtual.resultado_texto);
-      setUltimaAtualizacao(analiseAtual.updated_at);
-      
-      // Expandir automaticamente se houver uma análise ativa
-      if (activeAnaliseId || analiseRecenteId || (historicoAnalises && historicoAnalises.length > 0)) {
-        setTimeout(() => {
-          detaleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      }
-    } else if (!loading) {
-      setResultado('');
+    if (parsedAtual) {
+      setUltimaAtualizacao(analiseAtual?.updated_at ?? null);
     }
-  }, [analiseAtual, loading, activeAnaliseId, analiseRecenteId, historicoAnalises]);
+  }, [parsedAtual, analiseAtual?.updated_at]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -425,92 +426,153 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/10">
-                  <TableHead className="w-[180px] text-[11px] uppercase font-bold">
+                  <TableHead className="w-[160px] text-[11px] uppercase font-bold">
                     <div className="flex items-center gap-1">
                       Data e Hora
-                      <HeaderInfo content="Data e hora exata em que a análise foi processada pela nossa inteligência artificial." />
+                      <HeaderInfo content={
+                        <div className="space-y-1.5">
+                          <p><b>Quando a IA processou esta análise.</b></p>
+                          <p className="text-muted-foreground">A análise mais recente fica no topo. Use o botão "Atualizar Análise" para gerar uma nova versão sem perder o histórico anterior.</p>
+                        </div>
+                      } />
                     </div>
                   </TableHead>
                   <TableHead className="text-[11px] uppercase font-bold">
                     <div className="flex items-center gap-1">
                       Veredito
-                      <HeaderInfo content="Parecer conclusivo da IA. 'Transmitir' indica fluxo de caixa coerente. 'Ajustar' sugere revisão de valores. 'Bloqueado' indica inconsistência grave que geraria malha fiscal imediata." />
+                      <HeaderInfo content={
+                        <div className="space-y-1.5">
+                          <p><b>Parecer conclusivo da IA</b> sobre transmitir ou não a declaração.</p>
+                          <ul className="space-y-1 mt-1">
+                            <li><b className="text-emerald-600">Transmitir</b>: dados consistentes, sem riscos relevantes.</li>
+                            <li><b className="text-amber-600">Ajustar</b>: há pontos a corrigir antes do envio (ex.: dedução sem lastro, omissão de dívida).</li>
+                            <li><b className="text-destructive">Bloqueado</b>: inconsistências graves que provavelmente cairão em malha (ex.: estouro de caixa, bens omitidos).</li>
+                          </ul>
+                        </div>
+                      } />
                     </div>
                   </TableHead>
                   <TableHead className="text-[11px] uppercase font-bold text-right">
                     <div className="flex items-center justify-end gap-1">
                       Saldo de Caixa
-                      <HeaderInfo content="Diferença entre Origens e Aplicações. Exemplo: Se você ganhou R$ 100k (Origem) mas gastou/investiu R$ 120k (Aplicação), o saldo será negativo de -R$ 20k (Estouro), o que é um risco alto de malha fina." />
+                      <HeaderInfo content={
+                        <div className="space-y-1.5">
+                          <p><b>Origens − Aplicações.</b></p>
+                          <p className="text-muted-foreground">Mostra se o que entrou cobre o que foi gasto/investido no ano.</p>
+                          <ul className="space-y-1 mt-1">
+                            <li><b className="text-emerald-600">Positivo</b>: ex. ganhou R$ 200k e aplicou R$ 150k → sobra R$ 50k. OK.</li>
+                            <li><b className="text-destructive">Negativo (Estouro)</b>: ex. ganhou R$ 100k e aplicou R$ 150k → falta R$ 50k. A Receita questiona a origem.</li>
+                          </ul>
+                        </div>
+                      } />
                     </div>
                   </TableHead>
                   <TableHead className="text-[11px] uppercase font-bold text-center">
                     <div className="flex items-center justify-center gap-1">
                       Riscos
-                      <HeaderInfo content="Nível de criticidade dos alertas. Vermelho: Erros estruturais ou patrimoniais. Amarelo: Alertas de inconsistência leve ou cruzamento de dados. Verde: Dados dentro dos parâmetros de normalidade da Receita." />
+                      <HeaderInfo content={
+                        <div className="space-y-1.5">
+                          <p><b>Quantidade de alertas detectados</b> em cruzamentos com DIRF, DMED, DIMOB e e-Financeira.</p>
+                          <ul className="space-y-1 mt-1">
+                            <li><span className="inline-block h-2 w-2 rounded-full bg-destructive align-middle mr-1" /> <b>Alto</b>: ex. omissão de bem, dedução sem comprovante, financiamento não declarado.</li>
+                            <li><span className="inline-block h-2 w-2 rounded-full bg-amber-500 align-middle mr-1" /> <b>Médio</b>: ex. descrição incompleta de bem, divergência leve de valores.</li>
+                            <li><span className="inline-block h-2 w-2 rounded-full bg-emerald-500 align-middle mr-1" /> <b>Baixo</b>: dentro dos parâmetros normais.</li>
+                          </ul>
+                        </div>
+                      } />
                     </div>
                   </TableHead>
-                  <TableHead className="w-[100px] text-[11px] uppercase font-bold text-right pr-4">Ação</TableHead>
+                  <TableHead className="text-[11px] uppercase font-bold text-center hidden md:table-cell">
+                    <div className="flex items-center justify-center gap-1">
+                      Resumo
+                      <HeaderInfo content="Mensagem curta da IA explicando o veredito." />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[80px] text-[11px] uppercase font-bold text-right pr-4">Ação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {historicoAnalises.map((analise, index) => {
-                  const resumo = analise.resumo_visual as any;
-                  const isSelected = activeAnaliseId === analise.id || (activeAnaliseId === null && analiseRecenteId === null && index === 0);
-                  const veredito = analise.veredito;
-                  
-                  const formatCurrency = (value: number) => {
-                    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-                  };
+                  const parsed = parseAnalise(analise);
+                  const isAtual = analiseAtual?.id === analise.id;
+                  const isSelected = activeAnaliseId === analise.id
+                    || (activeAnaliseId === null && (analiseRecenteId === analise.id || (!analiseRecenteId && index === 0)));
+
+                  const formatCurrency = (value: number) =>
+                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
                   return (
-                    <TableRow 
+                    <TableRow
                       key={analise.id}
-                    className={`cursor-pointer transition-colors hover:bg-muted/40 ${isSelected ? 'bg-primary/5' : ''}`}
-                    onClick={() => {
-                      setAnaliseRecenteId(null);
-                      setActiveAnaliseId(analise.id);
-                    }}
+                      className={`cursor-pointer transition-colors hover:bg-muted/40 ${isAtual ? 'bg-primary/5' : ''}`}
+                      onClick={() => {
+                        // Toggle: se já está aberta como atual, recolhe; senão abre essa
+                        if (isAtual && activeAnaliseId !== 'collapsed') {
+                          setActiveAnaliseId('collapsed');
+                          setAnaliseRecenteId(null);
+                        } else {
+                          setAnaliseRecenteId(null);
+                          setActiveAnaliseId(analise.id);
+                          setTimeout(() => detaleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                        }
+                      }}
                     >
                       <TableCell className="font-medium text-xs">
                         <div className="flex flex-col">
                           <span>{new Date(analise.created_at || '').toLocaleDateString('pt-BR')}</span>
-                          <span className="text-[10px] text-muted-foreground">{new Date(analise.created_at || '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(analise.created_at || '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        {veredito === 'transmitir' ? (
+                        {parsed.veredito === 'transmitir' ? (
                           <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 text-[10px] gap-1">
                             <CheckCircle2 className="h-3 w-3" /> Transmitir
                           </Badge>
-                        ) : veredito === 'ajustar' ? (
+                        ) : parsed.veredito === 'ajustar' ? (
                           <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 text-[10px] gap-1">
                             <AlertCircle className="h-3 w-3" /> Ajustar
                           </Badge>
-                        ) : (
+                        ) : parsed.veredito === 'nao_transmitir' ? (
                           <Badge variant="destructive" className="bg-destructive/10 text-destructive hover:bg-destructive/10 border-destructive/20 text-[10px] gap-1">
                             <XCircle className="h-3 w-3" /> Bloqueado
                           </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground">— sem parecer</Badge>
                         )}
                       </TableCell>
-                      <TableCell className={`text-xs font-semibold text-right ${resumo?.estouro ? 'text-destructive' : 'text-emerald-600'}`}>
-                        {resumo?.saldo !== undefined ? formatCurrency(resumo.saldo) : '---'}
+                      <TableCell className={`text-xs font-semibold text-right ${parsed.estouro ? 'text-destructive' : parsed.saldo !== null ? 'text-emerald-600' : 'text-muted-foreground'}`}>
+                        {parsed.saldo !== null ? formatCurrency(parsed.saldo) : '—'}
                       </TableCell>
                       <TableCell>
-                        <div className="flex justify-center gap-1.5">
-                          {resumo?.riscos ? (
+                        <div className="flex justify-center gap-1.5 items-center">
+                          {parsed.riscos ? (
                             <>
-                              {resumo.riscos.alto > 0 && <span className="h-2 w-2 rounded-full bg-destructive shadow-[0_0_5px_rgba(239,68,68,0.5)] animate-pulse" title={`${resumo.riscos.alto} Crítico`} />}
-                              {resumo.riscos.medio > 0 && <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_5px_rgba(245,158,11,0.5)]" title={`${resumo.riscos.medio} Alerta`} />}
-                              {resumo.riscos.baixo >= 0 && <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" title="Normal" />}
+                              <span className="inline-flex items-center gap-0.5 text-[10px]" title={`${parsed.riscos.alto} alto`}>
+                                <span className={`h-2 w-2 rounded-full ${parsed.riscos.alto > 0 ? 'bg-destructive shadow-[0_0_5px_rgba(239,68,68,0.5)] animate-pulse' : 'bg-muted'}`} />
+                                <span className="font-medium tabular-nums">{parsed.riscos.alto}</span>
+                              </span>
+                              <span className="inline-flex items-center gap-0.5 text-[10px]" title={`${parsed.riscos.medio} médio`}>
+                                <span className={`h-2 w-2 rounded-full ${parsed.riscos.medio > 0 ? 'bg-amber-500' : 'bg-muted'}`} />
+                                <span className="font-medium tabular-nums">{parsed.riscos.medio}</span>
+                              </span>
+                              <span className="inline-flex items-center gap-0.5 text-[10px]" title={`${parsed.riscos.baixo} baixo`}>
+                                <span className={`h-2 w-2 rounded-full ${parsed.riscos.baixo > 0 ? 'bg-emerald-500' : 'bg-muted'}`} />
+                                <span className="font-medium tabular-nums">{parsed.riscos.baixo}</span>
+                              </span>
                             </>
                           ) : (
-                            <span className="text-[10px] text-muted-foreground italic">Processando...</span>
+                            <span className="text-[10px] text-muted-foreground italic">—</span>
                           )}
                         </div>
                       </TableCell>
+                      <TableCell className="hidden md:table-cell text-[11px] text-muted-foreground max-w-[260px]">
+                        <span className="line-clamp-2">{parsed.vereditoMensagem || '—'}</span>
+                      </TableCell>
                       <TableCell className="text-right pr-4">
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
-                          {isSelected ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          {isAtual && activeAnaliseId !== 'collapsed' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -522,21 +584,29 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
         </Card>
       )}
 
-      {(loading || (resultado && activeAnaliseId !== 'collapsed') || carregandoHistorico) && (
+      {(loading || (analiseAtual && activeAnaliseId !== 'collapsed') || (carregandoHistorico && !historicoAnalises)) && (
         <Card id="analise-detalhada" ref={detaleRef} className="scroll-mt-6 border-primary/20 shadow-md">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="outline" className="gap-1">
                   <Brain className="h-3 w-3" /> Análise Detalhada
                 </Badge>
+                {analiseAtual?.created_at && (
+                  <Badge variant="secondary" className="text-[10px] h-5">
+                    {new Date(analiseAtual.created_at).toLocaleString('pt-BR')}
+                  </Badge>
+                )}
                 {(loading || carregandoHistorico) && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                 {!loading && !carregandoHistorico && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="h-6 w-6 text-muted-foreground hover:text-primary"
-                    onClick={() => queryClient.invalidateQueries({ queryKey: ['analise-caixa-historico', declaracaoId] })}
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ['analise-caixa-historico', declaracaoId] });
+                      toast.success('Dados recarregados');
+                    }}
                     title="Recarregar dados"
                   >
                     <RotateCcw className="h-3 w-3" />
@@ -544,7 +614,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
                 )}
               </div>
               <Button variant="ghost" size="sm" onClick={() => {
-                setActiveAnaliseId('collapsed'); // Valor sentinela para esconder
+                setActiveAnaliseId('collapsed');
                 setAnaliseRecenteId(null);
               }} className="h-6 text-xs text-muted-foreground">
                 Recolher
@@ -553,12 +623,19 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
           </CardHeader>
           <Separator />
           <CardContent className="pt-4">
-            {resultado ? (
+            {loading && !analiseAtual ? (
+              <span className="text-muted-foreground animate-pulse text-sm">
+                Lendo declaração e cruzando com o cadastro...
+              </span>
+            ) : analiseAtual?.resultado_texto ? (
+              <VisualIAFiscal
+                resultado={analiseAtual.resultado_texto}
+                jsonOverride={(parsedAtual?.jsonData as never) ?? null}
+              />
+            ) : loading && resultado ? (
               <VisualIAFiscal resultado={resultado} />
             ) : (
-              <span className="text-muted-foreground animate-pulse text-sm">
-                {carregandoHistorico ? 'Recuperando histórico...' : 'Lendo declaração e cruzando com o cadastro...'}
-              </span>
+              <span className="text-muted-foreground text-sm">Nenhuma análise disponível.</span>
             )}
           </CardContent>
         </Card>

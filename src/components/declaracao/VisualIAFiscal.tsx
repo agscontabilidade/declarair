@@ -72,6 +72,8 @@ interface VisualData {
 
 interface Props {
   resultado: string;
+  /** Dados estruturados pré-parseados (preferenciais sobre o JSON inline) */
+  jsonOverride?: VisualData | null;
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -92,31 +94,29 @@ const InfoTooltip = ({ content }: { content?: string }) => {
   );
 };
 
-export function VisualIAFiscal({ resultado }: Props) {
+export function VisualIAFiscal({ resultado, jsonOverride }: Props) {
   const { textualContent, jsonData } = useMemo(() => {
-    // Regex aprimorada para capturar blocos JSON mesmo se mal formados no markdown
-    const jsonRegex = /```json\s*([\s\S]*?)\s*```/g;
+    const jsonRegex = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
     const matches = Array.from(resultado.matchAll(jsonRegex));
-    
-    let textual = resultado;
-    let data: VisualData | null = null;
+    let textual = resultado.replace(jsonRegex, '').trim();
+    let data: VisualData | null = jsonOverride ?? null;
 
-    if (matches.length > 0) {
-      // Pega o último bloco JSON (geralmente o que contém os dados estruturados)
+    if (!data && matches.length > 0) {
       const lastMatch = matches[matches.length - 1];
       try {
         data = JSON.parse(lastMatch[1]);
-        // Remove TODOS os blocos JSON do texto para exibição
-        textual = resultado.replace(jsonRegex, '').trim();
-      } catch (e) {
-        console.error("Erro ao parsear JSON da análise:", e);
-        // Se falhou o parse, removemos o bloco do texto assim mesmo para não poluir
-        textual = resultado.replace(jsonRegex, '').trim();
+      } catch {
+        // tenta reparo simples
+        try {
+          data = JSON.parse(lastMatch[1].replace(/,\s*([}\]])/g, '$1'));
+        } catch {
+          data = null;
+        }
       }
     }
 
     return { textualContent: textual, jsonData: data };
-  }, [resultado]);
+  }, [resultado, jsonOverride]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -124,7 +124,7 @@ export function VisualIAFiscal({ resultado }: Props) {
 
   if (!jsonData) {
     return (
-      <div className="prose prose-sm max-w-none dark:prose-invert">
+      <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-headings:font-semibold prose-h2:text-base prose-h3:text-sm prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-foreground">
         <ReactMarkdown>{textualContent}</ReactMarkdown>
       </div>
     );
@@ -591,15 +591,23 @@ function AnaliseTecnicaVisual({ secoes, recomendacoes, conclusao, detalhes, text
         );
       })()}
 
-      {/* Texto adicional (cálculos detalhados) - colapsado dentro de um card discreto */}
+      {/* Texto adicional (cálculos detalhados) - card legível e auto-explicativo */}
       {textualFallback && textualFallback.trim().length > 100 && (
         <div className="mt-8 space-y-3">
           <h4 className="text-xs font-semibold flex items-center gap-2 px-1 text-muted-foreground uppercase tracking-wider">
             <Info className="h-3 w-3" /> Detalhamento Técnico Completo
+            <InfoTooltip content="Texto técnico completo gerado pela IA. Útil para revisar os cálculos, fundamentos legais e rastros de cada conclusão." />
           </h4>
-          <Card className="border-none bg-accent/5">
-            <CardContent className="pt-4">
-              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground">
+          <Card className="border bg-card">
+            <CardContent className="pt-5 pb-5">
+              <div className="prose prose-sm max-w-none dark:prose-invert leading-relaxed
+                prose-headings:font-semibold prose-headings:text-foreground prose-headings:mt-4 prose-headings:mb-2
+                prose-h1:text-base prose-h2:text-base prose-h3:text-sm prose-h4:text-sm
+                prose-p:text-foreground/85 prose-p:my-2 prose-p:leading-relaxed
+                prose-li:text-foreground/85 prose-li:my-1 prose-li:leading-relaxed
+                prose-strong:text-foreground prose-strong:font-semibold
+                prose-ul:my-2 prose-ol:my-2
+                prose-hr:my-4">
                 <ReactMarkdown>{textualFallback}</ReactMarkdown>
               </div>
             </CardContent>
