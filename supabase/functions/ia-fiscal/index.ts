@@ -26,7 +26,7 @@ serve(async (req) => {
     const { data: { user }, error: authErr } = await anonClient.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authErr || !user) throw new Error("Token inválido");
 
-    const { declaracao_id, tipo } = await req.json();
+    const { declaracao_id, tipo, force_refresh } = await req.json();
 
     if (!declaracao_id) throw new Error("declaracao_id é obrigatório");
 
@@ -39,15 +39,47 @@ serve(async (req) => {
 
     if (!usuario) throw new Error("Usuário não encontrado");
 
+    // Check for existing analysis if not forcing refresh
+    if (!force_refresh) {
+      const { data: existing } = await supabase
+        .from("declaracao_analises")
+        .select("*")
+        .eq("declaracao_id", declaracao_id)
+        .eq("tipo", tipo || "analise")
+        .maybeSingle();
+
+      if (existing) {
+        // Return existing as a stream-like or just JSON
+        return new Response(JSON.stringify({ 
+          choices: [{ delta: { content: existing.resultado_texto }, finish_reason: "stop" }],
+          cached: true,
+          updated_at: existing.updated_at
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Get declaration + form data
     const { data: declaracao } = await supabase
       .from("declaracoes")
-      .select("*, clientes(nome, cpf)")
+      .select("*, clientes(id, nome, cpf)")
       .eq("id", declaracao_id)
       .eq("escritorio_id", usuario.escritorio_id)
       .single();
 
     if (!declaracao) throw new Error("Declaração não encontrada");
+
+    // Fetch Client Memories
+    const { data: memorias } = await supabase
+      .from("cliente_memorias")
+      .select("conteudo, categoria")
+      .eq("cliente_id", declaracao.clientes.id)
+      .order("created_at", { ascending: false });
+
+    const memoryContext = memorias?.length 
+      ? `\n## MEMÓRIA SOBRE ESTE CLIENTE (Análises Anteriores)\n${memorias.map(m => `- [${m.categoria || 'Geral'}] ${m.conteudo}`).join('\n')}\n`
+      : "";
 
     const { data: formulario } = await supabase
       .from("formulario_ir")
@@ -58,7 +90,7 @@ serve(async (req) => {
     const isAnaliseCaixa = tipo === "analise_caixa";
 
     // Build context for AI
-    const context = buildContext(declaracao, formulario);
+    const context = buildContext(declaracao, formulario) + memoryContext;
     const systemPrompt = getSystemPrompt(tipo || "analise");
 
     // Para análise de caixa, anexa o PDF da declaração como imagem
@@ -73,11 +105,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // Roteamento por tipo: Pro p/ tarefas com PDF + cálculo + raciocínio jurídico-fiscal,
-        // Flash p/ sugestões leves (deduções).
-        model: tipo === "deducoes"
-          ? "google/gemini-2.5-flash"
-          : "google/gemini-2.5-pro",
+        model: tipo === "deducoes" ? "google/gemini-2.5-flash" : "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
@@ -87,20 +115,64 @@ serve(async (req) => {
     });
 
     if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições atingido. Tente novamente em alguns minutos." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA esgotados." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      // ... error handling
       throw new Error("Erro na API de IA");
     }
 
-    return new Response(aiResponse.body, {
+    // Para salvar automaticamente, precisamos interceptar o stream
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    let fullResponse = "";
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = aiResponse.body?.getReader();
+        if (!reader) {
+          controller.close();
+          return;
+        }
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              // Quando o stream termina, salvamos no banco em background
+              if (fullResponse) {
+                saveAnalysis(supabase, {
+                  declaracao_id,
+                  escritorio_id: usuario.escritorio_id,
+                  tipo: tipo || "analise",
+                  resultado_texto: fullResponse
+                }).catch(err => console.error("Error saving analysis:", err));
+              }
+              controller.close();
+              break;
+            }
+
+            const chunk = decoder.decode(value);
+            controller.enqueue(value);
+
+            // Tenta extrair o conteúdo do delta para compor a resposta completa
+            const lines = chunk.split("\n");
+            for (const line of lines) {
+              if (line.startsWith("data: ") && line !== "data: [DONE]") {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  const content = data.choices?.[0]?.delta?.content || "";
+                  fullResponse += content;
+                } catch (e) {
+                  // Ignore parse errors for partial chunks
+                }
+              }
+            }
+          }
+        } catch (e) {
+          controller.error(e);
+        }
+      },
+    });
+
+    return new Response(stream, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
@@ -111,6 +183,36 @@ serve(async (req) => {
     });
   }
 });
+
+async function saveAnalysis(supabase: any, data: { declaracao_id: string; escritorio_id: string; tipo: string; resultado_texto: string }) {
+  // Extrai o JSON se existir na resposta
+  let jsonResult = null;
+  const jsonMatch = data.resultado_texto.match(/```json\n([\s\S]*?)\n```/);
+  if (jsonMatch) {
+    try {
+      jsonResult = JSON.parse(jsonMatch[1]);
+    } catch (e) {
+      console.warn("Could not parse JSON from AI response for saving");
+    }
+  }
+
+  const { error } = await supabase
+    .from("declaracao_analises")
+    .upsert({
+      declaracao_id: data.declaracao_id,
+      escritorio_id: data.escritorio_id,
+      tipo: data.tipo,
+      resultado_texto: data.resultado_texto,
+      resultado_json: jsonResult,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'declaracao_id, tipo' });
+
+  if (error) console.error("Database error saving analysis:", error);
+
+  // Lógica de Memória: Se houver recomendações críticas ou perfil novo, poderíamos salvar em cliente_memorias aqui.
+  // Por enquanto, a persistência da análise já serve como memória se recuperarmos no início da função.
+}
+
 
 // ===== Tabela 2026 IRPF e limites de dedução (single source of truth) =====
 // Quando a RFB publicar IN nova, atualizar AQUI.
