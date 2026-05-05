@@ -1,54 +1,37 @@
-Vou corrigir a seção de Análise de Caixa em `/declaracoes/:id` para que a lista e a expansão usem a análise correta e exibam os dados completos.
+## Diagnóstico
 
-Plano de implementação:
+Os cards (Saldo de Caixa, Variação Patrimonial, Nível de Risco, gráficos) sumiram porque o JSON salvo no banco da última análise está **corrompido / truncado**. Confirmei consultando `declaracao_analises` da declaração atual: o bloco ` ```json ... ``` ` tem trechos colados fora de lugar (ex.: `"atual": ":` e `"resumo":415.413,15"`), faltam fechamentos e a chave `riscos_count` está partida.
 
-1. Corrigir a origem dos dados da lista
-- A tabela do Histórico de Análises passará a ler os KPIs primeiro do JSON estruturado salvo da análise (`resultado_json`).
-- Se `resultado_json` estiver vazio, o componente tentará extrair o JSON de `resultado_texto`.
-- Se o JSON estiver quebrado, ainda assim tentará recuperar os campos principais de forma tolerante para preencher pelo menos saldo, riscos e veredito.
-- Só usará `resumo_visual` como fallback, porque hoje ele está vindo nulo nessa análise e por isso aparecem `---` e `Processando...`.
+Causa raiz no backend (`supabase/functions/ia-fiscal/index.ts`, linhas 154–169): o stream SSE da Lovable AI chega em chunks que **não respeitam fronteira de linha**. O código faz `chunk.split("\n")` por chunk, sem buffer entre chunks. Quando uma linha `data: {...}` é dividida entre dois chunks, o `JSON.parse` falha silenciosamente (`catch` vazio) e o pedaço de `delta.content` daquela linha é **perdido para sempre**, embora ainda seja repassado ao cliente via `controller.enqueue(value)`.
 
-2. Normalizar os campos da análise
-- Criar uma função utilitária no componente para transformar cada análise em um objeto visual único com:
-  - veredito normalizado: `transmitir`, `ajustar` ou `nao_transmitir`
-  - saldo de caixa
-  - total de origens
-  - total de aplicações
-  - estouro de caixa
-  - riscos alto/médio/baixo
-  - mensagem curta do veredito
-- Mapear `nao_transmitir` para o badge “Bloqueado”, e `ajustar` para “Ajustar”.
+Resultado: na primeira execução, o cliente até consegue mostrar parcialmente, mas o `fullResponse` salvo no banco vem furado. Em qualquer reload subsequente (que é o caso atual no histórico), o `VisualIAFiscal` recebe JSON inválido, cai no fallback de texto puro e os cards somem.
 
-3. Corrigir a expansão da análise completa
-- Ao clicar em uma linha do histórico, o card detalhado será aberto automaticamente com a análise selecionada.
-- O conteúdo expandido será montado a partir da análise selecionada, não de um estado textual antigo.
-- Os cards visuais, gráficos, recomendações, veredito final e texto técnico aparecerão juntos na expansão.
-- Se o usuário clicar na mesma análise aberta, ela recolhe; se clicar novamente, reabre corretamente.
+Adicionalmente, `VisualIAFiscal` só renderiza os 3 cards do topo se existir **`jsonData.resumo && jsonData.patrimonio`** simultaneamente — basta uma chave faltar para tudo desaparecer.
 
-4. Melhorar a renderização quando o JSON da IA vier imperfeito
-- Ajustar `VisualIAFiscal` para aceitar também `dadosEstruturados` já parseados pelo componente pai.
-- Assim, mesmo quando o bloco JSON em markdown estiver parcialmente quebrado, os cards e gráficos poderão abrir com os dados estruturados salvos ou recuperados.
-- Remover o risco de o JSON aparecer cru para o contador.
+## O que vou alterar
 
-5. Melhorar a legibilidade do texto técnico
-- Exibir o texto em um card mais limpo, com espaçamento maior, títulos destacados, listas mais legíveis e linguagem visual separando:
-  - resumo executivo
-  - pontos de atenção
-  - recomendações
-  - detalhamento técnico
-- Manter o texto completo, mas menos “parede de texto”.
+### 1. `supabase/functions/ia-fiscal/index.ts` — buffer SSE correto
+Manter um `buffer` acumulando entre chunks, processar somente até `\n`, devolver a sobra ao buffer. Garantir que `fullResponse` salvo no banco seja idêntico ao que o cliente recebeu. Sem mexer no `controller.enqueue(value)` (cliente continua recebendo o stream cru).
 
-6. Melhorar tooltips e colunas
-- Expandir tooltips das colunas para explicar objetivamente:
-  - Data e hora: quando a IA processou a análise.
-  - Veredito: quando é transmitir, ajustar ou bloquear.
-  - Saldo de caixa: exemplo positivo e negativo.
-  - Riscos: diferença entre alto, médio e baixo, com exemplos de discrepâncias.
-- Incluir informações úteis na lista, como totais de origem/aplicação ou mensagem curta quando houver espaço.
+### 2. `src/components/declaracao/VisualIAFiscal.tsx` — render tolerante
+- Mostrar os 3 cards do topo (Saldo, Patrimônio, Risco) sempre que **qualquer** dado estruturado existir (`resumo` OU `patrimonio` OU `riscos_count`), com placeholders "—" para o que faltar.
+- Mostrar cada gráfico (Fluxo de Caixa / Fontes de Origem) só se os dados respectivos existirem, em vez de exigir o pacote completo.
+- Continuar exibindo o texto completo abaixo via `AnaliseTecnicaVisual` mesmo quando o JSON está parcial.
 
-7. Atualização/recarregamento consistente
-- O botão de atualizar lista invalidará a busca do histórico e manterá a análise mais recente/selecionada sincronizada.
-- O botão de recarregar no detalhe buscará novamente os dados e reabrirá o card com a análise correta.
+### 3. `src/lib/parseAnalise.ts` — reparo mais agressivo
+- Antes do `JSON.parse`, tentar fechar chaves/colchetes pendentes (contar `{`/`}` e `[`/`]`) e cortar o JSON no último ponto válido antes do dano. Isso permite recuperar `resumo`, `origens`, `aplicacoes` e `patrimonio` mesmo quando o final está corrompido.
+- Expor `jsonData` recuperado parcial para o `VisualIAFiscal` consumir via `jsonOverride`.
 
-Detalhe técnico importante:
-- Encontrei no banco a análise atual desta declaração com `resultado_json` e `resumo_visual` nulos. O JSON ficou inválido no texto gerado pela IA, por isso a tela não consegue preencher as colunas nem montar os cards/gráficos. A correção será feita no front-end com parser tolerante e, na função de IA, vou endurecer o salvamento para extrair/salvar os KPIs sempre que possível nas próximas análises.
+### 4. `SecaoAnaliseCaixa.tsx` — pequeno ajuste
+- Passar `jsonOverride` mesmo quando ele é parcial (já passa, mas garantir que não é descartado quando `resumo` existe sem `patrimonio`).
+- Botão "Atualizar Análise (IA)" continua disponível para o usuário re-gerar a análise corrompida (após o fix do backend, virá íntegra).
+
+## Resultado esperado
+- Análises **novas** salvam JSON íntegro → cards e gráficos voltam a aparecer normalmente.
+- Análises **antigas corrompidas** (como a de 05/05/2026 13:58 que está na tela): o parser tolerante recupera `resumo` (saldo R$ 151.304,99 já aparece na lista), mostra os cards de Saldo e Risco mesmo sem patrimônio completo, e o card de Variação Patrimonial mostra "—" em vez de sumir tudo.
+- Usuário pode clicar "Atualizar Análise (IA)" para regerar com o backend corrigido.
+
+## Sem mudanças
+- Schema do banco intacto.
+- Layout da tabela Histórico, tooltips e expansão (já funcionando).
+- Modelo de IA (`gemini-2.5-pro`).
