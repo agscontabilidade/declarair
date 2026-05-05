@@ -60,8 +60,7 @@ export default function AdminEmails() {
 
   const filteredLogs = logs?.filter(log => 
     log.recipient_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.template_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.usuario?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
+    log.template_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredSuppressions = suppressions?.filter(sup => 
