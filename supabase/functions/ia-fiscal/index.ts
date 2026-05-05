@@ -274,7 +274,15 @@ No final da resposta, inclua EXATAMENTE este formato:
     "variacao_valor": 0.0,
     "variacao_perc": 0.0
   },
-  "riscos_count": { "alto": 0, "medio": 0, "baixo": 0 }
+  "riscos_count": { "alto": 0, "medio": 0, "baixo": 0 },
+  "detalhes": {
+    "saldo": "Explicação curta sobre o saldo...",
+    "patrimonio": "Explicação sobre a evolução...",
+    "risco": "Por que o risco foi calculado assim...",
+    "fluxo": "Análise rápida das barras de fluxo...",
+    "origens": "Onde está a maior concentração de renda...",
+    "analise_tecnica": "Resumo do que foi priorizado..."
+  }
 }
 \`\`\`
 
