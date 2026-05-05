@@ -160,7 +160,7 @@ export default function AdminEmails() {
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col">
-                              <span className="font-medium text-sm">{log.usuario?.nome || 'Visitante'}</span>
+                              <span className="font-medium text-sm">{log.recipient_email}</span>
                               <span className="text-xs text-muted-foreground">{log.recipient_email}</span>
                             </div>
                           </TableCell>
