@@ -97,30 +97,30 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     },
   });
 
+  // null = mostrar a análise mais recente (default expandido)
+  // 'collapsed' = card detalhado fechado
+  // string = ID da análise selecionada
   const [activeAnaliseId, setActiveAnaliseId] = useState<string | null>(null);
 
-  const analiseAtual = activeAnaliseId === 'collapsed' ? null : (
-                       historicoAnalises?.find(a => a.id === activeAnaliseId) || 
-                       historicoAnalises?.find(a => a.id === analiseRecenteId) ||
-                       (historicoAnalises && historicoAnalises.length > 0 ? historicoAnalises[0] : null));
+  // Análise atualmente exibida no card detalhado
+  const analiseAtual = (() => {
+    if (activeAnaliseId === 'collapsed') return null;
+    if (loading) return null;
+    if (activeAnaliseId) return historicoAnalises?.find(a => a.id === activeAnaliseId) ?? null;
+    if (analiseRecenteId) return historicoAnalises?.find(a => a.id === analiseRecenteId) ?? null;
+    return historicoAnalises && historicoAnalises.length > 0 ? historicoAnalises[0] : null;
+  })();
+
+  // Parser tolerante: extrai veredito, saldo, riscos, JSON estruturado e texto limpo
+  const parsedAtual: ParsedAnalise | null = analiseAtual ? parseAnalise(analiseAtual) : null;
 
   const detaleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (analiseAtual) {
-      setResultado(analiseAtual.resultado_texto);
-      setUltimaAtualizacao(analiseAtual.updated_at);
-      
-      // Expandir automaticamente se houver uma análise ativa
-      if (activeAnaliseId || analiseRecenteId || (historicoAnalises && historicoAnalises.length > 0)) {
-        setTimeout(() => {
-          detaleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      }
-    } else if (!loading) {
-      setResultado('');
+    if (parsedAtual) {
+      setUltimaAtualizacao(analiseAtual?.updated_at ?? null);
     }
-  }, [analiseAtual, loading, activeAnaliseId, analiseRecenteId, historicoAnalises]);
+  }, [parsedAtual, analiseAtual?.updated_at]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
