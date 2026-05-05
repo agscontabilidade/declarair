@@ -41,13 +41,13 @@ interface Props {
 
 const MAX_SIZE = 18 * 1024 * 1024;
 
-const HeaderInfo = ({ content }: { content: string }) => (
+const HeaderInfo = ({ content }: { content: React.ReactNode }) => (
   <TooltipProvider>
     <UITooltip>
       <TooltipTrigger asChild>
         <HelpCircle className="h-3 w-3 text-muted-foreground/50 cursor-help" />
       </TooltipTrigger>
-      <TooltipContent className="max-w-[200px] p-2 text-[10px] leading-tight">
+      <TooltipContent className="max-w-[300px] p-3 text-xs leading-relaxed">
         {content}
       </TooltipContent>
     </UITooltip>
