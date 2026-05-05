@@ -251,7 +251,7 @@ export default function AdminSettings() {
                           <div className="p-2 bg-red-500/5 border border-red-500/10 rounded text-[10px] overflow-auto max-h-24">
                             <p className="font-bold mb-1 uppercase opacity-50">Anterior</p>
                             <pre>
-                              {log.config && isSensitive({ key: log.config.key, category: '' }) // Simplificação para detecção
+                              {log.config && isSensitive(log.config)
                                 ? maskValue(log.old_value)
                                 : JSON.stringify(log.old_value, null, 2)}
                             </pre>
