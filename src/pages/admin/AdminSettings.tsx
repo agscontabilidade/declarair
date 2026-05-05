@@ -153,15 +153,29 @@ export default function AdminSettings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">Todas</TabsTrigger>
-            <TabsTrigger value="system">Sistema</TabsTrigger>
-            <TabsTrigger value="plans">Planos</TabsTrigger>
-            <TabsTrigger value="api">APIs</TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
-              <History className="h-4 w-4" /> Histórico
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-2 rounded-lg border">
+            <TabsList className="bg-transparent border-none">
+              <TabsTrigger value="all">Todas</TabsTrigger>
+              <TabsTrigger value="system">Sistema</TabsTrigger>
+              <TabsTrigger value="plans">Planos</TabsTrigger>
+              <TabsTrigger value="api">APIs</TabsTrigger>
+              <TabsTrigger value="history" className="gap-2">
+                <History className="h-4 w-4" /> Histórico
+              </TabsTrigger>
+            </TabsList>
+
+            {activeTab !== 'history' && (
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar configuração..." 
+                  className="pl-9 h-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
 
           <TabsContent value="history">
             <Card>
