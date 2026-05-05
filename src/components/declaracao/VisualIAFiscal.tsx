@@ -125,7 +125,7 @@ export function VisualIAFiscal({ resultado }: Props) {
   if (!jsonData) {
     return (
       <div className="prose prose-sm max-w-none dark:prose-invert">
-        <ReactMarkdown>{resultado}</ReactMarkdown>
+        <ReactMarkdown>{textualContent}</ReactMarkdown>
       </div>
     );
   }
