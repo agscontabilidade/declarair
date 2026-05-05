@@ -13,6 +13,7 @@ import {
   AlertCircle, Lightbulb, Target, FileCheck2, XCircle
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import { motion } from 'framer-motion';
 import {
   Tooltip as UITooltip,
@@ -177,25 +178,35 @@ export function VisualIAFiscal({ resultado, jsonOverride }: Props) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {patrimonio ? (
-                <>
-                  <div className="text-2xl font-bold flex items-baseline gap-2">
-                    {formatCurrency(patrimonio.atual)}
-                    <span className={`text-xs font-medium flex items-center ${patrimonio.variacao_perc >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
-                      {patrimonio.variacao_perc >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-                      {Math.abs(patrimonio.variacao_perc).toFixed(1)}%
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    Anterior: {formatCurrency(patrimonio.anterior)}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-muted-foreground">—</div>
-                  <p className="text-[11px] text-muted-foreground mt-1">Dado indisponível.</p>
-                </>
-              )}
+              {(() => {
+                const atualOk = typeof patrimonio?.atual === 'number' && Number.isFinite(patrimonio.atual);
+                const antOk = typeof patrimonio?.anterior === 'number' && Number.isFinite(patrimonio.anterior);
+                const percOk = typeof patrimonio?.variacao_perc === 'number' && Number.isFinite(patrimonio.variacao_perc);
+                if (!atualOk && !antOk) {
+                  return (
+                    <>
+                      <div className="text-2xl font-bold text-muted-foreground">—</div>
+                      <p className="text-[11px] text-muted-foreground mt-1">Dado indisponível na análise.</p>
+                    </>
+                  );
+                }
+                return (
+                  <>
+                    <div className="text-2xl font-bold flex items-baseline gap-2 flex-wrap">
+                      {atualOk ? formatCurrency(patrimonio!.atual!) : <span className="text-muted-foreground">—</span>}
+                      {percOk && (
+                        <span className={`text-xs font-medium flex items-center ${patrimonio!.variacao_perc! >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                          {patrimonio!.variacao_perc! >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                          {Math.abs(patrimonio!.variacao_perc!).toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {antOk ? `Anterior: ${formatCurrency(patrimonio!.anterior!)}` : 'Patrimônio anterior indisponível.'}
+                    </p>
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
 
