@@ -37,6 +37,17 @@ export default function Cobrancas() {
   const nomeClienteFiltro = clienteIdFiltro ? cobrancas[0]?.clientes?.nome : null;
   const { podeVerCobrancas, podeCriarCobrancas, podeExcluirCobranca } = usePermissoes();
 
+  // Check if Inter is configured
+  const { data: interAtivo } = useQuery({
+    queryKey: ['inter-ativo', profile.escritorioId],
+    queryFn: async () => {
+      if (!profile.escritorioId) return false;
+      const { data } = await supabase.from('configuracoes_escritorio').select('valor').eq('escritorio_id', profile.escritorioId).eq('chave', 'inter_ativo').single();
+      return data?.valor === 'true';
+    },
+    enabled: !!profile.escritorioId,
+  });
+
   if (!podeVerCobrancas) {
     return (
       <DashboardLayout>
@@ -51,17 +62,6 @@ export default function Cobrancas() {
       </DashboardLayout>
     );
   }
-
-  // Check if Inter is configured
-  const { data: interAtivo } = useQuery({
-    queryKey: ['inter-ativo', profile.escritorioId],
-    queryFn: async () => {
-      if (!profile.escritorioId) return false;
-      const { data } = await supabase.from('configuracoes_escritorio').select('valor').eq('escritorio_id', profile.escritorioId).eq('chave', 'inter_ativo').single();
-      return data?.valor === 'true';
-    },
-    enabled: !!profile.escritorioId,
-  });
 
   const handleSave = (data: { id?: string; cliente_id: string; declaracao_id?: string; descricao: string; valor: number; data_vencimento: string }) => {
     if (data.id) {
