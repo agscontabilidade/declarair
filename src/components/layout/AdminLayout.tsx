@@ -14,6 +14,7 @@ const navItems = [
   { label: 'Assinaturas', icon: CreditCard, href: '/admin/assinaturas' },
   { label: 'Logs de Auditoria', icon: History, href: '/admin/logs' },
   { label: 'E-mails', icon: Mail, href: '/admin/emails' },
+  { label: 'Webhooks', icon: Activity, href: '/admin/webhooks' },
   { label: 'Bug Reports', icon: Bug, href: '/admin/bugs' },
 ];
 
