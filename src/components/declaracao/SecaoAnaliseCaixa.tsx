@@ -4,7 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Wallet, Upload, FileCheck, Loader2, Lock, Brain, ScanSearch, Eye, Trash2, RotateCcw } from 'lucide-react';
+import { 
+  Wallet, Upload, FileCheck, Loader2, Lock, Brain, ScanSearch, 
+  Eye, Trash2, RotateCcw, ChevronDown, ChevronUp, History, 
+  AlertCircle, CheckCircle2, XCircle
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +18,14 @@ import { getErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
 import { VisualIAFiscal } from './VisualIAFiscal';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Props {
   declaracaoId: string;
@@ -63,12 +75,14 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     },
   });
 
-  const analiseAtual = historicoAnalises?.find(a => a.id === analiseSelecionadaId) || historicoAnalises?.[0];
+  const analiseAtual = historicoAnalises?.find(a => a.id === analiseSelecionadaId);
 
   useEffect(() => {
     if (analiseAtual) {
       setResultado(analiseAtual.resultado_texto);
       setUltimaAtualizacao(analiseAtual.updated_at);
+    } else {
+      setResultado('');
     }
   }, [analiseAtual]);
 
@@ -177,7 +191,8 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
         const { done, value } = await reader.read();
         if (done) {
           queryClient.invalidateQueries({ queryKey: ['analise-caixa-historico', declaracaoId] });
-          setAnaliseSelecionadaId(null); // Reseta para mostrar a mais nova automatically
+          setAnaliseSelecionadaId(null); // Reseta para forçar recarregamento se necessário
+          // A seleção automática da nova análise virá do cache invalidado
           break;
         }
         buffer += decoder.decode(value, { stream: true });
@@ -336,52 +351,90 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
 
       {/* Lista de Histórico de Análises */}
       {historicoAnalises && historicoAnalises.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Brain className="h-4 w-4 text-primary" /> Histórico de Análises
-            </CardTitle>
-            <Badge variant="outline">{historicoAnalises.length} {historicoAnalises.length === 1 ? 'análise' : 'análises'}</Badge>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 gap-2">
-              {historicoAnalises.map((analise) => {
-                const resumo = analise.resumo_visual as any;
-                const isSelected = analiseSelecionadaId === analise.id || (!analiseSelecionadaId && analise.id === historicoAnalises[0].id);
-                
-                return (
-                  <div 
-                    key={analise.id}
-                    className={`p-3 rounded-lg border transition-all cursor-pointer hover:bg-muted/50 ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card'}`}
-                    onClick={() => setAnaliseSelecionadaId(analise.id)}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-bold">
-                            {new Date(analise.created_at || '').toLocaleDateString('pt-BR')} às {new Date(analise.created_at || '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                          {resumo?.estouro && <Badge variant="destructive" className="h-4 text-[9px] uppercase">Estouro</Badge>}
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-1 italic">{resumo?.veredito_msg || 'Análise técnica de caixa'}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        {resumo?.riscos && (
-                          <div className="flex gap-1">
-                            {resumo.riscos.alto > 0 && <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" title="Risco Alto" />}
-                            {resumo.riscos.medio > 0 && <span className="h-2 w-2 rounded-full bg-amber-500" title="Risco Médio" />}
-                            <span className="h-2 w-2 rounded-full bg-emerald-500" title="Concluido" />
-                          </div>
-                        )}
-                        <Button size="sm" variant={isSelected ? "default" : "outline"} className="h-7 text-[10px] px-2">
-                          {isSelected ? 'Visualizando' : 'Ver Detalhes'}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between bg-muted/30">
+            <div className="space-y-1">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <History className="h-4 w-4 text-primary" /> Histórico de Análises
+              </CardTitle>
+              <p className="text-[10px] text-muted-foreground">Últimas verificações técnicas realizadas pela IA</p>
             </div>
+            <Badge variant="outline" className="font-normal">{historicoAnalises.length} {historicoAnalises.length === 1 ? 'análise' : 'análises'}</Badge>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/10">
+                  <TableHead className="w-[180px] text-[11px] uppercase font-bold">Data e Hora</TableHead>
+                  <TableHead className="text-[11px] uppercase font-bold">Veredito</TableHead>
+                  <TableHead className="text-[11px] uppercase font-bold text-right">Saldo de Caixa</TableHead>
+                  <TableHead className="text-[11px] uppercase font-bold text-center">Riscos</TableHead>
+                  <TableHead className="w-[100px] text-[11px] uppercase font-bold text-right pr-4">Ação</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {historicoAnalises.map((analise) => {
+                  const resumo = analise.resumo_visual as any;
+                  const isSelected = analiseSelecionadaId === analise.id;
+                  const veredito = analise.veredito;
+                  
+                  const formatCurrency = (value: number) => {
+                    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+                  };
+
+                  return (
+                    <TableRow 
+                      key={analise.id}
+                      className={`cursor-pointer transition-colors hover:bg-muted/40 ${isSelected ? 'bg-primary/5' : ''}`}
+                      onClick={() => setAnaliseSelecionadaId(isSelected ? null : analise.id)}
+                    >
+                      <TableCell className="font-medium text-xs">
+                        <div className="flex flex-col">
+                          <span>{new Date(analise.created_at || '').toLocaleDateString('pt-BR')}</span>
+                          <span className="text-[10px] text-muted-foreground">{new Date(analise.created_at || '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {veredito === 'transmitir' ? (
+                          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 text-[10px] gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Transmitir
+                          </Badge>
+                        ) : veredito === 'ajustar' ? (
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 text-[10px] gap-1">
+                            <AlertCircle className="h-3 w-3" /> Ajustar
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive" className="bg-destructive/10 text-destructive hover:bg-destructive/10 border-destructive/20 text-[10px] gap-1">
+                            <XCircle className="h-3 w-3" /> Bloqueado
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className={`text-xs font-semibold text-right ${resumo?.estouro ? 'text-destructive' : 'text-emerald-600'}`}>
+                        {resumo?.saldo !== undefined ? formatCurrency(resumo.saldo) : '---'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-center gap-1.5">
+                          {resumo?.riscos ? (
+                            <>
+                              {resumo.riscos.alto > 0 && <span className="h-2 w-2 rounded-full bg-destructive shadow-[0_0_5px_rgba(239,68,68,0.5)] animate-pulse" title={`${resumo.riscos.alto} Crítico`} />}
+                              {resumo.riscos.medio > 0 && <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_5px_rgba(245,158,11,0.5)]" title={`${resumo.riscos.medio} Alerta`} />}
+                              {resumo.riscos.baixo >= 0 && <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" title="Normal" />}
+                            </>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground italic">Processando...</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right pr-4">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
+                          {isSelected ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}
@@ -396,7 +449,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
                 </Badge>
                 {(loading || carregandoHistorico) && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setResultado('')} className="h-6 text-xs text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={() => setAnaliseSelecionadaId(null)} className="h-6 text-xs text-muted-foreground">
                 Recolher
               </Button>
             </div>
