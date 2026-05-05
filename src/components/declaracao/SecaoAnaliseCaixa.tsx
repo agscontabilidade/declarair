@@ -273,7 +273,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
           <Separator />
           <CardContent className="pt-4">
             {resultado ? (
-              <VisualAnaliseCaixa resultado={resultado} />
+              <VisualIAFiscal resultado={resultado} />
             ) : (
               <span className="text-muted-foreground animate-pulse">Lendo declaração e cruzando com o cadastro...</span>
             )}
