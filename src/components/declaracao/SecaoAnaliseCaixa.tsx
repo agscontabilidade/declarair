@@ -26,12 +26,32 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { HelpCircle } from 'lucide-react';
 
 interface Props {
   declaracaoId: string;
 }
 
 const MAX_SIZE = 18 * 1024 * 1024;
+
+const HeaderInfo = ({ content }: { content: string }) => (
+  <TooltipProvider>
+    <UITooltip>
+      <TooltipTrigger asChild>
+        <HelpCircle className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[200px] p-2 text-[10px] leading-tight">
+        {content}
+      </TooltipContent>
+    </UITooltip>
+  </TooltipProvider>
+);
 
 export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
   const navigate = useNavigate();
@@ -42,6 +62,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
   const [resultado, setResultado] = useState('');
   const [loading, setLoading] = useState(false);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<string | null>(null);
+  const [analiseRecenteId, setAnaliseRecenteId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [analiseSelecionadaId, setAnaliseSelecionadaId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -75,7 +96,8 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     },
   });
 
-  const analiseAtual = historicoAnalises?.find(a => a.id === analiseSelecionadaId);
+  const analiseAtual = historicoAnalises?.find(a => a.id === analiseSelecionadaId) || 
+                       historicoAnalises?.find(a => a.id === analiseRecenteId);
 
   const detaleRef = useRef<HTMLDivElement>(null);
 
@@ -83,14 +105,17 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     if (analiseAtual) {
       setResultado(analiseAtual.resultado_texto);
       setUltimaAtualizacao(analiseAtual.updated_at);
-      // Pequeno delay para garantir que o elemento foi renderizado
-      setTimeout(() => {
-        detaleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+      // Só scrolla se o usuário clicou explicitamente (analiseSelecionadaId está setado)
+      if (analiseSelecionadaId) {
+        setTimeout(() => {
+          detaleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
     } else if (!loading) {
+      // Se não há análise selecionada nem recém-criada, limpa o resultado
       setResultado('');
     }
-  }, [analiseAtual, loading]);
+  }, [analiseAtual, loading, analiseSelecionadaId]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -197,8 +222,19 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
         const { done, value } = await reader.read();
         if (done) {
           queryClient.invalidateQueries({ queryKey: ['analise-caixa-historico', declaracaoId] });
-          setAnaliseSelecionadaId(null); // Reseta para forçar recarregamento se necessário
-          // A seleção automática da nova análise virá do cache invalidado
+          setAnaliseSelecionadaId(null); 
+          // Busca a ID da análise que acabou de ser criada para mostrar no detalhe
+          const { data: novaAnalise } = await supabase
+            .from('declaracao_analises')
+            .select('id')
+            .eq('declaracao_id', declaracaoId)
+            .eq('tipo', 'analise_caixa')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          if (novaAnalise) setAnaliseRecenteId(novaAnalise.id);
+          queryClient.invalidateQueries({ queryKey: ['analise-caixa-historico', declaracaoId] });
           break;
         }
         buffer += decoder.decode(value, { stream: true });
@@ -371,10 +407,30 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/10">
-                  <TableHead className="w-[180px] text-[11px] uppercase font-bold">Data e Hora</TableHead>
-                  <TableHead className="text-[11px] uppercase font-bold">Veredito</TableHead>
-                  <TableHead className="text-[11px] uppercase font-bold text-right">Saldo de Caixa</TableHead>
-                  <TableHead className="text-[11px] uppercase font-bold text-center">Riscos</TableHead>
+                  <TableHead className="w-[180px] text-[11px] uppercase font-bold">
+                    <div className="flex items-center gap-1">
+                      Data e Hora
+                      <HeaderInfo content="Data da execução desta análise." />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-[11px] uppercase font-bold">
+                    <div className="flex items-center gap-1">
+                      Veredito
+                      <HeaderInfo content="Recomendação da IA sobre a transmissão da declaração (Transmitir, Ajustar ou Bloqueado)." />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-[11px] uppercase font-bold text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      Saldo de Caixa
+                      <HeaderInfo content="Saldo final calculado entre Origens e Aplicações. Valores negativos indicam estouro de caixa." />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-[11px] uppercase font-bold text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      Riscos
+                      <HeaderInfo content="Círculos indicam o nível de risco detectado: Vermelho (Crítico), Amarelo (Alerta) e Verde (Conforme)." />
+                    </div>
+                  </TableHead>
                   <TableHead className="w-[100px] text-[11px] uppercase font-bold text-right pr-4">Ação</TableHead>
                 </TableRow>
               </TableHeader>
@@ -391,8 +447,11 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
                   return (
                     <TableRow 
                       key={analise.id}
-                      className={`cursor-pointer transition-colors hover:bg-muted/40 ${isSelected ? 'bg-primary/5' : ''}`}
-                      onClick={() => setAnaliseSelecionadaId(isSelected ? null : analise.id)}
+                    className={`cursor-pointer transition-colors hover:bg-muted/40 ${isSelected || (analiseRecenteId === analise.id) ? 'bg-primary/5' : ''}`}
+                    onClick={() => {
+                      setAnaliseRecenteId(null);
+                      setAnaliseSelecionadaId(isSelected ? null : analise.id);
+                    }}
                     >
                       <TableCell className="font-medium text-xs">
                         <div className="flex flex-col">
@@ -455,7 +514,10 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
                 </Badge>
                 {(loading || carregandoHistorico) && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setAnaliseSelecionadaId(null)} className="h-6 text-xs text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={() => {
+                setAnaliseSelecionadaId(null);
+                setAnaliseRecenteId(null);
+              }} className="h-6 text-xs text-muted-foreground">
                 Recolher
               </Button>
             </div>
