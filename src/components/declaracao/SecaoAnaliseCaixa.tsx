@@ -77,14 +77,20 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
 
   const analiseAtual = historicoAnalises?.find(a => a.id === analiseSelecionadaId);
 
+  const detaleRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (analiseAtual) {
       setResultado(analiseAtual.resultado_texto);
       setUltimaAtualizacao(analiseAtual.updated_at);
-    } else {
+      // Pequeno delay para garantir que o elemento foi renderizado
+      setTimeout(() => {
+        detaleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    } else if (!loading) {
       setResultado('');
     }
-  }, [analiseAtual]);
+  }, [analiseAtual, loading]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -440,7 +446,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
       )}
 
       {(loading || resultado || carregandoHistorico) && (
-        <Card id="analise-detalhada">
+        <Card id="analise-detalhada" ref={detaleRef} className="scroll-mt-6 border-primary/20 shadow-md">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
