@@ -48,15 +48,11 @@ export default function AdminSettings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('system_config_logs' as any)
-        .select(`
-          *,
-          config:system_configs(key),
-          user:usuarios(nome)
-        `)
+        .select('*, config:system_configs(key), user:usuarios(nome)')
         .order('changed_at', { ascending: false })
         .limit(50);
       if (error) throw error;
-      return data;
+      return data as any[];
     }
   });
 
