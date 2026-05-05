@@ -312,10 +312,10 @@ export function VisualIAFiscal({ resultado }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-4">
-        {riscos_count && (
+        {jsonData.riscos_count && (
           <div className="flex gap-2">
-            <Badge variant={riscos_count.alto > 0 ? 'destructive' : 'outline'}>{riscos_count.alto} Alta</Badge>
-            <Badge variant={riscos_count.medio > 0 ? 'secondary' : 'outline'}>{riscos_count.medio} Média</Badge>
+            <Badge variant={jsonData.riscos_count.alto > 0 ? 'destructive' : 'outline'}>{jsonData.riscos_count.alto} Alta</Badge>
+            <Badge variant={jsonData.riscos_count.medio > 0 ? 'secondary' : 'outline'}>{jsonData.riscos_count.medio} Média</Badge>
           </div>
         )}
       </div>
