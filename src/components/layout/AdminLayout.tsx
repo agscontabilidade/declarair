@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { 
-  LayoutDashboard, Building2, Users, CreditCard, LogOut, Shield, Menu, X, ChevronRight, Bug, History, Mail 
+  LayoutDashboard, Building2, Users, CreditCard, LogOut, Shield, Menu, X, ChevronRight, Bug, History, Mail, Activity 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
