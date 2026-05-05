@@ -384,9 +384,68 @@ No final da resposta, inclua EXATAMENTE este formato:
     "fluxo": "Análise rápida das barras de fluxo...",
     "origens": "Onde está a maior concentração de renda...",
     "analise_tecnica": "Resumo do que foi priorizado..."
+  },
+  "secoes_analise": [
+    {
+      "id": "identificacao",
+      "titulo": "Identificação e Conformidade Cadastral",
+      "icone": "user",
+      "status": "ok" | "atencao" | "critico",
+      "resumo": "Frase curta de 1 linha (máx 120 chars).",
+      "pontos": ["Item objetivo curto 1", "Item objetivo curto 2"],
+      "tooltip": "Explicação técnica do que foi verificado nesta seção"
+    },
+    {
+      "id": "fluxo_caixa",
+      "titulo": "Origens vs Aplicações",
+      "icone": "wallet",
+      "status": "ok",
+      "resumo": "...",
+      "pontos": ["..."],
+      "tooltip": "..."
+    },
+    {
+      "id": "patrimonio",
+      "titulo": "Evolução Patrimonial",
+      "icone": "trending",
+      "status": "atencao",
+      "resumo": "...",
+      "pontos": ["..."],
+      "tooltip": "..."
+    },
+    {
+      "id": "riscos",
+      "titulo": "Riscos de Malha Fina",
+      "icone": "shield",
+      "status": "critico",
+      "resumo": "...",
+      "pontos": ["..."],
+      "tooltip": "..."
+    }
+  ],
+  "recomendacoes": [
+    {
+      "prioridade": "alta" | "media" | "baixa",
+      "acao": "Ação objetiva curta (até 80 chars)",
+      "motivo": "Justificativa técnica curta",
+      "base_legal": "RIR/2018 art X"
+    }
+  ],
+  "conclusao": {
+    "veredito": "transmitir" | "ajustar" | "nao_transmitir",
+    "mensagem": "Frase única de fechamento (máx 200 chars)"
   }
 }
 \`\`\`
+
+REGRAS DE OURO PARA O JSON:
+- Pontos devem ser CURTOS, objetivos, sem parágrafos. Use bullets de 1 linha.
+- Use ícones válidos: user, wallet, trending, shield, receipt, building, scale.
+- Status: "ok" (verde ✅), "atencao" (amarelo ⚠️), "critico" (vermelho 🚨).
+- Recomendações: máximo 6 itens, ordenadas por prioridade.
+- A interface vai renderizar TUDO visualmente. NÃO repita os mesmos dados em texto markdown longo.
+- Use markdown apenas se algo NÃO couber no JSON estruturado (ex: cálculo detalhado).
+
 
 Regras para os cálculos:
 - **Origens**: Somatório de rendimentos (todos), alienações e dívidas contraídas.
