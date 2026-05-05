@@ -15,6 +15,7 @@ const navItems = [
   { label: 'Logs de Auditoria', icon: History, href: '/admin/logs' },
   { label: 'E-mails', icon: Mail, href: '/admin/emails' },
   { label: 'Webhooks', icon: Activity, href: '/admin/webhooks' },
+  { label: 'Configurações Globais', icon: Settings, href: '/admin/configuracoes' },
   { label: 'Bug Reports', icon: Bug, href: '/admin/bugs' },
 ];
 
