@@ -272,9 +272,11 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
           </CardHeader>
           <Separator />
           <CardContent className="pt-4">
-            <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap text-sm leading-relaxed">
-              {resultado || <span className="text-muted-foreground animate-pulse">Lendo declaração e cruzando com o cadastro...</span>}
-            </div>
+            {resultado ? (
+              <VisualAnaliseCaixa resultado={resultado} />
+            ) : (
+              <span className="text-muted-foreground animate-pulse">Lendo declaração e cruzando com o cadastro...</span>
+            )}
           </CardContent>
         </Card>
       )}
