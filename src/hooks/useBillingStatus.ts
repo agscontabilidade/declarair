@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 
-export type BillingStatus = 'active' | 'overdue' | 'cancelled' | 'free';
+export type BillingStatus = 'active' | 'overdue' | 'cancelled' | 'free' | 'expiring';
 
 export interface PlanFeatures {
   gestao_declaracoes: boolean;
@@ -30,9 +30,13 @@ interface BillingState {
   plano: string;
   isBlocked: boolean;
   isOverdue: boolean;
+  isExpiringSoon: boolean;
+  daysRemaining: number | null;
+  proximaCobranca: string | null;
   loading: boolean;
   features: PlanFeatures;
 }
+
 
 const FREE_FEATURES: PlanFeatures = {
   gestao_declaracoes: true,
@@ -83,7 +87,7 @@ export function useBillingStatus(): BillingState {
     queryFn: async () => {
       const { data: assinatura } = await supabase
         .from('assinaturas')
-        .select('status, plano')
+        .select('status, plano, proxima_cobranca')
         .eq('escritorio_id', profile.escritorioId!)
         .maybeSingle();
 
@@ -104,6 +108,7 @@ export function useBillingStatus(): BillingState {
 
       return {
         subscriptionStatus: assinatura?.status || null,
+        proximaCobranca: assinatura?.proxima_cobranca || null,
         plano: escritorio?.plano || 'gratuito',
         activeAddonNames,
       };
@@ -114,16 +119,43 @@ export function useBillingStatus(): BillingState {
 
   const plano = data?.plano || 'gratuito';
   const subStatus = data?.subscriptionStatus;
+  const proximaCobranca = data?.proximaCobranca;
   const addonNames = data?.activeAddonNames || [];
 
-  const isOverdue = subStatus === 'overdue';
-  const isBlocked = isOverdue && plano !== 'gratuito';
+  let daysRemaining = null;
+  let isExpiringSoon = false;
+  let isOverdue = subStatus === 'overdue';
+
+  if (proximaCobranca) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(proximaCobranca);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = dueDate.getTime() - today.getTime();
+    daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (daysRemaining <= 7 && daysRemaining >= 0) {
+      isExpiringSoon = true;
+    }
+    
+    if (daysRemaining < 0) {
+      isOverdue = true;
+    }
+  }
+
+  const isBlocked = (isOverdue || subStatus === 'blocked') && plano !== 'gratuito';
+
 
   let status: BillingStatus = 'free';
   if (plano !== 'gratuito') {
     if (subStatus === 'active') status = 'active';
-    else if (subStatus === 'overdue') status = 'overdue';
+    else if (subStatus === 'overdue' || isOverdue) status = 'overdue';
     else if (subStatus === 'cancelled') status = 'cancelled';
+    
+    if (isExpiringSoon && status === 'active') {
+      status = 'expiring';
+    }
   }
 
   const isPro = plano.toLowerCase() === 'pro' || plano.toLowerCase() === 'profissional';
@@ -140,6 +172,9 @@ export function useBillingStatus(): BillingState {
     plano,
     isBlocked,
     isOverdue,
+    isExpiringSoon,
+    daysRemaining,
+    proximaCobranca,
     loading: isLoading,
     features: baseFeatures,
   };
