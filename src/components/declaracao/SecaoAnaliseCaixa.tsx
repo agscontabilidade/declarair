@@ -96,7 +96,9 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     },
   });
 
-  const analiseAtual = historicoAnalises?.find(a => a.id === analiseSelecionadaId) || 
+  const [activeAnaliseId, setActiveAnaliseId] = useState<string | null>(null);
+
+  const analiseAtual = historicoAnalises?.find(a => a.id === activeAnaliseId) || 
                        historicoAnalises?.find(a => a.id === analiseRecenteId) ||
                        (historicoAnalises && historicoAnalises.length > 0 ? historicoAnalises[0] : null);
 
@@ -106,17 +108,17 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     if (analiseAtual) {
       setResultado(analiseAtual.resultado_texto);
       setUltimaAtualizacao(analiseAtual.updated_at);
-      // Só scrolla se o usuário clicou explicitamente (analiseSelecionadaId está setado)
-      if (analiseSelecionadaId) {
+      
+      // Expandir automaticamente se houver uma análise ativa
+      if (activeAnaliseId || analiseRecenteId || (historicoAnalises && historicoAnalises.length > 0)) {
         setTimeout(() => {
           detaleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
       }
     } else if (!loading) {
-      // Se não há análise selecionada nem recém-criada, limpa o resultado
       setResultado('');
     }
-  }, [analiseAtual, loading, analiseSelecionadaId]);
+  }, [analiseAtual, loading, activeAnaliseId, analiseRecenteId, historicoAnalises]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -223,7 +225,8 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
         const { done, value } = await reader.read();
         if (done) {
           queryClient.invalidateQueries({ queryKey: ['analise-caixa-historico', declaracaoId] });
-          setAnaliseSelecionadaId(null); 
+          setActiveAnaliseId(null); 
+          setAnaliseRecenteId(null); // Limpa o recente anterior para forçar a nova análise como atual
           // Busca a ID da análise que acabou de ser criada para mostrar no detalhe
           const { data: novaAnalise } = await supabase
             .from('declaracao_analises')
@@ -451,7 +454,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
               <TableBody>
                 {historicoAnalises.map((analise, index) => {
                   const resumo = analise.resumo_visual as any;
-                  const isSelected = analiseSelecionadaId === analise.id || (analiseSelecionadaId === null && analiseRecenteId === null && index === 0);
+                  const isSelected = activeAnaliseId === analise.id || (activeAnaliseId === null && analiseRecenteId === null && index === 0);
                   const veredito = analise.veredito;
                   
                   const formatCurrency = (value: number) => {
@@ -461,10 +464,10 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
                   return (
                     <TableRow 
                       key={analise.id}
-                    className={`cursor-pointer transition-colors hover:bg-muted/40 ${isSelected || (analiseRecenteId === analise.id) ? 'bg-primary/5' : ''}`}
+                    className={`cursor-pointer transition-colors hover:bg-muted/40 ${isSelected ? 'bg-primary/5' : ''}`}
                     onClick={() => {
                       setAnaliseRecenteId(null);
-                      setAnaliseSelecionadaId(isSelected ? null : analise.id);
+                      setActiveAnaliseId(analise.id);
                     }}
                     >
                       <TableCell className="font-medium text-xs">
@@ -518,7 +521,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
         </Card>
       )}
 
-      {(loading || resultado || carregandoHistorico) && (
+      {(loading || (resultado && activeAnaliseId !== 'collapsed') || carregandoHistorico) && (
         <Card id="analise-detalhada" ref={detaleRef} className="scroll-mt-6 border-primary/20 shadow-md">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -540,7 +543,7 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
                 )}
               </div>
               <Button variant="ghost" size="sm" onClick={() => {
-                setAnaliseSelecionadaId(null);
+                setActiveAnaliseId('collapsed'); // Valor sentinela para esconder
                 setAnaliseRecenteId(null);
               }} className="h-6 text-xs text-muted-foreground">
                 Recolher
