@@ -94,31 +94,29 @@ const InfoTooltip = ({ content }: { content?: string }) => {
   );
 };
 
-export function VisualIAFiscal({ resultado }: Props) {
+export function VisualIAFiscal({ resultado, jsonOverride }: Props) {
   const { textualContent, jsonData } = useMemo(() => {
-    // Regex aprimorada para capturar blocos JSON mesmo se mal formados no markdown
-    const jsonRegex = /```json\s*([\s\S]*?)\s*```/g;
+    const jsonRegex = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
     const matches = Array.from(resultado.matchAll(jsonRegex));
-    
-    let textual = resultado;
-    let data: VisualData | null = null;
+    let textual = resultado.replace(jsonRegex, '').trim();
+    let data: VisualData | null = jsonOverride ?? null;
 
-    if (matches.length > 0) {
-      // Pega o último bloco JSON (geralmente o que contém os dados estruturados)
+    if (!data && matches.length > 0) {
       const lastMatch = matches[matches.length - 1];
       try {
         data = JSON.parse(lastMatch[1]);
-        // Remove TODOS os blocos JSON do texto para exibição
-        textual = resultado.replace(jsonRegex, '').trim();
-      } catch (e) {
-        console.error("Erro ao parsear JSON da análise:", e);
-        // Se falhou o parse, removemos o bloco do texto assim mesmo para não poluir
-        textual = resultado.replace(jsonRegex, '').trim();
+      } catch {
+        // tenta reparo simples
+        try {
+          data = JSON.parse(lastMatch[1].replace(/,\s*([}\]])/g, '$1'));
+        } catch {
+          data = null;
+        }
       }
     }
 
     return { textualContent: textual, jsonData: data };
-  }, [resultado]);
+  }, [resultado, jsonOverride]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -126,7 +124,7 @@ export function VisualIAFiscal({ resultado }: Props) {
 
   if (!jsonData) {
     return (
-      <div className="prose prose-sm max-w-none dark:prose-invert">
+      <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-headings:font-semibold prose-h2:text-base prose-h3:text-sm prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-foreground">
         <ReactMarkdown>{textualContent}</ReactMarkdown>
       </div>
     );
