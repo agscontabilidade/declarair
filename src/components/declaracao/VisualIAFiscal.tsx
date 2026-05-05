@@ -9,7 +9,8 @@ import {
 import { 
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, 
   Info, Wallet, ShieldAlert, Sparkles, Receipt, ListChecks,
-  ArrowDownRight, HelpCircle
+  ArrowDownRight, HelpCircle, User, Building, Scale,
+  AlertCircle, Lightbulb, Target, FileCheck2, XCircle
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
