@@ -270,7 +270,7 @@ export default function AdminSettings() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg font-mono flex items-center gap-2">
                       {config.key}
-                      {isSensitive(config) && <Lock className="h-3 w-3 text-amber-500" title="Valor Sensível" />}
+                      {isSensitive(config) && <Lock className="h-3 w-3 text-amber-500" />}
                     </CardTitle>
                     <CardDescription>{config.description || 'Sem descrição'}</CardDescription>
                   </CardHeader>
