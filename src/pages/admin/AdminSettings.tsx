@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Settings, Save, RotateCcw, History, AlertTriangle, 
-  Info, Shield, Package, Bell, Search, Edit3, Key
+  Info, Shield, Package, Bell, Search, Edit3, Key, Eye, EyeOff, Lock
 } from 'lucide-react';
 import { 
   Card, CardContent, CardHeader, CardTitle, CardDescription 
@@ -23,14 +23,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { usePermissoes } from '@/hooks/usePermissoes';
 
 export default function AdminSettings() {
   const queryClient = useQueryClient();
+  const { isDono } = usePermissoes();
   const [editingConfig, setEditingConfig] = useState<any>(null);
   const [newValue, setNewValue] = useState('');
   const [changeReason, setChangeReason] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [revealedConfigs, setRevealedConfigs] = useState<string[]>([]);
+  const [confirmRevealId, setConfirmRevealId] = useState<string | null>(null);
 
   const { data: configs, isLoading } = useQuery({
     queryKey: ['admin-system-configs'],
