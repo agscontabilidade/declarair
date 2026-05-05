@@ -18,6 +18,7 @@ import { getErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
 import { VisualIAFiscal } from './VisualIAFiscal';
+import { parseAnalise, type ParsedAnalise } from '@/lib/parseAnalise';
 import {
   Table,
   TableBody,
