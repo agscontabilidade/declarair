@@ -98,9 +98,10 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
 
   const [activeAnaliseId, setActiveAnaliseId] = useState<string | null>(null);
 
-  const analiseAtual = historicoAnalises?.find(a => a.id === activeAnaliseId) || 
+  const analiseAtual = activeAnaliseId === 'collapsed' ? null : (
+                       historicoAnalises?.find(a => a.id === activeAnaliseId) || 
                        historicoAnalises?.find(a => a.id === analiseRecenteId) ||
-                       (historicoAnalises && historicoAnalises.length > 0 ? historicoAnalises[0] : null);
+                       (historicoAnalises && historicoAnalises.length > 0 ? historicoAnalises[0] : null));
 
   const detaleRef = useRef<HTMLDivElement>(null);
 
