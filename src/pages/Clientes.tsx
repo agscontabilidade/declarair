@@ -109,6 +109,7 @@ export default function Clientes() {
               onCobranca={(c) => setCobrancaCliente(c)}
               canEdit={podeEditarClientes}
               canDelete={podeExcluirCliente}
+              clientesComCobranca={clientesComCobranca}
             />
           </CardContent>
         </Card>
