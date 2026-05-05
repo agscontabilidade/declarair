@@ -8,7 +8,8 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, 
-  Info, Wallet, ShieldAlert, Sparkles, Receipt, ListChecks
+  Info, Wallet, ShieldAlert, Sparkles, Receipt, ListChecks,
+  ArrowDownRight
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
