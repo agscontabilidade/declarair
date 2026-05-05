@@ -8,6 +8,7 @@ import { Brain, Sparkles, ShieldAlert, Receipt, Loader2, Lock } from 'lucide-rea
 import { useNavigate } from 'react-router-dom';
 import { useBillingStatus } from '@/hooks/useBillingStatus';
 import { getErrorMessage } from '@/lib/errors';
+import { VisualIAFiscal } from './VisualIAFiscal';
 
 interface Props {
   declaracaoId: string;
