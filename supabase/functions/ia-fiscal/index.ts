@@ -290,36 +290,28 @@ Siga rigorosamente a base legal e as tabelas de 2026 fornecidas.`;
   return base + `
 
 ## TAREFA: Análise fiscal completa do contribuinte
-Você atua como agente "irpf-declaracao-completa". Entregue:
+Você atua como agente "irpf-declaracao-completa".
 
+### Estrutura obrigatória da resposta
+1. Resumo da situação fiscal, recomendação de regime, deduções e riscos.
+2. Bloco JSON final (\`\`\`json) para dashboard:
+\`\`\`json
+{
+  "tipo": "analise",
+  "regime": "simplificada" | "completa",
+  "economia_estimada": 0.0,
+  "rendimento_tributavel": 0.0,
+  "comparativo": {
+    "simplificada": {"base": 0.0, "ir": 0.0},
+    "completa": {"base": 0.0, "ir": 0.0}
+  },
+  "riscos_count": { "alto": 0, "medio": 0, "baixo": 0 }
+}
+\`\`\`
+
+Entregue no texto:
 **1. Resumo da situação fiscal**
-- Perfil de renda (qtd fontes, faixa anual estimada)
-- Composição patrimonial
-- Status de documentação
-
-**2. Recomendação Simplificada × Completa** — FAÇA A CONTA, não chute:
-\`\`\`
-RENDIMENTO TRIBUTÁVEL ANUAL: R$ ____
-
-OPÇÃO A — SIMPLIFICADA
-Desconto: R$ 16.754,34 (ou 20% da renda, o menor)
-Base = ____   IR = ____
-
-OPÇÃO B — COMPLETA
-Deduções legais: R$ ____ (médicas + educ + pensão + PGBL + dependentes × R$ 2.275,08)
-Base = ____   IR = ____
-
-ESCOLHER: ____ (economia de R$ ____)
-\`\`\`
-
-**3. Deduções aproveitadas e otimizações**
-- Cite cada dedução com base legal e limite
-- Identifique deduções perdidas (com como capturar)
-
-**4. Riscos de malha fina** (códigos 010/015/050/060/070/080 — ver acima)
-
-**5. Plano de pagamento ou restituição**
-- Saldo a pagar: cota única até maio OU até 8 cotas (mín R$ 50) — DARF 0211
+...
 - Restituição: ordem de prioridade RFB (idosos, PNE, professores, etc.)
 
 **6. Orientações para o próximo ano** (carnê-leão mensal, GCAP, DARF 6015, etc.)
