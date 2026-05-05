@@ -30,6 +30,7 @@ export default function AdminSettings() {
   const [newValue, setNewValue] = useState('');
   const [changeReason, setChangeReason] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: configs, isLoading } = useQuery({
     queryKey: ['admin-system-configs'],
@@ -131,7 +132,12 @@ export default function AdminSettings() {
     }
   };
 
-  const filteredConfigs = configs?.filter(c => activeTab === 'all' || c.category === activeTab);
+  const filteredConfigs = configs?.filter(c => {
+    const matchesTab = activeTab === 'all' || c.category === activeTab;
+    const matchesSearch = c.key.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         (c.description?.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesTab && matchesSearch;
+  });
 
   return (
     <AdminLayout>
