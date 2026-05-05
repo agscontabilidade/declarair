@@ -335,6 +335,10 @@ function safeNumber(n: unknown): number | null {
   return typeof n === 'number' && Number.isFinite(n) ? n : null;
 }
 
+function onlyDigits(s: string): string {
+  return (s || "").replace(/\D/g, "");
+}
+
 async function saveAnalysis(supabase: any, data: { declaracao_id: string; escritorio_id: string; tipo: string; resultado_texto: string }) {
   let jsonResult: any = null;
   const jsonMatch = data.resultado_texto.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
