@@ -9,10 +9,16 @@ import {
 import { 
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, 
   Info, Wallet, ShieldAlert, Sparkles, Receipt, ListChecks,
-  ArrowDownRight
+  ArrowDownRight, HelpCircle
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface VisualData {
   tipo?: 'analise_caixa' | 'analise' | 'riscos';
@@ -32,13 +38,15 @@ interface VisualData {
     variacao_perc: number;
   };
   riscos_count?: { alto: number; medio: number; baixo: number };
-  // Para Analise Completa
   regime?: 'simplificada' | 'completa';
   economia_estimada?: number;
   rendimento_tributavel?: number;
   comparativo?: {
     simplificada: { base: number; ir: number };
     completa: { base: number; ir: number };
+  };
+  detalhes?: {
+    [key: string]: string; // Dicionário de tooltips para campos específicos
   };
 }
 
@@ -47,6 +55,22 @@ interface Props {
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+const InfoTooltip = ({ content }: { content?: string }) => {
+  if (!content) return null;
+  return (
+    <TooltipProvider>
+      <UITooltip>
+        <TooltipTrigger asChild>
+          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/50 cursor-help hover:text-primary transition-colors" />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-[250px] p-3 text-xs leading-relaxed">
+          {content}
+        </TooltipContent>
+      </UITooltip>
+    </TooltipProvider>
+  );
+};
 
 export function VisualIAFiscal({ resultado }: Props) {
   const { textualContent, jsonData } = useMemo(() => {
@@ -80,7 +104,7 @@ export function VisualIAFiscal({ resultado }: Props) {
 
   // Se for Análise de Caixa
   if (jsonData.resumo && jsonData.patrimonio) {
-    const { resumo, origens, aplicacoes, patrimonio, riscos_count } = jsonData;
+    const { resumo, origens, aplicacoes, patrimonio, riscos_count, detalhes } = jsonData;
     return (
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
@@ -99,7 +123,10 @@ export function VisualIAFiscal({ resultado }: Props) {
           <Card className={`${resumo!.estouro ? 'border-destructive/30 bg-destructive/5' : 'border-emerald-200 bg-emerald-50/30'}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-                Saldo de Caixa
+                <span className="flex items-center gap-1.5">
+                  Saldo de Caixa
+                  <InfoTooltip content={detalhes?.saldo || "Diferença entre tudo que entrou (Origens) e tudo que saiu ou foi investido (Aplicações). Se negativo, indica 'estouro de caixa'."} />
+                </span>
                 {resumo!.estouro ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
               </CardTitle>
             </CardHeader>
@@ -115,7 +142,10 @@ export function VisualIAFiscal({ resultado }: Props) {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Variação Patrimonial</CardTitle>
+              <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                Variação Patrimonial
+                <InfoTooltip content={detalhes?.patrimonio || "Crescimento ou redução do seu patrimônio líquido declarado entre o início e o fim do ano-base."} />
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold flex items-baseline gap-2">
@@ -133,8 +163,11 @@ export function VisualIAFiscal({ resultado }: Props) {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <ShieldAlert className="h-3 w-3" /> Nível de Risco
+              <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <ShieldAlert className="h-3 w-3" /> Nível de Risco
+                  <InfoTooltip content={detalhes?.risco || "Indica a probabilidade de a declaração cair na malha fina com base nas inconsistências encontradas."} />
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -160,6 +193,7 @@ export function VisualIAFiscal({ resultado }: Props) {
             <CardHeader className="pb-0">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-blue-500" /> Fluxo de Caixa
+                <InfoTooltip content={detalhes?.fluxo || "Comparação visual entre as suas fontes de recursos (Origens) e os seus gastos/investimentos (Aplicações)."} />
               </CardTitle>
             </CardHeader>
             <CardContent className="h-[280px] pt-4">
@@ -186,6 +220,7 @@ export function VisualIAFiscal({ resultado }: Props) {
             <CardHeader className="pb-0">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Wallet className="h-4 w-4 text-emerald-500" /> Fontes de Origem
+                <InfoTooltip content={detalhes?.origens || "Detalhamento de onde vieram os recursos declarados (Salários, Aluguéis, Isentos, etc.)."} />
               </CardTitle>
             </CardHeader>
             <CardContent className="h-[280px] pt-4">
@@ -218,11 +253,42 @@ export function VisualIAFiscal({ resultado }: Props) {
         <div className="space-y-4">
           <h4 className="text-sm font-semibold flex items-center gap-2 px-1">
             <ListChecks className="h-4 w-4 text-primary" /> Análise Técnica e Recomendações
+            <InfoTooltip content={detalhes?.analise_tecnica || "Diagnóstico detalhado realizado pela IA sobre a consistência dos dados e passos necessários para evitar a malha fina."} />
           </h4>
-          <Card className="border-none bg-accent/5">
+          <Card className="border-none bg-accent/5 overflow-hidden">
             <CardContent className="pt-6">
-              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground">
-                <ReactMarkdown>{textualContent}</ReactMarkdown>
+              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-li:text-muted-foreground">
+                <ReactMarkdown
+                  components={{
+                    h2: ({node, ...props}) => <h2 className="text-base font-bold text-foreground flex items-center gap-2 mb-4 border-b pb-2" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-sm font-bold text-foreground/90 mt-6 mb-3 flex items-center gap-2" {...props} />,
+                    p: ({node, children, ...props}) => {
+                      const text = String(children);
+                      if (text.includes('🚨 Risco Alto')) {
+                        return (
+                          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 my-4">
+                            <p className="m-0 font-medium text-destructive flex items-center gap-2">
+                              {children}
+                            </p>
+                          </div>
+                        );
+                      }
+                      if (text.includes('⚠️ Risco Médio')) {
+                        return (
+                          <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 my-4">
+                            <p className="m-0 font-medium text-amber-600 flex items-center gap-2">
+                              {children}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return <p className="mb-4" {...props}>{children}</p>;
+                    },
+                    li: ({node, ...props}) => <li className="mb-1" {...props} />
+                  }}
+                >
+                  {textualContent}
+                </ReactMarkdown>
               </div>
             </CardContent>
           </Card>
@@ -233,7 +299,7 @@ export function VisualIAFiscal({ resultado }: Props) {
 
   // Se for Análise Completa / Comparativo de Regimes
   if (jsonData.comparativo) {
-    const { regime, economia_estimada, rendimento_tributavel, comparativo, riscos_count } = jsonData;
+    const { regime, economia_estimada, rendimento_tributavel, comparativo, riscos_count, detalhes } = jsonData;
     return (
       <motion.div 
         initial={{ opacity: 0, scale: 0.98 }}
@@ -245,6 +311,7 @@ export function VisualIAFiscal({ resultado }: Props) {
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
                 <Receipt className="h-4 w-4" /> Recomendação de Regime
+                <InfoTooltip content={detalhes?.regime || "A IA calcula qual modelo de tributação gera o menor imposto a pagar ou a maior restituição para o seu caso."} />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -261,6 +328,7 @@ export function VisualIAFiscal({ resultado }: Props) {
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4" /> Status de Risco
+                <InfoTooltip content={detalhes?.risco || "Resumo dos alertas detectados pela IA."} />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -276,7 +344,10 @@ export function VisualIAFiscal({ resultado }: Props) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-semibold">Simulação de Impacto Fiscal</CardTitle>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              Simulação de Impacto Fiscal
+              <InfoTooltip content={detalhes?.simulacao || "Comparativo do imposto devido em cada modalidade."} />
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
