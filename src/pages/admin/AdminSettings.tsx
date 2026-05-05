@@ -364,6 +364,26 @@ export default function AdminSettings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Diálogo de Confirmação para Revelar Dados Sensíveis */}
+      <Dialog open={!!confirmRevealId} onOpenChange={() => setConfirmRevealId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Confirmar Revelação
+            </DialogTitle>
+            <DialogDescription>
+              Você está prestes a visualizar uma chave ou segredo sensível. 
+              Esta ação será registrada e deve ser feita apenas em ambiente seguro.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmRevealId(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmReveal}>Revelar Valor</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
