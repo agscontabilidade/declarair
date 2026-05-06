@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { validateCPF, maskCPF } from '@/lib/formatters';
 import { getErrorMessage } from '@/lib/errors';
+import { usePersistedForm } from '@/hooks/use-persisted-form';
 
 interface ClienteEditavel {
   id?: string;
@@ -45,11 +46,13 @@ const EMPTY = {
 export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente }: Props) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm, clearForm] = usePersistedForm('cliente_modal', EMPTY);
 
   useEffect(() => {
     if (open) {
       if (mode === 'edit' && cliente) {
+        // In edit mode, we prioritize the cliente data from props
+        // unless we want to also persist edits (more complex)
         setForm({
           nome: cliente.nome ?? '',
           cpf: cliente.cpf ?? '',
@@ -61,10 +64,16 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
           procuracao_ecac_validade: cliente.procuracao_ecac_validade ?? '',
         });
       } else {
-        setForm(EMPTY);
+        // In create mode, we only set to EMPTY if there's no persisted data
+        // usePersistedForm already handles the initial state from localStorage
+        // So we don't want to force EMPTY every time the modal opens if the user was mid-creation
+        const saved = localStorage.getItem('form_persistence_cliente_modal');
+        if (!saved) {
+          setForm(EMPTY);
+        }
       }
     }
-  }, [open, mode, cliente]);
+  }, [open, mode, cliente, setForm]);
 
   const isEdit = mode === 'edit';
   const cpfDigits = form.cpf.replace(/\D/g, '');
@@ -96,6 +105,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
         await onSave({ ...base, cpf: cpfDigits });
         toast({ title: 'Cliente criado com sucesso!' });
       }
+      clearForm();
       onOpenChange(false);
     } catch (err: unknown) {
       toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });

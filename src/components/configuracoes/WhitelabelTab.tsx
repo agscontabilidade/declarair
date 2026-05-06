@@ -9,6 +9,7 @@ import { Palette, Upload, Eye, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { usePersistedForm } from '@/hooks/use-persisted-form';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Escritorio = Tables<'escritorios'>;
@@ -35,23 +36,34 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
     enabled: !!escritorioId,
   });
 
-  const [corPrimaria, setCorPrimaria] = useState('#1E3A5F');
-  const [corFundo, setCorFundo] = useState('#F8FAFC');
-  const [nomePortal, setNomePortal] = useState('');
-  const [textoBoasVindas, setTextoBoasVindas] = useState('');
-  const [whitelabelAtivo, setWhitelabelAtivo] = useState(false);
+  const [form, setForm, clearForm] = usePersistedForm(`whitelabel_${escritorioId}`, {
+    corPrimaria: '#1E3A5F',
+    corFundo: '#F8FAFC',
+    nomePortal: '',
+    textoBoasVindas: '',
+    whitelabelAtivo: false,
+  });
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
+  const setFormField = (field: string, value: any) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
+
   useEffect(() => {
     if (escritorio) {
-      setCorPrimaria(escritorio.cor_primaria || '#1E3A5F');
-      setCorFundo(escritorio.cor_fundo_portal || '#F8FAFC');
-      setNomePortal(escritorio.nome_portal || '');
-      setTextoBoasVindas(escritorio.texto_boas_vindas || '');
-      setWhitelabelAtivo(escritorio.whitelabel_ativo || false);
+      const saved = localStorage.getItem(`form_persistence_whitelabel_${escritorioId}`);
+      if (!saved) {
+        setForm({
+          corPrimaria: escritorio.cor_primaria || '#1E3A5F',
+          corFundo: escritorio.cor_fundo_portal || '#F8FAFC',
+          nomePortal: escritorio.nome_portal || '',
+          textoBoasVindas: escritorio.texto_boas_vindas || '',
+          whitelabelAtivo: escritorio.whitelabel_ativo || false,
+        });
+      }
     }
-  }, [escritorio]);
+  }, [escritorio, setForm, escritorioId]);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -102,15 +114,16 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
       const { error } = await supabase
         .from('escritorios')
         .update({
-          cor_primaria: corPrimaria,
-          cor_fundo_portal: corFundo,
-          nome_portal: nomePortal || null,
-          texto_boas_vindas: textoBoasVindas || null,
-          whitelabel_ativo: whitelabelAtivo,
+          cor_primaria: form.corPrimaria,
+          cor_fundo_portal: form.corFundo,
+          nome_portal: form.nomePortal || null,
+          texto_boas_vindas: form.textoBoasVindas || null,
+          whitelabel_ativo: form.whitelabelAtivo,
         })
         .eq('id', escritorioId);
       if (error) throw error;
       toast.success('Configurações de marca salvas!');
+      clearForm();
       queryClient.invalidateQueries({ queryKey: ['escritorio-brand'] });
     } catch {
       toast.error('Erro ao salvar configurações');
@@ -159,12 +172,12 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
               <div className="flex items-center gap-2">
                 <input
                   type="color"
-                  value={corPrimaria}
-                  onChange={e => setCorPrimaria(e.target.value)}
+                  value={form.corPrimaria}
+                  onChange={e => setFormField('corPrimaria', e.target.value)}
                   className="h-10 w-10 rounded cursor-pointer border"
                   disabled={!isDono}
                 />
-                <Input value={corPrimaria} onChange={e => setCorPrimaria(e.target.value)} className="flex-1" readOnly={!isDono} />
+                <Input value={form.corPrimaria} onChange={e => setFormField('corPrimaria', e.target.value)} className="flex-1" readOnly={!isDono} />
               </div>
             </div>
             <div className="space-y-2">
@@ -172,12 +185,12 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
               <div className="flex items-center gap-2">
                 <input
                   type="color"
-                  value={corFundo}
-                  onChange={e => setCorFundo(e.target.value)}
+                  value={form.corFundo}
+                  onChange={e => setFormField('corFundo', e.target.value)}
                   className="h-10 w-10 rounded cursor-pointer border"
                   disabled={!isDono}
                 />
-                <Input value={corFundo} onChange={e => setCorFundo(e.target.value)} className="flex-1" readOnly={!isDono} />
+                <Input value={form.corFundo} onChange={e => setFormField('corFundo', e.target.value)} className="flex-1" readOnly={!isDono} />
               </div>
             </div>
           </div>
@@ -186,8 +199,8 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
           <div className="space-y-2">
             <Label>Nome exibido no Portal do Cliente</Label>
             <Input
-              value={nomePortal}
-              onChange={e => setNomePortal(e.target.value)}
+              value={form.nomePortal}
+              onChange={e => setFormField('nomePortal', e.target.value)}
               placeholder={`Portal do Cliente — ${escritorio?.nome || 'Seu Escritório'}`}
               readOnly={!isDono}
             />
@@ -197,8 +210,8 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
           <div className="space-y-2">
             <Label>Texto de boas-vindas no portal</Label>
             <Textarea
-              value={textoBoasVindas}
-              onChange={e => setTextoBoasVindas(e.target.value)}
+              value={form.textoBoasVindas}
+              onChange={e => setFormField('textoBoasVindas', e.target.value)}
               placeholder="Bem-vindo ao portal! Aqui você acompanha sua declaração de IR."
               rows={3}
               readOnly={!isDono}
@@ -212,8 +225,8 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
               <p className="text-xs text-muted-foreground">Remove a marca DeclaraIR do portal do cliente</p>
             </div>
             <Switch
-              checked={whitelabelAtivo}
-              onCheckedChange={setWhitelabelAtivo}
+              checked={form.whitelabelAtivo}
+              onCheckedChange={v => setFormField('whitelabelAtivo', v)}
               disabled={!isDono}
             />
           </div>
@@ -224,18 +237,18 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
               <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                 <Eye className="h-3.5 w-3.5" /> Preview
               </p>
-              <div className="rounded-lg p-4" style={{ backgroundColor: corFundo }}>
+              <div className="rounded-lg p-4" style={{ backgroundColor: form.corFundo }}>
                 <div className="flex items-center gap-2 mb-3">
                   {escritorio?.logo_url ? (
                     <img src={escritorio.logo_url} alt="" className="h-8 object-contain" />
                   ) : (
-                    <div className="h-8 w-8 rounded" style={{ backgroundColor: corPrimaria }} />
+                    <div className="h-8 w-8 rounded" style={{ backgroundColor: form.corPrimaria }} />
                   )}
-                  <span className="font-bold text-sm" style={{ color: corPrimaria }}>
-                    {nomePortal || `Portal — ${escritorio?.nome || 'Escritório'}`}
+                  <span className="font-bold text-sm" style={{ color: form.corPrimaria }}>
+                    {form.nomePortal || `Portal — ${escritorio?.nome || 'Escritório'}`}
                   </span>
                 </div>
-                <div className="h-8 rounded" style={{ backgroundColor: corPrimaria, opacity: 0.8 }} />
+                <div className="h-8 rounded" style={{ backgroundColor: form.corPrimaria, opacity: 0.8 }} />
               </div>
             </CardContent>
           </Card>

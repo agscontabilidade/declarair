@@ -21,7 +21,7 @@ const ONBOARDING_STORAGE_KEY = 'declarair_onboarding_draft';
 
 function loadOnboardingDraft() {
   try {
-    const raw = sessionStorage.getItem(ONBOARDING_STORAGE_KEY);
+    const raw = localStorage.getItem(ONBOARDING_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 }
@@ -61,7 +61,7 @@ export default function Onboarding() {
   // Persist draft to sessionStorage (exclude files)
   const saveDraft = useCallback(() => {
     try {
-      sessionStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify({
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify({
         step, razaoSocial, nomeFantasia, cnpj, emailEmpresa, telefoneEmpresa,
         whatsapp, chavePix, cep, logradouro, numero, complemento, bairro, cidade, uf, corPrimaria,
       }));
@@ -196,7 +196,7 @@ export default function Onboarding() {
         onboarding_completo: true,
       }).eq('id', profile.escritorioId);
 
-      sessionStorage.removeItem(ONBOARDING_STORAGE_KEY);
+      localStorage.removeItem(ONBOARDING_STORAGE_KEY);
       toast({ title: 'Configuração concluída!', description: 'Bem-vindo ao DeclaraIR!' });
       // Force full reload so AuthContext picks up onboarding_completo = true
       window.location.href = '/dashboard';

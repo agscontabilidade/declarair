@@ -63,7 +63,7 @@ const CADASTRO_STORAGE_KEY = 'declarair_cadastro_draft';
 
 function loadCadastroDraft() {
   try {
-    const raw = sessionStorage.getItem(CADASTRO_STORAGE_KEY);
+    const raw = localStorage.getItem(CADASTRO_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 }
@@ -90,7 +90,7 @@ export default function Cadastro() {
   // Persist draft to sessionStorage (exclude senha for security)
   const saveDraft = useCallback(() => {
     try {
-      sessionStorage.setItem(CADASTRO_STORAGE_KEY, JSON.stringify({
+      localStorage.setItem(CADASTRO_STORAGE_KEY, JSON.stringify({
         step, nome, email, cpf, telefone, planoSelecionado, nomeEscritorio,
       }));
     } catch { /* quota exceeded - ignore */ }
@@ -174,7 +174,7 @@ export default function Cadastro() {
       // Store them temporarily to apply after session is established
       const pendingUpdates = { telefone: telefone.trim(), plano: planoSelecionado };
 
-      sessionStorage.removeItem(CADASTRO_STORAGE_KEY);
+      localStorage.removeItem(CADASTRO_STORAGE_KEY);
       toast({
         title: 'Conta criada com sucesso!',
         description: 'Vamos configurar seu escritório agora.',

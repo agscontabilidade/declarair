@@ -24,6 +24,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+import { usePersistedForm } from '@/hooks/use-persisted-form';
+
 export default function Configuracoes() {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -81,13 +83,19 @@ export default function Configuracoes() {
     enabled: !!escritorioId,
   });
 
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [cnpj, setCnpj] = useState('');
-  const [responsavelNome, setResponsavelNome] = useState('');
-  const [responsavelCpf, setResponsavelCpf] = useState('');
-  const [responsavelCrc, setResponsavelCrc] = useState('');
+  const [form, setForm, clearForm] = usePersistedForm('configuracoes_escritorio', {
+    nome: '',
+    email: '',
+    telefone: '',
+    cnpj: '',
+    responsavelNome: '',
+    responsavelCpf: '',
+    responsavelCrc: '',
+  });
+  
+  const setFormField = (field: string, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
   const [saving, setSaving] = useState(false);
   const [buscandoCnpj, setBuscandoCnpj] = useState(false);
 
@@ -109,14 +117,14 @@ export default function Configuracoes() {
   }
 
   async function handleBuscarCnpj() {
-    const clean = cnpj.replace(/\D/g, '');
+    const clean = form.cnpj.replace(/\D/g, '');
     if (clean.length !== 14 || !podeAlterarEscritorio) return;
     setBuscandoCnpj(true);
     const dados = await buscarCNPJ(clean);
     if (dados) {
-      if (!nome && dados.razao_social) setNome(dados.razao_social);
-      if (!email && dados.email) setEmail(dados.email);
-      if (!telefone && dados.ddd_telefone_1) setTelefone(dados.ddd_telefone_1);
+      if (!form.nome && dados.razao_social) setFormField('nome', dados.razao_social);
+      if (!form.email && dados.email) setFormField('email', dados.email);
+      if (!form.telefone && dados.ddd_telefone_1) setFormField('telefone', dados.ddd_telefone_1);
       toast({ title: 'Dados do CNPJ preenchidos automaticamente!' });
     }
     setBuscandoCnpj(false);
@@ -124,31 +132,40 @@ export default function Configuracoes() {
 
   useEffect(() => {
     if (escritorio) {
-      setNome(escritorio.nome || '');
-      setEmail(escritorio.email || '');
-      setTelefone(escritorio.telefone || '');
-      setCnpj(escritorio.cnpj || '');
-      setResponsavelNome(escritorio.responsavel_nome || '');
-      setResponsavelCpf(escritorio.responsavel_cpf || '');
-      setResponsavelCrc(escritorio.responsavel_crc || '');
+      // Check if we already have persisted changes. 
+      // If not, we fill from DB.
+      const saved = localStorage.getItem('form_persistence_configuracoes_escritorio');
+      if (!saved) {
+        setForm({
+          nome: escritorio.nome || '',
+          email: escritorio.email || '',
+          telefone: escritorio.telefone || '',
+          cnpj: escritorio.cnpj || '',
+          responsavelNome: escritorio.responsavel_nome || '',
+          responsavelCpf: escritorio.responsavel_cpf || '',
+          responsavelCrc: escritorio.responsavel_crc || '',
+        });
+      }
     }
-  }, [escritorio]);
+  }, [escritorio, setForm]);
 
   async function handleSave() {
     if (!escritorioId || !podeAlterarEscritorio) return;
     setSaving(true);
     const { error } = await supabase.from('escritorios').update({ 
-      nome, 
-      email, 
-      telefone, 
-      cnpj,
-      responsavel_nome: responsavelNome,
-      responsavel_cpf: responsavelCpf,
-      responsavel_crc: responsavelCrc
+      nome: form.nome, 
+      email: form.email, 
+      telefone: form.telefone, 
+      cnpj: form.cnpj,
+      responsavel_nome: form.responsavelNome,
+      responsavel_cpf: form.responsavelCpf,
+      responsavel_crc: form.responsavelCrc
     }).eq('id', escritorioId);
+    
     if (error) toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
     else {
       toast({ title: 'Dados salvos com sucesso!' });
+      clearForm();
       queryClient.invalidateQueries({ queryKey: ['escritorio', escritorioId] });
     }
     setSaving(false);
@@ -177,26 +194,26 @@ export default function Configuracoes() {
                   <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
                 ) : (
                   <div className="space-y-4 max-w-lg">
-                    <div className="space-y-2"><Label>Nome</Label><Input value={nome} onChange={e => setNome(e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
-                    <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
-                    <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
-                    <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} readOnly={!podeAlterarEscritorio} disabled={buscandoCnpj} placeholder="00.000.000/0000-00" maxLength={18} /></div>
+                    <div className="space-y-2"><Label>Nome</Label><Input value={form.nome} onChange={e => setFormField('nome', e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
+                    <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={e => setFormField('email', e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
+                    <div className="space-y-2"><Label>Telefone</Label><Input value={form.telefone} onChange={e => setFormField('telefone', e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
+                    <div className="space-y-2"><Label>CNPJ</Label><Input value={form.cnpj} onChange={e => setFormField('cnpj', formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} readOnly={!podeAlterarEscritorio} disabled={buscandoCnpj} placeholder="00.000.000/0000-00" maxLength={18} /></div>
                     
                     <div className="pt-4 border-t">
                       <h3 className="text-sm font-semibold mb-3">Responsável Técnico</h3>
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label>Nome Completo</Label>
-                          <Input value={responsavelNome} onChange={e => setResponsavelNome(e.target.value)} readOnly={!podeAlterarEscritorio} placeholder="Nome do contador responsável" />
+                          <Input value={form.responsavelNome} onChange={e => setFormField('responsavelNome', e.target.value)} readOnly={!podeAlterarEscritorio} placeholder="Nome do contador responsável" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>CPF</Label>
-                            <Input value={responsavelCpf} onChange={e => setResponsavelCpf(formatCpf(e.target.value))} readOnly={!podeAlterarEscritorio} placeholder="000.000.000-00" maxLength={14} />
+                            <Input value={form.responsavelCpf} onChange={e => setFormField('responsavelCpf', formatCpf(e.target.value))} readOnly={!podeAlterarEscritorio} placeholder="000.000.000-00" maxLength={14} />
                           </div>
                           <div className="space-y-2">
                             <Label>CRC</Label>
-                            <Input value={responsavelCrc} onChange={e => setResponsavelCrc(e.target.value)} readOnly={!podeAlterarEscritorio} placeholder="Ex: SP-000000/O" />
+                            <Input value={form.responsavelCrc} onChange={e => setFormField('responsavelCrc', e.target.value)} readOnly={!podeAlterarEscritorio} placeholder="Ex: SP-000000/O" />
                           </div>
                         </div>
                       </div>
