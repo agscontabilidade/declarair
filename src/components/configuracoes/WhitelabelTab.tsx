@@ -114,15 +114,16 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
       const { error } = await supabase
         .from('escritorios')
         .update({
-          cor_primaria: corPrimaria,
-          cor_fundo_portal: corFundo,
-          nome_portal: nomePortal || null,
-          texto_boas_vindas: textoBoasVindas || null,
-          whitelabel_ativo: whitelabelAtivo,
+          cor_primaria: form.corPrimaria,
+          cor_fundo_portal: form.corFundo,
+          nome_portal: form.nomePortal || null,
+          texto_boas_vindas: form.textoBoasVindas || null,
+          whitelabel_ativo: form.whitelabelAtivo,
         })
         .eq('id', escritorioId);
       if (error) throw error;
       toast.success('Configurações de marca salvas!');
+      clearForm();
       queryClient.invalidateQueries({ queryKey: ['escritorio-brand'] });
     } catch {
       toast.error('Erro ao salvar configurações');
