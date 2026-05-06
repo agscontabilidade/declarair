@@ -90,7 +90,7 @@ export default function Cadastro() {
   // Persist draft to sessionStorage (exclude senha for security)
   const saveDraft = useCallback(() => {
     try {
-      sessionStorage.setItem(CADASTRO_STORAGE_KEY, JSON.stringify({
+      localStorage.setItem(CADASTRO_STORAGE_KEY, JSON.stringify({
         step, nome, email, cpf, telefone, planoSelecionado, nomeEscritorio,
       }));
     } catch { /* quota exceeded - ignore */ }
