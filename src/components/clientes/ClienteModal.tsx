@@ -51,6 +51,8 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
   useEffect(() => {
     if (open) {
       if (mode === 'edit' && cliente) {
+        // In edit mode, we prioritize the cliente data from props
+        // unless we want to also persist edits (more complex)
         setForm({
           nome: cliente.nome ?? '',
           cpf: cliente.cpf ?? '',
@@ -62,10 +64,16 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
           procuracao_ecac_validade: cliente.procuracao_ecac_validade ?? '',
         });
       } else {
-        setForm(EMPTY);
+        // In create mode, we only set to EMPTY if there's no persisted data
+        // usePersistedForm already handles the initial state from localStorage
+        // So we don't want to force EMPTY every time the modal opens if the user was mid-creation
+        const saved = localStorage.getItem('form_persistence_cliente_modal');
+        if (!saved) {
+          setForm(EMPTY);
+        }
       }
     }
-  }, [open, mode, cliente]);
+  }, [open, mode, cliente, setForm]);
 
   const isEdit = mode === 'edit';
   const cpfDigits = form.cpf.replace(/\D/g, '');
