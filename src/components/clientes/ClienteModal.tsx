@@ -46,7 +46,7 @@ const EMPTY = {
 export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente }: Props) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm, clearForm] = usePersistedForm('cliente_modal', EMPTY);
 
   useEffect(() => {
     if (open) {
