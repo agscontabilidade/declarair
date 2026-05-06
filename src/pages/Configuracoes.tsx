@@ -117,14 +117,14 @@ export default function Configuracoes() {
   }
 
   async function handleBuscarCnpj() {
-    const clean = cnpj.replace(/\D/g, '');
+    const clean = form.cnpj.replace(/\D/g, '');
     if (clean.length !== 14 || !podeAlterarEscritorio) return;
     setBuscandoCnpj(true);
     const dados = await buscarCNPJ(clean);
     if (dados) {
-      if (!nome && dados.razao_social) setNome(dados.razao_social);
-      if (!email && dados.email) setEmail(dados.email);
-      if (!telefone && dados.ddd_telefone_1) setTelefone(dados.ddd_telefone_1);
+      if (!form.nome && dados.razao_social) setFormField('nome', dados.razao_social);
+      if (!form.email && dados.email) setFormField('email', dados.email);
+      if (!form.telefone && dados.ddd_telefone_1) setFormField('telefone', dados.ddd_telefone_1);
       toast({ title: 'Dados do CNPJ preenchidos automaticamente!' });
     }
     setBuscandoCnpj(false);
@@ -132,31 +132,40 @@ export default function Configuracoes() {
 
   useEffect(() => {
     if (escritorio) {
-      setNome(escritorio.nome || '');
-      setEmail(escritorio.email || '');
-      setTelefone(escritorio.telefone || '');
-      setCnpj(escritorio.cnpj || '');
-      setResponsavelNome(escritorio.responsavel_nome || '');
-      setResponsavelCpf(escritorio.responsavel_cpf || '');
-      setResponsavelCrc(escritorio.responsavel_crc || '');
+      // Check if we already have persisted changes. 
+      // If not, we fill from DB.
+      const saved = localStorage.getItem('form_persistence_configuracoes_escritorio');
+      if (!saved) {
+        setForm({
+          nome: escritorio.nome || '',
+          email: escritorio.email || '',
+          telefone: escritorio.telefone || '',
+          cnpj: escritorio.cnpj || '',
+          responsavelNome: escritorio.responsavel_nome || '',
+          responsavelCpf: escritorio.responsavel_cpf || '',
+          responsavelCrc: escritorio.responsavel_crc || '',
+        });
+      }
     }
-  }, [escritorio]);
+  }, [escritorio, setForm]);
 
   async function handleSave() {
     if (!escritorioId || !podeAlterarEscritorio) return;
     setSaving(true);
     const { error } = await supabase.from('escritorios').update({ 
-      nome, 
-      email, 
-      telefone, 
-      cnpj,
-      responsavel_nome: responsavelNome,
-      responsavel_cpf: responsavelCpf,
-      responsavel_crc: responsavelCrc
+      nome: form.nome, 
+      email: form.email, 
+      telefone: form.telefone, 
+      cnpj: form.cnpj,
+      responsavel_nome: form.responsavelNome,
+      responsavel_cpf: form.responsavelCpf,
+      responsavel_crc: form.responsavelCrc
     }).eq('id', escritorioId);
+    
     if (error) toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
     else {
       toast({ title: 'Dados salvos com sucesso!' });
+      clearForm();
       queryClient.invalidateQueries({ queryKey: ['escritorio', escritorioId] });
     }
     setSaving(false);
