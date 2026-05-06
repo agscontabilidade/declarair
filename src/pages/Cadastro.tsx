@@ -63,7 +63,7 @@ const CADASTRO_STORAGE_KEY = 'declarair_cadastro_draft';
 
 function loadCadastroDraft() {
   try {
-    const raw = sessionStorage.getItem(CADASTRO_STORAGE_KEY);
+    const raw = localStorage.getItem(CADASTRO_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 }
