@@ -52,13 +52,18 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
 
   useEffect(() => {
     if (escritorio) {
-      setCorPrimaria(escritorio.cor_primaria || '#1E3A5F');
-      setCorFundo(escritorio.cor_fundo_portal || '#F8FAFC');
-      setNomePortal(escritorio.nome_portal || '');
-      setTextoBoasVindas(escritorio.texto_boas_vindas || '');
-      setWhitelabelAtivo(escritorio.whitelabel_ativo || false);
+      const saved = localStorage.getItem(`form_persistence_whitelabel_${escritorioId}`);
+      if (!saved) {
+        setForm({
+          corPrimaria: escritorio.cor_primaria || '#1E3A5F',
+          corFundo: escritorio.cor_fundo_portal || '#F8FAFC',
+          nomePortal: escritorio.nome_portal || '',
+          textoBoasVindas: escritorio.texto_boas_vindas || '',
+          whitelabelAtivo: escritorio.whitelabel_ativo || false,
+        });
+      }
     }
-  }, [escritorio]);
+  }, [escritorio, setForm, escritorioId]);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
