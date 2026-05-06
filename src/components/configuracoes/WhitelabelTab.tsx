@@ -172,12 +172,12 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
               <div className="flex items-center gap-2">
                 <input
                   type="color"
-                  value={corPrimaria}
-                  onChange={e => setCorPrimaria(e.target.value)}
+                  value={form.corPrimaria}
+                  onChange={e => setFormField('corPrimaria', e.target.value)}
                   className="h-10 w-10 rounded cursor-pointer border"
                   disabled={!isDono}
                 />
-                <Input value={corPrimaria} onChange={e => setCorPrimaria(e.target.value)} className="flex-1" readOnly={!isDono} />
+                <Input value={form.corPrimaria} onChange={e => setFormField('corPrimaria', e.target.value)} className="flex-1" readOnly={!isDono} />
               </div>
             </div>
             <div className="space-y-2">
@@ -185,12 +185,12 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
               <div className="flex items-center gap-2">
                 <input
                   type="color"
-                  value={corFundo}
-                  onChange={e => setCorFundo(e.target.value)}
+                  value={form.corFundo}
+                  onChange={e => setFormField('corFundo', e.target.value)}
                   className="h-10 w-10 rounded cursor-pointer border"
                   disabled={!isDono}
                 />
-                <Input value={corFundo} onChange={e => setCorFundo(e.target.value)} className="flex-1" readOnly={!isDono} />
+                <Input value={form.corFundo} onChange={e => setFormField('corFundo', e.target.value)} className="flex-1" readOnly={!isDono} />
               </div>
             </div>
           </div>
@@ -199,8 +199,8 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
           <div className="space-y-2">
             <Label>Nome exibido no Portal do Cliente</Label>
             <Input
-              value={nomePortal}
-              onChange={e => setNomePortal(e.target.value)}
+              value={form.nomePortal}
+              onChange={e => setFormField('nomePortal', e.target.value)}
               placeholder={`Portal do Cliente — ${escritorio?.nome || 'Seu Escritório'}`}
               readOnly={!isDono}
             />
@@ -210,8 +210,8 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
           <div className="space-y-2">
             <Label>Texto de boas-vindas no portal</Label>
             <Textarea
-              value={textoBoasVindas}
-              onChange={e => setTextoBoasVindas(e.target.value)}
+              value={form.textoBoasVindas}
+              onChange={e => setFormField('textoBoasVindas', e.target.value)}
               placeholder="Bem-vindo ao portal! Aqui você acompanha sua declaração de IR."
               rows={3}
               readOnly={!isDono}
@@ -225,8 +225,8 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
               <p className="text-xs text-muted-foreground">Remove a marca DeclaraIR do portal do cliente</p>
             </div>
             <Switch
-              checked={whitelabelAtivo}
-              onCheckedChange={setWhitelabelAtivo}
+              checked={form.whitelabelAtivo}
+              onCheckedChange={v => setFormField('whitelabelAtivo', v)}
               disabled={!isDono}
             />
           </div>
@@ -237,18 +237,18 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
               <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                 <Eye className="h-3.5 w-3.5" /> Preview
               </p>
-              <div className="rounded-lg p-4" style={{ backgroundColor: corFundo }}>
+              <div className="rounded-lg p-4" style={{ backgroundColor: form.corFundo }}>
                 <div className="flex items-center gap-2 mb-3">
                   {escritorio?.logo_url ? (
                     <img src={escritorio.logo_url} alt="" className="h-8 object-contain" />
                   ) : (
-                    <div className="h-8 w-8 rounded" style={{ backgroundColor: corPrimaria }} />
+                    <div className="h-8 w-8 rounded" style={{ backgroundColor: form.corPrimaria }} />
                   )}
-                  <span className="font-bold text-sm" style={{ color: corPrimaria }}>
-                    {nomePortal || `Portal — ${escritorio?.nome || 'Escritório'}`}
+                  <span className="font-bold text-sm" style={{ color: form.corPrimaria }}>
+                    {form.nomePortal || `Portal — ${escritorio?.nome || 'Escritório'}`}
                   </span>
                 </div>
-                <div className="h-8 rounded" style={{ backgroundColor: corPrimaria, opacity: 0.8 }} />
+                <div className="h-8 rounded" style={{ backgroundColor: form.corPrimaria, opacity: 0.8 }} />
               </div>
             </CardContent>
           </Card>
