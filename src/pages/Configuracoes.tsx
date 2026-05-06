@@ -83,13 +83,19 @@ export default function Configuracoes() {
     enabled: !!escritorioId,
   });
 
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [cnpj, setCnpj] = useState('');
-  const [responsavelNome, setResponsavelNome] = useState('');
-  const [responsavelCpf, setResponsavelCpf] = useState('');
-  const [responsavelCrc, setResponsavelCrc] = useState('');
+  const [form, setForm, clearForm] = usePersistedForm('configuracoes_escritorio', {
+    nome: '',
+    email: '',
+    telefone: '',
+    cnpj: '',
+    responsavelNome: '',
+    responsavelCpf: '',
+    responsavelCrc: '',
+  });
+  
+  const setFormField = (field: string, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
   const [saving, setSaving] = useState(false);
   const [buscandoCnpj, setBuscandoCnpj] = useState(false);
 
