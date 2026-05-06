@@ -9,6 +9,7 @@ import { Palette, Upload, Eye, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { usePersistedForm } from '@/hooks/use-persisted-form';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Escritorio = Tables<'escritorios'>;
