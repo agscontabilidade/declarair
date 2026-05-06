@@ -61,7 +61,7 @@ export default function Onboarding() {
   // Persist draft to sessionStorage (exclude files)
   const saveDraft = useCallback(() => {
     try {
-      sessionStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify({
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify({
         step, razaoSocial, nomeFantasia, cnpj, emailEmpresa, telefoneEmpresa,
         whatsapp, chavePix, cep, logradouro, numero, complemento, bairro, cidade, uf, corPrimaria,
       }));
