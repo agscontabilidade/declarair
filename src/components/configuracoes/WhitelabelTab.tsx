@@ -36,13 +36,19 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
     enabled: !!escritorioId,
   });
 
-  const [corPrimaria, setCorPrimaria] = useState('#1E3A5F');
-  const [corFundo, setCorFundo] = useState('#F8FAFC');
-  const [nomePortal, setNomePortal] = useState('');
-  const [textoBoasVindas, setTextoBoasVindas] = useState('');
-  const [whitelabelAtivo, setWhitelabelAtivo] = useState(false);
+  const [form, setForm, clearForm] = usePersistedForm(`whitelabel_${escritorioId}`, {
+    corPrimaria: '#1E3A5F',
+    corFundo: '#F8FAFC',
+    nomePortal: '',
+    textoBoasVindas: '',
+    whitelabelAtivo: false,
+  });
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const setFormField = (field: string, value: any) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
 
   useEffect(() => {
     if (escritorio) {
