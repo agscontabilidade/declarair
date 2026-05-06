@@ -194,10 +194,10 @@ export default function Configuracoes() {
                   <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
                 ) : (
                   <div className="space-y-4 max-w-lg">
-                    <div className="space-y-2"><Label>Nome</Label><Input value={nome} onChange={e => setNome(e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
-                    <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
-                    <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
-                    <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} readOnly={!podeAlterarEscritorio} disabled={buscandoCnpj} placeholder="00.000.000/0000-00" maxLength={18} /></div>
+                    <div className="space-y-2"><Label>Nome</Label><Input value={form.nome} onChange={e => setFormField('nome', e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
+                    <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={e => setFormField('email', e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
+                    <div className="space-y-2"><Label>Telefone</Label><Input value={form.telefone} onChange={e => setFormField('telefone', e.target.value)} readOnly={!podeAlterarEscritorio} /></div>
+                    <div className="space-y-2"><Label>CNPJ</Label><Input value={form.cnpj} onChange={e => setFormField('cnpj', formatCnpj(e.target.value))} onBlur={handleBuscarCnpj} readOnly={!podeAlterarEscritorio} disabled={buscandoCnpj} placeholder="00.000.000/0000-00" maxLength={18} /></div>
                     
                     <div className="pt-4 border-t">
                       <h3 className="text-sm font-semibold mb-3">Responsável Técnico</h3>
