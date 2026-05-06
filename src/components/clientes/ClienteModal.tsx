@@ -105,6 +105,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
         await onSave({ ...base, cpf: cpfDigits });
         toast({ title: 'Cliente criado com sucesso!' });
       }
+      clearForm();
       onOpenChange(false);
     } catch (err: unknown) {
       toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });
