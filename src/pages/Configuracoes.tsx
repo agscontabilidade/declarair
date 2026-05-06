@@ -204,16 +204,16 @@ export default function Configuracoes() {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label>Nome Completo</Label>
-                          <Input value={responsavelNome} onChange={e => setResponsavelNome(e.target.value)} readOnly={!podeAlterarEscritorio} placeholder="Nome do contador responsável" />
+                          <Input value={form.responsavelNome} onChange={e => setFormField('responsavelNome', e.target.value)} readOnly={!podeAlterarEscritorio} placeholder="Nome do contador responsável" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>CPF</Label>
-                            <Input value={responsavelCpf} onChange={e => setResponsavelCpf(formatCpf(e.target.value))} readOnly={!podeAlterarEscritorio} placeholder="000.000.000-00" maxLength={14} />
+                            <Input value={form.responsavelCpf} onChange={e => setFormField('responsavelCpf', formatCpf(e.target.value))} readOnly={!podeAlterarEscritorio} placeholder="000.000.000-00" maxLength={14} />
                           </div>
                           <div className="space-y-2">
                             <Label>CRC</Label>
-                            <Input value={responsavelCrc} onChange={e => setResponsavelCrc(e.target.value)} readOnly={!podeAlterarEscritorio} placeholder="Ex: SP-000000/O" />
+                            <Input value={form.responsavelCrc} onChange={e => setFormField('responsavelCrc', e.target.value)} readOnly={!podeAlterarEscritorio} placeholder="Ex: SP-000000/O" />
                           </div>
                         </div>
                       </div>
