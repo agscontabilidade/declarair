@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { validateCPF, maskCPF } from '@/lib/formatters';
 import { getErrorMessage } from '@/lib/errors';
+import { usePersistedForm } from '@/hooks/use-persisted-form';
 
 interface ClienteEditavel {
   id?: string;
