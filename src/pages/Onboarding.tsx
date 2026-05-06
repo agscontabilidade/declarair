@@ -21,7 +21,7 @@ const ONBOARDING_STORAGE_KEY = 'declarair_onboarding_draft';
 
 function loadOnboardingDraft() {
   try {
-    const raw = sessionStorage.getItem(ONBOARDING_STORAGE_KEY);
+    const raw = localStorage.getItem(ONBOARDING_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 }
