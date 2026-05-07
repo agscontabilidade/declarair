@@ -27,7 +27,6 @@ Deno.serve(async (req) => {
       .from('convites_cliente')
       .select('*')
       .eq('token', token)
-      .eq('usado', false)
       .gt('expira_em', new Date().toISOString())
       .single();
 

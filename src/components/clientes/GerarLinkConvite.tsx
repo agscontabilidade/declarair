@@ -313,7 +313,7 @@ export default function GerarLinkConvite() {
             <div className="pt-4 border-t">
               <p className="text-xs text-muted-foreground">
                 • O link expira em 30 dias<br />
-                • O cliente se autocadastra usando este link
+                • Pode ser usado por múltiplos clientes (reutilizável)
               </p>
             </div>
 
