@@ -396,7 +396,7 @@ export default function Declaracoes() {
                               }}
                             >
                               <Send className="h-3.5 w-3.5 mr-1.5" />
-                              {d.declaracao_enviada_em ? 'Reenviar e-mail' : 'Enviar e-mail'}
+                              {d.declaracao_enviada_em ? 'Reenviar' : 'Enviar'}
                             </Button>
                           )}
                           {temObs ? (
@@ -459,6 +459,23 @@ export default function Declaracoes() {
         open={!!obsTarget}
         onOpenChange={(o) => !o && setObsTarget(null)}
       />
+      {emailTarget && (
+        <EnviarDeclaracaoEmailModal
+          declaracaoId={emailTarget.id}
+          clienteNome={emailTarget.clienteNome}
+          clienteEmail={emailTarget.clienteEmail}
+          anoBase={emailTarget.ano_base}
+          arquivoDeclaracaoUrl={emailTarget.arquivo_declaracao_url}
+          arquivoDeclaracaoNome={emailTarget.arquivo_declaracao_nome}
+          arquivoReciboUrl={emailTarget.arquivo_recibo_url}
+          arquivoReciboNome={emailTarget.arquivo_recibo_nome}
+          open={!!emailTarget}
+          onOpenChange={(o) => !o && setEmailTarget(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 }
