@@ -1,5 +1,5 @@
 import * as React from 'npm:react@18.3.1'
-import { Heading, Text, Section } from 'npm:@react-email/components@0.0.22'
+import { Heading, Text, Section, Button } from 'npm:@react-email/components@0.0.22'
 import EmailLayout from '../email-layout.tsx'
 import type { TemplateEntry } from './registry.ts'
 
@@ -10,13 +10,15 @@ interface EnvioManualDeclaracaoProps {
   nomeEscritorio?: string
   anoBase?: string
   mensagemPersonalizada?: string
+  attachmentLinks?: Array<{ filename?: string; url?: string }>
 }
 
 const EnvioManualDeclaracaoEmail = ({ 
   nomeCliente, 
   nomeEscritorio, 
   anoBase, 
-  mensagemPersonalizada 
+  mensagemPersonalizada,
+  attachmentLinks = [],
 }: EnvioManualDeclaracaoProps) => {
   // Converte quebras de linha em <br /> se necessário, ou apenas renderiza como parágrafos
   const lines = mensagemPersonalizada?.split('\n') || []
@@ -52,6 +54,25 @@ const EnvioManualDeclaracaoEmail = ({
         Você também pode baixar esses documentos a qualquer momento acessando seu portal.
       </Text>
 
+      {attachmentLinks.length > 0 && (
+        <Section className="my-[24px] p-[16px] bg-gray-50 rounded-[8px] border border-solid border-gray-200">
+          <Text className="text-gray-900 text-[14px] leading-[22px] font-bold m-0 mb-[12px]">
+            Documentos disponíveis para download:
+          </Text>
+          {attachmentLinks.map((item, index) => (
+            item.url ? (
+              <Button
+                key={`${item.filename || 'documento'}-${index}`}
+                href={item.url}
+                className="block bg-emerald-600 text-white text-[13px] font-bold rounded-[6px] px-[14px] py-[10px] mb-[8px] text-center"
+              >
+                Baixar {item.filename || 'documento'}
+              </Button>
+            ) : null
+          ))}
+        </Section>
+      )}
+
       <Text className="text-gray-800 text-[14px] leading-[24px] mt-4">
         Atenciosamente,<br />
         <strong>{nomeEscritorio || SITE_NAME}</strong>
@@ -68,7 +89,11 @@ export const template = {
     nomeCliente: 'João Silva', 
     nomeEscritorio: 'Contabilidade ABC', 
     anoBase: '2026',
-    mensagemPersonalizada: 'Segue em anexo a sua declaração e o recibo de entrega.\nFicamos à disposição para qualquer dúvida.'
+    mensagemPersonalizada: 'Segue a sua declaração e o recibo de entrega.\nFicamos à disposição para qualquer dúvida.',
+    attachmentLinks: [
+      { filename: 'Declaracao_IRPF_2026.pdf', url: 'https://example.com/declaracao.pdf' },
+      { filename: 'Recibo_IRPF_2026.pdf', url: 'https://example.com/recibo.pdf' },
+    ],
   },
 } satisfies TemplateEntry
 

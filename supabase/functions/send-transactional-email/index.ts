@@ -1,7 +1,6 @@
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 // Configuration baked in at scaffold time — do NOT change these manually.
@@ -20,6 +19,15 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
+}
+
+interface AttachmentLink {
+  filename: string
+  url: string
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
 }
 
 // Generate a cryptographically random 32-byte hex token
@@ -61,8 +69,8 @@ Deno.serve(async (req) => {
   let idempotencyKey: string
   let messageId: string
   let templateData: Record<string, unknown> = {}
-  let attachments: Array<{ filename: string; content: string; contentType?: string }> = []
   let attachmentPaths: Array<{ filename: string; path: string }> = []
+  const attachmentLinks: AttachmentLink[] = []
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -71,9 +79,6 @@ Deno.serve(async (req) => {
     idempotencyKey = body.idempotencyKey || body.idempotency_key || messageId
     if (body.templateData && typeof body.templateData === 'object') {
       templateData = body.templateData
-    }
-    if (Array.isArray(body.attachments)) {
-      attachments = body.attachments
     }
     if (Array.isArray(body.attachmentPaths)) {
       attachmentPaths = body.attachmentPaths
@@ -134,31 +139,38 @@ Deno.serve(async (req) => {
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-  // Handle attachment paths if provided
+  // Convert stored files into signed download links instead of embedding PDFs in
+  // the queued payload. The email service rejects unsupported attachment fields,
+  // and base64 PDFs make the queue very heavy/slow.
   if (attachmentPaths.length > 0) {
     for (const att of attachmentPaths) {
       try {
         const { data, error } = await supabase.storage
           .from('documentos-clientes')
-          .download(att.path)
+          .createSignedUrl(att.path, 60 * 60 * 24 * 30)
         
-        if (error) {
-          console.error(`Failed to download attachment ${att.path}:`, error)
+        if (error || !data?.signedUrl) {
+          console.error(`Failed to create attachment link ${att.path}:`, error)
           continue
         }
 
-        const arrayBuffer = await data.arrayBuffer()
-        const uint8Array = new Uint8Array(arrayBuffer)
-        const base64 = encodeBase64(uint8Array)
-        
-        attachments.push({
+        attachmentLinks.push({
           filename: att.filename,
-          content: base64,
-          contentType: data.type
+          url: data.signedUrl,
         })
       } catch (err) {
         console.error(`Error processing attachment ${att.path}:`, err)
       }
+    }
+  }
+
+  if (attachmentLinks.length > 0) {
+    const currentLinks = templateData.attachmentLinks
+    templateData = {
+      ...templateData,
+      attachmentLinks: Array.isArray(currentLinks)
+        ? [...currentLinks.filter(isRecord), ...attachmentLinks]
+        : attachmentLinks,
     }
   }
 
@@ -360,7 +372,6 @@ Deno.serve(async (req) => {
       idempotency_key: idempotencyKey,
       unsubscribe_token: unsubscribeToken,
       queued_at: new Date().toISOString(),
-      attachments,
     },
   })
 
