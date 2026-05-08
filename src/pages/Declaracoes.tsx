@@ -93,6 +93,7 @@ export default function Declaracoes() {
     recibo_validado_em: string | null;
     em_processamento: boolean | null;
     status_processamento_rfb: StatusProcessamentoRfb | null;
+    declaracao_enviada_em: string | null;
     clientes: { nome: string; cpf: string; email: string } | null;
     clienteNome: string;
     clienteCpf: string;
@@ -133,6 +134,7 @@ export default function Declaracoes() {
 
       return (data || []).map((d) => ({
         ...d,
+        status_processamento_rfb: d.status_processamento_rfb as StatusProcessamentoRfb,
         clienteNome: d.clientes?.nome || '—',
         clienteCpf: d.clientes?.cpf || '',
         clienteEmail: d.clientes?.email || '',
