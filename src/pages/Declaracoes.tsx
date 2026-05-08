@@ -113,35 +113,27 @@ export default function Declaracoes() {
           arquivo_declaracao_url, arquivo_declaracao_nome,
           arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em,
           em_processamento, status_processamento_rfb, declaracao_enviada_em,
-          clientes(nome, cpf, email)
+          clientes(nome, cpf, email),
+          declaracao_notas_internas(conteudo)
         `)
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', Number(anoBase))
-        .order('ultima_atualizacao_status', { ascending: false });
+        .order('ultima_atualizacao_status', { ascending: false })
+        .limit(200); // Add a sensible limit to prevent huge data loads
+      
       if (error) throw error;
 
-      const ids = (data || []).map((d: { id: string }) => d.id);
-      const notasMap = new Map<string, string>();
-      if (ids.length > 0) {
-        const { data: notas } = await supabase
-          .from('declaracao_notas_internas')
-          .select('declaracao_id, conteudo')
-          .in('declaracao_id', ids);
-        (notas || []).forEach((n: { declaracao_id: string; conteudo: string | null }) => {
-          if (n.conteudo?.trim()) notasMap.set(n.declaracao_id, n.conteudo);
-        });
-      }
-
-      return (data || []).map((d) => ({
+      return (data || []).map((d: any) => ({
         ...d,
         status_processamento_rfb: d.status_processamento_rfb as StatusProcessamentoRfb,
         clienteNome: d.clientes?.nome || '—',
         clienteCpf: d.clientes?.cpf || '',
         clienteEmail: d.clientes?.email || '',
-        observacoes: notasMap.get(d.id) || '',
+        observacoes: d.declaracao_notas_internas?.[0]?.conteudo || '',
       }));
     },
     enabled: !!escritorioId,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   if (!podeVerDeclaracoes) {
