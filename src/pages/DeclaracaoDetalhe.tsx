@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DeclaracaoHeader } from '@/components/declaracao/DeclaracaoHeader';
 import { TransmitidaModal } from '@/components/declaracao/TransmitidaModal';
-import { EnviarDeclaracaoModal } from '@/components/declaracao/EnviarDeclaracaoModal';
+import { EnviarDeclaracaoEmailModal } from '@/components/declaracoes/EnviarDeclaracaoEmailModal';
 import { AbaDocumentosUnificada } from '@/components/declaracao/AbaDocumentosUnificada';
 import { SecaoInformacoesCadastrais } from '@/components/declaracao/SecaoInformacoesCadastrais';
 import { SecaoResultado } from '@/components/declaracao/SecaoResultado';
@@ -122,12 +122,9 @@ export default function DeclaracaoDetalhe() {
   }
 
   const clienteId = hook.declaracao?.clientes?.id;
-  const isTransmitida = hook.declaracao?.status === 'transmitida';
-  const decl = hook.declaracao as Record<string, unknown> | undefined;
-  const podeEnviarAoCliente = isTransmitida
-    && !!decl?.arquivo_declaracao_url
-    && !!decl?.arquivo_recibo_url
-    && !decl?.declaracao_enviada_em;
+  const isTransmitida = hook.declaracao?.status === 'transmitida' || !!hook.declaracao?.recibo_validado_em;
+  const decl = hook.declaracao as any;
+  const podeEnviarAoCliente = !!decl?.arquivo_declaracao_url && !!decl?.arquivo_recibo_url;
 
   return (
     <DashboardLayout>
@@ -140,9 +137,13 @@ export default function DeclaracaoDetalhe() {
 
         {podeEnviarAoCliente && (
           <div className="flex justify-end">
-            <Button onClick={() => setEnviarModalOpen(true)} className="gap-2">
+            <Button 
+              onClick={() => setEnviarModalOpen(true)} 
+              className={decl?.declaracao_enviada_em ? "gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 bg-emerald-50/30" : "gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"}
+              variant={decl?.declaracao_enviada_em ? "outline" : "default"}
+            >
               <Send className="h-4 w-4" />
-              Enviar Declaração ao Cliente
+              {decl?.declaracao_enviada_em ? 'Reenviar Declaração ao Cliente' : 'Enviar Declaração ao Cliente'}
             </Button>
           </div>
         )}
@@ -211,13 +212,23 @@ export default function DeclaracaoDetalhe() {
           isPending={hook.updateStatus.isPending}
         />
 
-        <EnviarDeclaracaoModal
-          open={enviarModalOpen}
-          onOpenChange={setEnviarModalOpen}
-          declaracao={hook.declaracao}
-          contadorNome={contadorNome}
-          onSendChat={handleSendChat}
-        />
+        {id && hook.declaracao && (
+          <EnviarDeclaracaoEmailModal
+            open={enviarModalOpen}
+            onOpenChange={setEnviarModalOpen}
+            declaracaoId={id}
+            clienteNome={hook.declaracao.clientes?.nome || ''}
+            clienteEmail={hook.declaracao.clientes?.email || ''}
+            anoBase={hook.declaracao.ano_base}
+            arquivoDeclaracaoUrl={decl?.arquivo_declaracao_url}
+            arquivoDeclaracaoNome={decl?.arquivo_declaracao_nome}
+            arquivoReciboUrl={decl?.arquivo_recibo_url}
+            arquivoReciboNome={decl?.arquivo_recibo_nome}
+            onSuccess={() => {
+              hook.refetch();
+            }}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
