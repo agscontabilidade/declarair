@@ -43,11 +43,12 @@ export default function Drive() {
       if (!escritorioId) return [];
       const { data } = await supabase
         .from('checklist_documentos')
-        .select('*, declaracoes!inner(ano_base, cliente_id, clientes(id, nome, cpf))')
+        .select('id, arquivo_nome, arquivo_url, nome_documento, categoria, status, created_at, declaracoes!inner(ano_base, cliente_id, clientes(id, nome, cpf))')
         .eq('declaracoes.escritorio_id', escritorioId)
         .eq('declaracoes.ano_base', Number(anoFiltro))
         .not('arquivo_url', 'is', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(500);
       return (data || []).filter((d: { arquivo_url: string | null }) => !d.arquivo_url?.includes('/_analise_caixa/'));
     },
     enabled: !!escritorioId,
