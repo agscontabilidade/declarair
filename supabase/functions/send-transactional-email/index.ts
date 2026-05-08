@@ -147,7 +147,13 @@ Deno.serve(async (req) => {
         }
 
         const arrayBuffer = await data.arrayBuffer()
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+        const uint8Array = new Uint8Array(arrayBuffer)
+        let binary = ''
+        const len = uint8Array.byteLength
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(uint8Array[i])
+        }
+        const base64 = btoa(binary)
         
         attachments.push({
           filename: att.filename,
