@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,9 +37,27 @@ export function EnviarDeclaracaoEmailModal({
 }: Props) {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [mensagem, setMensagem] = useState(
-    `Prezado(a) ${clienteNome},\n\nSua Declaração de Imposto de Renda ${anoBase} foi transmitida com sucesso.\n\nSeguem em anexo a cópia da declaração e o respectivo recibo de entrega.\n\nFicamos à disposição para qualquer dúvida.`
-  );
+  const [nomeEscritorio, setNomeEscritorio] = useState('Seu Contador');
+  const [mensagem, setMensagem] = useState('');
+
+  useEffect(() => {
+    setMensagem(
+      `Prezado(a) ${clienteNome},\n\nSua Declaração de Imposto de Renda ${anoBase} foi transmitida com sucesso.\n\nSeguem em anexo a cópia da declaração e o respectivo recibo de entrega.\n\nFicamos à disposição para qualquer dúvida.`
+    );
+  }, [clienteNome, anoBase]);
+
+  useEffect(() => {
+    async function loadEscritorio() {
+      if (!profile?.escritorioId) return;
+      const { data } = await supabase
+        .from('escritorios')
+        .select('nome')
+        .eq('id', profile.escritorioId)
+        .single();
+      if (data?.nome) setNomeEscritorio(data.nome);
+    }
+    loadEscritorio();
+  }, [profile?.escritorioId]);
 
   const handleEnviar = async () => {
     if (!clienteEmail) {
@@ -69,7 +87,7 @@ export function EnviarDeclaracaoEmailModal({
           recipientEmail: clienteEmail,
           templateData: {
             nomeCliente: clienteNome,
-            nomeEscritorio: profile?.nome_escritorio || 'Seu Contador',
+            nomeEscritorio: nomeEscritorio,
             anoBase: String(anoBase),
             mensagemPersonalizada: mensagem
           },
