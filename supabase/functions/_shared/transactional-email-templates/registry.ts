@@ -18,6 +18,7 @@ import { template as novaDeclaracao } from './nova-declaracao.tsx'
 import { template as declaracaoTransmitida } from './declaracao-transmitida.tsx'
 import { template as cobrancaVencendo } from './cobranca-vencendo.tsx'
 import { template as cobrancaPaga } from './cobranca-paga.tsx'
+import { template as envioManualDeclaracao } from './envio-manual-declaracao.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'boas-vindas': boasVindas,
@@ -27,4 +28,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'declaracao-transmitida': declaracaoTransmitida,
   'cobranca-vencendo': cobrancaVencendo,
   'cobranca-paga': cobrancaPaga,
+  'envio-manual-declaracao': envioManualDeclaracao,
 }

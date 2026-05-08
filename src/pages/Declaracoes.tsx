@@ -24,7 +24,8 @@ import { AnexarDeclaracaoButton } from '@/components/declaracoes/AnexarDeclaraca
 import { ProcessamentoSwitch, type StatusProcessamentoRfb } from '@/components/declaracoes/ProcessamentoSwitch';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Send } from 'lucide-react';
+import { EnviarDeclaracaoEmailModal } from '@/components/declaracoes/EnviarDeclaracaoEmailModal';
 
 const STATUS_COLORS: Record<string, string> = {
   aguardando_documentos: 'bg-amber-100 text-amber-800',
@@ -52,6 +53,7 @@ export default function Declaracoes() {
 
   const [docsTarget, setDocsTarget] = useState<{ id: string; nome: string } | null>(null);
   const [obsTarget, setObsTarget] = useState<{ id: string; nome: string } | null>(null);
+  const [emailTarget, setEmailTarget] = useState<DeclaracaoListaItem | null>(null);
   const { podeVerDeclaracoes } = usePermissoes();
 
   useEffect(() => {
@@ -91,9 +93,11 @@ export default function Declaracoes() {
     recibo_validado_em: string | null;
     em_processamento: boolean | null;
     status_processamento_rfb: StatusProcessamentoRfb | null;
-    clientes: { nome: string; cpf: string } | null;
+    declaracao_enviada_em: string | null;
+    clientes: { nome: string; cpf: string; email: string } | null;
     clienteNome: string;
     clienteCpf: string;
+    clienteEmail: string;
     observacoes: string;
   }
 
@@ -108,8 +112,8 @@ export default function Declaracoes() {
           tipo_resultado, valor_resultado,
           arquivo_declaracao_url, arquivo_declaracao_nome,
           arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em,
-          em_processamento, status_processamento_rfb,
-          clientes(nome, cpf)
+          em_processamento, status_processamento_rfb, declaracao_enviada_em,
+          clientes(nome, cpf, email)
         `)
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', Number(anoBase))
@@ -130,8 +134,10 @@ export default function Declaracoes() {
 
       return (data || []).map((d) => ({
         ...d,
+        status_processamento_rfb: d.status_processamento_rfb as StatusProcessamentoRfb,
         clienteNome: d.clientes?.nome || '—',
         clienteCpf: d.clientes?.cpf || '',
+        clienteEmail: d.clientes?.email || '',
         observacoes: notasMap.get(d.id) || '',
       }));
     },
@@ -225,6 +231,7 @@ export default function Declaracoes() {
                         <TableHead>Resultado</TableHead>
                         <TableHead>Anexar declaração</TableHead>
                         <TableHead>Processamento</TableHead>
+                        <TableHead>Enviar E-mail</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -309,6 +316,20 @@ export default function Declaracoes() {
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
                             </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              {d.arquivo_declaracao_url && d.arquivo_recibo_url && (
+                                <Button
+                                  size="sm"
+                                  variant={d.declaracao_enviada_em ? "ghost" : "default"}
+                                  className={d.declaracao_enviada_em ? "text-emerald-600 hover:text-emerald-700" : "bg-emerald-600 hover:bg-emerald-700 text-white"}
+                                  onClick={() => setEmailTarget(d)}
+                                  title={d.declaracao_enviada_em ? `Enviado em ${formatDateTime(d.declaracao_enviada_em)}` : "Enviar para o cliente"}
+                                >
+                                  <Send className="h-3.5 w-3.5 mr-1.5" />
+                                  {d.declaracao_enviada_em ? 'Reenviar' : 'Enviar'}
+                                </Button>
+                              )}
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -361,6 +382,20 @@ export default function Declaracoes() {
                             <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
                             Documentos
                           </Button>
+                          {d.arquivo_declaracao_url && d.arquivo_recibo_url && (
+                            <Button
+                              size="sm"
+                              variant={d.declaracao_enviada_em ? "ghost" : "default"}
+                              className={d.declaracao_enviada_em ? "text-emerald-600 hover:text-emerald-700" : "bg-emerald-600 hover:bg-emerald-700 text-white"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEmailTarget(d);
+                              }}
+                            >
+                              <Send className="h-3.5 w-3.5 mr-1.5" />
+                              {d.declaracao_enviada_em ? 'Reenviar e-mail' : 'Enviar e-mail'}
+                            </Button>
+                          )}
                           {temObs ? (
                             <button
                               type="button"
