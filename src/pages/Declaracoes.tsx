@@ -91,9 +91,10 @@ export default function Declaracoes() {
     recibo_validado_em: string | null;
     em_processamento: boolean | null;
     status_processamento_rfb: StatusProcessamentoRfb | null;
-    clientes: { nome: string; cpf: string } | null;
+    clientes: { nome: string; cpf: string; email: string } | null;
     clienteNome: string;
     clienteCpf: string;
+    clienteEmail: string;
     observacoes: string;
   }
 
@@ -109,7 +110,7 @@ export default function Declaracoes() {
           arquivo_declaracao_url, arquivo_declaracao_nome,
           arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em,
           em_processamento, status_processamento_rfb,
-          clientes(nome, cpf)
+          clientes(nome, cpf, email)
         `)
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', Number(anoBase))
@@ -132,6 +133,7 @@ export default function Declaracoes() {
         ...d,
         clienteNome: d.clientes?.nome || '—',
         clienteCpf: d.clientes?.cpf || '',
+        clienteEmail: d.clientes?.email || '',
         observacoes: notasMap.get(d.id) || '',
       }));
     },
