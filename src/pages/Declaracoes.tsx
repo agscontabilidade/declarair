@@ -322,7 +322,10 @@ export default function Declaracoes() {
                                   size="sm"
                                   variant={d.declaracao_enviada_em ? "ghost" : "default"}
                                   className={d.declaracao_enviada_em ? "text-emerald-600 hover:text-emerald-700" : "bg-emerald-600 hover:bg-emerald-700 text-white"}
-                                  onClick={() => setEmailTarget(d)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEmailTarget(d);
+                                  }}
                                   title={d.declaracao_enviada_em ? `Enviado em ${formatDateTime(d.declaracao_enviada_em)}` : "Enviar para o cliente"}
                                 >
                                   <Send className="h-3.5 w-3.5 mr-1.5" />
