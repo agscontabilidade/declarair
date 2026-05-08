@@ -1,0 +1,75 @@
+import * as React from 'npm:react@18.3.1'
+import { Heading, Text, Section } from 'npm:@react-email/components@0.0.22'
+import EmailLayout from '../email-layout.tsx'
+import type { TemplateEntry } from './registry.ts'
+
+const SITE_NAME = 'DeclaraIR'
+
+interface EnvioManualDeclaracaoProps {
+  nomeCliente?: string
+  nomeEscritorio?: string
+  anoBase?: string
+  mensagemPersonalizada?: string
+}
+
+const EnvioManualDeclaracaoEmail = ({ 
+  nomeCliente, 
+  nomeEscritorio, 
+  anoBase, 
+  mensagemPersonalizada 
+}: EnvioManualDeclaracaoProps) => {
+  // Converte quebras de linha em <br /> se necessário, ou apenas renderiza como parágrafos
+  const lines = mensagemPersonalizada?.split('\n') || []
+
+  return (
+    <EmailLayout 
+      preview={`📄 Sua declaração IRPF ${anoBase || ''} e o recibo estão disponíveis.`}
+      siteName={nomeEscritorio || SITE_NAME}
+    >
+      <Heading className="text-gray-900 text-[20px] font-bold text-center p-0 my-[30px] mx-0">
+        Sua Declaração e Recibo
+      </Heading>
+
+      <Text className="text-gray-800 text-[14px] leading-[24px]">
+        Olá <strong>{nomeCliente || 'contribuinte'}</strong>,
+      </Text>
+
+      <Section className="my-[24px]">
+        {lines.length > 0 ? (
+          lines.map((line, i) => (
+            <Text key={i} className="text-gray-800 text-[14px] leading-[24px] m-0 mb-2">
+              {line}
+            </Text>
+          ))
+        ) : (
+          <Text className="text-gray-800 text-[14px] leading-[24px]">
+            Sua Declaração de Imposto de Renda {anoBase || ''} e o respectivo recibo de entrega seguem em anexo a este e-mail.
+          </Text>
+        )}
+      </Section>
+
+      <Text className="text-gray-800 text-[14px] leading-[24px]">
+        Você também pode baixar esses documentos a qualquer momento acessando seu portal.
+      </Text>
+
+      <Text className="text-gray-800 text-[14px] leading-[24px] mt-4">
+        Atenciosamente,<br />
+        <strong>{nomeEscritorio || SITE_NAME}</strong>
+      </Text>
+    </EmailLayout>
+  )
+}
+
+export const template = {
+  component: EnvioManualDeclaracaoEmail,
+  subject: (data: Record<string, unknown>) => `📄 Declaração IRPF ${data.anoBase || ''} - ${data.nomeEscritorio || SITE_NAME}`,
+  displayName: 'Envio manual de declaração',
+  previewData: { 
+    nomeCliente: 'João Silva', 
+    nomeEscritorio: 'Contabilidade ABC', 
+    anoBase: '2026',
+    mensagemPersonalizada: 'Segue em anexo a sua declaração e o recibo de entrega.\nFicamos à disposição para qualquer dúvida.'
+  },
+} satisfies TemplateEntry
+
+export default EnvioManualDeclaracaoEmail
