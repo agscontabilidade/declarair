@@ -129,6 +129,33 @@ Deno.serve(async (req) => {
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+  // Handle attachment paths if provided
+  if (attachmentPaths.length > 0) {
+    for (const att of attachmentPaths) {
+      try {
+        const { data, error } = await supabase.storage
+          .from('documentos-clientes')
+          .download(att.path)
+        
+        if (error) {
+          console.error(`Failed to download attachment ${att.path}:`, error)
+          continue
+        }
+
+        const arrayBuffer = await data.arrayBuffer()
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+        
+        attachments.push({
+          filename: att.filename,
+          content: base64,
+          contentType: data.type
+        })
+      } catch (err) {
+        console.error(`Error processing attachment ${att.path}:`, err)
+      }
+    }
+  }
+
   // 2. Check suppression list (fail-closed: if we can't verify, don't send)
   const { data: suppressed, error: suppressionError } = await supabase
     .from('suppressed_emails')
