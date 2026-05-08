@@ -60,6 +60,7 @@ Deno.serve(async (req) => {
   let idempotencyKey: string
   let messageId: string
   let templateData: Record<string, unknown> = {}
+  let attachments: Array<{ filename: string; content: string; contentType?: string }> = []
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -68,6 +69,9 @@ Deno.serve(async (req) => {
     idempotencyKey = body.idempotencyKey || body.idempotency_key || messageId
     if (body.templateData && typeof body.templateData === 'object') {
       templateData = body.templateData
+    }
+    if (Array.isArray(body.attachments)) {
+      attachments = body.attachments
     }
   } catch {
     return new Response(
@@ -323,6 +327,7 @@ Deno.serve(async (req) => {
       idempotency_key: idempotencyKey,
       unsubscribe_token: unsubscribeToken,
       queued_at: new Date().toISOString(),
+      attachments,
     },
   })
 
