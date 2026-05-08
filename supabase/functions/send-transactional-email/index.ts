@@ -1,6 +1,7 @@
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 // Configuration baked in at scaffold time — do NOT change these manually.
@@ -148,12 +149,7 @@ Deno.serve(async (req) => {
 
         const arrayBuffer = await data.arrayBuffer()
         const uint8Array = new Uint8Array(arrayBuffer)
-        let binary = ''
-        const len = uint8Array.byteLength
-        for (let i = 0; i < len; i++) {
-          binary += String.fromCharCode(uint8Array[i])
-        }
-        const base64 = btoa(binary)
+        const base64 = encodeBase64(uint8Array)
         
         attachments.push({
           filename: att.filename,
