@@ -23,7 +23,7 @@ import { useUsageStatus } from '@/hooks/useUsageStatus';
 import { formatarPreco, PRECOS } from '@/lib/constants/planos';
 
 const currentYear = new Date().getFullYear();
-const years = [currentYear];
+const years = [currentYear, currentYear - 1, currentYear - 2];
 
 const checklistPadrao = [
   { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
