@@ -108,9 +108,9 @@ export function EnviarDeclaracaoEmailModal({
 
       onOpenChange(false);
       onSuccess?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao enviar e-mail:', err);
-      toast.error(err.message || 'Erro ao enviar e-mail');
+      toast.error(err instanceof Error ? err.message : 'Erro ao enviar e-mail');
     } finally {
       setLoading(false);
     }
@@ -125,7 +125,7 @@ export function EnviarDeclaracaoEmailModal({
             Enviar Declaração por E-mail
           </DialogTitle>
           <DialogDescription>
-            O e-mail será enviado para <strong>{clienteEmail}</strong> com os documentos em anexo.
+            O e-mail será enviado para <strong>{clienteEmail}</strong> com links seguros dos documentos.
           </DialogDescription>
         </DialogHeader>
 
@@ -142,7 +142,7 @@ export function EnviarDeclaracaoEmailModal({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground uppercase font-semibold">Anexos inclusos:</Label>
+            <Label className="text-xs text-muted-foreground uppercase font-semibold">Documentos inclusos:</Label>
             <div className="space-y-2">
               {arquivoDeclaracaoUrl && (
                 <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded border border-dashed">
