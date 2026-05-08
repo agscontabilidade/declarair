@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
   let messageId: string
   let templateData: Record<string, unknown> = {}
   let attachments: Array<{ filename: string; content: string; contentType?: string }> = []
+  let attachmentPaths: Array<{ filename: string; path: string }> = []
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -72,6 +73,9 @@ Deno.serve(async (req) => {
     }
     if (Array.isArray(body.attachments)) {
       attachments = body.attachments
+    }
+    if (Array.isArray(body.attachmentPaths)) {
+      attachmentPaths = body.attachmentPaths
     }
   } catch {
     return new Response(
