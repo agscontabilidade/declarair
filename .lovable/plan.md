@@ -1,27 +1,33 @@
-## Objetivo
+## Problema identificado
 
-Na página pública `/cadastro-cliente/:token` (acessada pelo cliente ao clicar no link do convite), a mensagem personalizada que o contador escreve no modal "Gerar Link de Convite" está sendo exibida em dois lugares — no painel esquerdo (sob o "Bem-vindo!") e em um Alert acima do formulário. Essa mensagem foi pensada para WhatsApp/Email (contém variáveis como `{nome}`, `{link}` e tom de conversa), e fica deslocada na landing de cadastro.
+Quando um cliente se cadastra pelo link de convite, o sistema cria automaticamente a declaração com `ano_base = anoAtual - 1`. Como `new Date().getFullYear()` retorna **2026**, a declaração nasce com **ano_base = 2025** — por isso todos os documentos enviados pelo cliente caem na pasta "2025" do Drive (que filtra por `declaracoes.ano_base`).
 
-A correção é remover essa exibição da página pública, mantendo sempre o texto padrão do sistema. A mensagem personalizada continua sendo usada normalmente como corpo da mensagem ao compartilhar via WhatsApp/Email pelo modal `GerarLinkConvite`.
+Comparação:
+- `useClientes.ts` (cadastro feito pelo contador): usa `new Date().getFullYear()` → 2026 ✅
+- `register-from-invite/index.ts` (autocadastro via link): usa `anoAtual - 1` → 2025 ❌
+- `register-from-direct-invite/index.ts` (convite direto): usa `anoAtual - 1` → 2025 ❌
 
-## Mudança
+## Correção
 
-**Arquivo:** `src/pages/cliente/CadastroCliente.tsx`
+Alterar as duas edge functions para usar o ano corrente (2026), igualando-se ao restante do sistema (Drive, NovaDeclaracaoModal, useClientes).
 
-1. **Painel esquerdo (linhas 216–224):** remover o condicional `convite.mensagem_personalizada` e deixar apenas o texto padrão:
-   > "Complete seu cadastro para iniciar sua declaração de Imposto de Renda."
+### Arquivos a editar
 
-2. **Acima do formulário (linhas 259–263):** remover o bloco `<Alert>` que renderiza `convite.mensagem_personalizada`.
+1. **`supabase/functions/register-from-invite/index.ts`** (linha 92)
+   - De: `ano_base: anoAtual - 1,`
+   - Para: `ano_base: anoAtual,`
 
-3. (Opcional, limpeza) Remover o campo `mensagem_personalizada` da interface local do convite, já que não é mais consumido na tela.
+2. **`supabase/functions/register-from-direct-invite/index.ts`** (linha 89)
+   - De: `ano_base: anoAtual - 1,`
+   - Para: `ano_base: anoAtual,`
 
-## O que NÃO muda
+Após salvar, as edge functions são redeployadas automaticamente.
 
-- `convites_cliente.mensagem_personalizada` continua sendo salvo no banco (usado para histórico e para o template padrão "Convite Cliente").
-- `GerarLinkConvite.tsx` continua igual — a mensagem personalizada é usada na prévia, no botão "Copiar Mensagem", no compartilhamento via WhatsApp e no Email.
-- Não há mudança de schema, RLS, Edge Functions ou outras telas.
+## Backfill (opcional — pergunto antes de aplicar)
+
+As declarações já existentes criadas com `ano_base = 2025` continuam apontando para 2025. Posso rodar uma migração que move para 2026 todas as declarações com `ano_base = 2025` que ainda **não foram transmitidas** (status ≠ 'transmitida'), junto com seus respectivos `formulario_ir`. Declarações de 2025 já transmitidas ficam intactas (são histórico real). Quer que eu inclua esse backfill no mesmo passo?
 
 ## Validação
 
-- Abrir um link de convite gerado com mensagem personalizada → painel esquerdo mostra apenas o texto padrão; nenhum Alert aparece acima do formulário.
-- Compartilhar o link via WhatsApp pelo modal → a mensagem personalizada continua aparecendo normalmente no WhatsApp.
+1. Criar um cliente novo via link de convite → confirmar que a declaração aparece com ano-base 2026.
+2. Cliente faz upload de um documento → arquivo aparece no Drive ao filtrar por 2026.
