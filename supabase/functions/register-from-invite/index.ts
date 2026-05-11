@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
       .insert({
         escritorio_id: convite.escritorio_id,
         cliente_id: cliente.id,
-        ano_base: anoAtual - 1,
+        ano_base: anoAtual,
         status: 'aguardando_documentos',
       })
       .select('id')
