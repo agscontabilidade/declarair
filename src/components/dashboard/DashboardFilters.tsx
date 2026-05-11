@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Search, X, Filter, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 import type { DashboardFilters as Filters } from '@/hooks/useDashboardFilters';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface DashboardFiltersProps {
   filters: Filters;
