@@ -1,49 +1,27 @@
-## Erros do CI no GitHub
+## Objetivo
 
-O job `Verificar Lint` está quebrando porque o ESLint agora bloqueia builds com `@typescript-eslint/no-explicit-any` como erro (Fase F do hardening). Há 11 erros e 2 warnings. Plano:
+Na página pública `/cadastro-cliente/:token` (acessada pelo cliente ao clicar no link do convite), a mensagem personalizada que o contador escreve no modal "Gerar Link de Convite" está sendo exibida em dois lugares — no painel esquerdo (sob o "Bem-vindo!") e em um Alert acima do formulário. Essa mensagem foi pensada para WhatsApp/Email (contém variáveis como `{nome}`, `{link}` e tom de conversa), e fica deslocada na landing de cadastro.
 
-### 1. Hooks chamados condicionalmente (rules-of-hooks)
+A correção é remover essa exibição da página pública, mantendo sempre o texto padrão do sistema. A mensagem personalizada continua sendo usada normalmente como corpo da mensagem ao compartilhar via WhatsApp/Email pelo modal `GerarLinkConvite`.
 
-**`src/pages/Declaracoes.tsx`** — o early-return do `if (!podeVerDeclaracoes)` (linhas 62-75) está antes do `useEffect` (78) e do `useQuery` (115). Mover ambos os hooks para ANTES do early-return.
+## Mudança
 
-**`src/pages/Cobrancas.tsx`** — mesma coisa: `useQuery` do `inter-ativo` (linha 56) precisa subir para antes do `if (!podeVerCobrancas)` (linha 40).
+**Arquivo:** `src/pages/cliente/CadastroCliente.tsx`
 
-### 2. `any` proibido
+1. **Painel esquerdo (linhas 216–224):** remover o condicional `convite.mensagem_personalizada` e deixar apenas o texto padrão:
+   > "Complete seu cadastro para iniciar sua declaração de Imposto de Renda."
 
-**`src/components/configuracoes/SeletorPermissoes.tsx`** (linhas 47, 70) — tipar:
-- `acc: Record<string, Permissao[]>` no reduce
-- `(p: Permissao)` no map (definir interface `Permissao` com `id/categoria/nome/descricao`).
+2. **Acima do formulário (linhas 259–263):** remover o bloco `<Alert>` que renderiza `convite.mensagem_personalizada`.
 
-**`src/hooks/useColaboradores.ts`** (linha 149) — `onError: (error: Error)` (ou `unknown` + narrow).
+3. (Opcional, limpeza) Remover o campo `mensagem_personalizada` da interface local do convite, já que não é mais consumido na tela.
 
-**`supabase/functions/ia-fiscal/index.ts`** (linhas 308, 342, 343):
-- `repairTruncatedJson(raw: string): unknown`
-- `saveAnalysis(supabase: SupabaseClient, ...)` importando o tipo de `@supabase/supabase-js`
-- `let jsonResult: unknown = null`
+## O que NÃO muda
 
-### 3. Outros erros
+- `convites_cliente.mensagem_personalizada` continua sendo salvo no banco (usado para histórico e para o template padrão "Convite Cliente").
+- `GerarLinkConvite.tsx` continua igual — a mensagem personalizada é usada na prévia, no botão "Copiar Mensagem", no compartilhamento via WhatsApp e no Email.
+- Não há mudança de schema, RLS, Edge Functions ou outras telas.
 
-**`src/components/declaracao/VisualIAFiscal.tsx`** linha 117 — trocar `let textual` por `const textual` (não é reatribuído).
+## Validação
 
-**`src/components/formulario-ir/StepDadosPessoais.tsx`** linha 398 — remover `!!`: `Chave: {data.chave_pix_cliente ? clientCPF : 'Não selecionada'}`.
-
-### 4. Warnings (não bloqueiam, mas vou limpar)
-
-- **`IntegracoesTab.tsx`** linha 400 — remover `toast` das deps do `useEffect`.
-- **`NotificacoesTab.tsx`** linha 41 — envolver `CANAIS` em `useMemo([isWhatsAppConnected])`.
-
-### Validação
-
-Rodar `bun run lint` localmente até passar com 0 erros. Os testes unitários e E2E já passam, então o CI deve ficar verde após esses ajustes.
-
-### Arquivos alterados
-
-- `src/pages/Declaracoes.tsx`
-- `src/pages/Cobrancas.tsx`
-- `src/components/configuracoes/SeletorPermissoes.tsx`
-- `src/hooks/useColaboradores.ts`
-- `supabase/functions/ia-fiscal/index.ts`
-- `src/components/declaracao/VisualIAFiscal.tsx`
-- `src/components/formulario-ir/StepDadosPessoais.tsx`
-- `src/components/configuracoes/IntegracoesTab.tsx`
-- `src/components/configuracoes/NotificacoesTab.tsx`
+- Abrir um link de convite gerado com mensagem personalizada → painel esquerdo mostra apenas o texto padrão; nenhum Alert aparece acima do formulário.
+- Compartilhar o link via WhatsApp pelo modal → a mensagem personalizada continua aparecendo normalmente no WhatsApp.

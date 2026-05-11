@@ -213,15 +213,9 @@ export default function CadastroCliente() {
           <h2 className="font-display text-3xl font-bold text-white leading-tight">
             Bem-vindo!<br />Crie sua conta
           </h2>
-          {convite.mensagem_personalizada ? (
-            <p className="text-white/70 text-lg leading-relaxed max-w-sm">
-              {convite.mensagem_personalizada}
-            </p>
-          ) : (
-            <p className="text-white/70 text-lg leading-relaxed max-w-sm">
-              Complete seu cadastro para iniciar sua declaração de Imposto de Renda.
-            </p>
-          )}
+          <p className="text-white/70 text-lg leading-relaxed max-w-sm">
+            Complete seu cadastro para iniciar sua declaração de Imposto de Renda.
+          </p>
           <div className="space-y-2">
             <div className="flex items-center gap-3 text-white/60 text-sm">
               <CheckCircle2 className="h-4 w-4" />
@@ -255,12 +249,6 @@ export default function CadastroCliente() {
               </h2>
             )}
           </div>
-
-          {convite.mensagem_personalizada && (
-            <Alert className="mb-6">
-              <AlertDescription>{convite.mensagem_personalizada}</AlertDescription>
-            </Alert>
-          )}
 
           <Card>
             <CardHeader>
