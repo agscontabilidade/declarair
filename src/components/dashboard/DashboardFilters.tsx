@@ -76,24 +76,45 @@ export function DashboardFilters({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="gap-1">
-            <Filter className="h-3 w-3" />
-            {stats.total}
-          </Badge>
-          {stats.urgentes > 0 && (
-            <Badge variant="destructive" className="gap-1">
-              <AlertCircle className="h-3 w-3" />
-              {stats.urgentes}
-            </Badge>
-          )}
-          {stats.atencao > 0 && (
-            <Badge className="gap-1 bg-warning/15 text-warning border-warning/30">
-              <Clock className="h-3 w-3" />
-              {stats.atencao}
-            </Badge>
-          )}
-        </div>
+        <TooltipProvider delayDuration={150}>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="outline" className="gap-1 cursor-help">
+                  <Filter className="h-3 w-3" />
+                  {stats.total}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>Total de declarações exibidas com os filtros atuais</TooltipContent>
+            </Tooltip>
+            {stats.urgentes > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="destructive" className="gap-1 cursor-help">
+                    <AlertCircle className="h-3 w-3" />
+                    {stats.urgentes}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Urgentes: {stats.urgentes} {stats.urgentes === 1 ? 'declaração parada' : 'declarações paradas'} há mais de 7 dias sem atualização
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {stats.atencao > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge className="gap-1 bg-warning/15 text-warning border-warning/30 cursor-help">
+                    <Clock className="h-3 w-3" />
+                    {stats.atencao}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Atenção: {stats.atencao} {stats.atencao === 1 ? 'declaração parada' : 'declarações paradas'} entre 3 e 7 dias sem atualização
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* Row 2: Filter selects */}
