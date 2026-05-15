@@ -18,12 +18,14 @@ import {
   Receipt,
   ChevronDown,
   Sparkles,
+  Briefcase,
+  Banknote,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
 
-type Tipo = 'declaracao' | 'recibo';
+type Tipo = 'declaracao' | 'recibo' | 'mei' | 'darf';
 
 interface Props {
   declaracaoId: string;
@@ -33,6 +35,12 @@ interface Props {
   arquivoReciboUrl: string | null;
   arquivoReciboNome: string | null;
   reciboValidadoEm: string | null;
+  arquivoMeiUrl?: string | null;
+  arquivoMeiNome?: string | null;
+  meiValidadoEm?: string | null;
+  arquivoDarfUrl?: string | null;
+  arquivoDarfNome?: string | null;
+  darfValidadoEm?: string | null;
 }
 
 export function AnexarDeclaracaoButton({
@@ -43,10 +51,20 @@ export function AnexarDeclaracaoButton({
   arquivoReciboUrl,
   arquivoReciboNome,
   reciboValidadoEm,
+  arquivoMeiUrl,
+  arquivoMeiNome,
+  meiValidadoEm,
+  arquivoDarfUrl,
+  arquivoDarfNome,
+  darfValidadoEm,
 }: Props) {
   const queryClient = useQueryClient();
-  const inputDeclaracaoRef = useRef<HTMLInputElement>(null);
-  const inputReciboRef = useRef<HTMLInputElement>(null);
+  const inputRefs: Record<Tipo, React.RefObject<HTMLInputElement>> = {
+    declaracao: useRef<HTMLInputElement>(null),
+    recibo: useRef<HTMLInputElement>(null),
+    mei: useRef<HTMLInputElement>(null),
+    darf: useRef<HTMLInputElement>(null),
+  };
   const [processandoTipo, setProcessandoTipo] = useState<Tipo | null>(null);
 
   const upload = useMutation({
@@ -72,7 +90,6 @@ export function AnexarDeclaracaoButton({
       });
 
       if (fnErr) {
-        // limpa upload em erro sistêmico
         await supabase.storage.from('documentos-clientes').remove([path]);
         throw new Error(fnErr.message || 'Erro ao processar PDF');
       }
@@ -89,16 +106,21 @@ export function AnexarDeclaracaoButton({
         });
       } else if (data?.tipo === 'declaracao') {
         toast.success('Declaração validada e anexada.');
+      } else if (data?.tipo === 'mei') {
+        toast.success('Declaração MEI validada e anexada.');
+      } else if (data?.tipo === 'darf') {
+        toast.success('DARF validado e anexado.');
       } else {
         toast.success('Recibo anexado.');
       }
       queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
     },
     onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao enviar arquivo')),
     onSettled: () => setProcessandoTipo(null),
   });
 
-  async function baixar(path: string | null) {
+  async function baixar(path: string | null | undefined) {
     if (!path) return;
     try {
       const { data, error } = await supabase.storage
@@ -117,26 +139,66 @@ export function AnexarDeclaracaoButton({
     e.target.value = '';
   }
 
-  const declAnexada = !!arquivoUrl;
-  const recAnexado = !!arquivoReciboUrl;
   const transmitida = !!reciboValidadoEm;
+
+  type SecaoConfig = {
+    tipo: Tipo;
+    titulo: string;
+    icone: React.ReactNode;
+    url: string | null | undefined;
+    nome: string | null | undefined;
+    validado: boolean;
+    descricao?: string;
+  };
+
+  const secoes: SecaoConfig[] = [
+    {
+      tipo: 'declaracao',
+      titulo: 'Declaração (PDF)',
+      icone: <FileText className="h-3.5 w-3.5" />,
+      url: arquivoUrl,
+      nome: arquivoNome,
+      validado: !!arquivoUrl,
+    },
+    {
+      tipo: 'recibo',
+      titulo: 'Recibo da Receita (PDF)',
+      icone: <Receipt className="h-3.5 w-3.5" />,
+      url: arquivoReciboUrl,
+      nome: arquivoReciboNome,
+      validado: !!arquivoReciboUrl && transmitida,
+      descricao: 'Ao validar o recibo, a declaração será marcada como transmitida e o cliente notificado.',
+    },
+    {
+      tipo: 'mei',
+      titulo: 'Declaração MEI (DASN-SIMEI)',
+      icone: <Briefcase className="h-3.5 w-3.5" />,
+      url: arquivoMeiUrl,
+      nome: arquivoMeiNome,
+      validado: !!meiValidadoEm,
+    },
+    {
+      tipo: 'darf',
+      titulo: 'DARF do IRPF (PDF)',
+      icone: <Banknote className="h-3.5 w-3.5" />,
+      url: arquivoDarfUrl,
+      nome: arquivoDarfNome,
+      validado: !!darfValidadoEm,
+    },
+  ];
 
   return (
     <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-2">
-      <input
-        ref={inputDeclaracaoRef}
-        type="file"
-        accept="application/pdf"
-        className="hidden"
-        onChange={(e) => onSelect('declaracao', e)}
-      />
-      <input
-        ref={inputReciboRef}
-        type="file"
-        accept="application/pdf"
-        className="hidden"
-        onChange={(e) => onSelect('recibo', e)}
-      />
+      {secoes.map((s) => (
+        <input
+          key={s.tipo}
+          ref={inputRefs[s.tipo]}
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={(e) => onSelect(s.tipo, e)}
+        />
+      ))}
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -166,91 +228,57 @@ export function AnexarDeclaracaoButton({
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
 
-          <div className="px-2 py-1.5">
-            <div className="flex items-center gap-2 text-xs font-medium mb-1.5">
-              <FileText className="h-3.5 w-3.5" /> Declaração (PDF)
-              {declAnexada && <FileCheck2 className="h-3.5 w-3.5 text-emerald-600 ml-auto" />}
-            </div>
-            {declAnexada && (
-              <p className="text-[11px] text-muted-foreground truncate mb-1.5" title={arquivoNome ?? ''}>
-                {arquivoNome}
-              </p>
-            )}
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1 h-7 text-xs"
-                onClick={() => inputDeclaracaoRef.current?.click()}
-                disabled={processandoTipo === 'declaracao'}
-              >
-                {processandoTipo === 'declaracao' ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Upload className="h-3 w-3" />
-                )}
-                <span className="ml-1">{declAnexada ? 'Substituir' : 'Anexar'}</span>
-              </Button>
-              {declAnexada && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2"
-                  onClick={() => baixar(arquivoUrl)}
-                  title="Baixar"
-                >
-                  <Download className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <DropdownMenuSeparator />
-
-          <div className="px-2 py-1.5">
-            <div className="flex items-center gap-2 text-xs font-medium mb-1.5">
-              <Receipt className="h-3.5 w-3.5" /> Recibo da Receita (PDF)
-              {recAnexado && transmitida && (
-                <FileCheck2 className="h-3.5 w-3.5 text-emerald-600 ml-auto" />
-              )}
-            </div>
-            {recAnexado ? (
-              <p className="text-[11px] text-muted-foreground truncate mb-1.5" title={arquivoReciboNome ?? ''}>
-                {arquivoReciboNome}
-              </p>
-            ) : (
-              <p className="text-[11px] text-muted-foreground mb-1.5">
-                Ao validar o recibo, a declaração será marcada como <strong>transmitida</strong> e o cliente notificado.
-              </p>
-            )}
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1 h-7 text-xs"
-                onClick={() => inputReciboRef.current?.click()}
-                disabled={processandoTipo === 'recibo'}
-              >
-                {processandoTipo === 'recibo' ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Upload className="h-3 w-3" />
-                )}
-                <span className="ml-1">{recAnexado ? 'Substituir' : 'Anexar'}</span>
-              </Button>
-              {recAnexado && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2"
-                  onClick={() => baixar(arquivoReciboUrl)}
-                  title="Baixar"
-                >
-                  <Download className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-          </div>
+          {secoes.map((s, idx) => {
+            const anexado = !!s.url;
+            const processando = processandoTipo === s.tipo;
+            return (
+              <div key={s.tipo}>
+                {idx > 0 && <DropdownMenuSeparator />}
+                <div className="px-2 py-1.5">
+                  <div className="flex items-center gap-2 text-xs font-medium mb-1.5">
+                    {s.icone} {s.titulo}
+                    {s.validado && (
+                      <FileCheck2 className="h-3.5 w-3.5 text-emerald-600 ml-auto" />
+                    )}
+                  </div>
+                  {anexado ? (
+                    <p className="text-[11px] text-muted-foreground truncate mb-1.5" title={s.nome ?? ''}>
+                      {s.nome}
+                    </p>
+                  ) : s.descricao ? (
+                    <p className="text-[11px] text-muted-foreground mb-1.5">{s.descricao}</p>
+                  ) : null}
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 h-7 text-xs"
+                      onClick={() => inputRefs[s.tipo].current?.click()}
+                      disabled={processando}
+                    >
+                      {processando ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Upload className="h-3 w-3" />
+                      )}
+                      <span className="ml-1">{anexado ? 'Substituir' : 'Anexar'}</span>
+                    </Button>
+                    {anexado && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2"
+                        onClick={() => baixar(s.url)}
+                        title="Baixar"
+                      >
+                        <Download className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
