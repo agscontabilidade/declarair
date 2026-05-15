@@ -167,7 +167,7 @@ export default function ClienteDocumentos() {
         const { error: insertError } = await supabase
           .from('checklist_documentos')
           .insert({
-            declaracao_id: declaracao.id,
+            declaracao_id: declaracaoAtiva.id,
             nome_documento: file.name,
             arquivo_url: path,
             arquivo_nome: file.name,
@@ -199,7 +199,7 @@ export default function ClienteDocumentos() {
             status: 'documentacao_recebida',
             ultima_atualizacao_status: new Date().toISOString(),
           })
-          .eq('id', declaracao.id);
+          .eq('id', declaracaoAtiva.id);
 
         if (updErr) {
           console.error('[upload] declaracao update error', updErr);
