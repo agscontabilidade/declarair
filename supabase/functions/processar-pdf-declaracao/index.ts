@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     }
     const base64 = btoa(bin);
 
-    // Prompt
+    // Prompts e schemas por tipo
     interface ExtracaoDeclaracao {
       eh_declaracao_irpf: boolean;
       cpf: string;
@@ -120,14 +120,33 @@ Deno.serve(async (req) => {
       data_transmissao: string;
       motivo_rejeicao: string | null;
     }
+    interface ExtracaoMei {
+      eh_dasn_simei: boolean;
+      cnpj: string;
+      cpf: string;
+      ano_calendario: number;
+      numero_recibo: string | null;
+      data_transmissao: string | null;
+      motivo_rejeicao: string | null;
+    }
+    interface ExtracaoDarf {
+      eh_darf_irpf: boolean;
+      cpf: string;
+      codigo_receita: string;
+      periodo_apuracao: string | null;
+      data_vencimento: string | null;
+      valor_principal: number;
+      valor_total: number;
+      motivo_rejeicao: string | null;
+    }
 
     const promptDeclaracao = {
       eh_declaracao_irpf: "boolean — true somente se for de fato uma Declaração de Ajuste Anual do IRPF (DIRPF) emitida pelo programa da Receita Federal",
       cpf: "string — CPF do declarante apenas dígitos (11)",
       nome: "string — nome completo do declarante",
       ano_exercicio: "number — ano-exercício (ex.: 2026)",
-      tipo_resultado: "'restituicao'|'pagamento'|'nenhum'",
-      valor_resultado: "number — valor em reais (sem sinal); 0 se nenhum",
+      tipo_resultado: "'restituicao'|'pagamento'|'nenhum' — leia a folha 'Resumo da Declaração'/'Cálculo do Imposto'. Use 'pagamento' se houver 'Saldo de Imposto a Pagar' > 0 (ou linhas equivalentes 'Imposto a Pagar', 'Imposto sobre a Renda Devido' líquido positivo a recolher). Use 'restituicao' se houver 'Imposto a Restituir' > 0. Use 'nenhum' SOMENTE se ambos forem zero (declaração isenta/sem imposto a pagar nem a restituir). Nunca chute 'nenhum' por incerteza — releia o resumo.",
+      valor_resultado: "number — valor em reais (sem sinal, ex.: 1234.56) correspondente ao tipo_resultado escolhido; 0 se nenhum",
       motivo_rejeicao: "string|null — preencha se eh_declaracao_irpf=false explicando o motivo",
     };
     const promptRecibo = {
@@ -138,18 +157,49 @@ Deno.serve(async (req) => {
       data_transmissao: "string ISO (YYYY-MM-DD) — data de transmissão",
       motivo_rejeicao: "string|null",
     };
-    const schema = tipo === "declaracao" ? promptDeclaracao : promptRecibo;
+    const promptMei = {
+      eh_dasn_simei: "boolean — true somente se for a Declaração Anual do Simples Nacional para o MEI (DASN-SIMEI) ou seu recibo de entrega emitido pela Receita Federal",
+      cnpj: "string — CNPJ do MEI (14 dígitos)",
+      cpf: "string — CPF do titular (11 dígitos)",
+      ano_calendario: "number — ano-calendário declarado (ex.: 2025)",
+      numero_recibo: "string|null — número do recibo se houver",
+      data_transmissao: "string|null ISO (YYYY-MM-DD)",
+      motivo_rejeicao: "string|null",
+    };
+    const promptDarf = {
+      eh_darf_irpf: "boolean — true SOMENTE se for um DARF de IRPF Pessoa Física. Códigos típicos: 0211 (IRPF Ajuste Anual), 4600 (Carnê-Leão), 6015 (ganhos de capital). Marque false para qualquer outro tributo.",
+      cpf: "string — CPF do contribuinte (11 dígitos)",
+      codigo_receita: "string — código da receita (4 dígitos)",
+      periodo_apuracao: "string|null — DD/MM/AAAA ou MM/AAAA",
+      data_vencimento: "string|null ISO (YYYY-MM-DD)",
+      valor_principal: "number — valor principal em reais",
+      valor_total: "number — valor total em reais (principal + multa + juros)",
+      motivo_rejeicao: "string|null",
+    };
+    const schemaPorTipo: Record<typeof tipo, unknown> = {
+      declaracao: promptDeclaracao,
+      recibo: promptRecibo,
+      mei: promptMei,
+      darf: promptDarf,
+    } as const;
+    const schema = schemaPorTipo[tipo];
 
-    const systemPrompt = `Você é um validador rigoroso de documentos fiscais brasileiros (IRPF).
-Você receberá um PDF anexado. Analise visual e textualmente.
-Responda SOMENTE um JSON válido, sem texto adicional, sem markdown.
+    const systemPrompt = `Você é um validador rigoroso de documentos fiscais brasileiros.
+Você receberá um PDF anexado. Analise visual e textualmente, página por página.
+Responda SOMENTE um JSON válido (sem markdown, sem texto fora do JSON).
 Esquema esperado: ${JSON.stringify(schema)}.
-Seja conservador: se houver QUALQUER dúvida sobre autenticidade ou tipo do documento, marque como false e explique em motivo_rejeicao.`;
+Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao extrair valores numéricos: leia a folha de resumo/cálculo e converta vírgula decimal brasileira corretamente.`;
 
-    const userPrompt =
-      tipo === "declaracao"
-        ? "Identifique se este PDF é a Declaração do IRPF (DIRPF) e extraia os dados do declarante e o resultado."
-        : "Identifique se este PDF é o Recibo de Entrega da DIRPF emitido pela Receita Federal e extraia o número do recibo, CPF, ano-exercício e data de transmissão.";
+    const userPromptMap: Record<typeof tipo, string> = {
+      declaracao: "Identifique se este PDF é a Declaração do IRPF (DIRPF) e extraia: CPF, nome, ano-exercício e o RESULTADO. Para o resultado, vá até a folha 'Resumo da Declaração' (ou equivalente) e verifique as linhas 'Saldo de Imposto a Pagar' e 'Imposto a Restituir'. Retorne 'pagamento' com o valor exato a recolher quando houver imposto a pagar, 'restituicao' com o valor a restituir, ou 'nenhum' apenas quando ambos forem zero.",
+      recibo: "Identifique se este PDF é o Recibo de Entrega da DIRPF emitido pela Receita Federal e extraia o número do recibo, CPF, ano-exercício e data de transmissão.",
+      mei: "Identifique se este PDF é a DASN-SIMEI (Declaração Anual do MEI) ou seu recibo, e extraia CNPJ, CPF do titular, ano-calendário, número do recibo e data de transmissão.",
+      darf: "Identifique se este PDF é um DARF de IRPF Pessoa Física. Extraia código de receita, CPF, período de apuração, data de vencimento, valor principal e valor total.",
+    };
+    const userPrompt = userPromptMap[tipo];
+
+    // Modelo: pro para declaração (precisão na leitura visual do resumo), flash para os demais
+    const model = tipo === "declaracao" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -158,7 +208,7 @@ Seja conservador: se houver QUALQUER dúvida sobre autenticidade ou tipo do docu
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },
@@ -185,7 +235,7 @@ Seja conservador: se houver QUALQUER dúvida sobre autenticidade ou tipo do docu
     }
     const aiJson = await aiRes.json();
     const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-    let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo>;
+    let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo & ExtracaoMei & ExtracaoDarf>;
     try {
       extracao = JSON.parse(content);
     } catch {
@@ -196,26 +246,51 @@ Seja conservador: se houver QUALQUER dúvida sobre autenticidade ou tipo do docu
     // Validação cruzada
     const cpfArquivo = digits(extracao?.cpf);
     const cpfCliente = digits(cliente.cpf);
-    const anoArquivo = Number(extracao?.ano_exercicio);
+    const anoArquivo = Number(
+      (extracao as Partial<ExtracaoDeclaracao & ExtracaoRecibo>)?.ano_exercicio ??
+      (extracao as Partial<ExtracaoMei>)?.ano_calendario,
+    );
     const anoBase = Number(dec.ano_base);
+    const CODIGOS_DARF_IRPF_PF = ["0211", "4600", "6015"];
 
     if (tipo === "declaracao") {
       if (!extracao?.eh_declaracao_irpf) {
         return fail(extracao?.motivo_rejeicao || "PDF não reconhecido como Declaração do IRPF");
       }
-    } else {
+    } else if (tipo === "recibo") {
       if (!extracao?.eh_recibo_rfb) {
         return fail(extracao?.motivo_rejeicao || "PDF não reconhecido como Recibo da Receita Federal");
       }
       if (!extracao?.numero_recibo) {
         return fail("Número do recibo não pôde ser extraído do PDF");
       }
+    } else if (tipo === "mei") {
+      if (!extracao?.eh_dasn_simei) {
+        return fail(extracao?.motivo_rejeicao || "PDF não reconhecido como DASN-SIMEI (Declaração Anual do MEI)");
+      }
+    } else if (tipo === "darf") {
+      if (!extracao?.eh_darf_irpf) {
+        return fail(extracao?.motivo_rejeicao || "PDF não reconhecido como DARF de IRPF Pessoa Física");
+      }
+      const cod = String(extracao?.codigo_receita || "").padStart(4, "0");
+      if (!CODIGOS_DARF_IRPF_PF.includes(cod)) {
+        return fail(`DARF com código ${cod} não pertence ao IRPF Pessoa Física (esperado: ${CODIGOS_DARF_IRPF_PF.join(", ")})`);
+      }
     }
     if (cpfArquivo && cpfCliente && cpfArquivo !== cpfCliente) {
       return fail(`CPF do PDF (${cpfArquivo}) não confere com o do cliente (${cpfCliente})`);
     }
-    if (anoArquivo && anoBase && anoArquivo !== anoBase) {
-      return fail(`Ano do PDF (${anoArquivo}) não confere com a declaração (${anoBase})`);
+    // Validação de ano: declaração e recibo precisam bater com ano_base.
+    // MEI: ano_calendario costuma ser ano_base - 1 (declara o ano anterior); aceitamos esse ou o próprio ano_base.
+    // DARF: pode ter períodos variados — não validamos ano.
+    if (tipo === "declaracao" || tipo === "recibo") {
+      if (anoArquivo && anoBase && anoArquivo !== anoBase) {
+        return fail(`Ano do PDF (${anoArquivo}) não confere com a declaração (${anoBase})`);
+      }
+    } else if (tipo === "mei") {
+      if (anoArquivo && anoBase && anoArquivo !== anoBase && anoArquivo !== anoBase - 1) {
+        return fail(`Ano-calendário do MEI (${anoArquivo}) incompatível com a declaração (${anoBase})`);
+      }
     }
 
     // Atualiza declaração
@@ -229,18 +304,16 @@ Seja conservador: se houver QUALQUER dúvida sobre autenticidade ou tipo do docu
       updates.arquivo_declaracao_uploaded_at = nowIso;
       updates.declaracao_validada_em = nowIso;
       updates.declaracao_extracao = extracao;
-      // Promove status para "declaracao_pronta" se ainda estava antes
       if (["aguardando_documentos", "documentacao_recebida"].includes(dec.status as string)) {
         updates.status = "declaracao_pronta";
       }
-      // Resultado se ainda não foi preenchido pelo cálculo
       if (extracao?.tipo_resultado && ["restituicao", "pagamento", "nenhum"].includes(extracao.tipo_resultado)) {
         updates.tipo_resultado = extracao.tipo_resultado;
       }
       if (typeof extracao?.valor_resultado === "number") {
         updates.valor_resultado = extracao.valor_resultado;
       }
-    } else {
+    } else if (tipo === "recibo") {
       updates.arquivo_recibo_url = storage_path;
       updates.arquivo_recibo_nome = arquivo_nome || storage_path.split("/").pop();
       updates.arquivo_recibo_uploaded_at = nowIso;
@@ -250,14 +323,24 @@ Seja conservador: se houver QUALQUER dúvida sobre autenticidade ou tipo do docu
       if (extracao?.data_transmissao) {
         updates.data_transmissao = new Date(extracao.data_transmissao).toISOString();
       }
-      // Marcar transmitida (idempotente)
       if (dec.status !== "transmitida") {
         updates.status = "transmitida";
         virouTransmitida = true;
       } else if (!dec.recibo_validado_em) {
-        // Já estava transmitida manualmente, mas é a primeira vez que validamos recibo
         virouTransmitida = true;
       }
+    } else if (tipo === "mei") {
+      updates.arquivo_mei_url = storage_path;
+      updates.arquivo_mei_nome = arquivo_nome || storage_path.split("/").pop();
+      updates.arquivo_mei_uploaded_at = nowIso;
+      updates.mei_validado_em = nowIso;
+      updates.mei_extracao = extracao;
+    } else if (tipo === "darf") {
+      updates.arquivo_darf_url = storage_path;
+      updates.arquivo_darf_nome = arquivo_nome || storage_path.split("/").pop();
+      updates.arquivo_darf_uploaded_at = nowIso;
+      updates.darf_validado_em = nowIso;
+      updates.darf_extracao = extracao;
     }
 
     const { error: upErr } = await admin
@@ -270,14 +353,16 @@ Seja conservador: se houver QUALQUER dúvida sobre autenticidade ou tipo do docu
     }
 
     // Espelha o arquivo do contador no checklist_documentos
-    // (para aparecer no Drive e no modal "Ver documentos")
     try {
-      const nomeDocumento = tipo === "declaracao"
-        ? "Declaração IRPF (PDF)"
-        : "Recibo da Receita (PDF)";
+      const nomeDocumentoMap: Record<typeof tipo, string> = {
+        declaracao: "Declaração IRPF (PDF)",
+        recibo: "Recibo da Receita (PDF)",
+        mei: "Declaração MEI (DASN-SIMEI)",
+        darf: "DARF IRPF (PDF)",
+      };
+      const nomeDocumento = nomeDocumentoMap[tipo];
       const arquivoNomeFinal = (arquivo_nome || storage_path.split("/").pop()) ?? null;
 
-      // Tenta atualizar entrada existente
       const { data: existente } = await admin
         .from("checklist_documentos")
         .select("id")
@@ -309,20 +394,23 @@ Seja conservador: se houver QUALQUER dúvida sobre autenticidade ou tipo do docu
         });
       }
     } catch (e) {
-      // Não bloqueia o fluxo principal
       console.error("Falha ao espelhar arquivo do contador no checklist", e);
     }
 
     // Auditoria
+    const atividadeMap: Record<typeof tipo, { tipo: string; descricao: string }> = {
+      declaracao: { tipo: "declaracao_validada", descricao: "Declaração validada por IA." },
+      recibo: { tipo: "recibo_validado", descricao: `Recibo da Receita Federal validado por IA (nº ${extracao?.numero_recibo ?? "?"}).` },
+      mei: { tipo: "mei_validado", descricao: "Declaração MEI (DASN-SIMEI) validada por IA." },
+      darf: { tipo: "darf_validado", descricao: `DARF IRPF validado por IA (código ${extracao?.codigo_receita ?? "?"}, R$ ${extracao?.valor_total ?? 0}).` },
+    };
     await admin.from("declaracao_atividades").insert({
       declaracao_id,
-      tipo: tipo === "recibo" ? "recibo_validado" : "declaracao_validada",
-      descricao:
-        tipo === "recibo"
-          ? `Recibo da Receita Federal validado por IA (nº ${extracao.numero_recibo}).`
-          : `Declaração validada por IA.`,
+      tipo: atividadeMap[tipo].tipo,
+      descricao: atividadeMap[tipo].descricao,
       usuario_nome: usuario.nome || null,
     });
+
 
     // Notificações ao virar transmitida
     if (virouTransmitida) {
