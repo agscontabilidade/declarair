@@ -6,6 +6,7 @@ import logoFull from '@/assets/logo-full.png';
 import NavBar from '@/components/landing-v2/NavBar';
 import Footer from '@/components/landing-v2/Footer';
 import { motion } from 'framer-motion';
+import { SEO } from '@/components/SEO';
 
 const valores = [
   { icon: Target, title: 'Foco no contador', desc: 'Cada funcionalidade é pensada para resolver problemas reais de quem vive o dia a dia do IR.' },
@@ -17,6 +18,11 @@ const valores = [
 export default function SobreNos() {
   return (
     <div className="landing-v2 min-h-screen overflow-x-hidden">
+      <SEO
+        title="Sobre Nós — DeclaraIR"
+        description="Conheça a DeclaraIR: plataforma criada para escritórios de contabilidade reduzirem o caos do IRPF com Kanban, portal do cliente e automações."
+        path="/sobre"
+      />
       <NavBar />
 
       {/* Hero */}

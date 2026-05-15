@@ -1,0 +1,20 @@
+# DeclaraIR
+
+> Plataforma SaaS B2B para escritórios de contabilidade brasileiros gerenciarem declarações de Imposto de Renda Pessoa Física (IRPF) com Kanban, portal do cliente, WhatsApp automático e Drive organizado.
+
+DeclaraIR organiza o fluxo do IRPF de ponta a ponta: o contador acompanha cada declaração em um Kanban (aguardando documentos → documentação recebida → declaração pronta → transmitida), o cliente envia documentos por um portal guiado e tudo é arquivado automaticamente em pastas separadas (enviadas pelo cliente vs. enviadas pelo contador). Inclui cobranças via Pix/boleto, automações por WhatsApp, whitelabel e relatórios.
+
+## Pages
+
+- [Início](/): Visão geral do produto, recursos, depoimentos e FAQ.
+- [Planos e Preços](/planos): Plano Free e Pro, addons (WhatsApp, API, Whitelabel) e comparativo.
+- [Sobre Nós](/sobre): Quem somos e missão da DeclaraIR.
+- [Cadastro](/cadastro): Criar conta de escritório de contabilidade.
+- [Entrar](/login): Login para contadores.
+- [Portal do Cliente](/cliente/login): Acesso para clientes (contribuintes) enviarem documentos.
+
+## Optional
+
+- [Termos de Uso](/termos-de-uso)
+- [Política de Privacidade](/politica-de-privacidade)
+- [Política LGPD](/politica-lgpd)

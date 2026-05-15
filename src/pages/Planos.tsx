@@ -4,6 +4,7 @@ import { Check, X, ArrowRight, Zap, Crown, Lock, MessageCircle } from 'lucide-re
 import NavBar from '@/components/landing-v2/NavBar';
 import Footer from '@/components/landing-v2/Footer';
 import { PRECOS } from '@/lib/constants/planos';
+import { SEO } from '@/components/SEO';
 
 const WHATSAPP_URL = 'https://api.whatsapp.com/send/?phone=5511998755782&text=Ol%C3%A1%2C+quero+saber+mais+sobre+o+DeclaraIR&type=phone_number&app_absent=0';
 
@@ -79,6 +80,11 @@ const ADDONS = [
 export default function Planos() {
   return (
     <div className="landing-v2 min-h-screen overflow-x-hidden">
+      <SEO
+        title="Planos e Preços — DeclaraIR"
+        description="Plano Free e Pro a partir de R$ 29,90/mês. Compare benefícios, addons (WhatsApp, API, Whitelabel) e comece sem cartão."
+        path="/planos"
+      />
       <NavBar />
 
       {/* ── HERO ── */}

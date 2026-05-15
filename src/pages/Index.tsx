@@ -14,6 +14,7 @@ import { LandingCTA } from '@/components/landing/LandingCTA';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { Section } from '@/components/landing/LandingSection';
 import { CookieConsent } from '@/components/landing/CookieConsent';
+import { SEO } from '@/components/SEO';
 import { Badge } from '@/components/ui/badge';
 import { Zap, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,11 @@ import featureMobile from '@/assets/feature-mobile.jpg';
 export default function Index() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <SEO
+        title="DeclaraIR — Gestão de IRPF para escritórios de contabilidade"
+        description="Acabe com o caos do IR: Kanban, portal do cliente, WhatsApp automático e Drive organizado. Comece grátis, sem cartão."
+        path="/"
+      />
       <LandingHeader />
       <div className="h-16" />
       <LandingHero />
