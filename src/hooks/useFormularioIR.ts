@@ -87,15 +87,26 @@ export function useFormularioIR() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Get active declaration
+  // Get active declaration (prioriza ano corrente)
   const { data: declaracao } = useQuery({
     queryKey: ['cliente-declaracao-form', clienteId],
     queryFn: async () => {
       if (!clienteId) return null;
+      const anoAtual = new Date().getFullYear();
+      const { data: doAno } = await supabase
+        .from('declaracoes')
+        .select('*')
+        .eq('cliente_id', clienteId)
+        .eq('ano_base', anoAtual)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (doAno) return doAno;
       const { data } = await supabase
         .from('declaracoes')
         .select('*')
         .eq('cliente_id', clienteId)
+        .order('ano_base', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
