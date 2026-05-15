@@ -434,6 +434,12 @@ export default function Declaracoes() {
                               arquivoReciboUrl={d.arquivo_recibo_url}
                               arquivoReciboNome={d.arquivo_recibo_nome}
                               reciboValidadoEm={d.recibo_validado_em}
+                              arquivoMeiUrl={d.arquivo_mei_url}
+                              arquivoMeiNome={d.arquivo_mei_nome}
+                              meiValidadoEm={d.mei_validado_em}
+                              arquivoDarfUrl={d.arquivo_darf_url}
+                              arquivoDarfNome={d.arquivo_darf_nome}
+                              darfValidadoEm={d.darf_validado_em}
                             />
                           )}
                           <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
