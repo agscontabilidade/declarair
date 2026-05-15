@@ -136,7 +136,7 @@ export default function Declaracoes() {
         clienteNome: d.clientes?.nome || '—',
         clienteCpf: d.clientes?.cpf || '',
         clienteEmail: d.clientes?.email || '',
-        observacoes: d.declaracao_notas_internas?.[0]?.conteudo || '',
+        observacoes: (Array.isArray(d.declaracao_notas_internas) ? d.declaracao_notas_internas[0]?.conteudo : d.declaracao_notas_internas?.conteudo) || '',
       }));
     },
     enabled: !!escritorioId,
