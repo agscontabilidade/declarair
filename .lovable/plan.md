@@ -1,44 +1,25 @@
-## Problemas identificados
+## Objetivo
+No modal de envio de declaração por e-mail (acionado pelo botão "Enviar" em `/declaracoes`), incluir automaticamente o valor da cobrança vinculada àquela declaração no texto padrão da mensagem.
 
-### 1. Busca por nome não funciona em `/declaracoes`
-Em `src/pages/Declaracoes.tsx` (linhas 156-164):
-
-```ts
-const cpfDigits = d.clienteCpf.replace(/\D/g, '');
-if (!d.clienteNome.toLowerCase().includes(s) && !cpfDigits.includes(s.replace(/\D/g, ''))) return false;
-```
-
-Quando o usuário digita um nome (ex: "Maria"), `s.replace(/\D/g, '')` vira string vazia `''`. Em JavaScript, `qualquerString.includes('')` sempre retorna `true`, então a condição CPF nunca exclui ninguém — mas como está encadeada com `&&`, a expressão completa fica `false` e nada é filtrado de fato pelo nome. Resultado: a busca por nome parece sem efeito.
-
-Além disso, `debouncedSearch` é calculado mas nunca usado.
-
-**Correção:** separar as duas verificações; só comparar CPF quando o termo digitado contém dígitos; usar `debouncedSearch` no filtro.
-
-### 2. Observação salva não aparece na lista
-O `ObservacoesModal` invalida `['declaracoes-lista']` no sucesso, mas:
-- O canal Realtime atual só escuta a tabela `declaracoes`, não `declaracao_notas_internas`.
-- Em alguns casos o React Query mantém os dados antigos visíveis até o refetch concluir, e o usuário tem a impressão de que "sumiu".
-
-**Correção:** após salvar, forçar `refetchQueries` (não só invalidate) da lista, e adicionar canal Realtime para `declaracao_notas_internas` filtrado por `escritorio_id`.
+## Escopo (estrito)
+Alterar APENAS `src/components/declaracoes/EnviarDeclaracaoEmailModal.tsx`. Nenhuma outra mudança.
 
 ## Mudanças
 
-**`src/pages/Declaracoes.tsx`**
-- Substituir o filtro de busca para usar `debouncedSearch` e tratar separadamente termo de texto vs. dígitos:
-  ```ts
-  const term = debouncedSearch.trim().toLowerCase();
-  const digits = term.replace(/\D/g, '');
-  if (term) {
-    const matchNome = d.clienteNome.toLowerCase().includes(term);
-    const matchCpf = digits.length > 0 && d.clienteCpf.replace(/\D/g, '').includes(digits);
-    if (!matchNome && !matchCpf) return false;
-  }
-  ```
-- Adicionar segundo canal Realtime para `declaracao_notas_internas` filtrado por `escritorio_id=eq.{escritorioId}` que invalida a mesma `queryKey`.
+**`EnviarDeclaracaoEmailModal.tsx`**
+1. Ao abrir o modal, buscar em `cobrancas` a cobrança vinculada via `declaracao_id` (filtrando por `escritorio_id` para respeitar RLS), pegando a mais recente não cancelada — campos `valor`, `status`, `data_vencimento`.
+2. Atualizar o `useEffect` que monta a `mensagem` padrão para, quando houver cobrança, acrescentar uma linha do tipo:
+   > "Valor dos honorários: R$ X.XXX,XX (vencimento DD/MM/AAAA — status: pendente/pago/atrasado)."
+   
+   Se não houver cobrança vinculada, o texto padrão segue exatamente como hoje (sem linha extra).
+3. Formatação: BRL via `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`; data via util já existente em `@/lib/formatters` se houver, senão `toLocaleDateString('pt-BR')`.
 
-**`src/components/declaracoes/ObservacoesModal.tsx`**
-- Trocar `invalidateQueries` por `refetchQueries` na lista para garantir atualização imediata visível antes do modal fechar.
+## Pontos a confirmar antes de implementar
+- Se houver mais de uma cobrança ligada à mesma declaração, usar a **mais recente por `created_at`** e ignorar canceladas. (Se preferir somar todas em aberto, me avise.)
+- Manter o comportamento de o usuário poder editar livremente o texto antes de enviar.
 
-## Resultado esperado
-- Buscar "Maria" filtra a tabela corretamente.
-- Após salvar uma observação, o badge verde com o conteúdo aparece imediatamente na linha correspondente.
+## O que NÃO será alterado
+- `src/pages/Declaracoes.tsx`
+- `EnviarDeclaracaoModal.tsx` (modal antigo via chat — não é o usado pelo botão Enviar atual)
+- Template de e-mail no backend
+- Qualquer lógica de cobranças/RLS
