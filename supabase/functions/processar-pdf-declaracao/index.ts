@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     if (!declaracao_id || !tipo || !storage_path) {
       return json({ error: "Parâmetros obrigatórios ausentes" }, 400);
     }
-    if (tipo !== "declaracao" && tipo !== "recibo") {
+    if (!["declaracao", "recibo", "mei", "darf"].includes(tipo)) {
       return json({ error: "tipo inválido" }, 400);
     }
 
