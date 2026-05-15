@@ -945,15 +945,23 @@ export type Database = {
           ano_base: number
           arquivo_analise_caixa_uploaded_at: string | null
           arquivo_analise_caixa_url: string | null
+          arquivo_darf_nome: string | null
+          arquivo_darf_uploaded_at: string | null
+          arquivo_darf_url: string | null
           arquivo_declaracao_nome: string | null
           arquivo_declaracao_uploaded_at: string | null
           arquivo_declaracao_url: string | null
+          arquivo_mei_nome: string | null
+          arquivo_mei_uploaded_at: string | null
+          arquivo_mei_url: string | null
           arquivo_recibo_nome: string | null
           arquivo_recibo_uploaded_at: string | null
           arquivo_recibo_url: string | null
           cliente_id: string
           contador_id: string | null
           created_at: string
+          darf_extracao: Json | null
+          darf_validado_em: string | null
           data_transmissao: string | null
           declaracao_enviada_em: string | null
           declaracao_extracao: Json | null
@@ -962,6 +970,8 @@ export type Database = {
           escritorio_id: string
           forma_tributacao: string | null
           id: string
+          mei_extracao: Json | null
+          mei_validado_em: string | null
           numero_recibo: string | null
           observacoes_internas: string | null
           recibo_extracao: Json | null
@@ -978,15 +988,23 @@ export type Database = {
           ano_base: number
           arquivo_analise_caixa_uploaded_at?: string | null
           arquivo_analise_caixa_url?: string | null
+          arquivo_darf_nome?: string | null
+          arquivo_darf_uploaded_at?: string | null
+          arquivo_darf_url?: string | null
           arquivo_declaracao_nome?: string | null
           arquivo_declaracao_uploaded_at?: string | null
           arquivo_declaracao_url?: string | null
+          arquivo_mei_nome?: string | null
+          arquivo_mei_uploaded_at?: string | null
+          arquivo_mei_url?: string | null
           arquivo_recibo_nome?: string | null
           arquivo_recibo_uploaded_at?: string | null
           arquivo_recibo_url?: string | null
           cliente_id: string
           contador_id?: string | null
           created_at?: string
+          darf_extracao?: Json | null
+          darf_validado_em?: string | null
           data_transmissao?: string | null
           declaracao_enviada_em?: string | null
           declaracao_extracao?: Json | null
@@ -995,6 +1013,8 @@ export type Database = {
           escritorio_id: string
           forma_tributacao?: string | null
           id?: string
+          mei_extracao?: Json | null
+          mei_validado_em?: string | null
           numero_recibo?: string | null
           observacoes_internas?: string | null
           recibo_extracao?: Json | null
@@ -1011,15 +1031,23 @@ export type Database = {
           ano_base?: number
           arquivo_analise_caixa_uploaded_at?: string | null
           arquivo_analise_caixa_url?: string | null
+          arquivo_darf_nome?: string | null
+          arquivo_darf_uploaded_at?: string | null
+          arquivo_darf_url?: string | null
           arquivo_declaracao_nome?: string | null
           arquivo_declaracao_uploaded_at?: string | null
           arquivo_declaracao_url?: string | null
+          arquivo_mei_nome?: string | null
+          arquivo_mei_uploaded_at?: string | null
+          arquivo_mei_url?: string | null
           arquivo_recibo_nome?: string | null
           arquivo_recibo_uploaded_at?: string | null
           arquivo_recibo_url?: string | null
           cliente_id?: string
           contador_id?: string | null
           created_at?: string
+          darf_extracao?: Json | null
+          darf_validado_em?: string | null
           data_transmissao?: string | null
           declaracao_enviada_em?: string | null
           declaracao_extracao?: Json | null
@@ -1028,6 +1056,8 @@ export type Database = {
           escritorio_id?: string
           forma_tributacao?: string | null
           id?: string
+          mei_extracao?: Json | null
+          mei_validado_em?: string | null
           numero_recibo?: string | null
           observacoes_internas?: string | null
           recibo_extracao?: Json | null
@@ -2743,15 +2773,23 @@ export type Database = {
           ano_base: number
           arquivo_analise_caixa_uploaded_at: string | null
           arquivo_analise_caixa_url: string | null
+          arquivo_darf_nome: string | null
+          arquivo_darf_uploaded_at: string | null
+          arquivo_darf_url: string | null
           arquivo_declaracao_nome: string | null
           arquivo_declaracao_uploaded_at: string | null
           arquivo_declaracao_url: string | null
+          arquivo_mei_nome: string | null
+          arquivo_mei_uploaded_at: string | null
+          arquivo_mei_url: string | null
           arquivo_recibo_nome: string | null
           arquivo_recibo_uploaded_at: string | null
           arquivo_recibo_url: string | null
           cliente_id: string
           contador_id: string | null
           created_at: string
+          darf_extracao: Json | null
+          darf_validado_em: string | null
           data_transmissao: string | null
           declaracao_enviada_em: string | null
           declaracao_extracao: Json | null
@@ -2760,6 +2798,8 @@ export type Database = {
           escritorio_id: string
           forma_tributacao: string | null
           id: string
+          mei_extracao: Json | null
+          mei_validado_em: string | null
           numero_recibo: string | null
           observacoes_internas: string | null
           recibo_extracao: Json | null

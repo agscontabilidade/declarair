@@ -112,6 +112,8 @@ export default function Declaracoes() {
           tipo_resultado, valor_resultado,
           arquivo_declaracao_url, arquivo_declaracao_nome,
           arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em,
+          arquivo_mei_url, arquivo_mei_nome, mei_validado_em,
+          arquivo_darf_url, arquivo_darf_nome, darf_validado_em,
           em_processamento, status_processamento_rfb, declaracao_enviada_em,
           clientes(nome, cpf, email),
           declaracao_notas_internas(conteudo)
@@ -304,6 +306,12 @@ export default function Declaracoes() {
                                   arquivoReciboUrl={d.arquivo_recibo_url}
                                   arquivoReciboNome={d.arquivo_recibo_nome}
                                   reciboValidadoEm={d.recibo_validado_em}
+                                  arquivoMeiUrl={d.arquivo_mei_url}
+                                  arquivoMeiNome={d.arquivo_mei_nome}
+                                  meiValidadoEm={d.mei_validado_em}
+                                  arquivoDarfUrl={d.arquivo_darf_url}
+                                  arquivoDarfNome={d.arquivo_darf_nome}
+                                  darfValidadoEm={d.darf_validado_em}
                                 />
                               )}
                             </TableCell>
@@ -426,6 +434,12 @@ export default function Declaracoes() {
                               arquivoReciboUrl={d.arquivo_recibo_url}
                               arquivoReciboNome={d.arquivo_recibo_nome}
                               reciboValidadoEm={d.recibo_validado_em}
+                              arquivoMeiUrl={d.arquivo_mei_url}
+                              arquivoMeiNome={d.arquivo_mei_nome}
+                              meiValidadoEm={d.mei_validado_em}
+                              arquivoDarfUrl={d.arquivo_darf_url}
+                              arquivoDarfNome={d.arquivo_darf_nome}
+                              darfValidadoEm={d.darf_validado_em}
                             />
                           )}
                           <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
