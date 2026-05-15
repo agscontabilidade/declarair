@@ -99,11 +99,55 @@ export default function ClienteDocumentos() {
     let successCount = 0;
     const failures: { name: string; reason: string }[] = [];
 
+    // Garante que o upload seja vinculado a uma declaração do ano corrente.
+    // Se a declaração ativa for de outro ano, busca/cria uma do ano atual.
+    let declaracaoAtiva = declaracao;
+    const anoAtual = new Date().getFullYear();
+    if (declaracaoAtiva.ano_base !== anoAtual) {
+      console.warn('[upload] declaracao ativa nao eh do ano corrente, redirecionando', {
+        ano_ativo: declaracaoAtiva.ano_base,
+        ano_atual: anoAtual,
+      });
+      const { data: doAno } = await supabase
+        .from('declaracoes')
+        .select('id, cliente_id, escritorio_id, ano_base, status')
+        .eq('cliente_id', profile.clienteId)
+        .eq('ano_base', anoAtual)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (doAno) {
+        declaracaoAtiva = { ...declaracaoAtiva, ...doAno } as typeof declaracaoAtiva;
+      } else {
+        const { data: nova, error: novaErr } = await supabase
+          .from('declaracoes')
+          .insert({
+            cliente_id: profile.clienteId,
+            escritorio_id: declaracaoAtiva.escritorio_id,
+            ano_base: anoAtual,
+            status: 'aguardando_documentos',
+          })
+          .select('id, cliente_id, escritorio_id, ano_base, status')
+          .single();
+        if (novaErr || !nova) {
+          console.error('[upload] falha ao criar declaracao do ano corrente', novaErr);
+          toast.error('Não foi possível preparar a declaração do ano corrente. Contate seu contador.');
+          setUploading(false);
+          return;
+        }
+        declaracaoAtiva = { ...declaracaoAtiva, ...nova } as typeof declaracaoAtiva;
+      }
+      // Atualiza caches do portal para refletir a nova declaração
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-form'] });
+    }
+
     try {
       for (const file of list) {
         const timestamp = Date.now();
         const safeName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-        const path = `${declaracao.escritorio_id}/${profile.clienteId}/geral/${safeName}`;
+        const path = `${declaracaoAtiva.escritorio_id}/${profile.clienteId}/geral/${safeName}`;
 
         console.log('[upload] uploading', { name: file.name, size: file.size, type: file.type, path });
 
