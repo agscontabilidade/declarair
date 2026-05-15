@@ -8,3 +8,8 @@ export const PORTAL_BASE_URL =
 export const API_BASE_URL =
   import.meta.env.VITE_SUPABASE_URL ||
   'https://bykqurgeptipguqvxwiq.supabase.co';
+
+// Ano-base corrente do IRPF (ano calendário em curso).
+// Centralizado para evitar valores hardcoded e divergências entre telas.
+export const getAnoBaseAtual = (): number => new Date().getFullYear();
+export const ANO_BASE_ATUAL = getAnoBaseAtual();
