@@ -4,6 +4,7 @@ import { Check, X, ArrowRight, Zap, Crown, Lock, MessageCircle } from 'lucide-re
 import NavBar from '@/components/landing-v2/NavBar';
 import Footer from '@/components/landing-v2/Footer';
 import { PRECOS } from '@/lib/constants/planos';
+import { SEO } from '@/components/SEO';
 
 const WHATSAPP_URL = 'https://api.whatsapp.com/send/?phone=5511998755782&text=Ol%C3%A1%2C+quero+saber+mais+sobre+o+DeclaraIR&type=phone_number&app_absent=0';
 
