@@ -26,6 +26,11 @@ import featureMobile from '@/assets/feature-mobile.jpg';
 export default function Index() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <SEO
+        title="DeclaraIR — Gestão de IRPF para escritórios de contabilidade"
+        description="Acabe com o caos do IR: Kanban, portal do cliente, WhatsApp automático e Drive organizado. Comece grátis, sem cartão."
+        path="/"
+      />
       <LandingHeader />
       <div className="h-16" />
       <LandingHero />
