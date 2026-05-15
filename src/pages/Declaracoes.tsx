@@ -160,10 +160,12 @@ export default function Declaracoes() {
 
   const filtered = declaracoes.filter((d: { status: string; clienteCpf: string; clienteNome: string }) => {
     if (statusFilter !== 'todos' && d.status !== statusFilter) return false;
-    if (search) {
-      const s = search.toLowerCase();
-      const cpfDigits = d.clienteCpf.replace(/\D/g, '');
-      if (!d.clienteNome.toLowerCase().includes(s) && !cpfDigits.includes(s.replace(/\D/g, ''))) return false;
+    const term = debouncedSearch.trim().toLowerCase();
+    if (term) {
+      const digits = term.replace(/\D/g, '');
+      const matchNome = d.clienteNome.toLowerCase().includes(term);
+      const matchCpf = digits.length > 0 && d.clienteCpf.replace(/\D/g, '').includes(digits);
+      if (!matchNome && !matchCpf) return false;
     }
     return true;
   });
