@@ -39,34 +39,31 @@ export function EnviarDeclaracaoEmailModal({
   const [loading, setLoading] = useState(false);
   const [nomeEscritorio, setNomeEscritorio] = useState('Seu Contador');
   const [mensagem, setMensagem] = useState('');
-  const [cobrancaInfo, setCobrancaInfo] = useState<{ valor: number; status: string; data_vencimento: string } | null>(null);
+  const [cobrancaValor, setCobrancaValor] = useState<number | null>(null);
 
   useEffect(() => {
     let cobrancaLinha = '';
-    if (cobrancaInfo) {
-      const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(cobrancaInfo.valor));
-      const [y, m, d] = cobrancaInfo.data_vencimento.split('-');
-      const dataFmt = `${d}/${m}/${y}`;
-      cobrancaLinha = `\n\nValor dos honorários: ${valorFmt} (vencimento ${dataFmt} — status: ${cobrancaInfo.status}).`;
+    if (cobrancaValor != null) {
+      const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaValor);
+      cobrancaLinha = `\n\nO valor da declaração é: ${valorFmt}.`;
     }
     setMensagem(
       `Prezado(a) ${clienteNome},\n\nSua Declaração de Imposto de Renda ${anoBase} foi transmitida com sucesso.\n\nSeguem em anexo a cópia da declaração e o respectivo recibo de entrega.${cobrancaLinha}\n\nFicamos à disposição para qualquer dúvida.`
     );
-  }, [clienteNome, anoBase, cobrancaInfo]);
+  }, [clienteNome, anoBase, cobrancaValor]);
 
   useEffect(() => {
     if (!open || !declaracaoId) return;
     (async () => {
       const { data } = await supabase
         .from('cobrancas')
-        .select('valor, status, data_vencimento')
+        .select('valor')
         .eq('declaracao_id', declaracaoId)
         .neq('status', 'cancelado')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (data) setCobrancaInfo({ valor: Number(data.valor), status: data.status, data_vencimento: data.data_vencimento });
-      else setCobrancaInfo(null);
+      setCobrancaValor(data ? Number(data.valor) : null);
     })();
   }, [open, declaracaoId]);
 
