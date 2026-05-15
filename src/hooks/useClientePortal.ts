@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { getAnoBaseAtual } from '@/lib/constants';
 
 export function useClientePortal() {
   const { profile } = useAuth();
@@ -10,10 +11,25 @@ export function useClientePortal() {
     queryKey: ['cliente-declaracao', clienteId],
     queryFn: async () => {
       if (!clienteId) return null;
+      const anoAtual = getAnoBaseAtual();
+      // 1) Prioriza a declaração do ano corrente
+      const { data: doAno, error: errAno } = await supabase
+        .from('declaracoes')
+        .select('id, cliente_id, escritorio_id, contador_id, ano_base, status, status_documentos, tipo_resultado, valor_resultado, numero_recibo, data_transmissao, forma_tributacao, ultima_atualizacao_status, created_at, version')
+        .eq('cliente_id', clienteId)
+        .eq('ano_base', anoAtual)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (errAno) throw errAno;
+      if (doAno) return doAno;
+
+      // 2) Fallback: declaração mais recente por ano-base, depois por created_at
       const { data, error } = await supabase
         .from('declaracoes')
         .select('id, cliente_id, escritorio_id, contador_id, ano_base, status, status_documentos, tipo_resultado, valor_resultado, numero_recibo, data_transmissao, forma_tributacao, ultima_atualizacao_status, created_at, version')
         .eq('cliente_id', clienteId)
+        .order('ano_base', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
