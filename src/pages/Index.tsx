@@ -14,6 +14,7 @@ import { LandingCTA } from '@/components/landing/LandingCTA';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { Section } from '@/components/landing/LandingSection';
 import { CookieConsent } from '@/components/landing/CookieConsent';
+import { SEO } from '@/components/SEO';
 import { Badge } from '@/components/ui/badge';
 import { Zap, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';

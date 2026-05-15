@@ -80,6 +80,11 @@ const ADDONS = [
 export default function Planos() {
   return (
     <div className="landing-v2 min-h-screen overflow-x-hidden">
+      <SEO
+        title="Planos e Preços — DeclaraIR"
+        description="Plano Free e Pro a partir de R$ 29,90/mês. Compare benefícios, addons (WhatsApp, API, Whitelabel) e comece sem cartão."
+        path="/planos"
+      />
       <NavBar />
 
       {/* ── HERO ── */}
