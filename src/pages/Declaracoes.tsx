@@ -61,17 +61,22 @@ export default function Declaracoes() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // Realtime: invalida a lista a cada mudança em declaracoes do escritório
+  // Realtime: invalida a lista a cada mudança em declaracoes ou notas internas do escritório
   useEffect(() => {
     if (!escritorioId) return;
+    const invalidate = () =>
+      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista', escritorioId] });
     const channel = supabase
       .channel(`declaracoes-realtime-${escritorioId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'declaracoes', filter: `escritorio_id=eq.${escritorioId}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['declaracoes-lista', escritorioId] });
-        }
+        invalidate
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'declaracao_notas_internas', filter: `escritorio_id=eq.${escritorioId}` },
+        invalidate
       )
       .subscribe();
     return () => {
