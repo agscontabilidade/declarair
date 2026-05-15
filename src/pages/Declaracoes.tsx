@@ -61,17 +61,22 @@ export default function Declaracoes() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // Realtime: invalida a lista a cada mudança em declaracoes do escritório
+  // Realtime: invalida a lista a cada mudança em declaracoes ou notas internas do escritório
   useEffect(() => {
     if (!escritorioId) return;
+    const invalidate = () =>
+      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista', escritorioId] });
     const channel = supabase
       .channel(`declaracoes-realtime-${escritorioId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'declaracoes', filter: `escritorio_id=eq.${escritorioId}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['declaracoes-lista', escritorioId] });
-        }
+        invalidate
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'declaracao_notas_internas', filter: `escritorio_id=eq.${escritorioId}` },
+        invalidate
       )
       .subscribe();
     return () => {
@@ -155,10 +160,12 @@ export default function Declaracoes() {
 
   const filtered = declaracoes.filter((d: { status: string; clienteCpf: string; clienteNome: string }) => {
     if (statusFilter !== 'todos' && d.status !== statusFilter) return false;
-    if (search) {
-      const s = search.toLowerCase();
-      const cpfDigits = d.clienteCpf.replace(/\D/g, '');
-      if (!d.clienteNome.toLowerCase().includes(s) && !cpfDigits.includes(s.replace(/\D/g, ''))) return false;
+    const term = debouncedSearch.trim().toLowerCase();
+    if (term) {
+      const digits = term.replace(/\D/g, '');
+      const matchNome = d.clienteNome.toLowerCase().includes(term);
+      const matchCpf = digits.length > 0 && d.clienteCpf.replace(/\D/g, '').includes(digits);
+      if (!matchNome && !matchCpf) return false;
     }
     return true;
   });
