@@ -21,7 +21,7 @@ const fail = (motivo: string, extras: Record<string, unknown> = {}) =>
 
 interface Body {
   declaracao_id?: string;
-  tipo?: "declaracao" | "recibo";
+  tipo?: "declaracao" | "recibo" | "mei" | "darf";
   storage_path?: string;
   arquivo_nome?: string;
 }
