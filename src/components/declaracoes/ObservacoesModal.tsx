@@ -51,10 +51,12 @@ export function ObservacoesModal({ declaracaoId, escritorioId, clienteNome, open
         );
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Observações salvas');
-      queryClient.invalidateQueries({ queryKey: ['declaracao-nota', declaracaoId] });
-      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['declaracao-nota', declaracaoId] }),
+        queryClient.refetchQueries({ queryKey: ['declaracoes-lista'] }),
+      ]);
       onOpenChange(false);
     },
     onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao salvar')),
