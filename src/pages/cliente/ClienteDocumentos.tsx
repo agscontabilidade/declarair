@@ -130,7 +130,7 @@ export default function ClienteDocumentos() {
 
     // Garante que o upload seja vinculado a uma declaração do ano corrente.
     // Se a declaração ativa for de outro ano, busca/cria uma do ano atual.
-    let declaracaoAtiva = declaracao;
+    let declaracaoAtiva = declaracaoInicial;
     const anoAtual = new Date().getFullYear();
     if (declaracaoAtiva.ano_base !== anoAtual) {
       console.warn('[upload] declaracao ativa nao eh do ano corrente, redirecionando', {
