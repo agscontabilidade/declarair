@@ -74,15 +74,44 @@ export default function ClienteDocumentos() {
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'n/a',
     });
 
-    if (!declaracao) {
-      toast.error('Declaração não encontrada. Recarregue a página.');
-      console.warn('[upload] aborted: no declaracao');
-      return;
-    }
     if (!profile.clienteId) {
       toast.error('Sessão inválida. Faça login novamente.');
       console.warn('[upload] aborted: no clienteId in profile');
       return;
+    }
+
+    // Se não existe declaração, cria uma para o ano corrente automaticamente
+    let declaracaoInicial = declaracao;
+    if (!declaracaoInicial) {
+      console.warn('[upload] sem declaracao, tentando criar para o ano corrente');
+      const { data: cli, error: cliErr } = await supabase
+        .from('clientes')
+        .select('escritorio_id')
+        .eq('id', profile.clienteId)
+        .maybeSingle();
+      if (cliErr || !cli?.escritorio_id) {
+        console.error('[upload] nao foi possivel obter escritorio_id do cliente', cliErr);
+        toast.error('Não foi possível identificar seu escritório. Contate seu contador.');
+        return;
+      }
+      const anoAtual = new Date().getFullYear();
+      const { data: nova, error: novaErr } = await supabase
+        .from('declaracoes')
+        .insert({
+          cliente_id: profile.clienteId,
+          escritorio_id: cli.escritorio_id,
+          ano_base: anoAtual,
+          status: 'aguardando_documentos',
+        })
+        .select('id, cliente_id, escritorio_id, ano_base, status')
+        .single();
+      if (novaErr || !nova) {
+        console.error('[upload] falha ao criar declaracao inicial', novaErr);
+        toast.error('Não foi possível preparar sua declaração. Contate seu contador.');
+        return;
+      }
+      declaracaoInicial = nova as typeof declaracaoInicial;
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
     }
 
     const MAX_BYTES = 20 * 1024 * 1024; // 20MB
@@ -101,7 +130,7 @@ export default function ClienteDocumentos() {
 
     // Garante que o upload seja vinculado a uma declaração do ano corrente.
     // Se a declaração ativa for de outro ano, busca/cria uma do ano atual.
-    let declaracaoAtiva = declaracao;
+    let declaracaoAtiva = declaracaoInicial;
     const anoAtual = new Date().getFullYear();
     if (declaracaoAtiva.ano_base !== anoAtual) {
       console.warn('[upload] declaracao ativa nao eh do ano corrente, redirecionando', {
