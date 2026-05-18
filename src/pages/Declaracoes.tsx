@@ -230,79 +230,44 @@ export default function Declaracoes() {
               </div>
             ) : (
               <>
-                {/* Desktop: tabela com scroll horizontal se necessário */}
-                <div className="hidden lg:block overflow-x-auto">
-                  <Table className="min-w-[1100px]">
+                {/* Desktop: tabela condensada */}
+                <div className="hidden lg:block">
+                  <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>CPF</TableHead>
-                        <TableHead>Nome</TableHead>
+                        <TableHead>Cliente</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Ver documentos</TableHead>
-                        <TableHead>Observações</TableHead>
-                        <TableHead className="whitespace-nowrap">Última atualização</TableHead>
                         <TableHead>Resultado</TableHead>
-                        <TableHead>Anexar declaração</TableHead>
-                        <TableHead>Processamento</TableHead>
-                        <TableHead>Enviar E-mail</TableHead>
+                        <TableHead className="whitespace-nowrap">Atualizado</TableHead>
+                        <TableHead>Anexar</TableHead>
+                        <TableHead>Processo</TableHead>
+                        <TableHead className="text-right pr-4">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filtered.map((d) => {
                         const resultado = d.tipo_resultado ? RESULTADO_META[d.tipo_resultado] : null;
                         const temObs = !!d.observacoes?.trim();
+                        const dt = formatDateShort(d.ultima_atualizacao_status);
+                        const podeEnviar = !!(d.arquivo_declaracao_url && d.arquivo_recibo_url);
+                        const enviado = !!d.declaracao_enviada_em;
                         return (
                           <TableRow
                             key={d.id}
                             className="cursor-pointer hover:bg-muted/50"
                             onClick={() => navigate(`/declaracoes/${d.id}`)}
                           >
-                            <TableCell className="tabular-nums whitespace-nowrap">{maskCpf(d.clienteCpf)}</TableCell>
-                            <TableCell className="font-medium">{d.clienteNome}</TableCell>
+                            <TableCell className="py-2">
+                              <div className="font-medium leading-tight">{d.clienteNome}</div>
+                              <div className="text-xs text-muted-foreground tabular-nums mt-0.5">{maskCpf(d.clienteCpf)}</div>
+                            </TableCell>
                             <TableCell>
                               <Badge className={`${STATUS_COLORS[d.status] || ''} whitespace-nowrap`}>{STATUS_LABELS[d.status] || d.status}</Badge>
                             </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setDocsTarget({ id: d.id, nome: d.clienteNome })}
-                                className="whitespace-nowrap"
-                              >
-                                <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
-                                Documentos
-                              </Button>
-                            </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              {temObs ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
-                                  className="inline-flex items-center gap-1.5 max-w-[220px] rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100 transition-colors"
-                                  title={d.observacoes}
-                                >
-                                  <StickyNote className="h-3.5 w-3.5 shrink-0" />
-                                  <span className="truncate">{d.observacoes}</span>
-                                </button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
-                                  className="whitespace-nowrap"
-                                >
-                                  <StickyNote className="h-3.5 w-3.5 mr-1.5" />
-                                  Adicionar
-                                </Button>
-                              )}
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap text-sm">
-                              {formatDateTime(d.ultima_atualizacao_status)}
-                            </TableCell>
                             <TableCell>
                               {resultado ? (
-                                <div className="flex flex-col gap-1">
-                                  <Badge className={`${resultado.cls} whitespace-nowrap`}>{resultado.label}</Badge>
+                                <div className="flex flex-col gap-0.5">
+                                  <Badge className={`${resultado.cls} whitespace-nowrap w-fit`}>{resultado.label}</Badge>
                                   {d.valor_resultado != null && d.tipo_resultado !== 'nenhum' && (
                                     <span className="text-xs text-muted-foreground tabular-nums">
                                       {formatCurrency(Number(d.valor_resultado))}
@@ -312,6 +277,10 @@ export default function Declaracoes() {
                               ) : (
                                 <span className="text-muted-foreground text-sm">—</span>
                               )}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-sm tabular-nums">
+                              <div className="leading-tight">{dt.date}</div>
+                              <div className="text-xs text-muted-foreground">{dt.time}</div>
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               {escritorioId && (
@@ -335,22 +304,64 @@ export default function Declaracoes() {
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
                             </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              {d.arquivo_declaracao_url && d.arquivo_recibo_url && (
-                                <Button
-                                  size="sm"
-                                  variant={d.declaracao_enviada_em ? "ghost" : "default"}
-                                  className={d.declaracao_enviada_em ? "text-emerald-600 hover:text-emerald-700" : "bg-emerald-600 hover:bg-emerald-700 text-white"}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEmailTarget(d);
-                                  }}
-                                  title={d.declaracao_enviada_em ? `Enviado em ${formatDateTime(d.declaracao_enviada_em)}` : "Enviar para o cliente"}
-                                >
-                                  <Send className="h-3.5 w-3.5 mr-1.5" />
-                                  {d.declaracao_enviada_em ? 'Reenviar' : 'Enviar'}
-                                </Button>
-                              )}
+                            <TableCell onClick={(e) => e.stopPropagation()} className="text-right pr-4">
+                              <div className="inline-flex items-center gap-1">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8"
+                                      onClick={() => setDocsTarget({ id: d.id, nome: d.clienteNome })}
+                                      aria-label="Ver documentos"
+                                    >
+                                      <FolderOpen className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Ver documentos</TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className={`h-8 w-8 ${temObs ? 'text-emerald-600 hover:text-emerald-700' : ''}`}
+                                      onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
+                                      aria-label={temObs ? 'Ver observações' : 'Adicionar observação'}
+                                    >
+                                      <StickyNote className={`h-4 w-4 ${temObs ? 'fill-emerald-100' : ''}`} />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-[260px]">
+                                    {temObs ? d.observacoes : 'Adicionar observação'}
+                                  </TooltipContent>
+                                </Tooltip>
+
+                                {podeEnviar ? (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant={enviado ? 'ghost' : 'default'}
+                                        className={`h-8 w-8 ${enviado ? 'text-emerald-600 hover:text-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setEmailTarget(d);
+                                        }}
+                                        aria-label={enviado ? 'Reenviar e-mail' : 'Enviar e-mail'}
+                                      >
+                                        <Send className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {enviado ? `Reenviar (enviado em ${formatDateTime(d.declaracao_enviada_em)})` : 'Enviar declaração ao cliente'}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                ) : (
+                                  <span className="inline-block h-8 w-8" aria-hidden />
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
