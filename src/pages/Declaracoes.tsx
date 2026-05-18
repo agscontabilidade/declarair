@@ -21,6 +21,15 @@ function formatDateTime(value: string | null | undefined) {
   if (!value) return '—';
   return new Date(value).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
+
+function formatDateShort(value: string | null | undefined) {
+  if (!value) return { date: '—', time: '' };
+  const d = new Date(value);
+  return {
+    date: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' }),
+    time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+  };
+}
 import { AnexarDeclaracaoButton } from '@/components/declaracoes/AnexarDeclaracaoButton';
 import { ProcessamentoSwitch, type StatusProcessamentoRfb } from '@/components/declaracoes/ProcessamentoSwitch';
 import { usePermissoes } from '@/hooks/usePermissoes';
