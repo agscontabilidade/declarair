@@ -2,10 +2,12 @@ import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDebouncedInvalidate } from '@/hooks/useDebouncedInvalidate';
 
 export function useDeclaracao(declaracaoId: string | undefined) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
+  const debouncedInvalidate = useDebouncedInvalidate(300);
 
   // Lista explícita: omite colunas JSONB pesadas (declaracao_extracao, recibo_extracao,
   // mei_extracao, darf_extracao) que não são consumidas em nenhum componente.
@@ -43,14 +45,14 @@ export function useDeclaracao(declaracaoId: string | undefined) {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'declaracoes', filter: `id=eq.${declaracaoId}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
+          debouncedInvalidate(['declaracao', declaracaoId]);
         },
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [declaracaoId, queryClient]);
+  }, [declaracaoId, debouncedInvalidate]);
 
   const checklist = useQuery({
     queryKey: ['declaracao-checklist', declaracaoId],
