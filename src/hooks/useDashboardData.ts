@@ -120,7 +120,7 @@ export function useDashboardData(anoBase: number) {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [escritorioId, anoBase, queryClient]);
+  }, [escritorioId, anoBase, debouncedInvalidate]);
 
   return { kpis, declaracoes };
 }
