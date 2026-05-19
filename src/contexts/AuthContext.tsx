@@ -151,9 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 1. Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        console.log('[AuthContext] Auth event:', event);
-
-        // Skip INITIAL_SESSION — we handle it in initializeAuth with server validation
+        // Skip INITIAL_SESSION — we handle it in initializeAuth
         if (!initialized) return;
 
         setSession(newSession);
@@ -180,17 +178,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // Validate the session is actually valid server-side
-        const { data: { user: verifiedUser }, error } = await supabase.auth.getUser();
-        if (error || !verifiedUser) {
-          console.warn('[AuthContext] Invalid local session cleared');
-          await clearInvalidSession();
-          return;
-        }
-
+        // Trust the local session for the first paint — load profile immediately.
+        // Validate against the server in the background; if invalid, sign out then.
         setSession(currentSession);
-        setUser(verifiedUser);
-        await loadProfile(verifiedUser);
+        setUser(currentSession.user);
+        await loadProfile(currentSession.user);
+
+        // Fire-and-forget server validation (non-blocking)
+        supabase.auth.getUser().then(({ data: { user: verifiedUser }, error }) => {
+          if (error || !verifiedUser) {
+            console.warn('[AuthContext] Invalid local session cleared (background)');
+            clearInvalidSession();
+          }
+        }).catch(() => { /* ignore network errors here */ });
       } catch (e) {
         console.error('[AuthContext] Init error:', e);
         resetAuthState();
