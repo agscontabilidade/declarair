@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,10 +32,14 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
 
   const displayItems = optimisticItems ?? items;
 
-  const grouped = columns.reduce((acc, col) => {
-    acc[col.status] = displayItems.filter(i => i.status === col.status);
+  const grouped = useMemo(() => {
+    const acc: Record<string, DeclaracaoKanban[]> = {};
+    for (const col of columns) acc[col.status] = [];
+    for (const item of displayItems) {
+      if (acc[item.status]) acc[item.status].push(item);
+    }
     return acc;
-  }, {} as Record<string, DeclaracaoKanban[]>);
+  }, [displayItems]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const item = displayItems.find(i => i.id === event.active.id);
