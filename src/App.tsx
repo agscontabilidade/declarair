@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,70 +11,82 @@ import { BillingGate } from "@/components/billing/BillingGate";
 import { useBillingStatus } from "@/hooks/useBillingStatus";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import RecuperarSenha from "./pages/RecuperarSenha";
-import RedefinirSenha from "./pages/RedefinirSenha";
-import Dashboard from "./pages/Dashboard";
-import Clientes from "./pages/Clientes";
-import Cobrancas from "./pages/Cobrancas";
-
-import Configuracoes from "./pages/Configuracoes";
-import Declaracoes from "./pages/Declaracoes";
-// Capa removed
-import Perfil from "./pages/Perfil";
-import Planos from "./pages/Planos";
-import Checkout from "./pages/Checkout";
-import Upgrade from "./pages/Upgrade";
-import Cadastro from "./pages/Cadastro";
-import Onboarding from "./pages/Onboarding";
-// MalhaFina removed
-import Drive from "./pages/Drive";
-import Addons from "./pages/Addons";
-// WhatsApp page removed (moved to settings)
-import ClienteLogin from "./pages/cliente/ClienteLogin";
-import ConviteCliente from "./pages/cliente/ConviteCliente";
-import ClienteDashboard from "./pages/cliente/ClienteDashboard";
-import ClienteFormulario from "./pages/cliente/ClienteFormulario";
-import ClienteDocumentos from "./pages/cliente/ClienteDocumentos";
-import ClientePerfil from "./pages/ClientePerfil";
-import DeclaracaoDetalhe from "./pages/DeclaracaoDetalhe";
-import ConviteColaborador from "./pages/ConviteColaborador";
-import ConfiguracoesAPI from "./pages/ConfiguracoesAPI";
-import Relatorios from "./pages/Relatorios";
-import WebhooksPage from "./pages/Webhooks";
-import CadastroCliente from "./pages/cliente/CadastroCliente";
-import NotFound from "./pages/NotFound";
-import AdminLogin from "./pages/admin/AdminLogin";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminEscritorios from "./pages/admin/AdminEscritorios";
-import AdminUsuarios from "./pages/admin/AdminUsuarios";
-import AdminAssinaturas from "./pages/admin/AdminAssinaturas";
-import AdminBugReports from "./pages/admin/AdminBugReports";
-import AdminLogs from "./pages/admin/AdminLogs";
-import AdminEmails from "./pages/admin/AdminEmails";
-import AdminWebhooks from "./pages/admin/AdminWebhooks";
-import AdminSettings from "./pages/admin/AdminSettings";
-import TermosDeUso from "./pages/TermosDeUso";
-import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
-import PoliticaLGPD from "./pages/PoliticaLGPD";
-import Unsubscribe from "./pages/Unsubscribe";
-import SobreNos from "./pages/SobreNos";
+// Eager: landing inicial (rota /) — evita Suspense fallback no primeiro paint público
 import LandingV2 from "./pages/LandingV2";
 
-const queryClient = new QueryClient();
+// Lazy: todas as demais páginas
+const Index = lazy(() => import("./pages/Index"));
+const Login = lazy(() => import("./pages/Login"));
+const RecuperarSenha = lazy(() => import("./pages/RecuperarSenha"));
+const RedefinirSenha = lazy(() => import("./pages/RedefinirSenha"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Clientes = lazy(() => import("./pages/Clientes"));
+const Cobrancas = lazy(() => import("./pages/Cobrancas"));
+const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const Declaracoes = lazy(() => import("./pages/Declaracoes"));
+const Perfil = lazy(() => import("./pages/Perfil"));
+const Planos = lazy(() => import("./pages/Planos"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Upgrade = lazy(() => import("./pages/Upgrade"));
+const Cadastro = lazy(() => import("./pages/Cadastro"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Drive = lazy(() => import("./pages/Drive"));
+const Addons = lazy(() => import("./pages/Addons"));
+const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
+const ConviteCliente = lazy(() => import("./pages/cliente/ConviteCliente"));
+const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
+const ClienteFormulario = lazy(() => import("./pages/cliente/ClienteFormulario"));
+const ClienteDocumentos = lazy(() => import("./pages/cliente/ClienteDocumentos"));
+const ClientePerfil = lazy(() => import("./pages/ClientePerfil"));
+const DeclaracaoDetalhe = lazy(() => import("./pages/DeclaracaoDetalhe"));
+const ConviteColaborador = lazy(() => import("./pages/ConviteColaborador"));
+const ConfiguracoesAPI = lazy(() => import("./pages/ConfiguracoesAPI"));
+const Relatorios = lazy(() => import("./pages/Relatorios"));
+const WebhooksPage = lazy(() => import("./pages/Webhooks"));
+const CadastroCliente = lazy(() => import("./pages/cliente/CadastroCliente"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminEscritorios = lazy(() => import("./pages/admin/AdminEscritorios"));
+const AdminUsuarios = lazy(() => import("./pages/admin/AdminUsuarios"));
+const AdminAssinaturas = lazy(() => import("./pages/admin/AdminAssinaturas"));
+const AdminBugReports = lazy(() => import("./pages/admin/AdminBugReports"));
+const AdminLogs = lazy(() => import("./pages/admin/AdminLogs"));
+const AdminEmails = lazy(() => import("./pages/admin/AdminEmails"));
+const AdminWebhooks = lazy(() => import("./pages/admin/AdminWebhooks"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
+const PoliticaDePrivacidade = lazy(() => import("./pages/PoliticaDePrivacidade"));
+const PoliticaLGPD = lazy(() => import("./pages/PoliticaLGPD"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const SobreNos = lazy(() => import("./pages/SobreNos"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: 'always',
+      retry: 1,
+    },
+  },
+});
+
+function FullscreenSpinner() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+    </div>
+  );
+}
 
 function RootRedirect() {
   const { session, userType, loading: authLoading } = useAuth();
   const { isBlocked, loading: billingLoading } = useBillingStatus();
 
   if (authLoading || (session && userType === 'contador' && billingLoading)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+    return <FullscreenSpinner />;
   }
 
   if (!session) return <LandingV2 />;
@@ -99,6 +112,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <ThemeProvider>
+            <Suspense fallback={<FullscreenSpinner />}>
             <Routes>
               <Route path="/" element={<RootRedirect />} />
               <Route path="/login" element={<Login />} />
@@ -138,8 +152,6 @@ const App = () => (
               <Route path="/clientes" element={<ProtectedRoute allowedType="contador"><BillingGate><Clientes /></BillingGate></ProtectedRoute>} />
               <Route path="/cobrancas" element={<ProtectedRoute allowedType="contador"><BillingGate><Cobrancas /></BillingGate></ProtectedRoute>} />
               <Route path="/mensagens" element={<Navigate to="/configuracoes?tab=mensagens" replace />} />
-              {/* Capa removed */}
-              {/* MalhaFina route removed */}
               <Route path="/drive" element={<ProtectedRoute allowedType="contador"><BillingGate><Drive /></BillingGate></ProtectedRoute>} />
               <Route path="/addons" element={<ProtectedRoute allowedType="contador"><BillingGate><Addons /></BillingGate></ProtectedRoute>} />
               <Route path="/whatsapp" element={<Navigate to="/configuracoes?tab=mensagens" replace />} />
@@ -161,6 +173,7 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
             </ThemeProvider>
           </AuthProvider>
         </BrowserRouter>

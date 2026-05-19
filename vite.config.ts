@@ -18,4 +18,21 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    target: "es2020",
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "supabase": ["@supabase/supabase-js"],
+          "query": ["@tanstack/react-query"],
+          "motion": ["framer-motion"],
+          "charts": ["recharts"],
+          "pdf": ["react-pdf", "jspdf", "pdf-lib"],
+          "stripe": ["@stripe/stripe-js", "@stripe/react-stripe-js"],
+        },
+      },
+    },
+  },
 }));
