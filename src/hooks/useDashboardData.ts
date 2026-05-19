@@ -115,8 +115,8 @@ export function useDashboardData(anoBase: number) {
     const channel = supabase
       .channel('dashboard-declaracoes-rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'declaracoes', filter: `escritorio_id=eq.${escritorioId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: ['dashboard-kpis', escritorioId, anoBase] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes', escritorioId, anoBase] });
+        debouncedInvalidate(['dashboard-kpis', escritorioId, anoBase]);
+        debouncedInvalidate(['dashboard-declaracoes', escritorioId, anoBase]);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
