@@ -7,12 +7,25 @@ export function useDeclaracao(declaracaoId: string | undefined) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
 
+  // Lista explícita: omite colunas JSONB pesadas (declaracao_extracao, recibo_extracao,
+  // mei_extracao, darf_extracao) que não são consumidas em nenhum componente.
+  const DECLARACAO_COLUMNS =
+    'id, cliente_id, escritorio_id, contador_id, ano_base, status, tipo_resultado, ' +
+    'valor_resultado, numero_recibo, data_transmissao, observacoes_internas, forma_tributacao, ' +
+    'ultima_atualizacao_status, created_at, version, status_documentos, em_processamento, ' +
+    'status_processamento_rfb, arquivo_declaracao_nome, arquivo_declaracao_url, ' +
+    'arquivo_declaracao_uploaded_at, arquivo_recibo_url, arquivo_recibo_nome, ' +
+    'arquivo_recibo_uploaded_at, recibo_validado_em, declaracao_validada_em, ' +
+    'arquivo_analise_caixa_url, arquivo_analise_caixa_uploaded_at, declaracao_enviada_em, ' +
+    'arquivo_mei_url, arquivo_mei_nome, arquivo_mei_uploaded_at, mei_validado_em, ' +
+    'arquivo_darf_url, arquivo_darf_nome, arquivo_darf_uploaded_at, darf_validado_em';
+
   const declaracao = useQuery({
     queryKey: ['declaracao', declaracaoId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('declaracoes')
-        .select('*, clientes(id, nome, cpf, email), usuarios!declaracoes_contador_id_fkey(nome)')
+        .select(`${DECLARACAO_COLUMNS}, clientes(id, nome, cpf, email), usuarios!declaracoes_contador_id_fkey(nome)`)
         .eq('id', declaracaoId!)
         .single();
       if (error) throw error;
