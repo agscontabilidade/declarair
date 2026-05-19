@@ -11,10 +11,20 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { convite_id, user_id, email, nome, escritorio_id, papel } = await req.json();
+    // Only convite_id + senha are accepted from the client.
+    // Everything else (escritorio_id, email, nome, papel, permissoes) is derived
+    // exclusively from the invite record, eliminating tenant-hijack vectors.
+    const { convite_id, senha } = await req.json();
 
-    if (!convite_id || !user_id || !email || !nome || !escritorio_id) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+    if (!convite_id || !senha) {
+      return new Response(JSON.stringify({ error: 'convite_id e senha são obrigatórios' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (typeof senha !== 'string' || senha.length < 6) {
+      return new Response(JSON.stringify({ error: 'Senha deve ter no mínimo 6 caracteres' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -25,7 +35,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Verify the invite is still valid
+    // 1. Validate invite
     const { data: convite, error: conviteError } = await supabaseAdmin
       .from('colaborador_convites')
       .select('*')
@@ -47,7 +57,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create usuario record
+    // 2. Derive ALL sensitive fields from the invite record
+    const escritorio_id = convite.escritorio_id as string;
+    const email = convite.email as string;
+    const nome = convite.nome as string;
+    const papel = (convite.papel as string) || 'colaborador';
+
+    // 3. Create auth user with admin API (auto-confirmed, like register-from-invite)
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: senha,
+      email_confirm: true,
+      user_metadata: { nome, tipo_usuario: 'contador' },
+    });
+
+    if (authError || !authData.user) {
+      console.error('[accept-collaborator-invite] Auth error:', authError);
+      const msg = authError?.message || 'Erro ao criar conta';
+      return new Response(JSON.stringify({ error: msg }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const user_id = authData.user.id;
+
+    // 4. Create usuario record
     const { error: usuarioError } = await supabaseAdmin
       .from('usuarios')
       .insert({
@@ -55,72 +90,68 @@ Deno.serve(async (req) => {
         email,
         nome,
         escritorio_id,
-        papel: papel || 'colaborador',
+        papel,
         ativo: true,
       });
 
     if (usuarioError) {
-      console.error('Error creating usuario:', usuarioError);
+      // Rollback the auth user so the invite can be retried
+      await supabaseAdmin.auth.admin.deleteUser(user_id);
+      console.error('[accept-collaborator-invite] usuarios error:', usuarioError);
       return new Response(JSON.stringify({ error: 'Erro ao criar usuário: ' + usuarioError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Add user role
+    // 5. Add user role
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .insert({
-        user_id,
-        role: 'colaborador',
-      });
+      .insert({ user_id, role: 'colaborador' });
 
     if (roleError) {
-      console.error('Error adding role:', roleError);
+      console.error('[accept-collaborator-invite] role error:', roleError);
     }
 
-    // Assign permissions if present in the invite
+    // 6. Assign permissions if present
     if (convite.permissoes && Array.isArray(convite.permissoes) && convite.permissoes.length > 0) {
-      console.log('Assigning permissions from invite:', convite.permissoes);
       const permissoesToInsert = convite.permissoes.map((pId: string) => ({
         user_id,
         permissao_id: pId,
-        escritorio_id
+        escritorio_id,
       }));
 
       const { error: permError } = await supabaseAdmin
         .from('usuario_permissoes')
         .insert(permissoesToInsert);
-      
+
       if (permError) {
-        console.error('Error assigning permissions:', permError);
+        console.error('[accept-collaborator-invite] permissions error:', permError);
       }
     }
 
-    // Mark invite as used
+    // 7. Mark invite as used
     await supabaseAdmin
       .from('colaborador_convites')
-      .update({
-        usado: true,
-        usado_em: new Date().toISOString(),
-      })
+      .update({ usado: true, usado_em: new Date().toISOString() })
       .eq('id', convite_id);
 
-    // Audit log
+    // 8. Audit log
     await supabaseAdmin.rpc('registrar_log_auditoria', {
       p_tipo: 'convite_aceito',
       p_evento: 'colaborador_registrado',
       p_dados: { user_id, escritorio_id, convite_id, email },
       p_status: 'sucesso',
-      p_mensagem: `${nome} aceitou o convite de colaborador.`
+      p_mensagem: `${nome} aceitou o convite de colaborador.`,
     });
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, user_id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Erro desconhecido';
+    console.error('[accept-collaborator-invite] Error:', message);
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

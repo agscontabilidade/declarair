@@ -245,12 +245,13 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
     try {
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
+      if (!token) throw new Error('Sessão expirada. Faça login novamente.');
       const URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ia-fiscal`;
       const resp = await fetch(URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ 
           declaracao_id: declaracaoId, 

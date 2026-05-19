@@ -97,38 +97,31 @@ export default function ConviteColaborador() {
     setAceitando(true);
 
     try {
-      // 1. Create auth account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: convite.email,
-        password: senha,
-        options: {
-          data: {
-            nome: convite.nome,
-            tipo_usuario: 'contador',
-          },
-        },
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Erro ao criar conta');
-
-      // 2. Use RPC to create usuario + mark invite as used (needs service role)
-      // Since we can't insert into usuarios directly (RLS), we'll use supabase.functions
+      // Server-side flow: edge function creates auth user + usuario + roles atomically.
+      // Email is auto-confirmed (invite is the verification step).
       const { error: fnError } = await supabase.functions.invoke('accept-collaborator-invite', {
         body: {
           convite_id: convite.id,
-          user_id: authData.user.id,
-          email: convite.email,
-          nome: convite.nome,
-          escritorio_id: convite.escritorio_id,
-          papel: convite.papel,
+          senha,
         },
       });
 
       if (fnError) throw fnError;
 
-      toast.success('Conta criada com sucesso! Verifique seu email para confirmar.');
-      setTimeout(() => navigate('/login'), 3000);
+      // Auto sign-in for immediate access
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: convite.email,
+        password: senha,
+      });
+
+      if (signInError) {
+        toast.success('Conta criada! Faça login para continuar.');
+        setTimeout(() => navigate('/login'), 1500);
+        return;
+      }
+
+      toast.success('Conta criada com sucesso!');
+      setTimeout(() => navigate('/dashboard'), 1000);
     } catch (error: unknown) {
       console.error('Erro ao aceitar convite:', error);
       const msg = getErrorMessage(error);
