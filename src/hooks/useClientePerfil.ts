@@ -43,7 +43,7 @@ export function useClientePerfil(clienteId: string | undefined) {
         .eq('cliente_id', clienteId!)
         .order('ano_base', { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as import('@/types/domain').DeclaracaoComContador[];
     },
     enabled: !!clienteId,
   });
