@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatCPF, formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { DocumentosDeclaracaoModal } from '@/components/declaracoes/DocumentosDeclaracaoModal';
 import { ObservacoesModal } from '@/components/declaracoes/ObservacoesModal';
+import { useDebouncedInvalidate } from '@/hooks/useDebouncedInvalidate';
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) return '—';
