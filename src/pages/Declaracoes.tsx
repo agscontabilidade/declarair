@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatCPF, formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { DocumentosDeclaracaoModal } from '@/components/declaracoes/DocumentosDeclaracaoModal';
 import { ObservacoesModal } from '@/components/declaracoes/ObservacoesModal';
+import { useDebouncedInvalidate } from '@/hooks/useDebouncedInvalidate';
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) return '—';
@@ -54,6 +55,7 @@ export default function Declaracoes() {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const debouncedInvalidate = useDebouncedInvalidate(300);
   const escritorioId = profile?.escritorioId;
 
   const [anoBase, setAnoBase] = useState('2026');
@@ -74,8 +76,7 @@ export default function Declaracoes() {
   // Realtime: invalida a lista a cada mudança em declaracoes ou notas internas do escritório
   useEffect(() => {
     if (!escritorioId) return;
-    const invalidate = () =>
-      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista', escritorioId] });
+    const invalidate = () => debouncedInvalidate(['declaracoes-lista', escritorioId]);
     const channel = supabase
       .channel(`declaracoes-realtime-${escritorioId}`)
       .on(
@@ -92,7 +93,7 @@ export default function Declaracoes() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [escritorioId, queryClient]);
+  }, [escritorioId, debouncedInvalidate]);
 
   interface DeclaracaoListaItem {
     id: string;

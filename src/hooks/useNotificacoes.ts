@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
+import { useDebouncedInvalidate } from '@/hooks/useDebouncedInvalidate';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Notificacao = Tables<'notificacoes'>;
@@ -9,6 +10,7 @@ type Notificacao = Tables<'notificacoes'>;
 export function useNotificacoes() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
+  const debouncedInvalidate = useDebouncedInvalidate(300);
   const escritorioId = profile.escritorioId;
 
   const query = useQuery({
@@ -38,11 +40,11 @@ export function useNotificacoes() {
         table: 'notificacoes',
         filter: `escritorio_id=eq.${escritorioId}`,
       }, () => {
-        queryClient.invalidateQueries({ queryKey: ['notificacoes'] });
+        debouncedInvalidate(['notificacoes']);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [escritorioId, queryClient]);
+  }, [escritorioId, debouncedInvalidate]);
 
   const naoLidas = (query.data || []).filter((n) => !n.lida).length;
 

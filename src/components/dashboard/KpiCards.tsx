@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Users, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,7 +17,7 @@ const kpiConfig = [
   { key: 'transmitidas' as const, label: 'Transmitidas', icon: CheckCircle, color: 'text-success' },
 ];
 
-export function KpiCards({ data, isLoading }: { data?: KpiData; isLoading: boolean }) {
+export const KpiCards = memo(function KpiCards({ data, isLoading }: { data?: KpiData; isLoading: boolean }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {kpiConfig.map((kpi) => (
@@ -38,4 +39,4 @@ export function KpiCards({ data, isLoading }: { data?: KpiData; isLoading: boole
       ))}
     </div>
   );
-}
+});
