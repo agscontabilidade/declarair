@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebouncedInvalidate } from '@/hooks/useDebouncedInvalidate';
@@ -31,7 +31,6 @@ interface DeclaracaoRow {
 
 export function useDashboardData(anoBase: number) {
   const { profile } = useAuth();
-  const queryClient = useQueryClient();
   const debouncedInvalidate = useDebouncedInvalidate(300);
   const escritorioId = profile.escritorioId;
 
