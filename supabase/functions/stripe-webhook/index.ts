@@ -206,11 +206,21 @@ Deno.serve(async (req) => {
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
 
+    if (!WEBHOOK_SECRET) {
+      console.error("STRIPE_WEBHOOK_SECRET not configured — rejecting webhook");
+      return new Response(JSON.stringify({ error: "Webhook secret not configured" }), { status: 500 });
+    }
+    if (!signature) {
+      return new Response(JSON.stringify({ error: "Missing stripe-signature header" }), { status: 400 });
+    }
+
     let event: Stripe.Event;
-    if (WEBHOOK_SECRET && signature) {
+    try {
       event = await stripe.webhooks.constructEventAsync(body, signature, WEBHOOK_SECRET);
-    } else {
-      event = JSON.parse(body) as Stripe.Event;
+    } catch (sigErr) {
+      const msg = sigErr instanceof Error ? sigErr.message : String(sigErr);
+      console.error("Invalid Stripe signature:", msg);
+      return new Response(JSON.stringify({ error: `Invalid signature: ${msg}` }), { status: 400 });
     }
 
     // Check for idempotency
