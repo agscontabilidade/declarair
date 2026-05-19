@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Brain, Sparkles, ShieldAlert, Receipt, Loader2, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { useBillingStatus } from '@/hooks/useBillingStatus';
 import { getErrorMessage } from '@/lib/errors';
 import { VisualIAFiscal } from './VisualIAFiscal';
@@ -32,12 +33,16 @@ export function SecaoIAFiscal({ declaracaoId }: Props) {
     abortRef.current = new AbortController();
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('Sessão expirada. Faça login novamente.');
+
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ia-fiscal`;
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ declaracao_id: declaracaoId, tipo }),
         signal: abortRef.current.signal,
