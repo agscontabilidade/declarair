@@ -17,6 +17,8 @@ interface Props {
   arquivoDeclaracaoNome: string | null;
   arquivoReciboUrl: string | null;
   arquivoReciboNome: string | null;
+  arquivoDarfUrl?: string | null;
+  arquivoDarfNome?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
@@ -31,6 +33,8 @@ export function EnviarDeclaracaoEmailModal({
   arquivoDeclaracaoNome,
   arquivoReciboUrl,
   arquivoReciboNome,
+  arquivoDarfUrl,
+  arquivoDarfNome,
   open,
   onOpenChange,
   onSuccess
@@ -47,10 +51,13 @@ export function EnviarDeclaracaoEmailModal({
       const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaValor);
       cobrancaLinha = `\n\nO valor da declaração é: ${valorFmt}.`;
     }
+    const anexosTxt = arquivoDarfUrl
+      ? 'a cópia da declaração, o respectivo recibo de entrega e o DARF para pagamento'
+      : 'a cópia da declaração e o respectivo recibo de entrega';
     setMensagem(
-      `Prezado(a) ${clienteNome},\n\nSua Declaração de Imposto de Renda ${anoBase} foi transmitida com sucesso.\n\nSeguem em anexo a cópia da declaração e o respectivo recibo de entrega.${cobrancaLinha}\n\nFicamos à disposição para qualquer dúvida.`
+      `Prezado(a) ${clienteNome},\n\nSua Declaração de Imposto de Renda ${anoBase} foi transmitida com sucesso.\n\nSeguem em anexo ${anexosTxt}.${cobrancaLinha}\n\nFicamos à disposição para qualquer dúvida.`
     );
-  }, [clienteNome, anoBase, cobrancaValor]);
+  }, [clienteNome, anoBase, cobrancaValor, arquivoDarfUrl]);
 
   useEffect(() => {
     if (!open || !declaracaoId) return;
@@ -99,6 +106,12 @@ export function EnviarDeclaracaoEmailModal({
         attachmentPaths.push({
           filename: arquivoReciboNome || `Recibo_IRPF_${anoBase}.pdf`,
           path: arquivoReciboUrl
+        });
+      }
+      if (arquivoDarfUrl) {
+        attachmentPaths.push({
+          filename: arquivoDarfNome || `DARF_IRPF_${anoBase}.pdf`,
+          path: arquivoDarfUrl
         });
       }
 
@@ -175,6 +188,12 @@ export function EnviarDeclaracaoEmailModal({
                 <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded border border-dashed">
                   <Receipt className="h-4 w-4 text-primary" />
                   <span className="truncate flex-1">{arquivoReciboNome || 'Recibo.pdf'}</span>
+                </div>
+              )}
+              {arquivoDarfUrl && (
+                <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded border border-dashed">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <span className="truncate flex-1">{arquivoDarfNome || 'DARF.pdf'}</span>
                 </div>
               )}
             </div>
