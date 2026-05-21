@@ -106,6 +106,8 @@ export default function Declaracoes() {
     arquivo_declaracao_nome: string | null;
     arquivo_recibo_url: string | null;
     arquivo_recibo_nome: string | null;
+    arquivo_darf_url: string | null;
+    arquivo_darf_nome: string | null;
     recibo_validado_em: string | null;
     em_processamento: boolean | null;
     status_processamento_rfb: StatusProcessamentoRfb | null;
@@ -506,6 +508,8 @@ export default function Declaracoes() {
           arquivoDeclaracaoNome={emailTarget.arquivo_declaracao_nome}
           arquivoReciboUrl={emailTarget.arquivo_recibo_url}
           arquivoReciboNome={emailTarget.arquivo_recibo_nome}
+          arquivoDarfUrl={emailTarget.arquivo_darf_url}
+          arquivoDarfNome={emailTarget.arquivo_darf_nome}
           open={!!emailTarget}
           onOpenChange={(o) => !o && setEmailTarget(null)}
           onSuccess={() => {
