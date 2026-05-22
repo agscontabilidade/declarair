@@ -257,10 +257,33 @@ export function EnviarDeclaracaoEmailModal({
             <Textarea
               id="mensagem"
               value={mensagem}
-              onChange={(e) => setMensagem(e.target.value)}
+              onChange={(e) => {
+                setMensagem(e.target.value);
+                setMensagemPersonalizada(true);
+              }}
               placeholder="Digite a mensagem que será enviada no corpo do e-mail..."
               className="min-h-[150px] resize-none"
             />
+            <div className="flex items-center justify-between">
+              {ultimaMensagemCarregada ? (
+                <p className="text-xs text-muted-foreground">
+                  Carregada a última mensagem enviada.
+                </p>
+              ) : <span />}
+              {mensagemPersonalizada && (
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => {
+                    setMensagemPersonalizada(false);
+                    setUltimaMensagemCarregada(false);
+                  }}
+                  disabled={loading}
+                >
+                  Restaurar mensagem padrão
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
