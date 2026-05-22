@@ -114,6 +114,17 @@ export function EnviarDeclaracaoEmailModal({
       return;
     }
 
+    const ccList = parseEmails(emailsCopia);
+    const invalido = ccList.find((e) => !EMAIL_REGEX.test(e));
+    if (invalido) {
+      toast.error(`E-mail de cópia inválido: ${invalido}`);
+      return;
+    }
+    if (ccList.length > MAX_CC) {
+      toast.error(`Máximo de ${MAX_CC} e-mails em cópia.`);
+      return;
+    }
+
     setLoading(true);
     try {
       const attachmentPaths = [];
@@ -136,16 +147,18 @@ export function EnviarDeclaracaoEmailModal({
         });
       }
 
+      const templateData = {
+        nomeCliente: clienteNome,
+        nomeEscritorio: nomeEscritorio,
+        anoBase: String(anoBase),
+        mensagemPersonalizada: mensagem
+      };
+
       const { data, error } = await supabase.functions.invoke('send-transactional-email', {
         body: {
           templateName: 'envio-manual-declaracao',
           recipientEmail: clienteEmail,
-          templateData: {
-            nomeCliente: clienteNome,
-            nomeEscritorio: nomeEscritorio,
-            anoBase: String(anoBase),
-            mensagemPersonalizada: mensagem
-          },
+          templateData,
           attachmentPaths
         }
       });
@@ -154,7 +167,35 @@ export function EnviarDeclaracaoEmailModal({
       if (data?.error) throw new Error(data.error);
 
       toast.success('E-mail enviado com sucesso para a fila de processamento.');
-      
+
+      // Envia cópias em paralelo (não bloqueia sucesso principal)
+      if (ccList.length > 0) {
+        const results = await Promise.allSettled(
+          ccList.map((email) =>
+            supabase.functions.invoke('send-transactional-email', {
+              body: {
+                templateName: 'envio-manual-declaracao',
+                recipientEmail: email,
+                templateData,
+                attachmentPaths
+              }
+            }).then((r) => {
+              if (r.error) throw r.error;
+              if (r.data?.error) throw new Error(r.data.error);
+              return r;
+            })
+          )
+        );
+        const falhas = results
+          .map((r, i) => (r.status === 'rejected' ? ccList[i] : null))
+          .filter((e): e is string => !!e);
+        if (falhas.length > 0) {
+          toast.warning(`Falha ao enviar cópia para: ${falhas.join(', ')}`);
+        } else {
+          toast.success(`Cópia enviada para ${ccList.length} e-mail(s).`);
+        }
+      }
+
       // Registrar que a declaração foi enviada
       await supabase
         .from('declaracoes')
