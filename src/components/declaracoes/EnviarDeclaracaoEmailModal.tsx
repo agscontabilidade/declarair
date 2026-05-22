@@ -218,10 +218,14 @@ export function EnviarDeclaracaoEmailModal({
         }
       }
 
-      // Registrar que a declaração foi enviada
+      // Registrar que a declaração foi enviada + guarda a mensagem para próxima vez
       await supabase
         .from('declaracoes')
-        .update({ declaracao_enviada_em: new Date().toISOString() })
+        .update({
+          declaracao_enviada_em: new Date().toISOString(),
+          ultima_mensagem_email: mensagem,
+          ultima_mensagem_email_em: new Date().toISOString(),
+        })
         .eq('id', declaracaoId);
 
       onOpenChange(false);
