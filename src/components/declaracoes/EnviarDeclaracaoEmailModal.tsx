@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Mail, Loader2, FileText, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +45,26 @@ export function EnviarDeclaracaoEmailModal({
   const [nomeEscritorio, setNomeEscritorio] = useState('Seu Contador');
   const [mensagem, setMensagem] = useState('');
   const [cobrancaValor, setCobrancaValor] = useState<number | null>(null);
+  const [emailsCopia, setEmailsCopia] = useState('');
+
+  const MAX_CC = 5;
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function parseEmails(raw: string): string[] {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    const clientLower = (clienteEmail || '').toLowerCase();
+    raw.split(/[,;\s]+/).forEach((e) => {
+      const t = e.trim();
+      if (!t) return;
+      const k = t.toLowerCase();
+      if (k === clientLower) return;
+      if (seen.has(k)) return;
+      seen.add(k);
+      out.push(t);
+    });
+    return out;
+  }
 
   useEffect(() => {
     let cobrancaLinha = '';
@@ -93,6 +114,17 @@ export function EnviarDeclaracaoEmailModal({
       return;
     }
 
+    const ccList = parseEmails(emailsCopia);
+    const invalido = ccList.find((e) => !EMAIL_REGEX.test(e));
+    if (invalido) {
+      toast.error(`E-mail de cópia inválido: ${invalido}`);
+      return;
+    }
+    if (ccList.length > MAX_CC) {
+      toast.error(`Máximo de ${MAX_CC} e-mails em cópia.`);
+      return;
+    }
+
     setLoading(true);
     try {
       const attachmentPaths = [];
@@ -115,16 +147,18 @@ export function EnviarDeclaracaoEmailModal({
         });
       }
 
+      const templateData = {
+        nomeCliente: clienteNome,
+        nomeEscritorio: nomeEscritorio,
+        anoBase: String(anoBase),
+        mensagemPersonalizada: mensagem
+      };
+
       const { data, error } = await supabase.functions.invoke('send-transactional-email', {
         body: {
           templateName: 'envio-manual-declaracao',
           recipientEmail: clienteEmail,
-          templateData: {
-            nomeCliente: clienteNome,
-            nomeEscritorio: nomeEscritorio,
-            anoBase: String(anoBase),
-            mensagemPersonalizada: mensagem
-          },
+          templateData,
           attachmentPaths
         }
       });
@@ -133,7 +167,35 @@ export function EnviarDeclaracaoEmailModal({
       if (data?.error) throw new Error(data.error);
 
       toast.success('E-mail enviado com sucesso para a fila de processamento.');
-      
+
+      // Envia cópias em paralelo (não bloqueia sucesso principal)
+      if (ccList.length > 0) {
+        const results = await Promise.allSettled(
+          ccList.map((email) =>
+            supabase.functions.invoke('send-transactional-email', {
+              body: {
+                templateName: 'envio-manual-declaracao',
+                recipientEmail: email,
+                templateData,
+                attachmentPaths
+              }
+            }).then((r) => {
+              if (r.error) throw r.error;
+              if (r.data?.error) throw new Error(r.data.error);
+              return r;
+            })
+          )
+        );
+        const falhas = results
+          .map((r, i) => (r.status === 'rejected' ? ccList[i] : null))
+          .filter((e): e is string => !!e);
+        if (falhas.length > 0) {
+          toast.warning(`Falha ao enviar cópia para: ${falhas.join(', ')}`);
+        } else {
+          toast.success(`Cópia enviada para ${ccList.length} e-mail(s).`);
+        }
+      }
+
       // Registrar que a declaração foi enviada
       await supabase
         .from('declaracoes')
@@ -173,6 +235,21 @@ export function EnviarDeclaracaoEmailModal({
               placeholder="Digite a mensagem que será enviada no corpo do e-mail..."
               className="min-h-[150px] resize-none"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="emails-copia">Enviar cópia para (opcional)</Label>
+            <Input
+              id="emails-copia"
+              type="text"
+              value={emailsCopia}
+              onChange={(e) => setEmailsCopia(e.target.value)}
+              placeholder="email1@exemplo.com, email2@exemplo.com"
+              disabled={loading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Separe múltiplos e-mails por vírgula (máx. {MAX_CC}).
+            </p>
           </div>
 
           <div className="space-y-2">
