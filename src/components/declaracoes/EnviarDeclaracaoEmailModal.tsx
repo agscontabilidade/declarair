@@ -69,6 +69,7 @@ export function EnviarDeclaracaoEmailModal({
   }
 
   useEffect(() => {
+    if (mensagemPersonalizada) return;
     let cobrancaLinha = '';
     if (cobrancaValor != null) {
       const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaValor);
@@ -80,7 +81,26 @@ export function EnviarDeclaracaoEmailModal({
     setMensagem(
       `Prezado(a) ${clienteNome},\n\nSua Declaração de Imposto de Renda ${anoBase} foi transmitida com sucesso.\n\nSeguem em anexo ${anexosTxt}.${cobrancaLinha}\n\nFicamos à disposição para qualquer dúvida.`
     );
-  }, [clienteNome, anoBase, cobrancaValor, arquivoDarfUrl]);
+  }, [clienteNome, anoBase, cobrancaValor, arquivoDarfUrl, mensagemPersonalizada]);
+
+  // Carrega a última mensagem enviada (se houver) ao abrir o modal
+  useEffect(() => {
+    if (!open || !declaracaoId) return;
+    setUltimaMensagemCarregada(false);
+    setMensagemPersonalizada(false);
+    (async () => {
+      const { data } = await supabase
+        .from('declaracoes')
+        .select('ultima_mensagem_email')
+        .eq('id', declaracaoId)
+        .maybeSingle();
+      if (data?.ultima_mensagem_email) {
+        setMensagem(data.ultima_mensagem_email);
+        setMensagemPersonalizada(true);
+        setUltimaMensagemCarregada(true);
+      }
+    })();
+  }, [open, declaracaoId]);
 
   useEffect(() => {
     if (!open || !declaracaoId) return;
