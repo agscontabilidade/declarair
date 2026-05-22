@@ -46,6 +46,8 @@ export function EnviarDeclaracaoEmailModal({
   const [mensagem, setMensagem] = useState('');
   const [cobrancaValor, setCobrancaValor] = useState<number | null>(null);
   const [emailsCopia, setEmailsCopia] = useState('');
+  const [mensagemPersonalizada, setMensagemPersonalizada] = useState(false);
+  const [ultimaMensagemCarregada, setUltimaMensagemCarregada] = useState(false);
 
   const MAX_CC = 5;
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
