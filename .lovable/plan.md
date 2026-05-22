@@ -1,53 +1,52 @@
 ## Objetivo
 
-No modal `EnviarDeclaracaoEmailModal` (acionado em `/declaracoes` e em `/declaracao/:id`), adicionar um campo opcional onde o contador pode informar um ou mais e-mails que receberão **cópia** da mesma mensagem enviada ao cliente, com os mesmos anexos (Declaração, Recibo e DARF quando houver).
+No modal de envio de e-mail em `/declaracoes`, carregar a última mensagem efetivamente enviada ao cliente (em vez da mensagem padrão) toda vez que o modal for aberto para a mesma declaração.
 
-## Escopo (somente frontend)
+## Abordagem
 
-Sem alterações no banco, RLS ou edge functions. A edge function `send-transactional-email` aceita 1 destinatário por chamada — então o envio para os e-mails em cópia será feito invocando a função **uma vez por destinatário extra**, reaproveitando o mesmo `templateData`, mensagem e `attachmentPaths`. Isso evita mudanças no backend e mantém o fluxo atual estável.
+Persistir a mensagem por declaração no banco e, ao abrir o modal, pré-carregar essa mensagem caso exista. Manter o template padrão apenas quando ainda não houve envio anterior. Incluir um botão para "Restaurar mensagem padrão" caso o contador queira voltar ao texto automático.
 
 ## Mudanças
 
-### 1) `src/components/declaracoes/EnviarDeclaracaoEmailModal.tsx`
+### 1. Banco (migração)
 
-- Adicionar estado `emailsCopia: string` (input controlado, texto livre separado por vírgula, ponto-e-vírgula ou espaço).
-- Novo campo na UI, abaixo do textarea da mensagem e acima de "Documentos inclusos":
-  - `Label`: "Enviar cópia para (opcional)"
-  - `Input` com placeholder: `email1@exemplo.com, email2@exemplo.com`
-  - Texto auxiliar pequeno: "Separe múltiplos e-mails por vírgula."
-- Função utilitária local `parseEmails(raw: string): string[]` que:
-  - faz split por `[,;\s]+`
-  - faz trim e remove vazios
-  - faz dedupe (case-insensitive)
-  - remove o próprio `clienteEmail` da lista (não envia duplicado para o cliente)
-- Validação no `handleEnviar`:
-  - Para cada e-mail em CC, validar com regex simples (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`). Se algum for inválido, `toast.error` com o e-mail problemático e abortar.
-- Fluxo de envio dentro de `handleEnviar`:
-  1. Invocar `send-transactional-email` para `clienteEmail` (igual ao atual).
-  2. Para cada e-mail válido em CC, invocar `send-transactional-email` em paralelo (`Promise.allSettled`) com o **mesmo** `templateName`, `templateData` e `attachmentPaths`, apenas trocando `recipientEmail`.
-  3. Se o envio principal falhar, abortar (não envia cópias, não marca `declaracao_enviada_em`).
-  4. Se o principal funcionar e alguma cópia falhar, exibir `toast.warning` listando os e-mails que falharam, mas manter sucesso geral (declaração já foi enviada ao cliente).
-- O `update` de `declaracao_enviada_em` continua sendo feito **apenas uma vez**, após o envio principal bem-sucedido.
+Adicionar duas colunas em `public.declaracoes`:
 
-### 2) Nenhuma mudança em `Declaracoes.tsx`, `DeclaracaoDetalhe.tsx` ou na edge function
+- `ultima_mensagem_email text null`
+- `ultima_mensagem_email_em timestamptz null`
 
-As props existentes do modal já são suficientes — o campo CC é estado interno do próprio modal.
+Sem alteração de RLS (já coberta pelas políticas existentes da tabela). Sem backfill — declarações antigas continuam abrindo com a mensagem padrão até o próximo envio.
 
-## Sem regressões
+### 2. `EnviarDeclaracaoEmailModal.tsx`
 
-- Campo é opcional e vazio por padrão → comportamento atual idêntico quando não preenchido.
-- Edge function não muda → demais fluxos (`boas-vindas`, `convite-cliente`, `cobranca-*`, etc.) intactos.
-- Anexos via `attachmentPaths` continuam gerando links assinados (não duplica armazenamento).
-- Mensagem do corpo é a mesma para todos os destinatários (cliente + cópias), o que é o esperado para uma "cópia" do e-mail.
+- Ao abrir o modal (`open && declaracaoId`), buscar `ultima_mensagem_email` da declaração.
+- Novo estado `mensagemPersonalizada: boolean`:
+  - Se a declaração tem `ultima_mensagem_email` salva → usar esse texto e marcar como personalizada (não sobrescrever no `useEffect` do template padrão).
+  - Caso contrário → manter o comportamento atual (template padrão recalculado quando muda nome/ano/cobrança/DARF).
+- Ao editar a textarea, marcar `mensagemPersonalizada = true` para não ser sobrescrita pelo `useEffect` do template.
+- Adicionar link/botão discreto "Restaurar mensagem padrão" abaixo da textarea, que reseta `mensagemPersonalizada = false` e regenera o template.
+- Após envio principal bem-sucedido (antes do toast de sucesso), gravar:
+  ```
+  update declaracoes set ultima_mensagem_email = mensagem,
+                        ultima_mensagem_email_em = now()
+  where id = declaracaoId
+  ```
+  Falha nesse update apenas loga warning — não bloqueia o sucesso do envio.
 
-## Validação manual após implementação
+### 3. Sem mudanças em
 
-1. Abrir modal em `/declaracoes` para uma declaração com DARF → preencher `cc1@teste.com, cc2@teste.com` → confirmar.
-2. Verificar em `email_send_log` que existem 3 linhas com mesmo template e timestamps próximos (1 para cliente, 2 para cc).
-3. Repetir sem preencher CC → 1 linha apenas, comportamento atual preservado.
-4. Tentar e-mail inválido (`foo`) → toast de erro, nenhuma invocação feita.
+- `Declaracoes.tsx`, `DeclaracaoDetalhe.tsx` (props existentes bastam).
+- Edge Functions (`send-transactional-email` inalterada).
+- Lógica de CC (independente — não foi pedida agora).
 
-## Pontos abertos para o usuário
+## Comportamento
 
-- **Limite de cópias**: sugiro impor um máximo de **5 e-mails** em CC para evitar abuso/rate-limit. OK manter 5, ou prefere outro número / sem limite?
-- **Persistência**: deseja que a lista de e-mails em cópia fique salva por cliente (ex.: sócio do cliente que sempre recebe cópia) ou é OK ser sempre digitada manualmente a cada envio? (Persistir exigiria nova coluna em `clientes` — fora do escopo deste plano; aviso caso queira.)
+- **1ª vez enviando**: abre com template padrão (como hoje).
+- **2ª vez em diante**: abre com a última mensagem enviada, editável.
+- Se cliente / ano / valor da cobrança mudar entre envios, o texto salvo permanece — usuário pode clicar "Restaurar mensagem padrão" para regenerar com os novos dados.
+- Sem regressões: declarações sem coluna preenchida seguem fluxo atual.
+
+## Pontos a confirmar
+
+1. **Escopo da persistência**: salvar **por declaração** (proposto) ou **por cliente** (todas as declarações do mesmo cliente compartilham a última mensagem)? A primeira opção é mais segura porque cada ano tem contexto próprio.
+2. **Salvar também os e-mails em cópia (CC)** da última vez? Não foi pedido, mas é uma extensão natural. Por padrão **não** vou salvar.

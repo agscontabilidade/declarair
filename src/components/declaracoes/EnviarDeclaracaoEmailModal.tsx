@@ -46,6 +46,8 @@ export function EnviarDeclaracaoEmailModal({
   const [mensagem, setMensagem] = useState('');
   const [cobrancaValor, setCobrancaValor] = useState<number | null>(null);
   const [emailsCopia, setEmailsCopia] = useState('');
+  const [mensagemPersonalizada, setMensagemPersonalizada] = useState(false);
+  const [ultimaMensagemCarregada, setUltimaMensagemCarregada] = useState(false);
 
   const MAX_CC = 5;
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -67,6 +69,7 @@ export function EnviarDeclaracaoEmailModal({
   }
 
   useEffect(() => {
+    if (mensagemPersonalizada) return;
     let cobrancaLinha = '';
     if (cobrancaValor != null) {
       const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaValor);
@@ -78,7 +81,26 @@ export function EnviarDeclaracaoEmailModal({
     setMensagem(
       `Prezado(a) ${clienteNome},\n\nSua Declaração de Imposto de Renda ${anoBase} foi transmitida com sucesso.\n\nSeguem em anexo ${anexosTxt}.${cobrancaLinha}\n\nFicamos à disposição para qualquer dúvida.`
     );
-  }, [clienteNome, anoBase, cobrancaValor, arquivoDarfUrl]);
+  }, [clienteNome, anoBase, cobrancaValor, arquivoDarfUrl, mensagemPersonalizada]);
+
+  // Carrega a última mensagem enviada (se houver) ao abrir o modal
+  useEffect(() => {
+    if (!open || !declaracaoId) return;
+    setUltimaMensagemCarregada(false);
+    setMensagemPersonalizada(false);
+    (async () => {
+      const { data } = await supabase
+        .from('declaracoes')
+        .select('ultima_mensagem_email')
+        .eq('id', declaracaoId)
+        .maybeSingle();
+      if (data?.ultima_mensagem_email) {
+        setMensagem(data.ultima_mensagem_email);
+        setMensagemPersonalizada(true);
+        setUltimaMensagemCarregada(true);
+      }
+    })();
+  }, [open, declaracaoId]);
 
   useEffect(() => {
     if (!open || !declaracaoId) return;
@@ -196,10 +218,14 @@ export function EnviarDeclaracaoEmailModal({
         }
       }
 
-      // Registrar que a declaração foi enviada
+      // Registrar que a declaração foi enviada + guarda a mensagem para próxima vez
       await supabase
         .from('declaracoes')
-        .update({ declaracao_enviada_em: new Date().toISOString() })
+        .update({
+          declaracao_enviada_em: new Date().toISOString(),
+          ultima_mensagem_email: mensagem,
+          ultima_mensagem_email_em: new Date().toISOString(),
+        })
         .eq('id', declaracaoId);
 
       onOpenChange(false);
@@ -231,10 +257,33 @@ export function EnviarDeclaracaoEmailModal({
             <Textarea
               id="mensagem"
               value={mensagem}
-              onChange={(e) => setMensagem(e.target.value)}
+              onChange={(e) => {
+                setMensagem(e.target.value);
+                setMensagemPersonalizada(true);
+              }}
               placeholder="Digite a mensagem que será enviada no corpo do e-mail..."
               className="min-h-[150px] resize-none"
             />
+            <div className="flex items-center justify-between">
+              {ultimaMensagemCarregada ? (
+                <p className="text-xs text-muted-foreground">
+                  Carregada a última mensagem enviada.
+                </p>
+              ) : <span />}
+              {mensagemPersonalizada && (
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => {
+                    setMensagemPersonalizada(false);
+                    setUltimaMensagemCarregada(false);
+                  }}
+                  disabled={loading}
+                >
+                  Restaurar mensagem padrão
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">

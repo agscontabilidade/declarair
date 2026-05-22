@@ -981,6 +981,8 @@ export type Database = {
           status_processamento_rfb: string
           tipo_resultado: string | null
           ultima_atualizacao_status: string
+          ultima_mensagem_email: string | null
+          ultima_mensagem_email_em: string | null
           valor_resultado: number | null
           version: number
         }
@@ -1024,6 +1026,8 @@ export type Database = {
           status_processamento_rfb?: string
           tipo_resultado?: string | null
           ultima_atualizacao_status?: string
+          ultima_mensagem_email?: string | null
+          ultima_mensagem_email_em?: string | null
           valor_resultado?: number | null
           version?: number
         }
@@ -1067,6 +1071,8 @@ export type Database = {
           status_processamento_rfb?: string
           tipo_resultado?: string | null
           ultima_atualizacao_status?: string
+          ultima_mensagem_email?: string | null
+          ultima_mensagem_email_em?: string | null
           valor_resultado?: number | null
           version?: number
         }
@@ -2809,6 +2815,8 @@ export type Database = {
           status_processamento_rfb: string
           tipo_resultado: string | null
           ultima_atualizacao_status: string
+          ultima_mensagem_email: string | null
+          ultima_mensagem_email_em: string | null
           valor_resultado: number | null
           version: number
         }[]
