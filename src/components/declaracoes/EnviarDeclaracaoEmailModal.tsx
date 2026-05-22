@@ -238,6 +238,21 @@ export function EnviarDeclaracaoEmailModal({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="emails-copia">Enviar cópia para (opcional)</Label>
+            <Input
+              id="emails-copia"
+              type="text"
+              value={emailsCopia}
+              onChange={(e) => setEmailsCopia(e.target.value)}
+              placeholder="email1@exemplo.com, email2@exemplo.com"
+              disabled={loading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Separe múltiplos e-mails por vírgula (máx. {MAX_CC}).
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label className="text-xs text-muted-foreground uppercase font-semibold">Documentos inclusos:</Label>
             <div className="space-y-2">
               {arquivoDeclaracaoUrl && (
