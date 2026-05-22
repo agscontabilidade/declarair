@@ -45,6 +45,26 @@ export function EnviarDeclaracaoEmailModal({
   const [nomeEscritorio, setNomeEscritorio] = useState('Seu Contador');
   const [mensagem, setMensagem] = useState('');
   const [cobrancaValor, setCobrancaValor] = useState<number | null>(null);
+  const [emailsCopia, setEmailsCopia] = useState('');
+
+  const MAX_CC = 5;
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function parseEmails(raw: string): string[] {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    const clientLower = (clienteEmail || '').toLowerCase();
+    raw.split(/[,;\s]+/).forEach((e) => {
+      const t = e.trim();
+      if (!t) return;
+      const k = t.toLowerCase();
+      if (k === clientLower) return;
+      if (seen.has(k)) return;
+      seen.add(k);
+      out.push(t);
+    });
+    return out;
+  }
 
   useEffect(() => {
     let cobrancaLinha = '';
