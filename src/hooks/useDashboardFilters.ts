@@ -70,7 +70,7 @@ export function useDashboardFilters<T extends DeclaracaoFiltravel>(declaracoes: 
     let urgentes = 0;
     let atencao = 0;
     for (const dec of declaracoesFiltradas) {
-      const u = calcularUrgencia(dec.ultima_atualizacao_status);
+      const u = calcularUrgencia(dec.ultima_atualizacao_status, dec.status);
       if (u === 'urgente') urgentes++;
       else if (u === 'atencao') atencao++;
     }
