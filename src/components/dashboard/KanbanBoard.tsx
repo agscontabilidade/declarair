@@ -59,6 +59,25 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
     if (!item || item.status === newStatus) return;
     if (!columns.some(c => c.status === newStatus)) return;
 
+    // Trava de regressão: declaração com sinal objetivo de transmissão
+    // (recibo validado, número de recibo, data de transmissão, arquivo de recibo
+    // ou já marcada como transmitida) não pode voltar para status anterior.
+    const jaTransmitida =
+      item.status === 'transmitida' ||
+      !!item.recibo_validado_em ||
+      !!item.arquivo_recibo_url ||
+      !!item.numero_recibo ||
+      !!item.data_transmissao;
+    if (jaTransmitida && newStatus !== 'transmitida') {
+      toast({
+        title: 'Movimento bloqueado',
+        description: 'Esta declaração já foi transmitida (recibo validado). Não é possível voltar para um status anterior.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+
     const prev = [...displayItems];
     setOptimisticItems(prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
 
