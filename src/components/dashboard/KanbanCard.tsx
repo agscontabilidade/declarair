@@ -4,6 +4,8 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { STATUS_LABELS, formatDate } from '@/lib/formatters';
 import type { DeclaracaoKanban } from '@/hooks/useDashboardData';
 
 function maskCpf(cpf: string) {
@@ -16,10 +18,20 @@ function getInitials(name: string) {
   return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 }
 
-function isStale(date: string) {
+function diasDesde(date: string) {
   const diff = Date.now() - new Date(date).getTime();
-  return diff > 7 * 24 * 60 * 60 * 1000;
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
+
+// Status that represent "ball is in the accountant's court" — staleness is meaningful here
+const STALE_RELEVANT_STATUSES = new Set(['documentacao_recebida', 'declaracao_pronta']);
+
+const STATUS_TOOLTIPS: Record<string, string> = {
+  aguardando_documentos: 'Esperando o cliente enviar os documentos.',
+  documentacao_recebida: 'Documentos recebidos. Hora do contador iniciar a declaração.',
+  declaracao_pronta: 'Declaração finalizada. Pronta para ser transmitida à Receita.',
+  transmitida: 'Declaração já enviada à Receita Federal.',
+};
 
 interface Props {
   item: DeclaracaoKanban;
@@ -30,7 +42,8 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
   const navigate = useNavigate();
   const nome = item.clientes?.nome ?? 'Cliente';
   const cpf = item.clientes?.cpf ?? '';
-  const stale = isStale(item.ultima_atualizacao_status) && item.status !== 'transmitida';
+  const dias = diasDesde(item.ultima_atualizacao_status);
+  const stale = dias > 7 && STALE_RELEVANT_STATUSES.has(item.status);
 
   const {
     attributes,
@@ -50,7 +63,10 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
     transition: isDragging ? undefined : 'transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease',
   };
 
-  return (
+  const statusLabel = STATUS_LABELS[item.status] || item.status;
+  const statusTooltip = STATUS_TOOLTIPS[item.status] || '';
+
+  const cardContent = (
     <div
       ref={setNodeRef}
       style={style}
@@ -75,9 +91,17 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
           <p className="text-xs text-muted-foreground tabular-nums mt-0.5">{maskCpf(cpf)}</p>
         </div>
         {stale && (
-          <div className="relative">
-            <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5 animate-pulse" />
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <AlertTriangle
+                className="h-4 w-4 text-warning shrink-0 mt-0.5 animate-pulse cursor-help"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="left" className="max-w-xs text-xs leading-relaxed">
+              Parado há {dias} dias sem mudança de status. Está com você — pode dar continuidade.
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 
@@ -89,5 +113,29 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
         </div>
       )}
     </div>
+  );
+
+  // While dragging or in overlay, skip tooltip wrapper to avoid layout/positioning conflicts
+  if (isOverlay || isDragging) {
+    return cardContent;
+  }
+
+  return (
+    <TooltipProvider delayDuration={400}>
+      <Tooltip>
+        <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
+        <TooltipContent side="right" align="start" className="max-w-xs text-xs leading-relaxed">
+          <div className="space-y-1">
+            <p className="font-semibold">{statusLabel}</p>
+            {statusTooltip && <p className="text-muted-foreground">{statusTooltip}</p>}
+            <p className="text-muted-foreground pt-1 border-t border-border/40">
+              Última atualização: {formatDate(item.ultima_atualizacao_status)}
+              {dias > 0 && ` (há ${dias} ${dias === 1 ? 'dia' : 'dias'})`}
+            </p>
+            <p className="text-muted-foreground italic pt-0.5">Clique para abrir · Arraste para mudar de status</p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 });
