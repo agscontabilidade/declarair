@@ -12,8 +12,6 @@ export interface DeclaracaoKanban {
   contador_id: string | null;
   clientes: { nome: string; cpf: string } | null;
   contador: { nome: string } | null;
-  pendingDocs: number;
-  totalDocs: number;
   version: number;
   recibo_validado_em: string | null;
   arquivo_recibo_url: string | null;
