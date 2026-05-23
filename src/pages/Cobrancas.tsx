@@ -25,6 +25,7 @@ export default function Cobrancas() {
   const [searchParams, setSearchParams] = useSearchParams();
   const clienteIdFiltro = searchParams.get('cliente');
   const [statusFilter, setStatusFilter] = useState('todos');
+  const [busca, setBusca] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, unknown> | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
@@ -32,8 +33,20 @@ export default function Cobrancas() {
 
   const { cobrancas: cobrancasAll, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
   const cobrancas = useMemo(
-    () => clienteIdFiltro ? cobrancasAll.filter(c => c.cliente_id === clienteIdFiltro) : cobrancasAll,
-    [cobrancasAll, clienteIdFiltro],
+    () => {
+      let list = clienteIdFiltro ? cobrancasAll.filter(c => c.cliente_id === clienteIdFiltro) : cobrancasAll;
+      const termo = busca.trim().toLowerCase();
+      if (termo) {
+        const digitos = termo.replace(/\D/g, '');
+        list = list.filter(c =>
+          c.clientes?.nome?.toLowerCase().includes(termo) ||
+          (digitos && c.clientes?.cpf?.replace(/\D/g, '').includes(digitos)) ||
+          c.descricao?.toLowerCase().includes(termo)
+        );
+      }
+      return list;
+    },
+    [cobrancasAll, clienteIdFiltro, busca],
   );
   const nomeClienteFiltro = clienteIdFiltro ? cobrancas[0]?.clientes?.nome : null;
   const { podeVerCobrancas, podeCriarCobrancas, podeExcluirCobranca } = usePermissoes();
