@@ -77,44 +77,90 @@ export function DashboardFilters({
         </div>
 
         <TooltipProvider delayDuration={150}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Total — informativo */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge variant="outline" className="gap-1 cursor-help">
-                  <Filter className="h-3 w-3" />
-                  {stats.total}
+                <Badge variant="outline" className="gap-1.5 cursor-help h-8 px-2.5">
+                  <Filter className="h-3.5 w-3.5" />
+                  <span className="font-medium">{stats.total}</span>
+                  <span className="text-muted-foreground">Total</span>
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent>Total de declarações exibidas com os filtros atuais</TooltipContent>
+              <TooltipContent>Declarações exibidas com os filtros atuais.</TooltipContent>
             </Tooltip>
-            {stats.urgentes > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="destructive" className="gap-1 cursor-help">
-                    <AlertCircle className="h-3 w-3" />
-                    {stats.urgentes}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Urgentes: {stats.urgentes} {stats.urgentes === 1 ? 'declaração parada' : 'declarações paradas'} há mais de 7 dias sem atualização
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {stats.atencao > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge className="gap-1 bg-warning/15 text-warning border-warning/30 cursor-help">
-                    <Clock className="h-3 w-3" />
-                    {stats.atencao}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Atenção: {stats.atencao} {stats.atencao === 1 ? 'declaração parada' : 'declarações paradas'} entre 3 e 7 dias sem atualização
-                </TooltipContent>
-              </Tooltip>
-            )}
+
+            {/* Paradas +7d — chip toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => onUrgenciaChange(filters.urgencia === 'urgente' ? 'todas' : 'urgente')}
+                  disabled={stats.urgentes === 0}
+                  className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                    filters.urgencia === 'urgente'
+                      ? 'bg-destructive text-destructive-foreground border-destructive ring-2 ring-destructive/30'
+                      : 'bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive/20'
+                  }`}
+                >
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  <span className="tabular-nums">{stats.urgentes}</span>
+                  <span>Paradas +7d</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {stats.urgentes === 0
+                  ? 'Nenhuma declaração parada há mais de 7 dias.'
+                  : `${stats.urgentes} ${stats.urgentes === 1 ? 'declaração sem mudança' : 'declarações sem mudança'} de status há mais de 7 dias. Clique para filtrar.`}
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Atenção 3-7d — chip toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => onUrgenciaChange(filters.urgencia === 'atencao' ? 'todas' : 'atencao')}
+                  disabled={stats.atencao === 0}
+                  className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                    filters.urgencia === 'atencao'
+                      ? 'bg-warning text-warning-foreground border-warning ring-2 ring-warning/30'
+                      : 'bg-warning/10 text-warning border-warning/30 hover:bg-warning/20'
+                  }`}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  <span className="tabular-nums">{stats.atencao}</span>
+                  <span>Atenção 3-7d</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {stats.atencao === 0
+                  ? 'Nenhuma declaração parada entre 3 e 7 dias.'
+                  : `${stats.atencao} ${stats.atencao === 1 ? 'declaração sem mudança' : 'declarações sem mudança'} de status entre 3 e 7 dias. Clique para filtrar.`}
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Em dia — chip toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => onUrgenciaChange(filters.urgencia === 'normal' ? 'todas' : 'normal')}
+                  className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border text-xs font-medium transition-all ${
+                    filters.urgencia === 'normal'
+                      ? 'bg-success text-success-foreground border-success ring-2 ring-success/30'
+                      : 'bg-success/10 text-success border-success/30 hover:bg-success/20'
+                  }`}
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  <span>Em dia</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Atualizadas nos últimos 3 dias. Clique para filtrar.</TooltipContent>
+            </Tooltip>
           </div>
         </TooltipProvider>
+
       </div>
 
       {/* Row 2: Filter selects */}
