@@ -7,7 +7,8 @@ export interface DashboardFilters {
   status: string | null;
 }
 
-export function calcularUrgencia(dataAtualizacao: string): 'urgente' | 'atencao' | 'normal' {
+export function calcularUrgencia(dataAtualizacao: string, status?: string): 'urgente' | 'atencao' | 'normal' {
+  if (status === 'transmitida') return 'normal';
   if (!dataAtualizacao) return 'normal';
   const diff = Date.now() - new Date(dataAtualizacao).getTime();
   const dias = diff / (1000 * 60 * 60 * 24);
@@ -15,6 +16,7 @@ export function calcularUrgencia(dataAtualizacao: string): 'urgente' | 'atencao'
   if (dias > 3) return 'atencao';
   return 'normal';
 }
+
 
 interface DeclaracaoFiltravel {
   id: string;
@@ -52,9 +54,10 @@ export function useDashboardFilters<T extends DeclaracaoFiltravel>(declaracoes: 
 
     if (filters.urgencia !== 'todas') {
       resultado = resultado.filter(dec =>
-        calcularUrgencia(dec.ultima_atualizacao_status) === filters.urgencia
+        calcularUrgencia(dec.ultima_atualizacao_status, dec.status) === filters.urgencia
       );
     }
+
 
     if (filters.status) {
       resultado = resultado.filter(dec => dec.status === filters.status);
@@ -67,7 +70,7 @@ export function useDashboardFilters<T extends DeclaracaoFiltravel>(declaracoes: 
     let urgentes = 0;
     let atencao = 0;
     for (const dec of declaracoesFiltradas) {
-      const u = calcularUrgencia(dec.ultima_atualizacao_status);
+      const u = calcularUrgencia(dec.ultima_atualizacao_status, dec.status);
       if (u === 'urgente') urgentes++;
       else if (u === 'atencao') atencao++;
     }
