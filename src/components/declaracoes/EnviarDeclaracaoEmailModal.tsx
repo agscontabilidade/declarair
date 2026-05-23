@@ -406,6 +406,9 @@ export function EnviarDeclaracaoEmailModal({
                 </Button>
               )}
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              Dica: use <code className="px-1 rounded bg-muted text-foreground">**texto**</code> para destacar trechos em <strong>negrito</strong> no e-mail.
+            </p>
           </div>
 
           {/* CC */}
