@@ -29,6 +29,7 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
   const { convitesPendentes, enviarConvite, cancelarConvite, removerColaborador, atualizarPermissoes } =
     useColaboradores(escritorioId || '');
 
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [novoEmail, setNovoEmail] = useState('');
   const [novoNome, setNovoNome] = useState('');
@@ -36,6 +37,50 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
   const [editPermissoesOpen, setEditPermissoesOpen] = useState(false);
   const [permissoesEditando, setPermissoesEditando] = useState<string[]>([]);
+
+  // Edição de dados (nome/email) do membro
+  const [editDadosOpen, setEditDadosOpen] = useState(false);
+  const [editNome, setEditNome] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const abrirEditDados = (u: Usuario) => {
+    setUsuarioEditando(u);
+    setEditNome(u.nome || '');
+    setEditEmail(u.email || '');
+    setEditDadosOpen(true);
+  };
+
+  const salvarEditDados = async () => {
+    if (!usuarioEditando) return;
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from('usuarios')
+      .update({ nome: editNome, email: editEmail })
+      .eq('id', usuarioEditando.id);
+    setSavingEdit(false);
+    if (error) {
+      toast.error('Erro ao salvar: ' + error.message);
+      return;
+    }
+    toast.success('Membro atualizado com sucesso');
+    setEditDadosOpen(false);
+    setUsuarioEditando(null);
+    queryClient.invalidateQueries({ queryKey: ['contadores', escritorioId] });
+  };
+
+  const reativarMembro = async (u: Usuario) => {
+    const { error } = await supabase
+      .from('usuarios')
+      .update({ ativo: true })
+      .eq('id', u.id);
+    if (error) {
+      toast.error('Erro ao reativar: ' + error.message);
+      return;
+    }
+    toast.success('Membro reativado');
+    queryClient.invalidateQueries({ queryKey: ['contadores', escritorioId] });
+  };
 
   const handleEnviarConvite = async (e: React.FormEvent) => {
     e.preventDefault();
