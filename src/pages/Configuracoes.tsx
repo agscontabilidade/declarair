@@ -83,7 +83,7 @@ export default function Configuracoes() {
     enabled: !!escritorioId,
   });
 
-  const [form, setForm, clearForm] = usePersistedForm('configuracoes_escritorio', {
+  const [form, setForm] = useState({
     nome: '',
     email: '',
     telefone: '',
@@ -91,8 +91,10 @@ export default function Configuracoes() {
     responsavelNome: '',
     responsavelCpf: '',
     responsavelCrc: '',
+    chavePixTipo: 'aleatoria' as 'cpf_cnpj' | 'email' | 'telefone' | 'aleatoria',
+    chavePix: '',
   });
-  
+
   const setFormField = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
@@ -116,6 +118,15 @@ export default function Configuracoes() {
       .replace(/\.(\d{3})(\d)/, '.$1-$2');
   }
 
+  function inferTipoPix(chave: string): 'cpf_cnpj' | 'email' | 'telefone' | 'aleatoria' {
+    if (!chave) return 'aleatoria';
+    if (chave.includes('@')) return 'email';
+    const digits = chave.replace(/\D/g, '');
+    if (digits.length === 11 || digits.length === 14) return 'cpf_cnpj';
+    if (digits.length >= 10 && digits.length <= 13 && chave.match(/^[+\d\s()\-]+$/)) return 'telefone';
+    return 'aleatoria';
+  }
+
   async function handleBuscarCnpj() {
     const clean = form.cnpj.replace(/\D/g, '');
     if (clean.length !== 14 || !podeAlterarEscritorio) return;
@@ -132,22 +143,19 @@ export default function Configuracoes() {
 
   useEffect(() => {
     if (escritorio) {
-      // Check if we already have persisted changes. 
-      // If not, we fill from DB.
-      const saved = localStorage.getItem('form_persistence_configuracoes_escritorio');
-      if (!saved) {
-        setForm({
-          nome: escritorio.nome || '',
-          email: escritorio.email || '',
-          telefone: escritorio.telefone || '',
-          cnpj: escritorio.cnpj || '',
-          responsavelNome: escritorio.responsavel_nome || '',
-          responsavelCpf: escritorio.responsavel_cpf || '',
-          responsavelCrc: escritorio.responsavel_crc || '',
-        });
-      }
+      setForm({
+        nome: escritorio.nome || '',
+        email: escritorio.email || '',
+        telefone: escritorio.telefone || '',
+        cnpj: escritorio.cnpj || '',
+        responsavelNome: escritorio.responsavel_nome || '',
+        responsavelCpf: escritorio.responsavel_cpf || '',
+        responsavelCrc: escritorio.responsavel_crc || '',
+        chavePix: escritorio.chave_pix || '',
+        chavePixTipo: inferTipoPix(escritorio.chave_pix || ''),
+      });
     }
-  }, [escritorio, setForm]);
+  }, [escritorio]);
 
   async function handleSave() {
     if (!escritorioId || !podeAlterarEscritorio) return;
