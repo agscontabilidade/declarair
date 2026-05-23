@@ -54,9 +54,10 @@ export function useDashboardFilters<T extends DeclaracaoFiltravel>(declaracoes: 
 
     if (filters.urgencia !== 'todas') {
       resultado = resultado.filter(dec =>
-        calcularUrgencia(dec.ultima_atualizacao_status) === filters.urgencia
+        calcularUrgencia(dec.ultima_atualizacao_status, dec.status) === filters.urgencia
       );
     }
+
 
     if (filters.status) {
       resultado = resultado.filter(dec => dec.status === filters.status);
