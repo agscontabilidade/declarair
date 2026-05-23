@@ -24,7 +24,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-16 flex items-center border-b bg-card px-4 gap-4 shrink-0">
-            <span className="text-sm font-medium text-foreground">
+            <span className="text-xl font-semibold text-foreground">
               {primeiroNome ? `Olá, ${primeiroNome}` : 'Olá'}
             </span>
             <div className="flex-1" />
