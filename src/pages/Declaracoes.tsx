@@ -42,7 +42,7 @@ const STATUS_COLORS: Record<string, string> = {
   aguardando_documentos: 'bg-amber-100 text-amber-800',
   documentacao_recebida: 'bg-blue-100 text-blue-800',
   declaracao_pronta: 'bg-emerald-100 text-emerald-800',
-  transmitida: 'bg-gray-100 text-gray-700',
+  transmitida: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
 };
 
 const RESULTADO_META: Record<string, { label: string; cls: string }> = {
@@ -244,7 +244,7 @@ export default function Declaracoes() {
                         <TableHead>Status</TableHead>
                         <TableHead>Resultado</TableHead>
                         <TableHead className="whitespace-nowrap">Atualizado</TableHead>
-                        <TableHead>Anexar</TableHead>
+                        <TableHead>Arquivos</TableHead>
                         <TableHead>Processo</TableHead>
                         <TableHead className="text-right pr-4">Ações</TableHead>
                       </TableRow>
