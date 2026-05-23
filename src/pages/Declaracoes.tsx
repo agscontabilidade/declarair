@@ -154,7 +154,9 @@ export default function Declaracoes() {
         clienteCpf: d.clientes?.cpf || '',
         clienteEmail: d.clientes?.email || '',
         observacoes: (Array.isArray(d.declaracao_notas_internas) ? d.declaracao_notas_internas[0]?.conteudo : d.declaracao_notas_internas?.conteudo) || '',
+        temDocsDrive: Array.isArray(d.checklist_documentos) && d.checklist_documentos.some((c: any) => !!c?.arquivo_url),
       }));
+
     },
     enabled: !!escritorioId,
     staleTime: 30000, // Cache for 30 seconds
