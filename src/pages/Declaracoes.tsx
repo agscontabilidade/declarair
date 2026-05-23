@@ -321,12 +321,12 @@ export default function Declaracoes() {
                                   <TooltipTrigger asChild>
                                     <Button
                                       size="icon"
-                                      variant="ghost"
-                                      className="h-8 w-8"
+                                      variant={d.temDocsDrive ? 'outline' : 'ghost'}
+                                      className={`h-8 w-8 ${d.temDocsDrive ? 'border-emerald-300 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50' : ''}`}
                                       onClick={() => setDocsTarget({ id: d.id, nome: d.clienteNome })}
                                       aria-label="Ver documentos"
                                     >
-                                      <FolderOpen className="h-4 w-4" />
+                                      <Paperclip className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>Ver documentos</TooltipContent>
@@ -341,7 +341,7 @@ export default function Declaracoes() {
                                       onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
                                       aria-label={temObs ? 'Ver observações' : 'Adicionar observação'}
                                     >
-                                      <StickyNote className={`h-4 w-4 ${temObs ? 'fill-emerald-100' : ''}`} />
+                                      <Pin className={`h-4 w-4 ${temObs ? 'fill-emerald-100' : ''}`} />
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent className="max-w-[260px]">
@@ -354,8 +354,8 @@ export default function Declaracoes() {
                                     <TooltipTrigger asChild>
                                       <Button
                                         size="icon"
-                                        variant={enviado ? 'ghost' : 'default'}
-                                        className={`h-8 w-8 ${enviado ? 'text-emerald-600 hover:text-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+                                        variant={enviado ? 'ghost' : 'outline'}
+                                        className={`h-8 w-8 ${enviado ? 'text-emerald-600 hover:text-emerald-700' : 'border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700'}`}
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setEmailTarget(d);
@@ -365,6 +365,7 @@ export default function Declaracoes() {
                                         <Send className="h-4 w-4" />
                                       </Button>
                                     </TooltipTrigger>
+
                                     <TooltipContent>
                                       {enviado ? `Reenviar (enviado em ${formatDateTime(d.declaracao_enviada_em)})` : 'Enviar declaração ao cliente'}
                                     </TooltipContent>
