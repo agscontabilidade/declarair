@@ -211,13 +211,13 @@ export function AnexarDeclaracaoButton({
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
-                variant={transmitida ? 'default' : 'outline'}
+                variant={ambos ? 'default' : 'outline'}
                 disabled={upload.isPending}
                 className={
-                  transmitida
-                    ? ''
-                    : ambos
-                      ? 'border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800'
+                  ambos
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    : parcial
+                      ? 'border-orange-300 text-orange-700 hover:bg-orange-50 hover:text-orange-800'
                       : ''
                 }
               >
@@ -228,7 +228,7 @@ export function AnexarDeclaracaoButton({
                   </>
                 ) : ambos ? (
                   <>
-                    Declaração/Recibo OK
+                    Anexados
                     <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
                   </>
                 ) : parcial ? (
@@ -238,12 +238,13 @@ export function AnexarDeclaracaoButton({
                   </>
                 ) : (
                   <>
-                    Anexar Declaração/Recibo
+                    Anexar
                     <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
                   </>
                 )}
               </Button>
             </DropdownMenuTrigger>
+
 
         <DropdownMenuContent align="end" className="w-72">
             <DropdownMenuLabel className="flex items-center gap-1.5 text-xs">
