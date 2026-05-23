@@ -108,6 +108,8 @@ export default function Declaracoes() {
     arquivo_recibo_nome: string | null;
     arquivo_darf_url: string | null;
     arquivo_darf_nome: string | null;
+    arquivo_mei_url: string | null;
+    arquivo_mei_nome: string | null;
     recibo_validado_em: string | null;
     em_processamento: boolean | null;
     status_processamento_rfb: StatusProcessamentoRfb | null;
