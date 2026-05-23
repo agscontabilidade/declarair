@@ -14,6 +14,66 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { maskCPF, maskCEP, parseCPF, validateCPF } from '@/lib/formatters';
 import { buscarCEP } from '@/lib/apiBrasil';
+import { NATUREZAS_OCUPACAO, OCUPACOES_PRINCIPAIS } from '@/lib/constants-ir';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+function ComboboxField({
+  value, onChange, options, placeholder, searchPlaceholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: ReadonlyArray<{ value: string; label: string }>;
+  placeholder: string;
+  searchPlaceholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o.value === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          className="w-full justify-between h-auto min-h-[40px] py-2 text-left font-normal bg-background"
+        >
+          <span className="whitespace-normal leading-tight pr-2 text-sm">
+            {selected ? selected.label : placeholder}
+          </span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="p-0 w-[var(--radix-popover-trigger-width)] max-h-[400px] overflow-hidden flex flex-col"
+        align="start"
+        sideOffset={6}
+      >
+        <Command shouldFilter={true} className="border-0">
+          <CommandInput placeholder={searchPlaceholder} className="h-10" />
+          <CommandList className="max-h-[320px] overflow-y-auto">
+            <CommandEmpty>Nenhum resultado.</CommandEmpty>
+            <CommandGroup>
+              {options.map((o) => (
+                <CommandItem
+                  key={o.value}
+                  value={`${o.value} ${o.label}`}
+                  onSelect={() => { onChange(o.value); setOpen(false); }}
+                  className="py-2.5 px-3 cursor-pointer border-b last:border-0 border-muted/20"
+                >
+                  <Check className={cn('mr-2 h-4 w-4 mt-0.5 shrink-0', value === o.value ? 'opacity-100 text-primary' : 'opacity-0')} />
+                  <span className="leading-tight text-sm">{o.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 // ===== Schemas =====
 const cpfOpt = z.string().optional().or(z.literal('')).refine(
