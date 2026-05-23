@@ -76,25 +76,6 @@ export function useDashboardData(anoBase: number) {
 
       if (error) throw error;
 
-      // Fetch doc counts (total + pending)
-      const ids = (data || []).map(d => d.id);
-      const pendingMap: Record<string, number> = {};
-      const totalMap: Record<string, number> = {};
-      if (ids.length > 0) {
-        const { data: docs } = await supabase
-          .from('checklist_documentos')
-          .select('declaracao_id, status')
-          .in('declaracao_id', ids);
-        if (docs) {
-          for (const doc of docs) {
-            totalMap[doc.declaracao_id] = (totalMap[doc.declaracao_id] || 0) + 1;
-            if (doc.status === 'pendente') {
-              pendingMap[doc.declaracao_id] = (pendingMap[doc.declaracao_id] || 0) + 1;
-            }
-          }
-        }
-      }
-
       return (data || []).map((d) => {
         const row = d as unknown as DeclaracaoRow;
         return {
@@ -105,8 +86,6 @@ export function useDashboardData(anoBase: number) {
           contador_id: row.contador_id,
           clientes: row.clientes,
           contador: row.usuarios ? { nome: row.usuarios.nome } : null,
-          pendingDocs: pendingMap[row.id] || 0,
-          totalDocs: totalMap[row.id] || 0,
           version: row.version,
           recibo_validado_em: row.recibo_validado_em,
           arquivo_recibo_url: row.arquivo_recibo_url,
