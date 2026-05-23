@@ -292,6 +292,8 @@ export function AnexarDeclaracaoButton({
           })}
         </DropdownMenuContent>
       </DropdownMenu>
+        );
+      })()}
     </div>
   );
 }
