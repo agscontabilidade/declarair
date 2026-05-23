@@ -172,9 +172,9 @@ export default function Cobrancas() {
         {/* Filters + Table */}
         <Card className="shadow-sm">
           <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Filtrar status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -185,6 +185,15 @@ export default function Cobrancas() {
                   <SelectItem value="cancelado">Cancelado</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por cliente, CPF ou descrição..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
             <CobrancasTable
               cobrancas={cobrancas}
