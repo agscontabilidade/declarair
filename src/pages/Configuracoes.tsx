@@ -232,6 +232,46 @@ export default function Configuracoes() {
                       </div>
                     </div>
 
+                    <div className="pt-4 border-t">
+                      <h3 className="text-sm font-semibold mb-1">Chave Pix do Escritório</h3>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Usada nas cobranças geradas pelo escritório. Somente o Responsável Técnico pode alterá-la.
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-4">
+                        <div className="space-y-2">
+                          <Label>Tipo</Label>
+                          <Select
+                            value={form.chavePixTipo}
+                            onValueChange={(v) => setFormField('chavePixTipo', v)}
+                            disabled={!isDono}
+                          >
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="cpf_cnpj">CPF/CNPJ</SelectItem>
+                              <SelectItem value="email">E-mail</SelectItem>
+                              <SelectItem value="telefone">Telefone</SelectItem>
+                              <SelectItem value="aleatoria">Aleatória</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Chave Pix</Label>
+                          <Input
+                            value={form.chavePix}
+                            onChange={e => setFormField('chavePix', e.target.value)}
+                            readOnly={!isDono}
+                            placeholder={
+                              form.chavePixTipo === 'cpf_cnpj' ? '000.000.000-00 ou 00.000.000/0000-00' :
+                              form.chavePixTipo === 'email' ? 'email@exemplo.com' :
+                              form.chavePixTipo === 'telefone' ? '+55 (00) 00000-0000' :
+                              'chave aleatória'
+                            }
+                          />
+                        </div>
+                      </div>
+                      {!isDono && <p className="text-xs text-muted-foreground mt-2">Apenas o Responsável Técnico pode editar a chave Pix.</p>}
+                    </div>
+
                     {!podeAlterarEscritorio && <p className="text-sm text-muted-foreground">Você não tem permissão para alterar os dados do escritório.</p>}
                     <Button onClick={handleSave} disabled={saving || !podeAlterarEscritorio} className="w-full sm:w-auto">{saving ? 'Salvando...' : 'Salvar Alterações'}</Button>
                   </div>
