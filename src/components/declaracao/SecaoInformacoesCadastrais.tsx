@@ -1,10 +1,18 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCPF, formatDate } from '@/lib/formatters';
-import { AlertCircle, User, MapPin, Users, Key } from 'lucide-react';
+import { AlertCircle, User, MapPin, Users, Key, Pencil } from 'lucide-react';
+import {
+  EditarDadosPessoaisDialog,
+  EditarEnderecoDialog,
+  EditarChavePixDialog,
+  EditarDependentesDialog,
+} from './editar/EditarCadastraisDialogs';
 
 interface Props {
   declaracaoId: string;
@@ -22,22 +30,20 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-/**
- * Aba "Informações Cadastrais": consolida dados pessoais que o cliente preenche
- * em /cliente/formulario (tabela formulario_ir) + dados de cadastro do cliente.
- * Esta é a MESMA fonte que o cliente usa — sincronia automática.
- */
 export function SecaoInformacoesCadastrais({ declaracaoId, clienteId }: Props) {
+  const [editing, setEditing] = useState<null | 'dados' | 'endereco' | 'pix' | 'deps'>(null);
+
   const { data, isLoading } = useQuery({
     queryKey: ['info-cadastrais', declaracaoId, clienteId],
     queryFn: async () => {
-      const [cliente, form] = await Promise.all([
+      const [cliente, form, declaracao] = await Promise.all([
         clienteId
           ? supabase.from('clientes').select('nome, cpf, email, telefone, data_nascimento').eq('id', clienteId).maybeSingle()
           : Promise.resolve({ data: null, error: null }),
         supabase.from('formulario_ir').select('*').eq('declaracao_id', declaracaoId).maybeSingle(),
+        supabase.from('declaracoes').select('ano_base').eq('id', declaracaoId).maybeSingle(),
       ]);
-      return { cliente: cliente.data, form: form.data };
+      return { cliente: cliente.data, form: form.data, declaracao: declaracao.data };
     },
   });
 
@@ -45,6 +51,7 @@ export function SecaoInformacoesCadastrais({ declaracaoId, clienteId }: Props) {
 
   const c = data?.cliente as Record<string, unknown> | null;
   const f = data?.form as Record<string, unknown> | null;
+  const anoBase = (data?.declaracao?.ano_base as number | undefined);
 
   if (!c && !f) {
     return (
@@ -62,6 +69,31 @@ export function SecaoInformacoesCadastrais({ declaracaoId, clienteId }: Props) {
   const statusLabel = status === 'concluido' ? 'Concluído' : status === 'em_andamento' ? 'Em andamento' : 'Não iniciado';
   const statusCls = status === 'concluido' ? 'bg-emerald-100 text-emerald-800' : status === 'em_andamento' ? 'bg-amber-100 text-amber-800' : 'bg-muted text-muted-foreground';
 
+  const initial = {
+    nome: c?.nome as string | undefined,
+    cpf: c?.cpf as string | undefined,
+    email: c?.email as string | undefined,
+    telefone: c?.telefone as string | undefined,
+    data_nascimento: (f?.data_nascimento || c?.data_nascimento) as string | undefined,
+    estado_civil: f?.estado_civil as string | undefined,
+    conjuge_nome: f?.conjuge_nome as string | undefined,
+    conjuge_cpf: f?.conjuge_cpf as string | undefined,
+    raca_cor: f?.raca_cor as string | undefined,
+    ocupacao_principal: f?.ocupacao_principal as string | undefined,
+    natureza_ocupacao: f?.natureza_ocupacao as string | undefined,
+    cep: f?.cep as string | undefined,
+    logradouro: f?.logradouro as string | undefined,
+    numero: f?.numero as string | undefined,
+    complemento: f?.complemento as string | undefined,
+    bairro: f?.bairro as string | undefined,
+    cidade: f?.cidade as string | undefined,
+    uf: f?.uf as string | undefined,
+    chave_pix_cliente: f?.chave_pix_cliente as string | undefined,
+    dependentes,
+  };
+
+  const canEdit = !!clienteId;
+
   return (
     <div className="space-y-4">
       <Card>
@@ -69,7 +101,14 @@ export function SecaoInformacoesCadastrais({ declaracaoId, clienteId }: Props) {
           <CardTitle className="text-base flex items-center gap-2">
             <User className="h-4 w-4" /> Dados pessoais
           </CardTitle>
-          <Badge className={statusCls}>{statusLabel}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge className={statusCls}>{statusLabel}</Badge>
+            {canEdit && (
+              <Button variant="ghost" size="sm" onClick={() => setEditing('dados')}>
+                <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Field label="Nome" value={c?.nome as string} />
@@ -87,10 +126,15 @@ export function SecaoInformacoesCadastrais({ declaracaoId, clienteId }: Props) {
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <MapPin className="h-4 w-4" /> Endereço
           </CardTitle>
+          {canEdit && (
+            <Button variant="ghost" size="sm" onClick={() => setEditing('endereco')}>
+              <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <Field label="CEP" value={f?.cep as string} />
@@ -104,10 +148,15 @@ export function SecaoInformacoesCadastrais({ declaracaoId, clienteId }: Props) {
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Key className="h-4 w-4" /> Chave Pix (restituição)
           </CardTitle>
+          {canEdit && (
+            <Button variant="ghost" size="sm" onClick={() => setEditing('pix')}>
+              <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <Field label="Chave Pix" value={f?.chave_pix_cliente as string} />
@@ -119,7 +168,14 @@ export function SecaoInformacoesCadastrais({ declaracaoId, clienteId }: Props) {
           <CardTitle className="text-base flex items-center gap-2">
             <Users className="h-4 w-4" /> Dependentes
           </CardTitle>
-          <Badge variant="outline">{dependentes.length}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{dependentes.length}</Badge>
+            {canEdit && (
+              <Button variant="ghost" size="sm" onClick={() => setEditing('deps')}>
+                <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {dependentes.length === 0 ? (
@@ -140,6 +196,43 @@ export function SecaoInformacoesCadastrais({ declaracaoId, clienteId }: Props) {
           )}
         </CardContent>
       </Card>
+
+      {canEdit && (
+        <>
+          <EditarDadosPessoaisDialog
+            open={editing === 'dados'}
+            onOpenChange={(o) => !o && setEditing(null)}
+            declaracaoId={declaracaoId}
+            clienteId={clienteId!}
+            anoBase={anoBase}
+            initial={initial}
+          />
+          <EditarEnderecoDialog
+            open={editing === 'endereco'}
+            onOpenChange={(o) => !o && setEditing(null)}
+            declaracaoId={declaracaoId}
+            clienteId={clienteId!}
+            anoBase={anoBase}
+            initial={initial}
+          />
+          <EditarChavePixDialog
+            open={editing === 'pix'}
+            onOpenChange={(o) => !o && setEditing(null)}
+            declaracaoId={declaracaoId}
+            clienteId={clienteId!}
+            anoBase={anoBase}
+            initial={initial}
+          />
+          <EditarDependentesDialog
+            open={editing === 'deps'}
+            onOpenChange={(o) => !o && setEditing(null)}
+            declaracaoId={declaracaoId}
+            clienteId={clienteId!}
+            anoBase={anoBase}
+            initial={initial}
+          />
+        </>
+      )}
     </div>
   );
 }
