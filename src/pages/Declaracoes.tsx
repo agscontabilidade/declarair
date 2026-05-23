@@ -136,7 +136,9 @@ export default function Declaracoes() {
           arquivo_darf_url, arquivo_darf_nome, darf_validado_em,
           em_processamento, status_processamento_rfb, declaracao_enviada_em,
           clientes(nome, cpf, email),
-          declaracao_notas_internas(conteudo)
+          declaracao_notas_internas(conteudo),
+          checklist_documentos(arquivo_url)
+
         `)
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', Number(anoBase))
