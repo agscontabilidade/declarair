@@ -8,12 +8,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { UserPlus, Copy, Trash2, ShieldCheck, Loader2 } from 'lucide-react';
+import { UserPlus, Copy, Trash2, ShieldCheck, Loader2, Pencil, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 import { formatarPapel } from '@/lib/formatters';
 import { SeletorPermissoes } from './SeletorPermissoes';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 type Usuario = Tables<'usuarios'>;
