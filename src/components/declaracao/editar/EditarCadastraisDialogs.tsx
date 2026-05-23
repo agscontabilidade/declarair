@@ -84,11 +84,13 @@ function useInvalidate(declaracaoId: string, clienteId: string) {
   return () => qc.invalidateQueries({ queryKey: ['info-cadastrais', declaracaoId, clienteId] });
 }
 
+type FormularioPatch = Parameters<ReturnType<typeof supabase.from<'formulario_ir'>>['update']>[0];
+
 async function upsertFormulario(
   declaracaoId: string,
   clienteId: string,
   anoBase: number | undefined,
-  patch: Record<string, unknown>,
+  patch: FormularioPatch,
 ) {
   const { data: existing } = await supabase
     .from('formulario_ir')
