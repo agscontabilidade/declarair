@@ -160,20 +160,21 @@ export default function Configuracoes() {
   async function handleSave() {
     if (!escritorioId || !podeAlterarEscritorio) return;
     setSaving(true);
-    const { error } = await supabase.from('escritorios').update({ 
-      nome: form.nome, 
-      email: form.email, 
-      telefone: form.telefone, 
+    const payload: Record<string, string> = {
+      nome: form.nome,
+      email: form.email,
+      telefone: form.telefone,
       cnpj: form.cnpj,
       responsavel_nome: form.responsavelNome,
       responsavel_cpf: form.responsavelCpf,
-      responsavel_crc: form.responsavelCrc
-    }).eq('id', escritorioId);
-    
+      responsavel_crc: form.responsavelCrc,
+    };
+    if (isDono) payload.chave_pix = form.chavePix;
+    const { error } = await supabase.from('escritorios').update(payload).eq('id', escritorioId);
+
     if (error) toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
     else {
       toast({ title: 'Dados salvos com sucesso!' });
-      clearForm();
       queryClient.invalidateQueries({ queryKey: ['escritorio', escritorioId] });
     }
     setSaving(false);
