@@ -201,28 +201,38 @@ export function AnexarDeclaracaoButton({
         />
       ))}
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size="sm" variant={transmitida ? 'default' : 'outline'} disabled={upload.isPending}>
-            {upload.isPending ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                Validando...
-              </>
-            ) : transmitida ? (
-              <>
-                <FileCheck2 className="h-3.5 w-3.5 mr-1.5" />
-                Transmitida
-              </>
-            ) : (
-              <>
-                <Upload className="h-3.5 w-3.5 mr-1.5" />
-                Anexar
-                <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
-              </>
-            )}
-          </Button>
-        </DropdownMenuTrigger>
+      {(() => {
+        const anexados = secoes.filter((s) => !!s.url).length;
+        const total = secoes.length;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant={transmitida ? 'default' : 'outline'} disabled={upload.isPending}>
+                {upload.isPending ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                    Validando...
+                  </>
+                ) : transmitida ? (
+                  <>
+                    <FileCheck2 className="h-3.5 w-3.5 mr-1.5" />
+                    Arquivos OK · {anexados}/{total}
+                  </>
+                ) : anexados > 0 ? (
+                  <>
+                    <Paperclip className="h-3.5 w-3.5 mr-1.5" />
+                    Arquivos · {anexados}/{total}
+                    <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-3.5 w-3.5 mr-1.5" />
+                    Anexar arquivos
+                    <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-72">
           <DropdownMenuLabel className="flex items-center gap-1.5 text-xs">
             <Sparkles className="h-3 w-3 text-emerald-600" /> Validação automática por IA
