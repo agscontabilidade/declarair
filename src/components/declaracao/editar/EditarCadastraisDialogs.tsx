@@ -255,8 +255,24 @@ export function EditarDadosPessoaisDialog({ open, onOpenChange, declaracaoId, cl
               <Input value={form.watch('conjuge_cpf') || ''} onChange={(e) => form.setValue('conjuge_cpf', maskCPF(e.target.value))} maxLength={14} />
             </Field>
             <Field label="Raça/cor"><Input {...form.register('raca_cor')} /></Field>
-            <Field label="Ocupação"><Input {...form.register('ocupacao_principal')} /></Field>
-            <Field label="Natureza ocupação"><Input {...form.register('natureza_ocupacao')} /></Field>
+            <Field label="Ocupação principal">
+              <ComboboxField
+                value={form.watch('ocupacao_principal') || ''}
+                onChange={(v) => form.setValue('ocupacao_principal', v)}
+                options={OCUPACOES_PRINCIPAIS}
+                placeholder="Selecione a ocupação..."
+                searchPlaceholder="Ex: Médico, Engenheiro, 221..."
+              />
+            </Field>
+            <Field label="Natureza da ocupação">
+              <ComboboxField
+                value={form.watch('natureza_ocupacao') || ''}
+                onChange={(v) => form.setValue('natureza_ocupacao', v)}
+                options={NATUREZAS_OCUPACAO}
+                placeholder="Selecione a natureza..."
+                searchPlaceholder="Busque por código ou nome..."
+              />
+            </Field>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
