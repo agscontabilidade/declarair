@@ -15,6 +15,10 @@ export interface DeclaracaoKanban {
   pendingDocs: number;
   totalDocs: number;
   version: number;
+  recibo_validado_em: string | null;
+  arquivo_recibo_url: string | null;
+  numero_recibo: string | null;
+  data_transmissao: string | null;
 }
 
 
@@ -25,6 +29,10 @@ interface DeclaracaoRow {
   ultima_atualizacao_status: string;
   contador_id: string | null;
   version: number;
+  recibo_validado_em: string | null;
+  arquivo_recibo_url: string | null;
+  numero_recibo: string | null;
+  data_transmissao: string | null;
   clientes: { nome: string; cpf: string } | null;
   usuarios: { nome: string } | null;
 }
