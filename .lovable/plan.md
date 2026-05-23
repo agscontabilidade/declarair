@@ -1,59 +1,59 @@
-# Plano: Configurações — Persistência, Equipe e Chave Pix
+# Plano: Redesign do modal Enviar Declaração por E-mail
 
-## 1. Bug: Dados do Escritório não persistem visualmente após salvar
+Arquivo único: `src/components/declaracoes/EnviarDeclaracaoEmailModal.tsx`. Sem mudar lógica, payloads, edge function ou queries.
 
-**Causa raiz** (em `src/pages/Configuracoes.tsx` + `src/hooks/use-persisted-form.ts`):
+## Layout
 
-O hook `usePersistedForm` grava o form no `localStorage` em todo `useEffect`. Após `handleSave()`:
-1. `clearForm()` remove a chave e seta o form para valores vazios.
-2. O `useEffect` interno do hook **imediatamente regrava o form vazio no localStorage**.
-3. O `useEffect` que preenche o form a partir do banco (linha 133) checa `localStorage.getItem(...)` — encontra a string vazia e **não preenche com os dados recém-salvos do banco**.
+- Largura: `max-w-2xl` (era `max-w-md`) com `sm:max-w-2xl`, `p-0` no `DialogContent` para controlar paddings internos por seção. `max-h-[90vh]` e corpo com `overflow-y-auto`.
+- Estrutura em 3 blocos visuais com separadores sutis (`border-b border-border/60`): **Header**, **Corpo (mensagem + CC + anexos)**, **Footer fixo**.
 
-Resultado: o `update` no banco funciona, mas a UI mostra os campos vazios — passa a impressão de que "não persistiu".
+## Header (novo)
 
-**Correção:** remover o `usePersistedForm` para esta aba (não faz sentido persistir em localStorage dados de configuração do escritório — a fonte de verdade é o banco). Trocar por `useState` simples inicializado vazio e preenchido via `useEffect` sempre que `escritorio` mudar. Após o save, o `invalidateQueries` refaz o fetch e o `useEffect` repopula naturalmente.
+- Faixa com leve gradiente `bg-gradient-to-br from-primary/5 via-background to-background`, padding `px-6 py-5`.
+- Ícone num "tile" arredondado: `h-10 w-10 rounded-xl bg-primary/10 text-primary` com `Mail`.
+- Título `text-lg font-semibold` (Bricolage via classe existente) + subtítulo em `text-sm text-muted-foreground` mostrando "Para" como pill: `<span class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 font-medium text-foreground">{clienteEmail}</span>`.
+- Linha auxiliar com `Badge` cinza: "IRPF {anoBase}" e, quando houver `cobrancaValor`, outra `Badge` em emerald: "Valor: R$ X".
 
-Sem mudanças no schema.
+## Corpo
 
-## 2. Aba Usuários — habilitar ações na equipe
+Padding `px-6 py-5 space-y-6`.
 
-Hoje em `AbaEquipe.tsx`:
-- A coluna "Ações" só renderiza botões quando `u.papel !== 'dono' && u.ativo`. Para o próprio Responsável Técnico (dono) a célula fica vazia — daí "não é possível fazer nada".
-- Para colaboradores já existem ações de gerenciar permissões e desativar, mas falta **editar nome/email** do membro.
-- Faltam ações para reativar um membro inativo.
+### Mensagem do e-mail
+- Label com contador de caracteres à direita (`{mensagem.length} caracteres`).
+- Textarea: `min-h-[180px]`, `rounded-xl`, `border-border/70`, `focus-visible:ring-2 focus-visible:ring-primary/30`, `leading-relaxed`, `text-[13.5px]`.
+- Linha inferior reorganizada: à esquerda chip discreto com `Sparkles`/`History` indicando "Última mensagem carregada" (quando aplicável), à direita botão **Restaurar padrão** como `Button variant="ghost" size="sm"` com ícone `RotateCcw`.
 
-**Mudanças (apenas UI/CRUD em `AbaEquipe.tsx`, sem alterar schema):**
+### Cópia (CC)
+- Layout em card sutil `rounded-xl border border-dashed border-border/70 p-4`.
+- Label inline com ícone `Users` + texto "Enviar cópia para" + chip `(opcional)`.
+- Input `rounded-lg`. Hint mais discreto em `text-[11px]`.
+- Renderizar chips dos e-mails válidos detectados em tempo real (debounce simples ao digitar via `parseEmails(emailsCopia)`) — apenas visual, não muda envio.
 
-- Adicionar botão **Editar** (ícone `Pencil`) em todas as linhas (inclusive do próprio dono, quando o usuário logado for Responsável Técnico), abrindo um diálogo para editar `nome` e `email` do registro `usuarios`. Update via `supabase.from('usuarios').update(...).eq('id', u.id)`.
-- Para usuários `ativo === false`: mostrar botão **Reativar** (atualiza `ativo = true`).
-- Manter os botões existentes de Permissões e Desativar para colaboradores ativos.
-- Para o Responsável Técnico exibir apenas Editar (nunca Desativar/Permissões — ele tem tudo por padrão).
-- Toasts de sucesso/erro e `invalidateQueries(['contadores', escritorioId])` após cada mutação.
+### Documentos inclusos
+- Trocar lista vertical por **grid responsivo** `grid grid-cols-1 sm:grid-cols-2 gap-2.5`.
+- Cada card: `flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3 hover:border-primary/40 transition-colors`.
+  - Ícone num quadrado colorido por tipo:
+    - Declaração: `bg-primary/10 text-primary` + `FileText`
+    - Recibo: `bg-emerald-500/10 text-emerald-600` + `Receipt`
+    - DARF: `bg-amber-500/10 text-amber-600` + `FileText`
+    - MEI: `bg-blue-500/10 text-blue-600` + `FileText`
+  - Coluna direita com nome (truncate, `text-sm font-medium`) e linha menor `text-[11px] text-muted-foreground` com o "tipo" (Declaração / Recibo / DARF / MEI).
+- Acima do grid, um título discreto `text-xs font-semibold uppercase tracking-wide text-muted-foreground` + contador "({n} anexos)".
 
-As políticas RLS atuais de `usuarios` já permitem ao dono atualizar membros do próprio escritório (confirmar antes de implementar; se necessário ajustar política — só adicionar migration se faltar).
+## Footer
 
-## 3. Novo campo: Chave Pix do Escritório
+- Sticky no fundo: `border-t bg-background/95 backdrop-blur px-6 py-4 flex items-center justify-between gap-3`.
+- Esquerda: micro-texto `text-[11px] text-muted-foreground` "Envio assíncrono — pode levar alguns segundos."
+- Direita: `Cancelar` (`variant="outline"`) + **Confirmar e Enviar** com `bg-primary hover:bg-primary/90 shadow-sm` mantendo o `Loader2`/`Mail`.
 
-A coluna `chave_pix` **já existe** em `public.escritorios` (text). Não precisa de migration.
+## Detalhes de polimento
 
-**UI (em `Configuracoes.tsx`, aba Escritório):**
-
-- Adicionar nova seção "Pix do Escritório" após "Responsável Técnico", com:
-  - Select de **Tipo de chave**: CPF/CNPJ, E-mail, Telefone, Aleatória.
-  - Input **Chave Pix** com máscara dinâmica conforme o tipo.
-  - Texto auxiliar: "Esta chave é usada nas cobranças geradas pelo escritório. Somente o Responsável Técnico pode alterá-la."
-- Persistência: salvar como string única no campo `chave_pix` (mantendo compatibilidade). Tipo pode ser inferido na leitura ou armazenado como prefixo simples — manteremos só a string crua para não criar coluna nova.
-- **Controle de acesso na UI**: o campo é `readOnly` quando `!isDono` (somente Responsável Técnico — papel `dono` — pode alterar). Colaboradores veem somente leitura.
-- **Reforço no servidor**: a política RLS atual `Donos podem atualizar seu escritorio` já restringe o `UPDATE` a `papel='dono'`, então colaboradores não conseguem alterar via API mesmo se burlarem a UI. Nenhuma mudança de RLS necessária.
-
-Incluir `chave_pix` no payload do `handleSave` apenas quando `isDono`.
-
-## Arquivos afetados
-
-- `src/pages/Configuracoes.tsx` — remover `usePersistedForm`, adicionar campo Chave Pix com gate por `isDono`.
-- `src/components/configuracoes/AbaEquipe.tsx` — adicionar diálogo de edição, botão Reativar e ações para o próprio Responsável Técnico.
+- Substituir `max-w-md` por `sm:max-w-2xl` e remover o padding default do `DialogContent` (`p-0`), aplicando padding por seção para permitir o header gradiente full-bleed.
+- Bordas em `rounded-2xl` no modal (já vem do Dialog), garantir `overflow-hidden`.
+- Tipografia: títulos com `font-display` (Bricolage), corpo padrão.
+- Cores e tokens: usar tokens semânticos (`primary`, `muted`, `border`, `card`, `foreground`) — sem hex direto.
+- Acessibilidade preservada: `Label htmlFor`, `aria-label` no botão Restaurar, foco visível mantido.
 
 ## Fora do escopo
 
-- Nenhuma alteração de schema, RLS, edge functions, lógica de billing/cobranças ou nomenclatura.
-- Validação avançada da chave Pix (formato por tipo) fica como melhoria futura — só máscara visual.
+- Nenhuma mudança em props, contratos, RLS, edge function, payload, validações ou regras de negócio. Apenas reorganização visual e classes Tailwind.
