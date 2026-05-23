@@ -1,80 +1,59 @@
-## Objetivo
 
-Enriquecer a mensagem padrão do modal "Enviar Declaração por E-mail" com dados contextuais (resultado, valor da cobrança, chave Pix e assinatura) e habilitar **negrito** no e-mail renderizado.
+## Escopo
 
-## Arquivos afetados
+Apenas mudanças visuais (ícones, cores, labels) em `/declaracoes`. Nenhuma alteração de lógica de upload, RLS, envio de e-mail ou banco.
 
-1. `src/components/declaracoes/EnviarDeclaracaoEmailModal.tsx` (frontend, montagem da mensagem padrão).
-2. `supabase/functions/_shared/transactional-email-templates/envio-manual-declaracao.tsx` (renderizar `**negrito**` como `<strong>`).
+## 1. Coluna "Arquivos" (`AnexarDeclaracaoButton.tsx`)
 
-Nenhuma mudança em props, schema, RLS ou edge function. Sem novas tabelas.
+Hoje o botão mostra apenas dois estados úteis: "Anexar arquivos" (nenhum anexado) ou "Arquivos · N/4" / "Arquivos OK · N/4" (algum anexado / recibo validado), com ícone à esquerda.
 
-## 1. Dados adicionais buscados no modal
+Mudanças:
+- Considerar apenas **Declaração** e **Recibo** para o estado textual (MEI e DARF continuam no dropdown, mas não entram na contagem do label).
+- Remover o ícone da esquerda do botão (`Paperclip`/`FileCheck2`/`Upload`) em todos os estados não-loading. Manter o `ChevronDown` à direita quando o dropdown estiver disponível.
+- Remover o sufixo `· N/4` (sem números).
+- Novos labels:
+  - Nenhum dos dois anexado → **"Anexar Declaração/Recibo"** (variant `outline`)
+  - Apenas um dos dois anexado (declaração XOR recibo) → **"Anexado parcial"** (variant `outline`, sem cor verde)
+  - Os dois anexados, recibo ainda não validado → **"Declaração/Recibo OK"** (variant `outline` verde suave)
+  - Recibo validado (`reciboValidadoEm`) → **"Declaração/Recibo OK"** (variant `default` verde sólido, como hoje quando `transmitida`)
+- Loading state inalterado ("Validando...").
 
-No `useEffect` já existente que abre o modal, ampliar as queries (apenas leitura):
+## 2. Coluna "Ações" (`Declaracoes.tsx`, desktop e mobile)
 
-- **Declaração** (`declaracoes`): adicionar `tipo_resultado, valor_resultado` na seleção (já consultada para `ultima_mensagem_email`).
-- **Cobrança** (`cobrancas`): além de `valor`, trazer `forma_pagamento` na query existente.
-- **Escritório** (`escritorios`): além de `nome`, trazer `chave_pix, chave_pix_tipo`.
-- **Contador** (assinatura): usar `profile.nome` do `useAuth()` (já disponível).
+Ordem da esquerda para direita continua: ver documentos · observações · enviar e-mail.
 
-Novos states: `resultado: { tipo, valor } | null`, `formaPagamento: string | null`, `chavePix: { tipo, chave } | null`.
+### 2a. Ícone "Ver documentos" (atual `FolderOpen`)
+- Trocar por `Paperclip` (lucide `Paperclip`).
+- Quando houver documentos anexados pelo cliente no drive (qualquer linha em `checklist_documentos` da declaração com `arquivo_url` not null), aplicar contorno + cor verde: `variant="outline"` + classes `border-emerald-300 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50`.
+- Quando não houver, manter `variant="ghost"` neutro como hoje.
+- Tooltip permanece "Ver documentos".
 
-## 2. Geração da mensagem padrão
+Para detectar a presença de documentos, adicionar ao `select` da query `declaracoes-lista` o agregado `checklist_documentos(arquivo_url)` e derivar `temDocsDrive = (d.checklist_documentos || []).some(c => !!c.arquivo_url)` no `map`. Sem nova query, sem mudar RLS.
 
-Reescrever o `useEffect` que monta `mensagem` para incluir blocos condicionais. Cada label/valor importante envolvido em `**...**`.
+### 2b. Ícone "Observações" (atual `StickyNote`)
+- Trocar por `Pin` (alfinete, lucide `Pin`).
+- Manter exatamente a mesma lógica: contorno/preenchimento verde quando `temObs`, ghost neutro quando vazio. Mesmo tooltip mostrando o texto da observação.
 
-Esqueleto da mensagem final (exemplo com todos os blocos):
+### 2c. Ícone "Enviar e-mail" (atual `Send`)
+- Ícone permanece `Send`.
+- E-mail já enviado (`declaracao_enviada_em` truthy): manter ghost com `text-emerald-600 hover:text-emerald-700` (como hoje).
+- E-mail não enviado: trocar o atual botão verde sólido por `variant="outline"` com classes `border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700` (sem contorno verde, sem preenchimento sólido).
+- Tooltip e ação inalterados.
 
-```
-Prezado(a) {Nome},
+## 3. Versão mobile (cards `lg:hidden`)
 
-Sua Declaração de Imposto de Renda {ano} foi transmitida com sucesso.
+Aplicar as mesmas trocas de ícone/cor para coerência:
+- Botão "Documentos" usa `Paperclip` em vez de `FolderOpen`, com cor verde de contorno quando há docs no drive.
+- Botão/chip de "Observações" usa `Pin` em vez de `StickyNote`.
+- Botão "Enviar"/"Reenviar": "Reenviar" continua ghost verde; "Enviar" passa a `outline` laranja (não mais verde sólido).
 
-Seguem em anexo a cópia da declaração, o respectivo recibo de entrega[, o DARF para pagamento][, a Declaração do MEI (DASN-SIMEI)].
+## Fora de escopo
 
-**Resultado da declaração:** **Restituição de R$ 1.234,56**  (ou: **Imposto a pagar de R$ X**, ou: **Sem imposto a pagar nem restituição**)
+- Conteúdo do dropdown de anexar (seções MEI/DARF, validação inteligente) permanece igual.
+- `EnviarDeclaracaoEmailModal`, `DocumentosDeclaracaoModal`, `ObservacoesModal` não são alterados.
+- Sem mudanças de schema, RLS, edge functions ou nomenclatura no banco.
 
-**Valor da declaração:** **R$ 300,00**
+## Arquivos a editar
 
-**Chave Pix para pagamento ({tipo}):** **{chave}**
-
-Ficamos à disposição para qualquer dúvida.
-
-Obrigado pela confiança mais um ano.
-
-Atenciosamente,
-**{Nome do Contador}**
-```
-
-### Regras de inclusão
-
-- **Resultado**: incluir sempre que `tipo_resultado` existir. Mapeamento:
-  - `restituicao` → "Restituição de {valorFmt}"
-  - `pagamento` / `imposto_a_pagar` → "Imposto a pagar de {valorFmt}"
-  - `nenhum` / sem valor → "Sem imposto a pagar nem restituição"
-- **Valor da declaração (cobrança)**: incluir quando `cobrancaValor != null` (linha já existente, apenas reformatada com `**`).
-- **Chave Pix**: incluir quando `escritorio.chave_pix` existir **e** houver cobrança **e** (`cobranca.forma_pagamento === 'pix'` **ou** `forma_pagamento` for null/ausente — fallback para suportar fluxo atual antes da futura opção no modal de cobrança).
-- **Assinatura**: sempre. "Obrigado pela confiança mais um ano." + nova linha + "Atenciosamente," + nova linha + `**{profile.nome ?? nomeEscritorio}**`.
-
-A mensagem padrão continua sendo sobrescrita assim que o usuário edita (flag `mensagemPersonalizada` já existente preservada). "Restaurar padrão" volta a gerar com os novos blocos.
-
-## 3. Renderização de negrito no e-mail
-
-No template `envio-manual-declaracao.tsx`, hoje cada linha vira um `<Text>` simples. Adicionar um util `renderMarkdownBold(line: string): React.ReactNode[]` que faz split em `/\*\*(.+?)\*\*/g` e devolve um array misturando strings cruas e `<strong>{...}</strong>`.
-
-Substituir `{line}` pelo retorno desse util dentro do `lines.map`. Sem dependências novas, sem `dangerouslySetInnerHTML` (continua seguro/escapado pelo React).
-
-Comportamento: usuário pode digitar `**texto**` na textarea do modal e ver em negrito no e-mail final. Mensagens antigas sem `**` continuam funcionando.
-
-## 4. Detalhes de UX no modal
-
-- A textarea continua exibindo `**marcadores**` como texto cru (não interpretamos no preview do modal para manter simplicidade). Pode-se adicionar uma micro-hint no rodapé da textarea: `Use **texto** para destacar trechos em negrito no e-mail.` (`text-[11px] text-muted-foreground`).
-- Sem mudanças visuais no header, anexos, CC ou footer do modal.
-
-## Fora do escopo
-
-- Modal de gerar cobrança (escolher Pix) — será feito em tarefa futura, conforme indicado pelo usuário.
-- Suporte a outros marcadores markdown (itálico, listas, links). Apenas `**negrito**`.
-- Alterações no template de e-mail além do parser de negrito.
-- Mudanças em `declaracao`, `cobranca` ou `escritorios` (apenas leitura).
+- `src/components/declaracoes/AnexarDeclaracaoButton.tsx` — novos labels e remoção do ícone à esquerda.
+- `src/pages/Declaracoes.tsx` — query inclui `checklist_documentos(arquivo_url)`; imports `Paperclip`, `Pin`; troca de ícones e classes nas duas views (desktop + mobile).
