@@ -422,16 +422,16 @@ export default function Declaracoes() {
                             size="sm"
                             variant="outline"
                             onClick={() => setDocsTarget({ id: d.id, nome: d.clienteNome })}
-                            className="justify-start"
+                            className={`justify-start ${d.temDocsDrive ? 'border-emerald-300 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700' : ''}`}
                           >
-                            <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
+                            <Paperclip className="h-3.5 w-3.5 mr-1.5" />
                             Documentos
                           </Button>
                           {d.arquivo_declaracao_url && d.arquivo_recibo_url && (
                             <Button
                               size="sm"
-                              variant={d.declaracao_enviada_em ? "ghost" : "default"}
-                              className={d.declaracao_enviada_em ? "text-emerald-600 hover:text-emerald-700" : "bg-emerald-600 hover:bg-emerald-700 text-white"}
+                              variant={d.declaracao_enviada_em ? "ghost" : "outline"}
+                              className={d.declaracao_enviada_em ? "text-emerald-600 hover:text-emerald-700" : "border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700"}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setEmailTarget(d);
@@ -448,7 +448,7 @@ export default function Declaracoes() {
                               className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100 transition-colors min-w-0"
                               title={d.observacoes}
                             >
-                              <StickyNote className="h-3.5 w-3.5 shrink-0" />
+                              <Pin className="h-3.5 w-3.5 shrink-0" />
                               <span className="truncate">{d.observacoes}</span>
                             </button>
                           ) : (
@@ -458,10 +458,11 @@ export default function Declaracoes() {
                               onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
                               className="justify-start"
                             >
-                              <StickyNote className="h-3.5 w-3.5 mr-1.5" />
+                              <Pin className="h-3.5 w-3.5 mr-1.5" />
                               Observações
                             </Button>
                           )}
+
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
