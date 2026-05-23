@@ -20,6 +20,7 @@ import {
   Sparkles,
   Briefcase,
   Banknote,
+  Paperclip,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
