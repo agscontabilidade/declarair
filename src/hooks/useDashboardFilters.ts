@@ -7,7 +7,8 @@ export interface DashboardFilters {
   status: string | null;
 }
 
-export function calcularUrgencia(dataAtualizacao: string): 'urgente' | 'atencao' | 'normal' {
+export function calcularUrgencia(dataAtualizacao: string, status?: string): 'urgente' | 'atencao' | 'normal' {
+  if (status === 'transmitida') return 'normal';
   if (!dataAtualizacao) return 'normal';
   const diff = Date.now() - new Date(dataAtualizacao).getTime();
   const dias = diff / (1000 * 60 * 60 * 24);
@@ -15,6 +16,7 @@ export function calcularUrgencia(dataAtualizacao: string): 'urgente' | 'atencao'
   if (dias > 3) return 'atencao';
   return 'normal';
 }
+
 
 interface DeclaracaoFiltravel {
   id: string;
