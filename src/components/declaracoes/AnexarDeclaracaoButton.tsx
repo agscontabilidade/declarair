@@ -234,10 +234,10 @@ export function AnexarDeclaracaoButton({
               </Button>
             </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-72">
-          <DropdownMenuLabel className="flex items-center gap-1.5 text-xs">
-            <Sparkles className="h-3 w-3 text-emerald-600" /> Validação automática por IA
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-1.5 text-xs">
+              <Sparkles className="h-3 w-3 text-emerald-600" /> Validação inteligente
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
 
           {secoes.map((s, idx) => {
             const anexado = !!s.url;
@@ -263,7 +263,7 @@ export function AnexarDeclaracaoButton({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1 h-7 text-xs"
+                      className="flex-1 h-7 text-xs border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
                       onClick={() => inputRefs[s.tipo].current?.click()}
                       disabled={processando}
                     >
