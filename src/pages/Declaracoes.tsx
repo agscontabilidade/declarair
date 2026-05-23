@@ -119,6 +119,8 @@ export default function Declaracoes() {
     clienteCpf: string;
     clienteEmail: string;
     observacoes: string;
+    temDocsDrive: boolean;
+
   }
 
   const { data: declaracoes = [] as DeclaracaoListaItem[], isLoading } = useQuery({
