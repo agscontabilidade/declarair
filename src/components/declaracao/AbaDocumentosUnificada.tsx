@@ -137,17 +137,6 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
 
   return (
     <div className="space-y-4">
-      {obrigatorios.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Documentos obrigatórios recebidos</span>
-              <span className="text-sm text-muted-foreground">{recebidos}/{obrigatorios.length}</span>
-            </div>
-            <Progress value={progressPct} className="h-2" />
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
