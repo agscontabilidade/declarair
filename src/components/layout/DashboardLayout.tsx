@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from './Sidebar';
 import { Bell, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
