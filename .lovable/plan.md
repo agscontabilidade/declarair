@@ -1,118 +1,41 @@
-## Diagnóstico da auditoria
+# Auditoria: Documentos Pendentes no Dashboard
 
-Encontrei divergência real entre o status gravado em `declaracoes.status` e os sinais operacionais da própria declaração.
+## Erros encontrados
 
-### Divergências confirmadas no banco
+1. **Ícone de exclamação amarelo (⚠️) no KanbanCard** — `KanbanCard.tsx:34,81` usa `isStale()` (>7 dias sem alteração) e aplica em **qualquer status, inclusive `transmitida`**. Por isso declarações já transmitidas há mais de uma semana exibem alerta no Kanban.
 
-- Total de declarações: **54**
-- Declarações com status `declaracao_pronta`, mas com sinais claros de transmissão: **5**
-- Declarações com status `transmitida`, mas sem recibo/dados de transmissão: **1**
+2. **Barra de progresso "X/Y documentos" + badge "N pendente(s)"** — `KanbanCard.tsx:88-107` e `DeclaracoesListView.tsx:79-88` leem a tabela legacy `checklist_documentos`. Esse checklist foi descontinuado na UI (contador hoje envia documentos livremente via Drive/`DocumentosDeclaracaoModal`), mas os registros antigos continuam no banco e alimentando esses contadores enganosos.
 
-As 5 divergências principais são todas de 2026, no escritório **AGS CONTABILIDADE INTEGRADA LTDA**:
+3. **Dados confirmados no banco** (ano 2026):
+   - 14 declarações `transmitida` ainda têm **128 itens** no checklist legacy, sendo 4 com `status='pendente'` → aparecem como "1 pendente" no card mesmo já transmitidas.
+   - 39 `aguardando_documentos` com 150 pendentes (irrelevante, pois o status já comunica isso).
 
-- Jena Junior da Costa
-- Andreia Lourenço da Costa
-- Juliana Sabrina dos Santos
-- Pascoal Angelo Roteli
-- Cassia Cristina Iadask de Oliveira
+4. **Query extra desnecessária** — `useDashboardData.ts:85-98` faz round-trip adicional para `checklist_documentos` em todo refresh do Dashboard, só para alimentar UI que será removida.
 
-Todas essas 5 têm:
+5. **KPI "Doc. Pendente"** (`KpiCards`) está OK — conta declarações com `status='aguardando_documentos'`, não usa o checklist. Mantém.
 
-- declaração anexada
-- recibo anexado
-- `recibo_validado_em` preenchido
-- `numero_recibo` preenchido
-- `data_transmissao` preenchida
-- `declaracao_enviada_em` preenchido
-- mas `status = declaracao_pronta`
+## Plano de ajuste
 
-Portanto, deveriam aparecer como **Transmitida** tanto no Dashboard/Kanban quanto em `/declaracoes`.
+### 1. `src/components/dashboard/KanbanCard.tsx`
+- Remover totalmente o bloco da barra de progresso (linhas 88-94) e o badge "N pendente(s)" (linhas 103-107).
+- Remover import de `Progress` e `FileText` se não restarem usos.
+- Manter o ícone stale apenas para status não-finalizados: `stale && item.status !== 'transmitida'`.
+- Remover `totalDocs`/`pendingDocs`/`receivedDocs`/`docPct` do componente.
 
-## Causa provável
+### 2. `src/components/dashboard/DeclaracoesListView.tsx`
+- Remover a coluna "Documentos" inteira (header + cell + `<Progress>`).
+- Remover cálculo de `totalDocs/receivedDocs/docPct`.
 
-A divergência está no fluxo de anexar PDFs via `processar-pdf-declaracao`.
+### 3. `src/hooks/useDashboardData.ts`
+- Remover a segunda query a `checklist_documentos` e os maps `pendingMap`/`totalMap`.
+- Remover `pendingDocs` e `totalDocs` da interface `DeclaracaoKanban`.
 
-O comportamento atual é:
+### 4. (Opcional, limpeza de dados) Migration
+- Marcar como `recebido` os 4 itens `pendente` em declarações já `transmitida`, só por higiene — não afeta UI após as mudanças acima. Posso pular se preferir.
 
-1. Quando o recibo é validado, a função muda o status para `transmitida`.
-2. Se depois a declaração PDF é anexada/validada, a função ainda pode voltar o status para `declaracao_pronta` quando o status anterior era `aguardando_documentos` ou `documentacao_recebida`.
-3. Em alguns casos, por concorrência/ordem de processamento, o recibo marca como `transmitida` e logo depois a validação da declaração sobrescreve para `declaracao_pronta`.
+## Resultado esperado
+- Card e lista do Dashboard **deixam de mostrar qualquer aviso de documento faltante**.
+- Declarações `transmitida` não exibem mais ícone de alerta.
+- A única sinalização de pendência de documentos passa a ser o próprio status `aguardando_documentos` (cor + KPI), coerente com o fluxo atual ("ou tem documentos ou não tem").
 
-A trilha de atividades confirma exatamente isso: existem eventos “Status alterado de aguardando_documentos para transmitida” seguidos logo depois por “Status alterado de transmitida para declaracao_pronta”.
-
-## Por que Dashboard e /declaracoes divergem da realidade
-
-As duas telas estão lendo o mesmo campo `declaracoes.status`:
-
-- Dashboard/Kanban: `src/hooks/useDashboardData.ts`
-- `/declaracoes`: `src/pages/Declaracoes.tsx`
-
-Então o problema não é visual nem filtro. As telas estão sincronizadas entre si, mas estão sincronizadas com um status gravado incorretamente.
-
-## Plano de correção
-
-### 1. Corrigir imediatamente os registros divergentes
-
-Atualizar no banco apenas as declarações que têm evidência objetiva de transmissão, mas ainda estão com status diferente de `transmitida`.
-
-Critério seguro:
-
-```text
-status != transmitida
-E pelo menos um sinal forte de transmissão:
-- recibo_validado_em preenchido
-- arquivo_recibo_url preenchido
-- numero_recibo preenchido
-- data_transmissao preenchida
-- declaracao_enviada_em preenchido
-```
-
-Para este caso atual, isso corrige as 5 declarações listadas.
-
-### 2. Corrigir a função de processamento de PDFs
-
-Alterar `supabase/functions/processar-pdf-declaracao/index.ts` para impedir regressão automática de status.
-
-Regra proposta:
-
-```text
-Se a declaração já tem recibo validado, número de recibo, data de transmissão ou status transmitida,
-nunca permitir que o anexo da declaração PDF volte o status para declaracao_pronta.
-```
-
-Na prática:
-
-- upload de `recibo` continua marcando como `transmitida`
-- upload de `declaracao` só marca como `declaracao_pronta` se não houver nenhum sinal de transmissão
-- upload de `darf` e `mei` não altera status principal
-
-### 3. Fortalecer o Kanban contra regressões manuais acidentais
-
-Hoje o Kanban permite arrastar qualquer card para qualquer coluna. Isso pode permitir regressão de `transmitida` para status anterior.
-
-Vou ajustar o handler do Kanban para bloquear regressão quando houver sinal de transmissão, mantendo a regra do sistema:
-
-```text
-Declaração com recibo/dados de transmissão não pode voltar para status anterior pelo Kanban.
-```
-
-Para isso, o Dashboard precisará carregar sinais mínimos (`recibo_validado_em`, `numero_recibo`, `data_transmissao`, `arquivo_recibo_url`, `declaracao_enviada_em`) junto com cada item.
-
-### 4. Ajustar o detalhe da declaração para evitar regressão insegura
-
-Em `/declaracoes/:id`, o menu “Mover status” também pode permitir regressão dependendo do papel.
-
-Vou bloquear a regressão para declarações já transmitidas por evidência objetiva. O status só poderá avançar ou permanecer coerente com o recibo.
-
-### 5. Revalidar consultas e contadores
-
-Depois das correções:
-
-- reconsultar divergências no banco
-- confirmar que as 5 passam a `transmitida`
-- confirmar que Dashboard/Kanban e `/declaracoes` continuam lendo do mesmo campo
-- confirmar que os KPIs deixam de contar essas declarações como “em andamento”
-
-## Observação importante
-
-Existe também 1 declaração com `status = transmitida`, mas sem recibo/dados de transmissão. Ela parece ser de teste (`cliente teste`, escritório `contCorr`). Eu não corrigiria automaticamente para trás sem confirmação, porque pode ter sido marcada manualmente como transmitida. Posso apenas reportar essa inconsistência ou tratá-la separadamente se você quiser.
+Confirma que sigo com os 3 ajustes (e me diz se quer o item 4 de limpeza)?

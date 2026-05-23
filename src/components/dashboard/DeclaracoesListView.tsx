@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Eye, FileText } from 'lucide-react';
 import { STATUS_LABELS, formatDate } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -50,16 +49,12 @@ export function DeclaracoesListView({ items, isLoading }: { items: DeclaracaoKan
             <TableHead>CPF</TableHead>
             <TableHead className="hidden md:table-cell">Responsável</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="hidden lg:table-cell">Documentos</TableHead>
             <TableHead className="hidden md:table-cell">Atualização</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((item) => {
-            const totalDocs = item.totalDocs || 0;
-            const receivedDocs = totalDocs - (item.pendingDocs || 0);
-            const docPct = totalDocs > 0 ? Math.round((receivedDocs / totalDocs) * 100) : 0;
             return (
               <TableRow
                 key={item.id}
@@ -75,16 +70,6 @@ export function DeclaracoesListView({ items, isLoading }: { items: DeclaracaoKan
                   <Badge variant="outline" className={STATUS_COLORS[item.status] || ''}>
                     {STATUS_LABELS[item.status] || item.status}
                   </Badge>
-                </TableCell>
-                <TableCell className="hidden lg:table-cell">
-                  {totalDocs > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <Progress value={docPct} className="h-1.5 w-16" />
-                      <span className="text-xs text-muted-foreground tabular-nums">{receivedDocs}/{totalDocs}</span>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                   {formatDate(item.ultima_atualizacao_status)}
