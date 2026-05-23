@@ -1,25 +1,13 @@
-## Bug
-Em `src/pages/Drive.tsx` linha 62, o filtro de busca é:
+## Mudanças em `src/components/declaracoes/AnexarDeclaracaoButton.tsx`
 
-```ts
-if (busca && !cl.nome?.toLowerCase().includes(busca.toLowerCase())
-          && !cl.cpf?.includes(busca.replace(/\D/g, ''))) continue;
-```
+1. **Header do dropdown** (linha ~226-228): trocar "Validação automática por IA" por **"Validação inteligente"**. Manter o ícone `Sparkles` em verde.
 
-Ao digitar um **nome** (ex.: "ana"), `busca.replace(/\D/g, '')` resulta em `""`. Como `string.includes("")` é sempre `true`, o segundo termo do `&&` é sempre falso → a linha nunca executa `continue` → nenhum cliente é filtrado. Resultado: a busca por nome parece não funcionar.
+2. **Botões "Anexar" / "Substituir"** de cada seção (linha ~252-265): aplicar cor suave em vez do `variant="outline"` neutro. Usar tom emerald discreto, compatível com o design system (primário Emerald #10B981):
+   - Classe: `border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800`
+   - Mantém ícones `Upload` / `Loader2` e o tamanho `h-7 text-xs`.
+   - Botão "Baixar" (`Download`) permanece `variant="ghost"` (sem alteração) para não competir visualmente.
 
-## Correção (apenas Drive.tsx, linha 62)
+3. Nenhuma alteração no botão trigger principal, na lógica de upload, na edge function ou em qualquer outro arquivo.
 
-Calcular os dois termos separadamente e só considerar o match por CPF quando o usuário digitou dígitos:
-
-```ts
-const termo = busca.trim().toLowerCase();
-const digitos = busca.replace(/\D/g, '');
-const matchNome = termo ? cl.nome?.toLowerCase().includes(termo) : true;
-const matchCpf  = digitos ? cl.cpf?.replace(/\D/g, '').includes(digitos) : false;
-if (busca && !matchNome && !matchCpf) continue;
-```
-
-Também normalizo `cl.cpf` removendo pontuação antes do `includes`, para que a busca por CPF funcione mesmo se o valor armazenado vier formatado.
-
-Sem mudanças em queries, RLS, layout ou outros arquivos.
+## Resultado
+Dropdown mais leve e amigável: header com nomenclatura neutra ("Validação inteligente") e botões de anexar em verde suave, alinhados à marca.

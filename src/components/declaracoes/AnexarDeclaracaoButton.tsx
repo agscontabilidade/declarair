@@ -234,9 +234,10 @@ export function AnexarDeclaracaoButton({
               </Button>
             </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-72">
-          <DropdownMenuLabel className="flex items-center gap-1.5 text-xs">
-            <Sparkles className="h-3 w-3 text-emerald-600" /> Validação automática por IA
-          </DropdownMenuLabel>
+            <DropdownMenuLabel className="flex items-center gap-1.5 text-xs">
+              <Sparkles className="h-3 w-3 text-emerald-600" /> Validação inteligente
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
           <DropdownMenuSeparator />
 
           {secoes.map((s, idx) => {
