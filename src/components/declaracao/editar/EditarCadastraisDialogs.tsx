@@ -85,7 +85,7 @@ function useInvalidate(declaracaoId: string, clienteId: string) {
   return () => qc.invalidateQueries({ queryKey: ['info-cadastrais', declaracaoId, clienteId] });
 }
 
-type FormularioPatch = Record<string, string | number | null | Array<Record<string, string>>>;
+type FormularioPatch = Database['public']['Tables']['formulario_ir']['Update'];
 
 async function upsertFormulario(
   declaracaoId: string,
