@@ -250,7 +250,7 @@ export default function Declaracoes() {
                         <TableHead>Status</TableHead>
                         <TableHead>Resultado</TableHead>
                         <TableHead className="whitespace-nowrap">Atualizado</TableHead>
-                        <TableHead>Arquivos</TableHead>
+                        <TableHead>Declaração/Recibo</TableHead>
                         <TableHead>Processo</TableHead>
                         <TableHead className="text-right pr-4">Ações</TableHead>
                       </TableRow>
