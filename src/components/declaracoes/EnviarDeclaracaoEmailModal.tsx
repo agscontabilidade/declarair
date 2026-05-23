@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useState, useEffect, useMemo } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Mail, Loader2, FileText, Receipt } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Mail, Loader2, FileText, Receipt, Users, RotateCcw, History, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -252,22 +253,86 @@ export function EnviarDeclaracaoEmailModal({
     }
   };
 
+  const ccChips = useMemo(() => parseEmails(emailsCopia), [emailsCopia]);
+
+  const anexos = [
+    arquivoDeclaracaoUrl && {
+      nome: arquivoDeclaracaoNome || 'Declaração.pdf',
+      tipo: 'Declaração',
+      icon: FileText,
+      tone: 'bg-primary/10 text-primary',
+    },
+    arquivoReciboUrl && {
+      nome: arquivoReciboNome || 'Recibo.pdf',
+      tipo: 'Recibo',
+      icon: Receipt,
+      tone: 'bg-emerald-500/10 text-emerald-600',
+    },
+    arquivoDarfUrl && {
+      nome: arquivoDarfNome || 'DARF.pdf',
+      tipo: 'DARF',
+      icon: FileText,
+      tone: 'bg-amber-500/10 text-amber-600',
+    },
+    arquivoMeiUrl && {
+      nome: arquivoMeiNome || 'Declaração MEI (DASN-SIMEI).pdf',
+      tipo: 'MEI',
+      icon: FileText,
+      tone: 'bg-blue-500/10 text-blue-600',
+    },
+  ].filter(Boolean) as Array<{ nome: string; tipo: string; icon: typeof FileText; tone: string }>;
+
+  const valorFmt = cobrancaValor != null
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaValor)
+    : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5 text-primary" />
-            Enviar Declaração por E-mail
-          </DialogTitle>
-          <DialogDescription>
-            O e-mail será enviado para <strong>{clienteEmail}</strong> com links seguros dos documentos.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="p-0 gap-0 overflow-hidden sm:max-w-2xl max-h-[92vh] flex flex-col">
+        {/* Header */}
+        <div className="relative px-6 py-5 border-b border-border/60 bg-gradient-to-br from-primary/5 via-background to-background">
+          <div className="flex items-start gap-4">
+            <div className="h-11 w-11 shrink-0 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <Mail className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-semibold font-display leading-tight">
+                Enviar Declaração por E-mail
+              </h2>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+                <span>Para</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 font-medium text-foreground max-w-[260px] truncate">
+                  {clienteEmail}
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <Badge variant="secondary" className="rounded-full font-normal">
+                  IRPF {anoBase}
+                </Badge>
+                {valorFmt && (
+                  <Badge className="rounded-full font-normal bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 border-emerald-500/20">
+                    Valor: {valorFmt}
+                  </Badge>
+                )}
+                <Badge variant="outline" className="rounded-full font-normal gap-1">
+                  <Paperclip className="h-3 w-3" />
+                  {anexos.length} {anexos.length === 1 ? 'anexo' : 'anexos'}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div className="space-y-4 py-4">
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+          {/* Mensagem */}
           <div className="space-y-2">
-            <Label htmlFor="mensagem">Mensagem do e-mail</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="mensagem" className="text-sm font-medium">Mensagem do e-mail</Label>
+              <span className="text-[11px] text-muted-foreground tabular-nums">
+                {mensagem.length} caracteres
+              </span>
+            </div>
             <Textarea
               id="mensagem"
               value={mensagem}
@@ -276,32 +341,44 @@ export function EnviarDeclaracaoEmailModal({
                 setMensagemPersonalizada(true);
               }}
               placeholder="Digite a mensagem que será enviada no corpo do e-mail..."
-              className="min-h-[150px] resize-none"
+              className="min-h-[180px] resize-none rounded-xl border-border/70 leading-relaxed text-[13.5px] focus-visible:ring-2 focus-visible:ring-primary/30"
             />
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between min-h-[24px]">
               {ultimaMensagemCarregada ? (
-                <p className="text-xs text-muted-foreground">
-                  Carregada a última mensagem enviada.
-                </p>
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <History className="h-3 w-3" />
+                  Última mensagem enviada carregada
+                </span>
               ) : <span />}
               {mensagemPersonalizada && (
-                <button
+                <Button
                   type="button"
-                  className="text-xs text-primary hover:underline"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-primary hover:text-primary"
                   onClick={() => {
                     setMensagemPersonalizada(false);
                     setUltimaMensagemCarregada(false);
                   }}
                   disabled={loading}
+                  aria-label="Restaurar mensagem padrão"
                 >
-                  Restaurar mensagem padrão
-                </button>
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  Restaurar padrão
+                </Button>
               )}
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="emails-copia">Enviar cópia para (opcional)</Label>
+          {/* CC */}
+          <div className="rounded-xl border border-dashed border-border/70 p-4 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <Label htmlFor="emails-copia" className="text-sm font-medium">
+                Enviar cópia para
+              </Label>
+              <span className="text-[11px] text-muted-foreground">(opcional)</span>
+            </div>
             <Input
               id="emails-copia"
               type="text"
@@ -309,61 +386,88 @@ export function EnviarDeclaracaoEmailModal({
               onChange={(e) => setEmailsCopia(e.target.value)}
               placeholder="email1@exemplo.com, email2@exemplo.com"
               disabled={loading}
+              className="rounded-lg"
             />
-            <p className="text-xs text-muted-foreground">
+            {ccChips.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {ccChips.map((email) => {
+                  const valid = EMAIL_REGEX.test(email);
+                  return (
+                    <span
+                      key={email}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        valid
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-destructive/10 text-destructive'
+                      }`}
+                    >
+                      {email}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground">
               Separe múltiplos e-mails por vírgula (máx. {MAX_CC}).
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground uppercase font-semibold">Documentos inclusos:</Label>
-            <div className="space-y-2">
-              {arquivoDeclaracaoUrl && (
-                <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded border border-dashed">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="truncate flex-1">{arquivoDeclaracaoNome || 'Declaração.pdf'}</span>
-                </div>
-              )}
-              {arquivoReciboUrl && (
-                <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded border border-dashed">
-                  <Receipt className="h-4 w-4 text-primary" />
-                  <span className="truncate flex-1">{arquivoReciboNome || 'Recibo.pdf'}</span>
-                </div>
-              )}
-              {arquivoDarfUrl && (
-                <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded border border-dashed">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="truncate flex-1">{arquivoDarfNome || 'DARF.pdf'}</span>
-                </div>
-              )}
-              {arquivoMeiUrl && (
-                <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded border border-dashed">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="truncate flex-1">{arquivoMeiNome || 'Declaração MEI (DASN-SIMEI).pdf'}</span>
-                </div>
-              )}
+          {/* Anexos */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Documentos inclusos
+              </Label>
+              <span className="text-[11px] text-muted-foreground">
+                {anexos.length} {anexos.length === 1 ? 'arquivo' : 'arquivos'}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {anexos.map((a, i) => {
+                const Icon = a.icon;
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3 hover:border-primary/40 transition-colors"
+                  >
+                    <div className={`h-9 w-9 shrink-0 rounded-lg flex items-center justify-center ${a.tone}`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate leading-tight">{a.nome}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{a.tipo}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            Cancelar
-          </Button>
-          <Button onClick={handleEnviar} disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              <>
-                <Mail className="h-4 w-4 mr-2" />
-                Confirmar e Enviar
-              </>
-            )}
-          </Button>
-        </DialogFooter>
+        {/* Footer */}
+        <div className="border-t border-border/60 bg-background/95 backdrop-blur px-6 py-4 flex items-center justify-between gap-3">
+          <span className="text-[11px] text-muted-foreground hidden sm:block">
+            Envio assíncrono — pode levar alguns segundos.
+          </span>
+          <div className="flex items-center gap-2 ml-auto">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEnviar} disabled={loading} className="shadow-sm">
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Confirmar e Enviar
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
