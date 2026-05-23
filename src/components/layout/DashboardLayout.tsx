@@ -14,8 +14,9 @@ import { ReportBugModal } from '@/components/bug-report/ReportBugModal';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { userType } = useAuth();
+  const { userType, profile } = useAuth();
   const isContador = userType === 'contador';
+  const primeiroNome = profile.nome?.trim().split(/\s+/)[0];
 
   return (
     <SidebarProvider>
@@ -23,7 +24,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-16 flex items-center border-b bg-card px-4 gap-4 shrink-0">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+            <span className="text-sm font-medium text-foreground">
+              {primeiroNome ? `Olá, ${primeiroNome}` : 'Olá'}
+            </span>
             <div className="flex-1" />
             <ThemeToggle />
             {isContador && <NotificacoesBell />}
