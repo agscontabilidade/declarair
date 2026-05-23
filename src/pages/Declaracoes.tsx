@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, Search, FolderOpen, StickyNote } from 'lucide-react';
+import { FileText, Search, Paperclip, Pin } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -119,6 +119,8 @@ export default function Declaracoes() {
     clienteCpf: string;
     clienteEmail: string;
     observacoes: string;
+    temDocsDrive: boolean;
+
   }
 
   const { data: declaracoes = [] as DeclaracaoListaItem[], isLoading } = useQuery({
@@ -136,7 +138,9 @@ export default function Declaracoes() {
           arquivo_darf_url, arquivo_darf_nome, darf_validado_em,
           em_processamento, status_processamento_rfb, declaracao_enviada_em,
           clientes(nome, cpf, email),
-          declaracao_notas_internas(conteudo)
+          declaracao_notas_internas(conteudo),
+          checklist_documentos(arquivo_url)
+
         `)
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', Number(anoBase))
@@ -152,7 +156,9 @@ export default function Declaracoes() {
         clienteCpf: d.clientes?.cpf || '',
         clienteEmail: d.clientes?.email || '',
         observacoes: (Array.isArray(d.declaracao_notas_internas) ? d.declaracao_notas_internas[0]?.conteudo : d.declaracao_notas_internas?.conteudo) || '',
+        temDocsDrive: Array.isArray(d.checklist_documentos) && d.checklist_documentos.some((c: any) => !!c?.arquivo_url),
       }));
+
     },
     enabled: !!escritorioId,
     staleTime: 30000, // Cache for 30 seconds
@@ -315,12 +321,12 @@ export default function Declaracoes() {
                                   <TooltipTrigger asChild>
                                     <Button
                                       size="icon"
-                                      variant="ghost"
-                                      className="h-8 w-8"
+                                      variant={d.temDocsDrive ? 'outline' : 'ghost'}
+                                      className={`h-8 w-8 ${d.temDocsDrive ? 'border-emerald-300 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50' : ''}`}
                                       onClick={() => setDocsTarget({ id: d.id, nome: d.clienteNome })}
                                       aria-label="Ver documentos"
                                     >
-                                      <FolderOpen className="h-4 w-4" />
+                                      <Paperclip className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>Ver documentos</TooltipContent>
@@ -335,7 +341,7 @@ export default function Declaracoes() {
                                       onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
                                       aria-label={temObs ? 'Ver observações' : 'Adicionar observação'}
                                     >
-                                      <StickyNote className={`h-4 w-4 ${temObs ? 'fill-emerald-100' : ''}`} />
+                                      <Pin className={`h-4 w-4 ${temObs ? 'fill-emerald-100' : ''}`} />
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent className="max-w-[260px]">
@@ -348,8 +354,8 @@ export default function Declaracoes() {
                                     <TooltipTrigger asChild>
                                       <Button
                                         size="icon"
-                                        variant={enviado ? 'ghost' : 'default'}
-                                        className={`h-8 w-8 ${enviado ? 'text-emerald-600 hover:text-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+                                        variant={enviado ? 'ghost' : 'outline'}
+                                        className={`h-8 w-8 ${enviado ? 'text-emerald-600 hover:text-emerald-700' : 'border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700'}`}
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setEmailTarget(d);
@@ -359,6 +365,7 @@ export default function Declaracoes() {
                                         <Send className="h-4 w-4" />
                                       </Button>
                                     </TooltipTrigger>
+
                                     <TooltipContent>
                                       {enviado ? `Reenviar (enviado em ${formatDateTime(d.declaracao_enviada_em)})` : 'Enviar declaração ao cliente'}
                                     </TooltipContent>
@@ -415,16 +422,16 @@ export default function Declaracoes() {
                             size="sm"
                             variant="outline"
                             onClick={() => setDocsTarget({ id: d.id, nome: d.clienteNome })}
-                            className="justify-start"
+                            className={`justify-start ${d.temDocsDrive ? 'border-emerald-300 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700' : ''}`}
                           >
-                            <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
+                            <Paperclip className="h-3.5 w-3.5 mr-1.5" />
                             Documentos
                           </Button>
                           {d.arquivo_declaracao_url && d.arquivo_recibo_url && (
                             <Button
                               size="sm"
-                              variant={d.declaracao_enviada_em ? "ghost" : "default"}
-                              className={d.declaracao_enviada_em ? "text-emerald-600 hover:text-emerald-700" : "bg-emerald-600 hover:bg-emerald-700 text-white"}
+                              variant={d.declaracao_enviada_em ? "ghost" : "outline"}
+                              className={d.declaracao_enviada_em ? "text-emerald-600 hover:text-emerald-700" : "border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700"}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setEmailTarget(d);
@@ -441,7 +448,7 @@ export default function Declaracoes() {
                               className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100 transition-colors min-w-0"
                               title={d.observacoes}
                             >
-                              <StickyNote className="h-3.5 w-3.5 shrink-0" />
+                              <Pin className="h-3.5 w-3.5 shrink-0" />
                               <span className="truncate">{d.observacoes}</span>
                             </button>
                           ) : (
@@ -451,10 +458,11 @@ export default function Declaracoes() {
                               onClick={() => setObsTarget({ id: d.id, nome: d.clienteNome })}
                               className="justify-start"
                             >
-                              <StickyNote className="h-3.5 w-3.5 mr-1.5" />
+                              <Pin className="h-3.5 w-3.5 mr-1.5" />
                               Observações
                             </Button>
                           )}
+
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
