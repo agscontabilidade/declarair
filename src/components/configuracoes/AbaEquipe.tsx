@@ -345,6 +345,32 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={editDadosOpen} onOpenChange={setEditDadosOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Membro</DialogTitle>
+            <DialogDescription>Atualize o nome e o e-mail de <strong>{usuarioEditando?.nome}</strong>.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input value={editNome} onChange={(e) => setEditNome(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setEditDadosOpen(false)}>Cancelar</Button>
+            <Button onClick={salvarEditDados} disabled={savingEdit}>
+              {savingEdit && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
