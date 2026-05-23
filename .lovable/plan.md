@@ -1,41 +1,51 @@
-# Auditoria: Documentos Pendentes no Dashboard
 
-## Erros encontrados
+## Problema
 
-1. **Ícone de exclamação amarelo (⚠️) no KanbanCard** — `KanbanCard.tsx:34,81` usa `isStale()` (>7 dias sem alteração) e aplica em **qualquer status, inclusive `transmitida`**. Por isso declarações já transmitidas há mais de uma semana exibem alerta no Kanban.
+Na barra de filtros do dashboard os 3 selos no topo direito (47 cinza, 31 vermelho, 7 amarelo) só mostram número + ícone minúsculo. O contador bate o olho e:
 
-2. **Barra de progresso "X/Y documentos" + badge "N pendente(s)"** — `KanbanCard.tsx:88-107` e `DeclaracoesListView.tsx:79-88` leem a tabela legacy `checklist_documentos`. Esse checklist foi descontinuado na UI (contador hoje envia documentos livremente via Drive/`DocumentosDeclaracaoModal`), mas os registros antigos continuam no banco e alimentando esses contadores enganosos.
+- Não sabe o que cada número significa sem passar o mouse.
+- Os círculos vermelho/amarelo parecem "erro/alerta do sistema" (igual ao problema que já resolvemos com o ⚠ do card) e não "declarações paradas há X dias".
+- Não dá pra clicar — o filtro de urgência fica num `<Select>` separado embaixo, duplicando função.
 
-3. **Dados confirmados no banco** (ano 2026):
-   - 14 declarações `transmitida` ainda têm **128 itens** no checklist legacy, sendo 4 com `status='pendente'` → aparecem como "1 pendente" no card mesmo já transmitidas.
-   - 39 `aguardando_documentos` com 150 pendentes (irrelevante, pois o status já comunica isso).
+## Objetivo
 
-4. **Query extra desnecessária** — `useDashboardData.ts:85-98` faz round-trip adicional para `checklist_documentos` em todo refresh do Dashboard, só para alimentar UI que será removida.
+Trocar os 3 selos por **chips de filtro rápido**, autoexplicativos, clicáveis, com rótulo curto + número + cor semântica. O `<Select>` "Urgência" sai (vira redundante).
 
-5. **KPI "Doc. Pendente"** (`KpiCards`) está OK — conta declarações com `status='aguardando_documentos'`, não usa o checklist. Mantém.
+## Como vai ficar
 
-## Plano de ajuste
+```text
+[ 🔽 Filtro ativo: 47 Total ]   [ 🔴 31  Paradas +7d ]   [ 🟡 7  Atenção 3-7d ]   [ 🟢  Em dia ]
+```
 
-### 1. `src/components/dashboard/KanbanCard.tsx`
-- Remover totalmente o bloco da barra de progresso (linhas 88-94) e o badge "N pendente(s)" (linhas 103-107).
-- Remover import de `Progress` e `FileText` se não restarem usos.
-- Manter o ícone stale apenas para status não-finalizados: `stale && item.status !== 'transmitida'`.
-- Remover `totalDocs`/`pendingDocs`/`receivedDocs`/`docPct` do componente.
+- Cada chip é um **toggle** do filtro de urgência (clicou → filtra; clicou de novo → limpa).
+- Quando ativo: borda sólida + ring sutil na cor; quando inativo: fundo bem suave (`bg-destructive/10` etc.), sem parecer "alerta gritando".
+- Zero quando `stats.urgentes === 0` → chip aparece desabilitado em cinza claro ("Nenhuma parada +7d") em vez de sumir, pra UI não "pular".
+- Tooltip mantém a explicação completa em linguagem simples.
+- O selo "Total" (47) continua só informativo, sem ação.
 
-### 2. `src/components/dashboard/DeclaracoesListView.tsx`
-- Remover a coluna "Documentos" inteira (header + cell + `<Progress>`).
-- Remover cálculo de `totalDocs/receivedDocs/docPct`.
+## Mudanças de cópia (linguagem simples)
 
-### 3. `src/hooks/useDashboardData.ts`
-- Remover a segunda query a `checklist_documentos` e os maps `pendingMap`/`totalMap`.
-- Remover `pendingDocs` e `totalDocs` da interface `DeclaracaoKanban`.
+- `47` → **"Total 47"** · tooltip: "Declarações exibidas com os filtros atuais."
+- `🔴 31` → **"Paradas +7d · 31"** · tooltip: "31 declarações sem mudança de status há mais de 7 dias. Clique para filtrar."
+- `🟡 7` → **"Atenção 3-7d · 7"** · tooltip: "7 declarações sem mudança de status entre 3 e 7 dias. Clique para filtrar."
+- Novo `🟢` → **"Em dia"** · tooltip: "Atualizadas nos últimos 3 dias. Clique para filtrar."
 
-### 4. (Opcional, limpeza de dados) Migration
-- Marcar como `recebido` os 4 itens `pendente` em declarações já `transmitida`, só por higiene — não afeta UI após as mudanças acima. Posso pular se preferir.
+## Remoções
 
-## Resultado esperado
-- Card e lista do Dashboard **deixam de mostrar qualquer aviso de documento faltante**.
-- Declarações `transmitida` não exibem mais ícone de alerta.
-- A única sinalização de pendência de documentos passa a ser o próprio status `aguardando_documentos` (cor + KPI), coerente com o fluxo atual ("ou tem documentos ou não tem").
+- Tira o `<Select>` "Urgência" da linha 137-165 (vira redundante com os chips).
+- Mantém `<Select>` de Contador e Status.
+- Chip de filtro ativo (na linha de chips embaixo) continua refletindo o estado.
 
-Confirma que sigo com os 3 ajustes (e me diz se quer o item 4 de limpeza)?
+## Arquivos a alterar
+
+- `src/components/dashboard/DashboardFilters.tsx` — substituir os 3 `<Badge>` por 4 chips-botão; remover `<Select>` de urgência; reusar `onUrgenciaChange` que já existe.
+
+## Não muda
+
+- `useDashboardFilters.ts` (lógica de `calcularUrgencia`, stats, filtros) — fica igual.
+- `KanbanCard`, `KanbanColumn`, `KpiCards` — não tocar.
+- Edge functions, schema, RLS — nada.
+
+## Resultado
+
+O contador bate o olho e vê **rótulo + número + cor**, entende em 1 segundo que são declarações paradas (não erros do sistema), e clica direto pra filtrar — sem precisar abrir tooltip nem o select redundante.
