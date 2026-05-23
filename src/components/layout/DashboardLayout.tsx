@@ -16,7 +16,10 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userType, profile } = useAuth();
   const isContador = userType === 'contador';
-  const primeiroNome = profile.nome?.trim().split(/\s+/)[0];
+  const primeiroNomeRaw = profile.nome?.trim().split(/\s+/)[0];
+  const primeiroNome = primeiroNomeRaw
+    ? primeiroNomeRaw.charAt(0).toUpperCase() + primeiroNomeRaw.slice(1).toLowerCase()
+    : null;
 
   return (
     <SidebarProvider>
