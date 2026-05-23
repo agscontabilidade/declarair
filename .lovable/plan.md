@@ -1,29 +1,25 @@
-## Problema
-Na tabela `/declaracoes`, quando uma declaração é transmitida, **duas colunas exibem o mesmo rótulo "Transmitida"**:
-- Coluna **Status** — badge do status real da declaração.
-- Coluna **Arquivos** — `AnexarDeclaracaoButton` em variante "default" também mostra "Transmitida" (porque hoje o estado do botão é derivado de `reciboValidadoEm`).
+## Bug
+Em `src/pages/Drive.tsx` linha 62, o filtro de busca é:
 
-Isso é redundante e desperdiça a coluna "Arquivos", que deveria comunicar o estado dos anexos (Declaração, Recibo, MEI, DARF), não o status global.
+```ts
+if (busca && !cl.nome?.toLowerCase().includes(busca.toLowerCase())
+          && !cl.cpf?.includes(busca.replace(/\D/g, ''))) continue;
+```
 
-## Proposta (apenas UI, sem mudar lógica)
+Ao digitar um **nome** (ex.: "ana"), `busca.replace(/\D/g, '')` resulta em `""`. Como `string.includes("")` é sempre `true`, o segundo termo do `&&` é sempre falso → a linha nunca executa `continue` → nenhum cliente é filtrado. Resultado: a busca por nome parece não funcionar.
 
-Em `src/components/declaracoes/AnexarDeclaracaoButton.tsx`, alterar **somente o rótulo/visual do trigger** do dropdown. A lógica de upload, validação por IA e a regra "recibo validado → transmitida" continuam intactas.
+## Correção (apenas Drive.tsx, linha 62)
 
-Novo comportamento do botão (estado visual derivado dos mesmos dados já recebidos por props):
+Calcular os dois termos separadamente e só considerar o match por CPF quando o usuário digitou dígitos:
 
-1. Calcular contagem de anexos válidos: `anexados = secoes.filter(s => !!s.url).length` (total 4).
-2. Substituir o texto fixo "Transmitida" / "Anexar" por um rótulo que descreva os **arquivos**, com 3 estados visuais:
-   - **Nenhum anexo** (`anexados === 0`) → `variant="outline"`, ícone `Upload`, texto `Anexar arquivos` + chevron. (igual ao atual)
-   - **Parcial** (`0 < anexados < 4`) → `variant="outline"`, ícone `Paperclip`, texto `Arquivos · {anexados}/4` + chevron. Mostra progresso sem prometer conclusão.
-   - **Recibo validado** (`transmitida === true`) → `variant="default"` (verde), ícone `FileCheck2`, texto `Arquivos OK · {anexados}/4`. Comunica "anexos completos e validados" sem repetir a palavra "Transmitida".
-3. Estado "Validando..." durante upload permanece igual.
-4. Importar `Paperclip` de `lucide-react`.
+```ts
+const termo = busca.trim().toLowerCase();
+const digitos = busca.replace(/\D/g, '');
+const matchNome = termo ? cl.nome?.toLowerCase().includes(termo) : true;
+const matchCpf  = digitos ? cl.cpf?.replace(/\D/g, '').includes(digitos) : false;
+if (busca && !matchNome && !matchCpf) continue;
+```
 
-Nenhuma mudança em:
-- `src/pages/Declaracoes.tsx` (colunas, ordem, filtros).
-- Edge function `processar-pdf-declaracao`.
-- Regras de status (`declaracoes.status`), banco ou RLS.
-- Dropdown interno (seções por tipo de arquivo continuam idênticas).
+Também normalizo `cl.cpf` removendo pontuação antes do `includes`, para que a busca por CPF funcione mesmo se o valor armazenado vier formatado.
 
-## Resultado
-A coluna **Status** continua dizendo "Transmitida" (status oficial). A coluna **Arquivos** passa a comunicar o que de fato representa — quantos PDFs estão anexados/validados — eliminando a duplicação visual e dando contexto útil de relance.
+Sem mudanças em queries, RLS, layout ou outros arquivos.

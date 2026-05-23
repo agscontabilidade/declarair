@@ -59,7 +59,13 @@ export default function Drive() {
     for (const doc of docs as DocWithDeclaracao[]) {
       const cl = doc.declaracoes?.clientes;
       if (!cl) continue;
-      if (busca && !cl.nome?.toLowerCase().includes(busca.toLowerCase()) && !cl.cpf?.includes(busca.replace(/\D/g, ''))) continue;
+      if (busca) {
+        const termo = busca.trim().toLowerCase();
+        const digitos = busca.replace(/\D/g, '');
+        const matchNome = termo ? cl.nome?.toLowerCase().includes(termo) : false;
+        const matchCpf = digitos ? cl.cpf?.replace(/\D/g, '').includes(digitos) : false;
+        if (!matchNome && !matchCpf) continue;
+      }
       if (!clienteMap.has(cl.id)) {
         clienteMap.set(cl.id, { id: cl.id, nome: cl.nome, cpf: cl.cpf, cliente: [], contador: [] });
       }
