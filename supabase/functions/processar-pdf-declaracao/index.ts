@@ -298,13 +298,30 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
     const updates: Record<string, unknown> = {};
     let virouTransmitida = false;
 
+    // Releitura do estado atual para evitar race condition (uploads paralelos de
+    // declaração e recibo podem usar snapshots desatualizados e reverter o status).
+    const { data: decFresh } = await admin
+      .from("declaracoes")
+      .select("status, recibo_validado_em, arquivo_recibo_url, numero_recibo, data_transmissao")
+      .eq("id", declaracao_id)
+      .single();
+    const statusAtual = (decFresh?.status ?? dec.status) as string;
+    const jaTransmitida =
+      statusAtual === "transmitida" ||
+      !!decFresh?.recibo_validado_em ||
+      !!decFresh?.arquivo_recibo_url ||
+      !!decFresh?.numero_recibo ||
+      !!decFresh?.data_transmissao;
+
     if (tipo === "declaracao") {
       updates.arquivo_declaracao_url = storage_path;
       updates.arquivo_declaracao_nome = arquivo_nome || storage_path.split("/").pop();
       updates.arquivo_declaracao_uploaded_at = nowIso;
       updates.declaracao_validada_em = nowIso;
       updates.declaracao_extracao = extracao;
-      if (["aguardando_documentos", "documentacao_recebida"].includes(dec.status as string)) {
+      // Só promove para "declaracao_pronta" se NÃO houver qualquer sinal de transmissão.
+      // Isso evita regressão de "transmitida" → "declaracao_pronta" em uploads paralelos.
+      if (!jaTransmitida && ["aguardando_documentos", "documentacao_recebida"].includes(statusAtual)) {
         updates.status = "declaracao_pronta";
       }
       if (extracao?.tipo_resultado && ["restituicao", "pagamento", "nenhum"].includes(extracao.tipo_resultado)) {
@@ -323,10 +340,10 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
       if (extracao?.data_transmissao) {
         updates.data_transmissao = new Date(extracao.data_transmissao).toISOString();
       }
-      if (dec.status !== "transmitida") {
+      if (statusAtual !== "transmitida") {
         updates.status = "transmitida";
         virouTransmitida = true;
-      } else if (!dec.recibo_validado_em) {
+      } else if (!decFresh?.recibo_validado_em) {
         virouTransmitida = true;
       }
     } else if (tipo === "mei") {

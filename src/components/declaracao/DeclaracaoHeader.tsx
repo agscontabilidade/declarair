@@ -16,7 +16,17 @@ const statusColors: Record<string, string> = {
 const statusOrder = ['aguardando_documentos', 'documentacao_recebida', 'declaracao_pronta', 'transmitida'];
 
 interface Props {
-  declaracao: { id?: string; status?: string; ano_base?: number; escritorio_id?: string; clientes?: { id?: string; nome?: string; cpf?: string; email?: string } | null } | null | undefined;
+  declaracao: {
+    id?: string;
+    status?: string;
+    ano_base?: number;
+    escritorio_id?: string;
+    recibo_validado_em?: string | null;
+    arquivo_recibo_url?: string | null;
+    numero_recibo?: string | null;
+    data_transmissao?: string | null;
+    clientes?: { id?: string; nome?: string; cpf?: string; email?: string } | null;
+  } | null | undefined;
   papel: string | null;
   onChangeStatus: (status: string) => void;
 }
@@ -27,7 +37,18 @@ export function DeclaracaoHeader({ declaracao, papel, onChangeStatus }: Props) {
   const clienteId = declaracao?.clientes?.id;
   const currentIndex = statusOrder.indexOf(declaracao?.status || '');
 
+  const jaTransmitida =
+    declaracao?.status === 'transmitida' ||
+    !!declaracao?.recibo_validado_em ||
+    !!declaracao?.arquivo_recibo_url ||
+    !!declaracao?.numero_recibo ||
+    !!declaracao?.data_transmissao;
+
   const getAvailableStatuses = () => {
+    // Se já transmitida por evidência objetiva, só permite manter ou (re)marcar transmitida.
+    if (jaTransmitida) {
+      return declaracao?.status === 'transmitida' ? [] : ['transmitida'];
+    }
     if (papel === 'dono') {
       return statusOrder.filter(s => s !== declaracao?.status);
     }

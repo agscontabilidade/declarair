@@ -15,6 +15,10 @@ export interface DeclaracaoKanban {
   pendingDocs: number;
   totalDocs: number;
   version: number;
+  recibo_validado_em: string | null;
+  arquivo_recibo_url: string | null;
+  numero_recibo: string | null;
+  data_transmissao: string | null;
 }
 
 
@@ -25,6 +29,10 @@ interface DeclaracaoRow {
   ultima_atualizacao_status: string;
   contador_id: string | null;
   version: number;
+  recibo_validado_em: string | null;
+  arquivo_recibo_url: string | null;
+  numero_recibo: string | null;
+  data_transmissao: string | null;
   clientes: { nome: string; cpf: string } | null;
   usuarios: { nome: string } | null;
 }
@@ -64,7 +72,7 @@ export function useDashboardData(anoBase: number) {
 
       const { data, error } = await supabase
         .from('declaracoes')
-        .select('id, status, ano_base, ultima_atualizacao_status, contador_id, version, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome)')
+        .select('id, status, ano_base, ultima_atualizacao_status, contador_id, version, recibo_validado_em, arquivo_recibo_url, numero_recibo, data_transmissao, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome)')
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', anoBase);
 
@@ -102,6 +110,10 @@ export function useDashboardData(anoBase: number) {
           pendingDocs: pendingMap[row.id] || 0,
           totalDocs: totalMap[row.id] || 0,
           version: row.version,
+          recibo_validado_em: row.recibo_validado_em,
+          arquivo_recibo_url: row.arquivo_recibo_url,
+          numero_recibo: row.numero_recibo,
+          data_transmissao: row.data_transmissao,
         };
       });
     },
