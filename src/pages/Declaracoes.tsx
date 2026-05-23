@@ -510,6 +510,8 @@ export default function Declaracoes() {
           arquivoReciboNome={emailTarget.arquivo_recibo_nome}
           arquivoDarfUrl={emailTarget.arquivo_darf_url}
           arquivoDarfNome={emailTarget.arquivo_darf_nome}
+          arquivoMeiUrl={emailTarget.arquivo_mei_url}
+          arquivoMeiNome={emailTarget.arquivo_mei_nome}
           open={!!emailTarget}
           onOpenChange={(o) => !o && setEmailTarget(null)}
           onSuccess={() => {

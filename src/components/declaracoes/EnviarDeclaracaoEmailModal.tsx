@@ -20,6 +20,8 @@ interface Props {
   arquivoReciboNome: string | null;
   arquivoDarfUrl?: string | null;
   arquivoDarfNome?: string | null;
+  arquivoMeiUrl?: string | null;
+  arquivoMeiNome?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
@@ -36,6 +38,8 @@ export function EnviarDeclaracaoEmailModal({
   arquivoReciboNome,
   arquivoDarfUrl,
   arquivoDarfNome,
+  arquivoMeiUrl,
+  arquivoMeiNome,
   open,
   onOpenChange,
   onSuccess
@@ -75,13 +79,17 @@ export function EnviarDeclaracaoEmailModal({
       const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaValor);
       cobrancaLinha = `\n\nO valor da declaração é: ${valorFmt}.`;
     }
-    const anexosTxt = arquivoDarfUrl
-      ? 'a cópia da declaração, o respectivo recibo de entrega e o DARF para pagamento'
-      : 'a cópia da declaração e o respectivo recibo de entrega';
+    const partes = ['a cópia da declaração', 'o respectivo recibo de entrega'];
+    if (arquivoDarfUrl) partes.push('o DARF para pagamento');
+    if (arquivoMeiUrl) partes.push('a Declaração do MEI (DASN-SIMEI)');
+    const anexosTxt =
+      partes.length === 1
+        ? partes[0]
+        : `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`;
     setMensagem(
       `Prezado(a) ${clienteNome},\n\nSua Declaração de Imposto de Renda ${anoBase} foi transmitida com sucesso.\n\nSeguem em anexo ${anexosTxt}.${cobrancaLinha}\n\nFicamos à disposição para qualquer dúvida.`
     );
-  }, [clienteNome, anoBase, cobrancaValor, arquivoDarfUrl, mensagemPersonalizada]);
+  }, [clienteNome, anoBase, cobrancaValor, arquivoDarfUrl, arquivoMeiUrl, mensagemPersonalizada]);
 
   // Carrega a última mensagem enviada (se houver) ao abrir o modal
   useEffect(() => {
@@ -166,6 +174,12 @@ export function EnviarDeclaracaoEmailModal({
         attachmentPaths.push({
           filename: arquivoDarfNome || `DARF_IRPF_${anoBase}.pdf`,
           path: arquivoDarfUrl
+        });
+      }
+      if (arquivoMeiUrl) {
+        attachmentPaths.push({
+          filename: arquivoMeiNome || `Declaracao_MEI_DASN_SIMEI_${anoBase}.pdf`,
+          path: arquivoMeiUrl
         });
       }
 
@@ -320,6 +334,12 @@ export function EnviarDeclaracaoEmailModal({
                 <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded border border-dashed">
                   <FileText className="h-4 w-4 text-primary" />
                   <span className="truncate flex-1">{arquivoDarfNome || 'DARF.pdf'}</span>
+                </div>
+              )}
+              {arquivoMeiUrl && (
+                <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded border border-dashed">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <span className="truncate flex-1">{arquivoMeiNome || 'Declaração MEI (DASN-SIMEI).pdf'}</span>
                 </div>
               )}
             </div>
