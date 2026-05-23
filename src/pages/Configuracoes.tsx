@@ -160,7 +160,11 @@ export default function Configuracoes() {
   async function handleSave() {
     if (!escritorioId || !podeAlterarEscritorio) return;
     setSaving(true);
-    const payload: Record<string, string> = {
+    const payload: {
+      nome: string; email: string; telefone: string; cnpj: string;
+      responsavel_nome: string; responsavel_cpf: string; responsavel_crc: string;
+      chave_pix?: string;
+    } = {
       nome: form.nome,
       email: form.email,
       telefone: form.telefone,
