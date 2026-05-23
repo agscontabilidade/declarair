@@ -181,39 +181,10 @@ export function DashboardFilters({
         </Select>
 
         <Select
-          value={filters.urgencia}
-          onValueChange={(v) => onUrgenciaChange(v as Filters['urgencia'])}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Urgência" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todas">Todas</SelectItem>
-            <SelectItem value="urgente">
-              <span className="flex items-center gap-2">
-                <AlertCircle className="h-3.5 w-3.5 text-destructive" />
-                Urgentes (&gt;7d parado)
-              </span>
-            </SelectItem>
-            <SelectItem value="atencao">
-              <span className="flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5 text-warning" />
-                Atenção (&gt;3d parado)
-              </span>
-            </SelectItem>
-            <SelectItem value="normal">
-              <span className="flex items-center gap-2">
-                <CheckCircle className="h-3.5 w-3.5 text-success" />
-                Normal
-              </span>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select
           value={filters.status || 'todos'}
           onValueChange={(v) => onStatusChange(v === 'todos' ? null : v)}
         >
+
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Todos os status" />
           </SelectTrigger>
