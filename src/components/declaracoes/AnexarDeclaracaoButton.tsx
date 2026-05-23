@@ -238,7 +238,6 @@ export function AnexarDeclaracaoButton({
               <Sparkles className="h-3 w-3 text-emerald-600" /> Validação inteligente
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-          <DropdownMenuSeparator />
 
           {secoes.map((s, idx) => {
             const anexado = !!s.url;
