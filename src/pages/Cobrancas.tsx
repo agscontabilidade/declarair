@@ -5,7 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, DollarSign, TrendingUp, AlertTriangle, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, DollarSign, TrendingUp, AlertTriangle, X, Search } from 'lucide-react';
 import { useCobrancas } from '@/hooks/useCobrancas';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -24,6 +25,7 @@ export default function Cobrancas() {
   const [searchParams, setSearchParams] = useSearchParams();
   const clienteIdFiltro = searchParams.get('cliente');
   const [statusFilter, setStatusFilter] = useState('todos');
+  const [busca, setBusca] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, unknown> | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
@@ -31,8 +33,20 @@ export default function Cobrancas() {
 
   const { cobrancas: cobrancasAll, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
   const cobrancas = useMemo(
-    () => clienteIdFiltro ? cobrancasAll.filter(c => c.cliente_id === clienteIdFiltro) : cobrancasAll,
-    [cobrancasAll, clienteIdFiltro],
+    () => {
+      let list = clienteIdFiltro ? cobrancasAll.filter(c => c.cliente_id === clienteIdFiltro) : cobrancasAll;
+      const termo = busca.trim().toLowerCase();
+      if (termo) {
+        const digitos = termo.replace(/\D/g, '');
+        list = list.filter(c =>
+          c.clientes?.nome?.toLowerCase().includes(termo) ||
+          (digitos && c.clientes?.cpf?.replace(/\D/g, '').includes(digitos)) ||
+          c.descricao?.toLowerCase().includes(termo)
+        );
+      }
+      return list;
+    },
+    [cobrancasAll, clienteIdFiltro, busca],
   );
   const nomeClienteFiltro = clienteIdFiltro ? cobrancas[0]?.clientes?.nome : null;
   const { podeVerCobrancas, podeCriarCobrancas, podeExcluirCobranca } = usePermissoes();
@@ -158,9 +172,9 @@ export default function Cobrancas() {
         {/* Filters + Table */}
         <Card className="shadow-sm">
           <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Filtrar status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -171,6 +185,15 @@ export default function Cobrancas() {
                   <SelectItem value="cancelado">Cancelado</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por cliente, CPF ou descrição..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
             <CobrancasTable
               cobrancas={cobrancas}
