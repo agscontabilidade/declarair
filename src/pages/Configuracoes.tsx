@@ -24,7 +24,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-import { usePersistedForm } from '@/hooks/use-persisted-form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Configuracoes() {
   const { profile } = useAuth();
@@ -83,7 +83,7 @@ export default function Configuracoes() {
     enabled: !!escritorioId,
   });
 
-  const [form, setForm, clearForm] = usePersistedForm('configuracoes_escritorio', {
+  const [form, setForm] = useState({
     nome: '',
     email: '',
     telefone: '',
@@ -91,8 +91,10 @@ export default function Configuracoes() {
     responsavelNome: '',
     responsavelCpf: '',
     responsavelCrc: '',
+    chavePixTipo: 'aleatoria' as 'cpf_cnpj' | 'email' | 'telefone' | 'aleatoria',
+    chavePix: '',
   });
-  
+
   const setFormField = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
@@ -116,6 +118,15 @@ export default function Configuracoes() {
       .replace(/\.(\d{3})(\d)/, '.$1-$2');
   }
 
+  function inferTipoPix(chave: string): 'cpf_cnpj' | 'email' | 'telefone' | 'aleatoria' {
+    if (!chave) return 'aleatoria';
+    if (chave.includes('@')) return 'email';
+    const digits = chave.replace(/\D/g, '');
+    if (digits.length === 11 || digits.length === 14) return 'cpf_cnpj';
+    if (digits.length >= 10 && digits.length <= 13 && chave.match(/^[+\d\s()\-]+$/)) return 'telefone';
+    return 'aleatoria';
+  }
+
   async function handleBuscarCnpj() {
     const clean = form.cnpj.replace(/\D/g, '');
     if (clean.length !== 14 || !podeAlterarEscritorio) return;
@@ -132,40 +143,42 @@ export default function Configuracoes() {
 
   useEffect(() => {
     if (escritorio) {
-      // Check if we already have persisted changes. 
-      // If not, we fill from DB.
-      const saved = localStorage.getItem('form_persistence_configuracoes_escritorio');
-      if (!saved) {
-        setForm({
-          nome: escritorio.nome || '',
-          email: escritorio.email || '',
-          telefone: escritorio.telefone || '',
-          cnpj: escritorio.cnpj || '',
-          responsavelNome: escritorio.responsavel_nome || '',
-          responsavelCpf: escritorio.responsavel_cpf || '',
-          responsavelCrc: escritorio.responsavel_crc || '',
-        });
-      }
+      setForm({
+        nome: escritorio.nome || '',
+        email: escritorio.email || '',
+        telefone: escritorio.telefone || '',
+        cnpj: escritorio.cnpj || '',
+        responsavelNome: escritorio.responsavel_nome || '',
+        responsavelCpf: escritorio.responsavel_cpf || '',
+        responsavelCrc: escritorio.responsavel_crc || '',
+        chavePix: escritorio.chave_pix || '',
+        chavePixTipo: inferTipoPix(escritorio.chave_pix || ''),
+      });
     }
-  }, [escritorio, setForm]);
+  }, [escritorio]);
 
   async function handleSave() {
     if (!escritorioId || !podeAlterarEscritorio) return;
     setSaving(true);
-    const { error } = await supabase.from('escritorios').update({ 
-      nome: form.nome, 
-      email: form.email, 
-      telefone: form.telefone, 
+    const payload: {
+      nome: string; email: string; telefone: string; cnpj: string;
+      responsavel_nome: string; responsavel_cpf: string; responsavel_crc: string;
+      chave_pix?: string;
+    } = {
+      nome: form.nome,
+      email: form.email,
+      telefone: form.telefone,
       cnpj: form.cnpj,
       responsavel_nome: form.responsavelNome,
       responsavel_cpf: form.responsavelCpf,
-      responsavel_crc: form.responsavelCrc
-    }).eq('id', escritorioId);
-    
+      responsavel_crc: form.responsavelCrc,
+    };
+    if (isDono) payload.chave_pix = form.chavePix;
+    const { error } = await supabase.from('escritorios').update(payload).eq('id', escritorioId);
+
     if (error) toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
     else {
       toast({ title: 'Dados salvos com sucesso!' });
-      clearForm();
       queryClient.invalidateQueries({ queryKey: ['escritorio', escritorioId] });
     }
     setSaving(false);
@@ -217,6 +230,46 @@ export default function Configuracoes() {
                           </div>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <h3 className="text-sm font-semibold mb-1">Chave Pix do Escritório</h3>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Usada nas cobranças geradas pelo escritório. Somente o Responsável Técnico pode alterá-la.
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-4">
+                        <div className="space-y-2">
+                          <Label>Tipo</Label>
+                          <Select
+                            value={form.chavePixTipo}
+                            onValueChange={(v) => setFormField('chavePixTipo', v)}
+                            disabled={!isDono}
+                          >
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="cpf_cnpj">CPF/CNPJ</SelectItem>
+                              <SelectItem value="email">E-mail</SelectItem>
+                              <SelectItem value="telefone">Telefone</SelectItem>
+                              <SelectItem value="aleatoria">Aleatória</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Chave Pix</Label>
+                          <Input
+                            value={form.chavePix}
+                            onChange={e => setFormField('chavePix', e.target.value)}
+                            readOnly={!isDono}
+                            placeholder={
+                              form.chavePixTipo === 'cpf_cnpj' ? '000.000.000-00 ou 00.000.000/0000-00' :
+                              form.chavePixTipo === 'email' ? 'email@exemplo.com' :
+                              form.chavePixTipo === 'telefone' ? '+55 (00) 00000-0000' :
+                              'chave aleatória'
+                            }
+                          />
+                        </div>
+                      </div>
+                      {!isDono && <p className="text-xs text-muted-foreground mt-2">Apenas o Responsável Técnico pode editar a chave Pix.</p>}
                     </div>
 
                     {!podeAlterarEscritorio && <p className="text-sm text-muted-foreground">Você não tem permissão para alterar os dados do escritório.</p>}

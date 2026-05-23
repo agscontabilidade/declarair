@@ -8,12 +8,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { UserPlus, Copy, Trash2, ShieldCheck, Loader2 } from 'lucide-react';
+import { UserPlus, Copy, Trash2, ShieldCheck, Loader2, Pencil, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 import { formatarPapel } from '@/lib/formatters';
 import { SeletorPermissoes } from './SeletorPermissoes';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 type Usuario = Tables<'usuarios'>;
@@ -29,6 +29,7 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
   const { convitesPendentes, enviarConvite, cancelarConvite, removerColaborador, atualizarPermissoes } =
     useColaboradores(escritorioId || '');
 
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [novoEmail, setNovoEmail] = useState('');
   const [novoNome, setNovoNome] = useState('');
@@ -36,6 +37,50 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
   const [editPermissoesOpen, setEditPermissoesOpen] = useState(false);
   const [permissoesEditando, setPermissoesEditando] = useState<string[]>([]);
+
+  // Edição de dados (nome/email) do membro
+  const [editDadosOpen, setEditDadosOpen] = useState(false);
+  const [editNome, setEditNome] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const abrirEditDados = (u: Usuario) => {
+    setUsuarioEditando(u);
+    setEditNome(u.nome || '');
+    setEditEmail(u.email || '');
+    setEditDadosOpen(true);
+  };
+
+  const salvarEditDados = async () => {
+    if (!usuarioEditando) return;
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from('usuarios')
+      .update({ nome: editNome, email: editEmail })
+      .eq('id', usuarioEditando.id);
+    setSavingEdit(false);
+    if (error) {
+      toast.error('Erro ao salvar: ' + error.message);
+      return;
+    }
+    toast.success('Membro atualizado com sucesso');
+    setEditDadosOpen(false);
+    setUsuarioEditando(null);
+    queryClient.invalidateQueries({ queryKey: ['contadores', escritorioId] });
+  };
+
+  const reativarMembro = async (u: Usuario) => {
+    const { error } = await supabase
+      .from('usuarios')
+      .update({ ativo: true })
+      .eq('id', u.id);
+    if (error) {
+      toast.error('Erro ao reativar: ' + error.message);
+      return;
+    }
+    toast.success('Membro reativado');
+    queryClient.invalidateQueries({ queryKey: ['contadores', escritorioId] });
+  };
 
   const handleEnviarConvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,6 +211,14 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                     {isDono && (
                       <TableCell>
                         <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => abrirEditDados(u)}
+                            title="Editar dados"
+                          >
+                            <Pencil className="h-4 w-4 text-muted-foreground" />
+                          </Button>
                           {u.papel !== 'dono' && u.ativo && (
                             <>
                               <Button
@@ -189,6 +242,16 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </>
+                          )}
+                          {u.papel !== 'dono' && !u.ativo && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => reativarMembro(u)}
+                              title="Reativar"
+                            >
+                              <RotateCcw className="h-4 w-4 text-emerald-600" />
+                            </Button>
                           )}
                         </div>
                       </TableCell>
@@ -278,6 +341,32 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
             >
               {atualizarPermissoes.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editDadosOpen} onOpenChange={setEditDadosOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Membro</DialogTitle>
+            <DialogDescription>Atualize o nome e o e-mail de <strong>{usuarioEditando?.nome}</strong>.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input value={editNome} onChange={(e) => setEditNome(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setEditDadosOpen(false)}>Cancelar</Button>
+            <Button onClick={salvarEditDados} disabled={savingEdit}>
+              {savingEdit && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar
             </Button>
           </div>
         </DialogContent>
