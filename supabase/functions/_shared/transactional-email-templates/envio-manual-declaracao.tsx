@@ -52,7 +52,7 @@ const EnvioManualDeclaracaoEmail = ({
         {lines.length > 0 ? (
           lines.map((line, i) => (
             <Text key={i} className="text-gray-800 text-[14px] leading-[24px] m-0 mb-2">
-              {line}
+              {renderBold(line)}
             </Text>
           ))
         ) : (
