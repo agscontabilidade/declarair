@@ -211,6 +211,14 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                     {isDono && (
                       <TableCell>
                         <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => abrirEditDados(u)}
+                            title="Editar dados"
+                          >
+                            <Pencil className="h-4 w-4 text-muted-foreground" />
+                          </Button>
                           {u.papel !== 'dono' && u.ativo && (
                             <>
                               <Button
@@ -234,6 +242,16 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </>
+                          )}
+                          {u.papel !== 'dono' && !u.ativo && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => reativarMembro(u)}
+                              title="Reativar"
+                            >
+                              <RotateCcw className="h-4 w-4 text-emerald-600" />
+                            </Button>
                           )}
                         </div>
                       </TableCell>
