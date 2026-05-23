@@ -1,59 +1,80 @@
-# Plano: Redesign do modal Enviar Declaração por E-mail
+## Objetivo
 
-Arquivo único: `src/components/declaracoes/EnviarDeclaracaoEmailModal.tsx`. Sem mudar lógica, payloads, edge function ou queries.
+Enriquecer a mensagem padrão do modal "Enviar Declaração por E-mail" com dados contextuais (resultado, valor da cobrança, chave Pix e assinatura) e habilitar **negrito** no e-mail renderizado.
 
-## Layout
+## Arquivos afetados
 
-- Largura: `max-w-2xl` (era `max-w-md`) com `sm:max-w-2xl`, `p-0` no `DialogContent` para controlar paddings internos por seção. `max-h-[90vh]` e corpo com `overflow-y-auto`.
-- Estrutura em 3 blocos visuais com separadores sutis (`border-b border-border/60`): **Header**, **Corpo (mensagem + CC + anexos)**, **Footer fixo**.
+1. `src/components/declaracoes/EnviarDeclaracaoEmailModal.tsx` (frontend, montagem da mensagem padrão).
+2. `supabase/functions/_shared/transactional-email-templates/envio-manual-declaracao.tsx` (renderizar `**negrito**` como `<strong>`).
 
-## Header (novo)
+Nenhuma mudança em props, schema, RLS ou edge function. Sem novas tabelas.
 
-- Faixa com leve gradiente `bg-gradient-to-br from-primary/5 via-background to-background`, padding `px-6 py-5`.
-- Ícone num "tile" arredondado: `h-10 w-10 rounded-xl bg-primary/10 text-primary` com `Mail`.
-- Título `text-lg font-semibold` (Bricolage via classe existente) + subtítulo em `text-sm text-muted-foreground` mostrando "Para" como pill: `<span class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 font-medium text-foreground">{clienteEmail}</span>`.
-- Linha auxiliar com `Badge` cinza: "IRPF {anoBase}" e, quando houver `cobrancaValor`, outra `Badge` em emerald: "Valor: R$ X".
+## 1. Dados adicionais buscados no modal
 
-## Corpo
+No `useEffect` já existente que abre o modal, ampliar as queries (apenas leitura):
 
-Padding `px-6 py-5 space-y-6`.
+- **Declaração** (`declaracoes`): adicionar `tipo_resultado, valor_resultado` na seleção (já consultada para `ultima_mensagem_email`).
+- **Cobrança** (`cobrancas`): além de `valor`, trazer `forma_pagamento` na query existente.
+- **Escritório** (`escritorios`): além de `nome`, trazer `chave_pix, chave_pix_tipo`.
+- **Contador** (assinatura): usar `profile.nome` do `useAuth()` (já disponível).
 
-### Mensagem do e-mail
-- Label com contador de caracteres à direita (`{mensagem.length} caracteres`).
-- Textarea: `min-h-[180px]`, `rounded-xl`, `border-border/70`, `focus-visible:ring-2 focus-visible:ring-primary/30`, `leading-relaxed`, `text-[13.5px]`.
-- Linha inferior reorganizada: à esquerda chip discreto com `Sparkles`/`History` indicando "Última mensagem carregada" (quando aplicável), à direita botão **Restaurar padrão** como `Button variant="ghost" size="sm"` com ícone `RotateCcw`.
+Novos states: `resultado: { tipo, valor } | null`, `formaPagamento: string | null`, `chavePix: { tipo, chave } | null`.
 
-### Cópia (CC)
-- Layout em card sutil `rounded-xl border border-dashed border-border/70 p-4`.
-- Label inline com ícone `Users` + texto "Enviar cópia para" + chip `(opcional)`.
-- Input `rounded-lg`. Hint mais discreto em `text-[11px]`.
-- Renderizar chips dos e-mails válidos detectados em tempo real (debounce simples ao digitar via `parseEmails(emailsCopia)`) — apenas visual, não muda envio.
+## 2. Geração da mensagem padrão
 
-### Documentos inclusos
-- Trocar lista vertical por **grid responsivo** `grid grid-cols-1 sm:grid-cols-2 gap-2.5`.
-- Cada card: `flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3 hover:border-primary/40 transition-colors`.
-  - Ícone num quadrado colorido por tipo:
-    - Declaração: `bg-primary/10 text-primary` + `FileText`
-    - Recibo: `bg-emerald-500/10 text-emerald-600` + `Receipt`
-    - DARF: `bg-amber-500/10 text-amber-600` + `FileText`
-    - MEI: `bg-blue-500/10 text-blue-600` + `FileText`
-  - Coluna direita com nome (truncate, `text-sm font-medium`) e linha menor `text-[11px] text-muted-foreground` com o "tipo" (Declaração / Recibo / DARF / MEI).
-- Acima do grid, um título discreto `text-xs font-semibold uppercase tracking-wide text-muted-foreground` + contador "({n} anexos)".
+Reescrever o `useEffect` que monta `mensagem` para incluir blocos condicionais. Cada label/valor importante envolvido em `**...**`.
 
-## Footer
+Esqueleto da mensagem final (exemplo com todos os blocos):
 
-- Sticky no fundo: `border-t bg-background/95 backdrop-blur px-6 py-4 flex items-center justify-between gap-3`.
-- Esquerda: micro-texto `text-[11px] text-muted-foreground` "Envio assíncrono — pode levar alguns segundos."
-- Direita: `Cancelar` (`variant="outline"`) + **Confirmar e Enviar** com `bg-primary hover:bg-primary/90 shadow-sm` mantendo o `Loader2`/`Mail`.
+```
+Prezado(a) {Nome},
 
-## Detalhes de polimento
+Sua Declaração de Imposto de Renda {ano} foi transmitida com sucesso.
 
-- Substituir `max-w-md` por `sm:max-w-2xl` e remover o padding default do `DialogContent` (`p-0`), aplicando padding por seção para permitir o header gradiente full-bleed.
-- Bordas em `rounded-2xl` no modal (já vem do Dialog), garantir `overflow-hidden`.
-- Tipografia: títulos com `font-display` (Bricolage), corpo padrão.
-- Cores e tokens: usar tokens semânticos (`primary`, `muted`, `border`, `card`, `foreground`) — sem hex direto.
-- Acessibilidade preservada: `Label htmlFor`, `aria-label` no botão Restaurar, foco visível mantido.
+Seguem em anexo a cópia da declaração, o respectivo recibo de entrega[, o DARF para pagamento][, a Declaração do MEI (DASN-SIMEI)].
+
+**Resultado da declaração:** **Restituição de R$ 1.234,56**  (ou: **Imposto a pagar de R$ X**, ou: **Sem imposto a pagar nem restituição**)
+
+**Valor da declaração:** **R$ 300,00**
+
+**Chave Pix para pagamento ({tipo}):** **{chave}**
+
+Ficamos à disposição para qualquer dúvida.
+
+Obrigado pela confiança mais um ano.
+
+Atenciosamente,
+**{Nome do Contador}**
+```
+
+### Regras de inclusão
+
+- **Resultado**: incluir sempre que `tipo_resultado` existir. Mapeamento:
+  - `restituicao` → "Restituição de {valorFmt}"
+  - `pagamento` / `imposto_a_pagar` → "Imposto a pagar de {valorFmt}"
+  - `nenhum` / sem valor → "Sem imposto a pagar nem restituição"
+- **Valor da declaração (cobrança)**: incluir quando `cobrancaValor != null` (linha já existente, apenas reformatada com `**`).
+- **Chave Pix**: incluir quando `escritorio.chave_pix` existir **e** houver cobrança **e** (`cobranca.forma_pagamento === 'pix'` **ou** `forma_pagamento` for null/ausente — fallback para suportar fluxo atual antes da futura opção no modal de cobrança).
+- **Assinatura**: sempre. "Obrigado pela confiança mais um ano." + nova linha + "Atenciosamente," + nova linha + `**{profile.nome ?? nomeEscritorio}**`.
+
+A mensagem padrão continua sendo sobrescrita assim que o usuário edita (flag `mensagemPersonalizada` já existente preservada). "Restaurar padrão" volta a gerar com os novos blocos.
+
+## 3. Renderização de negrito no e-mail
+
+No template `envio-manual-declaracao.tsx`, hoje cada linha vira um `<Text>` simples. Adicionar um util `renderMarkdownBold(line: string): React.ReactNode[]` que faz split em `/\*\*(.+?)\*\*/g` e devolve um array misturando strings cruas e `<strong>{...}</strong>`.
+
+Substituir `{line}` pelo retorno desse util dentro do `lines.map`. Sem dependências novas, sem `dangerouslySetInnerHTML` (continua seguro/escapado pelo React).
+
+Comportamento: usuário pode digitar `**texto**` na textarea do modal e ver em negrito no e-mail final. Mensagens antigas sem `**` continuam funcionando.
+
+## 4. Detalhes de UX no modal
+
+- A textarea continua exibindo `**marcadores**` como texto cru (não interpretamos no preview do modal para manter simplicidade). Pode-se adicionar uma micro-hint no rodapé da textarea: `Use **texto** para destacar trechos em negrito no e-mail.` (`text-[11px] text-muted-foreground`).
+- Sem mudanças visuais no header, anexos, CC ou footer do modal.
 
 ## Fora do escopo
 
-- Nenhuma mudança em props, contratos, RLS, edge function, payload, validações ou regras de negócio. Apenas reorganização visual e classes Tailwind.
+- Modal de gerar cobrança (escolher Pix) — será feito em tarefa futura, conforme indicado pelo usuário.
+- Suporte a outros marcadores markdown (itálico, listas, links). Apenas `**negrito**`.
+- Alterações no template de e-mail além do parser de negrito.
+- Mudanças em `declaracao`, `cobranca` ou `escritorios` (apenas leitura).

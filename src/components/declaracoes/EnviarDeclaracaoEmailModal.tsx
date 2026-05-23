@@ -48,8 +48,10 @@ export function EnviarDeclaracaoEmailModal({
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [nomeEscritorio, setNomeEscritorio] = useState('Seu Contador');
+  const [chavePix, setChavePix] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState('');
   const [cobrancaValor, setCobrancaValor] = useState<number | null>(null);
+  const [resultado, setResultado] = useState<{ tipo: string | null; valor: number | null } | null>(null);
   const [emailsCopia, setEmailsCopia] = useState('');
   const [mensagemPersonalizada, setMensagemPersonalizada] = useState(false);
   const [ultimaMensagemCarregada, setUltimaMensagemCarregada] = useState(false);
@@ -73,13 +75,13 @@ export function EnviarDeclaracaoEmailModal({
     return out;
   }
 
+  function fmtBRL(v: number) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+  }
+
   useEffect(() => {
     if (mensagemPersonalizada) return;
-    let cobrancaLinha = '';
-    if (cobrancaValor != null) {
-      const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaValor);
-      cobrancaLinha = `\n\nO valor da declaração é: ${valorFmt}.`;
-    }
+
     const partes = ['a cópia da declaração', 'o respectivo recibo de entrega'];
     if (arquivoDarfUrl) partes.push('o DARF para pagamento');
     if (arquivoMeiUrl) partes.push('a Declaração do MEI (DASN-SIMEI)');
@@ -87,10 +89,41 @@ export function EnviarDeclaracaoEmailModal({
       partes.length === 1
         ? partes[0]
         : `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`;
-    setMensagem(
-      `Prezado(a) ${clienteNome},\n\nSua Declaração de Imposto de Renda ${anoBase} foi transmitida com sucesso.\n\nSeguem em anexo ${anexosTxt}.${cobrancaLinha}\n\nFicamos à disposição para qualquer dúvida.`
-    );
-  }, [clienteNome, anoBase, cobrancaValor, arquivoDarfUrl, arquivoMeiUrl, mensagemPersonalizada]);
+
+    const blocos: string[] = [];
+    blocos.push(`Prezado(a) ${clienteNome},`);
+    blocos.push(`Sua Declaração de Imposto de Renda ${anoBase} foi transmitida com sucesso.`);
+    blocos.push(`Seguem em anexo ${anexosTxt}.`);
+
+    if (resultado?.tipo) {
+      const valorFmt = resultado.valor != null ? fmtBRL(Number(resultado.valor)) : null;
+      let resumoResultado = '';
+      if (resultado.tipo === 'restituicao' && valorFmt) {
+        resumoResultado = `Restituição de ${valorFmt}`;
+      } else if ((resultado.tipo === 'pagamento' || resultado.tipo === 'imposto_a_pagar') && valorFmt) {
+        resumoResultado = `Imposto a pagar de ${valorFmt}`;
+      } else {
+        resumoResultado = 'Sem imposto a pagar nem restituição';
+      }
+      blocos.push(`**Resultado da declaração:** **${resumoResultado}**`);
+    }
+
+    if (cobrancaValor != null) {
+      blocos.push(`**Valor da declaração:** **${fmtBRL(cobrancaValor)}**`);
+    }
+
+    if (chavePix && cobrancaValor != null) {
+      blocos.push(`**Chave Pix para pagamento:** **${chavePix}**`);
+    }
+
+    blocos.push('Ficamos à disposição para qualquer dúvida.');
+    blocos.push('Obrigado pela confiança mais um ano.');
+
+    const assinante = profile?.nome || nomeEscritorio;
+    blocos.push(`Atenciosamente,\n**${assinante}**`);
+
+    setMensagem(blocos.join('\n\n'));
+  }, [clienteNome, anoBase, cobrancaValor, arquivoDarfUrl, arquivoMeiUrl, mensagemPersonalizada, resultado, chavePix, profile?.nome, nomeEscritorio]);
 
   // Carrega a última mensagem enviada (se houver) ao abrir o modal
   useEffect(() => {
@@ -100,13 +133,19 @@ export function EnviarDeclaracaoEmailModal({
     (async () => {
       const { data } = await supabase
         .from('declaracoes')
-        .select('ultima_mensagem_email')
+        .select('ultima_mensagem_email, tipo_resultado, valor_resultado')
         .eq('id', declaracaoId)
         .maybeSingle();
-      if (data?.ultima_mensagem_email) {
-        setMensagem(data.ultima_mensagem_email);
-        setMensagemPersonalizada(true);
-        setUltimaMensagemCarregada(true);
+      if (data) {
+        setResultado({
+          tipo: data.tipo_resultado ?? null,
+          valor: data.valor_resultado != null ? Number(data.valor_resultado) : null,
+        });
+        if (data.ultima_mensagem_email) {
+          setMensagem(data.ultima_mensagem_email);
+          setMensagemPersonalizada(true);
+          setUltimaMensagemCarregada(true);
+        }
       }
     })();
   }, [open, declaracaoId]);
@@ -130,11 +169,10 @@ export function EnviarDeclaracaoEmailModal({
     async function loadEscritorio() {
       if (!profile?.escritorioId) return;
       const { data } = await supabase
-        .from('escritorios')
-        .select('nome')
-        .eq('id', profile.escritorioId)
-        .single();
+        .rpc('get_escritorio_safe_data', { esc_id: profile.escritorioId })
+        .maybeSingle();
       if (data?.nome) setNomeEscritorio(data.nome);
+      setChavePix(data?.chave_pix ?? null);
     }
     loadEscritorio();
   }, [profile?.escritorioId]);
@@ -368,6 +406,9 @@ export function EnviarDeclaracaoEmailModal({
                 </Button>
               )}
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              Dica: use <code className="px-1 rounded bg-muted text-foreground">**texto**</code> para destacar trechos em <strong>negrito</strong> no e-mail.
+            </p>
           </div>
 
           {/* CC */}

@@ -23,6 +23,18 @@ const EnvioManualDeclaracaoEmail = ({
   // Converte quebras de linha em <br /> se necessário, ou apenas renderiza como parágrafos
   const lines = mensagemPersonalizada?.split('\n') || []
 
+  // Parser simples de **negrito** (markdown). Sem dependências; React escapa o resto.
+  const renderBold = (line: string): React.ReactNode[] => {
+    const parts = line.split(/(\*\*[^*]+\*\*)/g)
+    return parts.map((part, idx) => {
+      const m = /^\*\*([^*]+)\*\*$/.exec(part)
+      if (m) {
+        return <strong key={idx}>{m[1]}</strong>
+      }
+      return <React.Fragment key={idx}>{part}</React.Fragment>
+    })
+  }
+
   return (
     <EmailLayout 
       preview={`📄 Sua declaração IRPF ${anoBase || ''} e o recibo estão disponíveis.`}
@@ -40,7 +52,7 @@ const EnvioManualDeclaracaoEmail = ({
         {lines.length > 0 ? (
           lines.map((line, i) => (
             <Text key={i} className="text-gray-800 text-[14px] leading-[24px] m-0 mb-2">
-              {line}
+              {renderBold(line)}
             </Text>
           ))
         ) : (
