@@ -21,7 +21,10 @@ import {
   Briefcase,
   Banknote,
   Paperclip,
+  Plus,
+  X,
 } from 'lucide-react';
+
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
@@ -29,6 +32,12 @@ import { ConfirmarDocumentoManualDialog, type ManualConfirmacaoPayload } from '.
 
 
 type Tipo = 'declaracao' | 'recibo' | 'mei' | 'darf';
+
+export interface OutroDocumento {
+  path: string;
+  nome: string;
+  uploaded_at: string;
+}
 
 interface Props {
   declaracaoId: string;
@@ -44,7 +53,9 @@ interface Props {
   arquivoDarfUrl?: string | null;
   arquivoDarfNome?: string | null;
   darfValidadoEm?: string | null;
+  arquivosOutros?: OutroDocumento[] | null;
 }
+
 
 export function AnexarDeclaracaoButton({
   declaracaoId,
@@ -60,7 +71,9 @@ export function AnexarDeclaracaoButton({
   arquivoDarfUrl,
   arquivoDarfNome,
   darfValidadoEm,
+  arquivosOutros,
 }: Props) {
+
   const queryClient = useQueryClient();
   const inputRefs: Record<Tipo, React.RefObject<HTMLInputElement>> = {
     declaracao: useRef<HTMLInputElement>(null),
@@ -171,6 +184,63 @@ export function AnexarDeclaracaoButton({
   });
 
 
+  const outrosInputRef = useRef<HTMLInputElement>(null);
+  const [outrosBusy, setOutrosBusy] = useState(false);
+  const outrosLista: OutroDocumento[] = Array.isArray(arquivosOutros) ? arquivosOutros : [];
+
+  const uploadOutros = useMutation({
+    mutationFn: async (files: File[]) => {
+      setOutrosBusy(true);
+      const novos: OutroDocumento[] = [];
+      for (const file of files) {
+        if (file.size > 18 * 1024 * 1024) {
+          throw new Error(`"${file.name}" excede 18MB`);
+        }
+        const safeName = file.name.replace(/[^\w.\-]/g, '_');
+        const path = `${escritorioId}/declaracoes/${declaracaoId}/outros-${Date.now()}-${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from('documentos-clientes')
+          .upload(path, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
+        if (upErr) throw new Error(upErr.message);
+        novos.push({ path, nome: file.name, uploaded_at: new Date().toISOString() });
+      }
+      const merged = [...outrosLista, ...novos];
+      const { error } = await supabase
+        .from('declaracoes')
+        .update({ arquivos_outros: merged as unknown as never })
+        .eq('id', declaracaoId);
+      if (error) throw new Error(error.message);
+      return novos.length;
+    },
+    onSuccess: (n) => {
+      toast.success(n === 1 ? 'Documento anexado.' : `${n} documentos anexados.`);
+      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
+    },
+    onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao anexar documento')),
+    onSettled: () => setOutrosBusy(false),
+  });
+
+  const removerOutro = useMutation({
+    mutationFn: async (path: string) => {
+      setOutrosBusy(true);
+      await supabase.storage.from('documentos-clientes').remove([path]);
+      const filtered = outrosLista.filter((o) => o.path !== path);
+      const { error } = await supabase
+        .from('declaracoes')
+        .update({ arquivos_outros: filtered as unknown as never })
+        .eq('id', declaracaoId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success('Documento removido.');
+      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
+    },
+    onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao remover documento')),
+    onSettled: () => setOutrosBusy(false),
+  });
+
   async function baixar(path: string | null | undefined) {
     if (!path) return;
     try {
@@ -189,6 +259,13 @@ export function AnexarDeclaracaoButton({
     if (f) upload.mutate({ file: f, tipo });
     e.target.value = '';
   }
+
+  function onSelectOutros(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) uploadOutros.mutate(files);
+    e.target.value = '';
+  }
+
 
   const transmitida = !!reciboValidadoEm;
 
@@ -353,8 +430,73 @@ export function AnexarDeclaracaoButton({
               </div>
             );
           })}
+
+          <DropdownMenuSeparator />
+          <div className="px-2 py-1.5">
+            <div className="flex items-center gap-2 text-xs font-medium mb-1.5">
+              <Paperclip className="h-3.5 w-3.5" /> Outros documentos
+              <span className="ml-auto text-[10px] font-normal text-muted-foreground">
+                sem validação
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mb-1.5">
+              Documentos diversos (ações, comprovantes etc.) anexados ao e-mail enviado ao cliente.
+            </p>
+            <input
+              ref={outrosInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={onSelectOutros}
+            />
+            {outrosLista.length > 0 && (
+              <ul className="mb-1.5 space-y-1">
+                {outrosLista.map((o) => (
+                  <li
+                    key={o.path}
+                    className="flex items-center gap-1 rounded-md border border-border/60 bg-muted/30 px-1.5 py-1 text-[11px]"
+                  >
+                    <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    <span className="flex-1 truncate" title={o.nome}>{o.nome}</span>
+                    <button
+                      type="button"
+                      className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      onClick={() => baixar(o.path)}
+                      title="Baixar"
+                    >
+                      <Download className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                      onClick={() => removerOutro.mutate(o.path)}
+                      disabled={outrosBusy}
+                      title="Remover"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full h-7 text-xs border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+              onClick={() => outrosInputRef.current?.click()}
+              disabled={outrosBusy}
+            >
+              {outrosBusy ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Plus className="h-3 w-3" />
+              )}
+              <span className="ml-1">Anexar documento</span>
+            </Button>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
+
         );
       })()}
 

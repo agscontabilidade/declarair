@@ -147,7 +147,9 @@ export default function Declaracoes() {
     arquivo_darf_nome: string | null;
     arquivo_mei_url: string | null;
     arquivo_mei_nome: string | null;
+    arquivos_outros: Array<{ path: string; nome: string; uploaded_at?: string }> | null;
     recibo_validado_em: string | null;
+
     em_processamento: boolean | null;
     status_processamento_rfb: StatusProcessamentoRfb | null;
     declaracao_enviada_em: string | null;
@@ -173,6 +175,8 @@ export default function Declaracoes() {
           arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em,
           arquivo_mei_url, arquivo_mei_nome, mei_validado_em,
           arquivo_darf_url, arquivo_darf_nome, darf_validado_em,
+          arquivos_outros,
+
           em_processamento, status_processamento_rfb, declaracao_enviada_em,
           clientes(nome, cpf, email),
           declaracao_notas_internas(conteudo),
@@ -349,6 +353,7 @@ export default function Declaracoes() {
                                   arquivoDarfUrl={d.arquivo_darf_url}
                                   arquivoDarfNome={d.arquivo_darf_nome}
                                   darfValidadoEm={d.darf_validado_em}
+                                  arquivosOutros={d.arquivos_outros}
                                 />
                               )}
                             </TableCell>
@@ -524,6 +529,7 @@ export default function Declaracoes() {
                               arquivoDarfUrl={d.arquivo_darf_url}
                               arquivoDarfNome={d.arquivo_darf_nome}
                               darfValidadoEm={d.darf_validado_em}
+                                  arquivosOutros={d.arquivos_outros}
                             />
                           )}
                           <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
@@ -565,6 +571,8 @@ export default function Declaracoes() {
           arquivoDarfNome={emailTarget.arquivo_darf_nome}
           arquivoMeiUrl={emailTarget.arquivo_mei_url}
           arquivoMeiNome={emailTarget.arquivo_mei_nome}
+          arquivosOutros={emailTarget.arquivos_outros}
+
           open={!!emailTarget}
           onOpenChange={(o) => !o && setEmailTarget(null)}
           onSuccess={() => {

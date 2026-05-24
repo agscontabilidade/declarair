@@ -10,6 +10,12 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+interface ArquivoOutro {
+  path: string;
+  nome: string;
+  uploaded_at?: string;
+}
+
 interface Props {
   declaracaoId: string;
   clienteNome: string;
@@ -23,10 +29,12 @@ interface Props {
   arquivoDarfNome?: string | null;
   arquivoMeiUrl?: string | null;
   arquivoMeiNome?: string | null;
+  arquivosOutros?: ArquivoOutro[] | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
+
 
 export function EnviarDeclaracaoEmailModal({
   declaracaoId,
@@ -41,6 +49,8 @@ export function EnviarDeclaracaoEmailModal({
   arquivoDarfNome,
   arquivoMeiUrl,
   arquivoMeiNome,
+  arquivosOutros,
+
   open,
   onOpenChange,
   onSuccess
@@ -221,6 +231,12 @@ export function EnviarDeclaracaoEmailModal({
           path: arquivoMeiUrl
         });
       }
+      (arquivosOutros || []).forEach((o) => {
+        if (o?.path) {
+          attachmentPaths.push({ filename: o.nome || 'documento', path: o.path });
+        }
+      });
+
 
       const templateData = {
         nomeCliente: clienteNome,
@@ -318,7 +334,14 @@ export function EnviarDeclaracaoEmailModal({
       icon: FileText,
       tone: 'bg-blue-500/10 text-blue-600',
     },
+    ...((arquivosOutros || []).map((o) => ({
+      nome: o.nome || 'Documento',
+      tipo: 'Outro',
+      icon: FileText,
+      tone: 'bg-slate-500/10 text-slate-600',
+    }))),
   ].filter(Boolean) as Array<{ nome: string; tipo: string; icon: typeof FileText; tone: string }>;
+
 
   const valorFmt = cobrancaValor != null
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaValor)
