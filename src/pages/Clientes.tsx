@@ -10,6 +10,7 @@ import { ClientesTable, type ClienteRow } from '@/components/clientes/ClientesTa
 import { ClienteModal } from '@/components/clientes/ClienteModal';
 import { ClienteViewModal } from '@/components/clientes/ClienteViewModal';
 import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
+import { DocumentosDeclaracaoModal } from '@/components/declaracoes/DocumentosDeclaracaoModal';
 import { useCobrancas } from '@/hooks/useCobrancas';
 import { QueryError } from '@/components/ui/QueryError';
 import type { ClienteWithContador } from '@/types/domain';
@@ -28,6 +29,7 @@ export default function Clientes() {
   const [viewCliente, setViewCliente] = useState<ClienteRow | null>(null);
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
   const [cobrancaCliente, setCobrancaCliente] = useState<ClienteRow | null>(null);
+  const [uploadDocs, setUploadDocs] = useState<{ declaracaoId: string; nome: string } | null>(null);
   const { criar: criarCobranca } = useCobrancas('todos');
   const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente, isDono } = usePermissoes();
   const { toast } = useToast();
@@ -135,7 +137,18 @@ export default function Clientes() {
         contadores={contadores}
         onSave={(data) => createCliente.mutateAsync(data as Parameters<typeof createCliente.mutateAsync>[0])}
         mode="create"
+        onSavedAndUpload={(ctx) => {
+          if (ctx.declaracaoId) setUploadDocs({ declaracaoId: ctx.declaracaoId, nome: ctx.nome });
+        }}
       />
+
+      <DocumentosDeclaracaoModal
+        open={!!uploadDocs}
+        onOpenChange={(o) => !o && setUploadDocs(null)}
+        declaracaoId={uploadDocs?.declaracaoId ?? null}
+        clienteNome={uploadDocs?.nome}
+      />
+
 
       <ClienteModal
         open={!!editCliente}
