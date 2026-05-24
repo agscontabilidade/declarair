@@ -25,6 +25,8 @@ import {
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
+import { ConfirmarDocumentoManualDialog, type ManualConfirmacaoPayload } from './ConfirmarDocumentoManualDialog';
+
 
 type Tipo = 'declaracao' | 'recibo' | 'mei' | 'darf';
 
