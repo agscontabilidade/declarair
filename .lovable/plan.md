@@ -1,35 +1,42 @@
-## Objetivo
+# Extrair resultado do Recibo, não da Declaração
 
-Reverter a edge function `processar-pdf-declaracao` para a versão antiga: extração feita exclusivamente pela Lovable AI sobre o texto do PDF, sem OCR.space, sem Vision (Gemini visual) e sem a cascata híbrida que foi adicionada depois.
+## Problema
+Hoje a edge function `processar-pdf-declaracao` tenta extrair `tipo_resultado` (restituição/pagamento/nenhum) e `valor_resultado` do **PDF da declaração completa** (10–30+ páginas). A IA confunde o valor final com totais de rendimentos/base de cálculo/imposto devido, gerando resultados errados.
 
-## O que será feito
+O **recibo da Receita** tem 1–2 páginas, layout fixo, e contém exatamente os campos que precisamos: número do recibo, data de transmissão, e o valor de imposto a restituir OU a pagar.
 
-1. **`supabase/functions/processar-pdf-declaracao/index.ts`**
-   - Remover imports e chamadas de `runOcrFallback`, `runVisionExtraction` e do parser nativo determinístico (`tryNativeValidation`, `parseFromText`).
-   - Manter apenas: download do PDF, extração de texto bruto via `extractRawTextFromPdf`, chamada de `runAiExtraction` (Lovable AI) e a confirmação manual do contador como fallback.
-   - Fluxo final para todos os tipos (declaração, recibo, mei, darf):
-     1. Se veio `manual_confirmacao` → usa direto.
-     2. Senão → extrai texto do PDF → chama IA → grava resultado.
-     3. Se IA falhar ou texto for insuficiente → devolve `requires_manual_review` para abrir o modal de confirmação manual.
-   - Remover toda a lógica de "vision/regex candidate/divergência" e logs relacionados.
+## Solução
+Inverter os papéis dos dois tipos no pipeline:
 
-2. **Excluir arquivos não usados**
-   - `supabase/functions/processar-pdf-declaracao/ocr-fallback.ts`
-   - `supabase/functions/processar-pdf-declaracao/vision-fallback.ts`
-   - Manter `ai-fallback.ts` (é a IA) e `extract-native.ts` apenas se ainda for usado por `extractRawTextFromPdf`. Se sim, deixo só essa função e removo os parsers determinísticos não usados; se não, removo o arquivo todo.
+- **`tipo = "recibo"`** passa a ser a **única** fonte de `tipo_resultado` + `valor_resultado` (além de `numero_recibo` e `data_transmissao` que já extrai hoje).
+- **`tipo = "declaracao"`** deixa de chamar IA para extrair resultado. O PDF da declaração completa passa a ser apenas **arquivado** como documento de referência (validação de CPF/ano continua, mas nada de valor).
 
-3. **Não tocar em**
-   - Frontend (modal de confirmação manual já existe e continua funcionando).
-   - Schema/RLS/storage.
-   - Outras edge functions.
-   - Anexar/Email/Documentos extras (alterações anteriores ficam intactas).
+## Mudanças
 
-## Resultado esperado
+### 1. `supabase/functions/processar-pdf-declaracao/ai-fallback.ts`
+- **Recibo (novo schema da IA)**: adicionar `tipo_resultado` (`restituicao` | `pagamento` | `nenhum`) e `valor_resultado` (number) no tool schema do tipo `recibo`. Prompt instrui: procurar "Imposto a Restituir" ou "Imposto a Pagar" / "Saldo a Pagar" no recibo; se ambos zero → `nenhum`.
+- **Declaração**: remover `tipo_resultado` e `valor_resultado` do schema e do prompt. Manter apenas validação de CPF + ano. Remover toda a validação anti-alucinação relacionada a esses campos no tipo declaração.
 
-- Comportamento idêntico à versão "antes dos créditos acabarem": IA lê o texto do PDF e devolve os dados; se não der, abre o modal manual.
-- Sem chamadas OCR/Vision, sem cascata complexa, sem rejeições por "evidência".
+### 2. `supabase/functions/processar-pdf-declaracao/index.ts`
+- Bloco `tipo === "recibo"` (linhas ~205, ~362): aceitar e gravar `tipo_resultado` + `valor_resultado` em `updates`, exatamente como hoje faz no bloco `tipo === "declaracao"`.
+- Bloco `tipo === "declaracao"` (linhas ~189, ~285, ~345): remover gravação de `tipo_resultado`/`valor_resultado`. Continuar gravando `arquivo_declaracao_url`, validando CPF e ano. Remover do modal de confirmação manual da declaração os campos de resultado (passam pro modal do recibo).
+- Bloco de transição de status: o status só vai para `transmitida` quando o **recibo** for validado (já é o comportamento atual via `recibo_validado_em`). Confirmar que nada na declaração move o status sozinho.
+
+### 3. Frontend — modais de confirmação manual
+- `ManualConfirmacaoModal` (ou equivalente) usado em upload de **declaração**: remover seleção de tipo_resultado/valor.
+- Mesmo modal para **recibo**: adicionar os campos `tipo_resultado` (radio: restituição/pagar/nenhum) e `valor_resultado` (input BRL), além dos já existentes (número do recibo, data).
+
+### 4. Sem mudanças
+- Schema do banco (colunas `tipo_resultado`, `valor_resultado`, `numero_recibo`, `data_transmissao` continuam onde estão).
+- Templates de mensagem, hooks `useDeclaracao`, `useClientePortal`, `useMensagens` — leem os mesmos campos, só muda a origem da escrita.
+- Bucket de storage, RLS, billing.
 
 ## Validação
+1. Upload de PDF de declaração completa → grava arquivo, valida CPF/ano, **não** preenche resultado, **não** muda status.
+2. Upload de recibo → IA extrai número, data, tipo e valor; grava todos, move status para `transmitida`, dispara notificações (WhatsApp/email) com o valor correto.
+3. Confirmação manual no recibo → mesmos 4 campos aceitos pelo backend.
+4. Verificar logs `[ia]` mostrando extração só do recibo para `tipo_resultado`.
 
-- Deploy automático da função.
-- Conferir nos logs (`supabase--edge_function_logs processar-pdf-declaracao`) que só aparece `[ia]` e nunca mais `[ocr]`, `[vision]` ou `[cascade]`.
+## Riscos
+- Declarações já transmitidas no sistema permanecem intactas (mudança só afeta novos uploads).
+- Se um escritório só anexar a declaração e nunca o recibo, o resultado ficará vazio até subirem o recibo — **comportamento desejado** segundo a decisão do usuário ("só recibo extrai resultado").

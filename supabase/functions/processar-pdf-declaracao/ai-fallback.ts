@@ -68,31 +68,22 @@ function schemaFor(tipo: Tipo) {
     case "declaracao":
       return {
         name: "extrair_declaracao_irpf",
-        description: "Extrai dados do RESUMO de uma Declaração de IRPF (DIRPF/DSDP).",
+        description: "Valida que um PDF é uma Declaração de IRPF (DIRPF/DSDP) e extrai apenas CPF, ano e nome. O RESULTADO (restituição/pagamento) NÃO é extraído daqui — é extraído do Recibo.",
         parameters: {
           type: "object",
           properties: {
             cpf: { type: "string", description: "CPF do contribuinte titular, apenas dígitos (11)." },
             ano_exercicio: { type: "integer", description: "Ano-exercício da declaração (ex.: 2026)." },
-            tipo_resultado: {
-              type: "string",
-              enum: ["restituicao", "pagamento", "nenhum"],
-              description: "Apenas com base no bloco RESUMO: 'restituicao' se IMPOSTO A RESTITUIR > 0; 'pagamento' se SALDO DE IMPOSTO A PAGAR > 0; 'nenhum' se ambos forem zero.",
-            },
-            valor_resultado: {
-              type: "number",
-              description: "Valor exato em reais correspondente ao tipo_resultado escolhido. Deve aparecer literalmente no texto, dentro do RESUMO. Use 0 quando tipo_resultado='nenhum'.",
-            },
             nome: { type: "string", description: "Nome completo do contribuinte titular." },
           },
-          required: ["cpf", "ano_exercicio", "tipo_resultado", "valor_resultado"],
+          required: ["cpf", "ano_exercicio"],
           additionalProperties: false,
         },
       };
     case "recibo":
       return {
         name: "extrair_recibo_rfb",
-        description: "Extrai dados de um Recibo de Entrega da Receita Federal.",
+        description: "Extrai dados de um Recibo de Entrega da Receita Federal, incluindo o resultado da declaração (restituição/pagamento).",
         parameters: {
           type: "object",
           properties: {
@@ -100,8 +91,17 @@ function schemaFor(tipo: Tipo) {
             ano_exercicio: { type: "integer" },
             numero_recibo: { type: "string", description: "Número do recibo no formato dd.dd.dd.dd.dd-dd." },
             data_transmissao: { type: "string", description: "Data no formato YYYY-MM-DD." },
+            tipo_resultado: {
+              type: "string",
+              enum: ["restituicao", "pagamento", "nenhum"],
+              description: "Procure no recibo: 'restituicao' se houver IMPOSTO A RESTITUIR > 0; 'pagamento' se houver IMPOSTO A PAGAR / SALDO A PAGAR > 0; 'nenhum' se ambos forem zero ou ausentes.",
+            },
+            valor_resultado: {
+              type: "number",
+              description: "Valor em reais correspondente ao tipo_resultado. Deve aparecer literalmente no recibo. Use 0 quando tipo_resultado='nenhum'.",
+            },
           },
-          required: ["cpf", "ano_exercicio", "numero_recibo", "data_transmissao"],
+          required: ["cpf", "ano_exercicio", "numero_recibo", "data_transmissao", "tipo_resultado", "valor_resultado"],
           additionalProperties: false,
         },
       };
@@ -164,12 +164,11 @@ export async function runAiExtraction(
     "Você extrai dados estruturados de documentos fiscais brasileiros (Receita Federal).",
     "REGRAS ABSOLUTAS:",
     "1. Use APENAS valores que aparecem literalmente no texto fornecido.",
-    "2. Para declarações IRPF, leia EXCLUSIVAMENTE o bloco 'RESUMO' (ignore totais de rendimentos, base de cálculo e imposto devido — esses NÃO são o resultado).",
-    "3. Se IMPOSTO A RESTITUIR > 0 -> tipo_resultado='restituicao', valor_resultado=esse número.",
-    "4. Se SALDO DE IMPOSTO A PAGAR > 0 -> tipo_resultado='pagamento', valor_resultado=esse número.",
-    "5. Se ambos forem zero -> tipo_resultado='nenhum', valor_resultado=0.",
-    "6. NUNCA invente dígitos. Se um campo não aparece com clareza no texto, NÃO chame a função.",
+    "2. Para o RECIBO de entrega: localize 'IMPOSTO A RESTITUIR' ou 'IMPOSTO A PAGAR' (ou 'SALDO A PAGAR'). Se Restituir > 0 -> tipo_resultado='restituicao'; se Pagar > 0 -> tipo_resultado='pagamento'; se ambos zero/ausentes -> tipo_resultado='nenhum' e valor_resultado=0.",
+    "3. Para DECLARAÇÃO completa: extraia APENAS CPF, ano e nome. NÃO tente extrair valor de resultado — isso vem do recibo.",
+    "4. NUNCA invente dígitos. Se um campo não aparece com clareza no texto, NÃO chame a função.",
   ].join("\n");
+
 
   const userPrompt = [
     `Ano-base esperado: ${anoBase}.`,
@@ -256,52 +255,7 @@ export async function runAiExtraction(
         }
       }
     }
-    // Anti-alucinação extra para declaração: o valor não pode coincidir com
-    // totais de rendimentos / base de cálculo / imposto devido (campos que a
-    // IA costuma confundir com o resultado final).
-    if (tipo === "declaracao" && typeof args.valor_resultado === "number" && (args.valor_resultado as number) > 0) {
-      const v = args.valor_resultado as number;
-      const moneyRe = /\d{1,3}(?:\.\d{3})*,\d{2}/g;
-      const labelsProibidos = [
-        /rendimentos\s+tribut[aá]veis[\s\S]{0,400}?\btotal\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i,
-        /base\s+de\s+c[aá]lculo[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i,
-        /imposto\s+devido\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i,
-        /total\s+do\s+imposto\s+devido[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i,
-      ];
-      const proibidos = new Set<number>();
-      for (const re of labelsProibidos) {
-        const m = fullText.match(re);
-        if (m) {
-          const n = parseFloat(m[1].replace(/\./g, "").replace(",", "."));
-          if (Number.isFinite(n) && n > 0) proibidos.add(Math.round(n * 100));
-        }
-      }
-      if (proibidos.has(Math.round(v * 100))) {
-        return { ok: false, reason: `ia_valor_coincide_com_total_proibido (${v})`, elapsedMs };
-      }
-      // O valor precisa estar próximo do label correto (até 250 chars depois).
-      const labelEsperado = args.tipo_resultado === "pagamento"
-        ? /saldo\s+de\s+imposto\s+a\s+pagar|imposto\s+a\s+pagar(?!\s+sobre)/i
-        : args.tipo_resultado === "restituicao"
-          ? /imposto\s+a\s+restituir/i
-          : null;
-      if (labelEsperado) {
-        const mL = fullText.match(labelEsperado);
-        if (mL && typeof mL.index === "number") {
-          const slice = fullText.slice(mL.index, mL.index + 400);
-          moneyRe.lastIndex = 0;
-          let found = false;
-          let m: RegExpExecArray | null;
-          while ((m = moneyRe.exec(slice)) !== null) {
-            const n = parseFloat(m[0].replace(/\./g, "").replace(",", "."));
-            if (Math.abs(n - v) < 0.01) { found = true; break; }
-          }
-          if (!found) {
-            return { ok: false, reason: `ia_valor_distante_do_label (${v})`, elapsedMs };
-          }
-        }
-      }
-    }
+
     // Ano
     const anoKey = tipo === "mei" ? "ano_calendario" : "ano_exercicio";
     if (typeof args[anoKey] === "number") {
@@ -329,8 +283,6 @@ export async function runAiExtraction(
         cpf: args.cpf,
         nome: args.nome || "",
         ano_exercicio: args.ano_exercicio,
-        tipo_resultado: args.tipo_resultado || "nenhum",
-        valor_resultado: typeof args.valor_resultado === "number" ? args.valor_resultado : 0,
         motivo_rejeicao: null,
         _confianca: 0.70,
         _metodo: "ia",
@@ -342,6 +294,8 @@ export async function runAiExtraction(
         cpf: args.cpf,
         ano_exercicio: args.ano_exercicio,
         data_transmissao: args.data_transmissao,
+        tipo_resultado: args.tipo_resultado || "nenhum",
+        valor_resultado: typeof args.valor_resultado === "number" ? args.valor_resultado : 0,
         motivo_rejeicao: null,
         _confianca: 0.70,
         _metodo: "ia",
