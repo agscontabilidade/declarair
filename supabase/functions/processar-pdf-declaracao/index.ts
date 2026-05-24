@@ -1,5 +1,5 @@
-// Edge function: valida PDF anexado (Declaração ou Recibo) com IA,
-// atualiza o status da declaração e dispara notificações ao cliente.
+// Edge function: valida PDF anexado (Declaração / Recibo / MEI / DARF) 100%
+// determinístico (SEM IA), atualiza o status da declaração e dispara notificações.
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { tryNativeValidation } from "./extract-native.ts";
 
@@ -55,7 +55,7 @@ function digits(s: string | null | undefined) {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
 const CODIGOS_DARF_IRPF_PF = ["0211", "4600", "6015"];
 
 
@@ -67,7 +67,6 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-    // LOVABLE_API_KEY pode estar ausente — o fluxo cai para revisão manual sem quebrar.
 
     const anon = createClient(SUPABASE_URL, ANON_KEY);
     const { data: userData, error: userErr } = await anon.auth.getUser(
@@ -262,7 +261,7 @@ Deno.serve(async (req) => {
           console.log(`[pipeline] ${tipo} validado SEM IA (metodo=${met}, confianca=${conf})`);
         } else {
           nativeReason = native.reason;
-          isScan = native.reason === "scan_sem_texto";
+          isScan = native.reason === "scan_sem_texto_real" || native.reason === "scan_sem_texto";
           console.log(`[pipeline] ${tipo} falhou: ${native.reason}`);
         }
       } catch (e) {
@@ -274,7 +273,7 @@ Deno.serve(async (req) => {
       if (!pipelineOk) {
         return manualReview(
           isScan
-            ? "PDF parece escaneado/imagem (sem texto pesquisável). Confirme os dados manualmente para registrar."
+            ? "PDF é uma imagem escaneada (sem texto pesquisável em nenhuma camada). Confirme os dados manualmente para registrar."
             : `Não foi possível extrair os dados automaticamente (${nativeReason || "documento não reconhecido"}). Confirme os dados manualmente para registrar.`
         );
       }
