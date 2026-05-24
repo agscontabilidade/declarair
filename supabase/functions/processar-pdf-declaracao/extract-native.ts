@@ -439,8 +439,19 @@ async function extractD_rawStreams(bytes: Uint8Array): Promise<ExtractedText> {
       cursor = eIdx + endMarker.length;
       streamCount++;
 
+      // Inspeciona o dict imediatamente antes de "stream" (até 400 bytes) pra
+      // detectar streams de imagem (JPEG/JBIG2/CCITT/JPX) e pulá-los — eles
+      // são lixo binário pra parsing textual e queimam CPU em vão.
+      const dictStart = Math.max(0, sIdx - 400);
+      const dictPeek = latin.substring(dictStart, sIdx);
+      if (/\/(DCTDecode|JBIG2Decode|CCITTFaxDecode|JPXDecode|RunLengthDecode)\b/.test(dictPeek)) continue;
+      if (/\/Subtype\s*\/Image\b/.test(dictPeek)) continue;
+
       const slice = bytes.subarray(dataStart, dataEnd);
       if (slice.length === 0) continue;
+      // Limite de tamanho — streams enormes raramente são content streams textuais
+      if (slice.length > 2_000_000) continue;
+
 
       let decoded: Uint8Array | null = null;
       // Heurística: zlib header começa com 0x78 (0x78 0x9C / 0x78 0xDA / 0x78 0x01)
