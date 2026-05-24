@@ -204,23 +204,14 @@ async function extractFullText(pdf: unknown): Promise<ExtractedText> {
   }
 }
 
-// Fallback: extrai texto via pdfjs-dist (legacy) item a item, reconstruindo
-// linhas pela coordenada Y. Roda quando unpdf devolve pouco texto mas o PDF
-// realmente tem camada de texto.
-async function extractWithPdfjs(bytes: Uint8Array): Promise<ExtractedText> {
+// Fallback: usa o próprio PDFDocumentProxy do unpdf (que embute pdfjs sem
+// canvas) e reconstrói o texto item-a-item via getTextContent, agrupando por
+// coordenada Y. Cobre PDFs onde extractText(mergePages) devolve texto vazio
+// ou corrompido — comum nos PDFs do PGD/eCAC com fontes embutidas.
+async function extractWithProxy(pdf: unknown): Promise<ExtractedText> {
   try {
-    const pdfjs = await loadPdfjs();
-    // Em Deno edge não há worker; desabilitamos para evitar fetch externo.
-    try { pdfjs.GlobalWorkerOptions.workerSrc = ""; } catch { /* ignore */ }
-
-    const loadingTask = pdfjs.getDocument({
-      data: bytes,
-      disableWorker: true,
-      isEvalSupported: false,
-      useSystemFonts: false,
-      disableFontFace: true,
-    });
-    const doc = await loadingTask.promise;
+    // deno-lint-ignore no-explicit-any
+    const doc: any = pdf;
     const numPages: number = doc.numPages || 0;
     const byPage: string[] = [];
 
@@ -229,7 +220,6 @@ async function extractWithPdfjs(bytes: Uint8Array): Promise<ExtractedText> {
       const content = await page.getTextContent({ includeMarkedContent: false, disableNormalization: false });
       // deno-lint-ignore no-explicit-any
       const items: any[] = content.items || [];
-      // Agrupa por linha (y arredondado), ordena por x
       const lines = new Map<number, { x: number; s: string }[]>();
       for (const it of items) {
         const str = (it.str ?? "").toString();
@@ -242,7 +232,7 @@ async function extractWithPdfjs(bytes: Uint8Array): Promise<ExtractedText> {
       }
       const ys = [...lines.keys()].sort((a, b) => b - a); // top → bottom
       const pageText = ys
-        .map((y) => lines.get(y)!.sort((a, b) => a.x - b.x).map((c) => c.s).join(" ").replace(/\s+/g, " ").trim())
+        .map((y) => lines.get(y)!.sort((a, b) => a.x - b.x).map((c) => c.s).join(" ").replace(/[ \t]+/g, " ").trim())
         .filter(Boolean)
         .join("\n");
       byPage.push(pageText);
@@ -250,7 +240,7 @@ async function extractWithPdfjs(bytes: Uint8Array): Promise<ExtractedText> {
     const full = byPage.join("\n\n");
     return { full, byPage, normalized: normalize(full) };
   } catch (e) {
-    console.error("[layer2/pdfjs] fallback falhou:", (e as Error).message);
+    console.error("[layer2/proxy] fallback falhou:", (e as Error).message);
     return { full: "", byPage: [], normalized: "" };
   }
 }
