@@ -958,3 +958,42 @@ export async function tryNativeValidation(
   }
   return result;
 }
+
+// =============================================================================
+// API auxiliar: roda apenas os parsers regex sobre um texto já extraído por
+// outro meio (ex.: OCR.space). Usada como fallback quando o PDF é uma imagem.
+// =============================================================================
+export function parseFromText(
+  fullText: string,
+  tipo: Tipo,
+  anoBase: number,
+  cpfCliente: string,
+): NativeResult {
+  if (!fullText || fullText.replace(/\s/g, "").length < 80) {
+    return { ok: false, reason: "texto OCR insuficiente" };
+  }
+  const byPage = fullText.split(/\f|\n{3,}/);
+  const text = buildText(fullText, byPage);
+  // Sem metadados — fingerprint neutro
+  const fingerprint: FingerprintHit = {
+    matched: false,
+    produtor: "desconhecido",
+    confianca: 0,
+    detalhes: "via OCR",
+  };
+  const cpfDigits = onlyDigits(cpfCliente);
+  const input: ParseInput = { text, fingerprint, anoBase, cpfClienteDigits: cpfDigits };
+
+  let result: NativeResult;
+  switch (tipo) {
+    case "declaracao": result = parseDeclaracao(input); break;
+    case "recibo": result = parseRecibo(input); break;
+    case "mei": result = parseMei(input); break;
+    case "darf": result = parseDarf(input); break;
+  }
+  if (result.ok) {
+    // marca o método como OCR
+    (result.data as { _metodo?: string })._metodo = "ocr";
+  }
+  return result;
+}
