@@ -256,6 +256,7 @@ Deno.serve(async (req) => {
         if (native.ok) {
           extracao = native.data as typeof extracao;
           metodoValidacao = "regex";
+          pipelineOk = true;
           const conf = (native.data as { _confianca?: number })._confianca;
           const met = (native.data as { _metodo?: string })._metodo;
           console.log(`[pipeline] ${tipo} validado SEM IA (metodo=${met}, confianca=${conf})`);
@@ -269,8 +270,8 @@ Deno.serve(async (req) => {
         nativeReason = "erro_pipeline";
       }
 
-      // 3) Sem IA: qualquer falha do pipeline → revisão manual.
-      if (metodoValidacao === "ia") {
+      // 3) Sem IA: qualquer falha do pipeline → revisão manual (modal já existente).
+      if (!pipelineOk) {
         return manualReview(
           isScan
             ? "PDF parece escaneado/imagem (sem texto pesquisável). Confirme os dados manualmente para registrar."
