@@ -1,78 +1,56 @@
-## Diagnóstico
+O problema real é que o pipeline está tratando “não encontrei o resultado” como “resultado nenhum”. Nos logs, a declaração ANDRIA foi aceita via OCR parcial com `resultado=nenhum valor=0`, porque o OCR.space devolveu só as 3 primeiras páginas e o parser validou CPF/ano/documento, mesmo sem evidência explícita de `IMPOSTO A RESTITUIR` ou `SALDO DE IMPOSTO A PAGAR`.
 
-O problema principal não é mais falha de chamada: a função está retornando `200` e a IA aparece como `ok=true`. O gargalo atual é precisão/validação:
+Do I know what the issue is? Sim: a extração de declaração está permitindo falso positivo quando o bloco/linhas de resultado não aparecem no texto disponível.
 
-- O OCR.space está devolvendo texto parcial por limite de 3 páginas.
-- O regex falha porque lê `ano 2025` como se fosse ano-exercício, quando em declaração IRPF 2026 esse `2025` costuma ser ano-calendário.
-- Quando o regex falha, a IA consegue extrair algo, mas hoje a validação ainda depende pouco de evidências específicas do bloco `RESUMO`.
-- O app atualiza `declaracoes`, mas pode gravar resultado incorreto se a IA escolher um valor que existe no texto fora do campo correto.
+## Plano seguro
 
-## Plano de correção definitiva
+1. **Não aceitar mais “nenhum/0” sem evidência explícita**
+   - Em `extract-native.ts`, ajustar `extractResultadoFromResumo` para diferenciar:
+     - resultado encontrado com restituição/pagamento;
+     - resultado encontrado explicitamente zerado;
+     - resultado ausente/inconclusivo.
+   - Se as linhas de resultado não aparecerem, retornar falha controlada em vez de salvar `nenhum`.
 
-### 1. Corrigir interpretação de ano em declaração IRPF
+2. **Preservar a lógica principal do sistema**
+   - Manter o fluxo atual: upload → validação → atualização de `declaracoes` → espelho no checklist → auditoria.
+   - Não mexer em tabelas, RLS, status, autenticação ou frontend.
+   - Só alterar a decisão de aceitar/rejeitar a extração automática do resultado.
 
-Ajustar o parser para declaração aceitar a relação correta:
+3. **Corrigir a cascata para declarações parcialmente OCRizadas**
+   - Em `index.ts`, quando o OCR for parcial e não trouxer resultado confiável, não salvar `nenhum`.
+   - Tentar fallback seguro com texto nativo quando houver chance de texto real no PDF.
+   - Se ainda não houver bloco de resultado, mandar para IA apenas com o texto disponível; se a IA não validar com evidência, exigir revisão manual em vez de gravar dado errado.
 
-- `ano_exercicio` deve bater com `ano_base`.
-- `ano_calendario` pode ser `ano_base - 1`.
-- Se o OCR só encontrar `2025` perto de “ano-calendário”, isso não deve reprovar uma declaração `2026`.
-- A busca de ano deve priorizar labels fortes como `Exercício 2026`, `IRPF 2026`, `Declaração de Ajuste Anual 2026`, e só depois considerar `ano-calendário` como evidência auxiliar.
+4. **Melhorar o parser do RESUMO sem ampliar escopo**
+   - Aceitar variações comuns de OCR/Receita:
+     - `IMPOSTO A RESTITUIR`
+     - `SALDO DE IMPOSTO A PAGAR`
+     - `IMPOSTO A PAGAR`
+     - quebras de linha entre label e valor
+     - valores zerados `0,00`
+   - Considerar `nenhum` válido somente se encontrar explicitamente os dois resultados zerados ou estrutura equivalente.
 
-### 2. Criar extração determinística específica para o bloco RESUMO
+5. **Logs de produção para não ficarmos cegos**
+   - Logar se o resultado foi:
+     - encontrado;
+     - ausente;
+     - zerado explicitamente;
+     - bloqueado por OCR parcial.
+   - Isso permitirá confirmar no próximo upload sem alterar UI.
 
-Substituir a lógica genérica de “pegar primeiro dinheiro depois do label” por uma extração focada em pares label/valor do resumo:
+6. **Deploy e validação**
+   - Deploy somente da função `processar-pdf-declaracao`.
+   - Validar pelos logs que ANDRIA não será mais salva como `nenhum/0` sem evidência.
+   - Resultado esperado: se o PDF/texto contém o valor, salvar restituição/pagamento corretamente; se a página do resultado não está acessível pelo OCR parcial, o sistema abre revisão manual em vez de gravar errado.
 
-- Normalizar OCR com quebras ruins, espaços duplicados e acentos.
-- Recortar somente a janela `RESUMO` até `INFORMAÇÕES BANCÁRIAS`, `PAGAMENTOS EFETUADOS` ou final da página.
-- Procurar explicitamente:
-  - `IMPOSTO A RESTITUIR`
-  - `SALDO DE IMPOSTO A PAGAR`
-  - variações comuns do OCR sem acento ou com quebras de linha.
-- Usar validação cruzada: se ambos aparecem positivos, rejeita para revisão/IA; se um aparece positivo e outro zero/ausente, aceita.
-- Evitar pegar `rendimentos`, `base de cálculo`, `imposto devido` e `total de deduções` como resultado final.
+## Observação importante
 
-### 3. Usar OCR como fonte principal para declarações escaneadas, mas sem depender de IA
+A solução definitiva contra OCR limitado a 3 páginas é usar OCR que leia todas as páginas do PDF. A própria documentação do OCR.space indica limite de 3 páginas no plano Free/PRO comum e 999+ páginas no PRO PDF. Então o ajuste de código evita dados errados imediatamente; para automatizar PDFs longos/escaneados com precisão total, será necessário usar uma chave/endpoint OCR.space PRO PDF ou outro OCR completo.
 
-Manter a cascata para `declaracao` assim:
+<presentation-actions>
+  <presentation-open-history>View History</presentation-open-history>
+</presentation-actions>
 
-```text
-OCR.space -> parser RESUMO determinístico -> IA somente se RESUMO não fechar -> revisão manual
-```
-
-A IA continuará como último recurso para controlar créditos.
-
-### 4. Fortalecer IA com validação por evidência textual
-
-Quando a IA for acionada:
-
-- Enviar preferencialmente só a janela do `RESUMO` + cabeçalho com CPF/nome/ano.
-- Exigir que o valor retornado esteja próximo do label correto, não apenas “em qualquer lugar do texto”.
-- Rejeitar IA se o valor estiver presente no documento mas associado a outro campo, como rendimentos/base/imposto devido.
-- Manter bloqueio de CPF divergente e ano divergente.
-
-### 5. Melhorar logs para auditoria de produção
-
-Adicionar logs compactos com:
-
-- método usado: `ocr-resumo`, `regex`, `ia`, `manual`;
-- ano encontrado e contexto (`exercicio` ou `calendario`);
-- valores candidatos de restituição/pagamento;
-- motivo exato quando cair para IA/manual.
-
-Isso permite diagnosticar documentos problemáticos sem expor dados sensíveis demais.
-
-### 6. Validar com os documentos reais já enviados
-
-Após implementar:
-
-- Reprocessar/testar a função com o último PDF enviado (`ALMVEIDA 2.pdf`) usando o storage path já registrado.
-- Conferir no banco se `tipo_resultado`, `valor_resultado`, `declaracao_extracao` e `declaracao_validada_em` foram atualizados corretamente.
-- Verificar logs da função para confirmar que a IA só foi usada se o parser determinístico não conseguiu fechar o RESUMO.
-
-## Arquivos envolvidos
-
-- `supabase/functions/processar-pdf-declaracao/extract-native.ts`
-- `supabase/functions/processar-pdf-declaracao/ai-fallback.ts`
-- `supabase/functions/processar-pdf-declaracao/index.ts`
-
-Sem mudança de schema, RLS, tabelas ou frontend neste ajuste.
+<presentation-actions>
+<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
+</presentation-actions>
