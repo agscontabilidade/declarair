@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
       motivo_rejeicao: string | null;
     }
 
-    // ========== Pipeline determinístico (SEM IA): regex+layout > manual ==========
+    // ========== Pipeline: Lovable AI > manual ==========
     let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo & ExtracaoMei & ExtracaoDarf> = {};
     let metodoValidacao: "regex" | "ocr" | "ia" | "manual" = "regex";
     let pipelineOk = false;
@@ -248,177 +248,27 @@ Deno.serve(async (req) => {
       }
       console.log(`[hibrido] ${tipo} validado MANUALMENTE pelo contador`);
     } else {
-      // 2) Pipeline determinístico — cascata depende do tipo:
-      //    - declaracao  → OCR  →  Nativo (fallback)  →  IA  →  Manual
-      //    - recibo/mei/darf → Nativo  →  OCR (se scan)  →  IA  →  Manual
-      let nativeReason = "";
-      let isScan = false;
-      let ocrText = "";
+      const rawText = await extractRawTextFromPdf(bytes);
+      const textLength = rawText.replace(/\s/g, "").length;
+      console.log(`[ia] ${tipo} texto extraído chars=${textLength}`);
 
-      const runNative = async () => {
-        try {
-          const native = await tryNativeValidation(bytes, tipo, anoBaseNum, cliente.cpf || "");
-          if (native.ok) {
-            extracao = native.data as typeof extracao;
-            metodoValidacao = "regex";
-            pipelineOk = true;
-            const conf = (native.data as { _confianca?: number })._confianca;
-            const met = (native.data as { _metodo?: string })._metodo;
-            console.log(`[pipeline] ${tipo} validado SEM IA (metodo=${met}, confianca=${conf})`);
-          } else {
-            nativeReason = native.reason;
-            isScan = native.reason === "scan_sem_texto_real" || native.reason === "scan_sem_texto";
-            console.log(`[pipeline] ${tipo} nativo falhou: ${native.reason}`);
-          }
-        } catch (e) {
-          console.error("[pipeline] erro inesperado:", e);
-          nativeReason = "erro_pipeline";
-        }
-      };
-
-      const runOcr = async (): Promise<void> => {
-        if (bytes.length > OCR_MAX_BYTES) {
-          console.log(`[ocr] tipo=${tipo} pulado: ${(bytes.length / 1024 / 1024).toFixed(2)}MB > limite ${(OCR_MAX_BYTES / 1024 / 1024).toFixed(0)}MB`);
-          nativeReason = nativeReason || `PDF de ${(bytes.length / 1024 / 1024).toFixed(1)}MB excede limite OCR`;
-          return;
-        }
-        const ocr = await runOcrFallback(bytes, arquivo_nome || "documento.pdf");
-        console.log(`[ocr] tipo=${tipo} ok=${ocr.ok} tempo_ms=${ocr.elapsedMs} chars=${ocr.text.length} reason=${ocr.reason || "-"}`);
-        if (ocr.ok && ocr.text.length > 100) {
-          ocrText = ocr.text;
-          if (ocr.reason) console.log(`[ocr] tipo=${tipo} aproveitando texto PARCIAL (${ocr.reason})`);
-          const ocrResult = parseFromText(ocr.text, tipo, anoBaseNum, cliente.cpf || "");
-          if (ocrResult.ok) {
-            extracao = ocrResult.data as typeof extracao;
-            metodoValidacao = "ocr";
-            pipelineOk = true;
-            console.log(`[ocr] ${tipo} validado via OCR.space`);
-          } else {
-            nativeReason = nativeReason || `OCR ok mas regex falhou: ${ocrResult.reason}`;
-            console.log(`[ocr] ${tipo} regex falhou sobre texto OCR: ${ocrResult.reason} — texto disponível para IA`);
-          }
-        } else {
-          nativeReason = nativeReason || `OCR vazio: ${ocr.reason || "sem texto"}`;
-        }
-      };
-
-      if (tipo === "declaracao") {
-        // SOLUÇÃO DEFINITIVA: para declaração, o resultado tem que ser
-        // brutalmente preciso. Cascata:
-        //   a) OCR.space (texto-guarda, anti-alucinação)
-        //   b) VISION (Gemini 2.5 Pro lê o PDF original) → FONTE DA VERDADE
-        //   c) Se VISION falhar → tenta regex nativo sobre OCR
-        //   d) Se regex falhar → cai no fallback IA-texto mais adiante
-        console.log(`[cascade] tipo=declaracao -> OCR (guarda) + VISION (fonte da verdade)`);
-        await runOcr();
-        // runOcr já pode ter setado pipelineOk=true via regex sobre OCR.
-        // Mesmo assim, para declaração, NÃO confiamos no regex sozinho —
-        // só usamos esse resultado se o VISION confirmar. Salvamos e resetamos.
-        const regexCandidate = pipelineOk ? extracao : null;
-        const regexMetodo = pipelineOk ? metodoValidacao : null;
-        pipelineOk = false;
-        extracao = {};
-
-        console.log(`[vision] tipo=declaracao -> enviando PDF para Gemini 2.5 Pro`);
-        const visionRes = await runVisionExtraction(bytes, ocrText, anoBaseNum, cliente.cpf || "");
-        console.log(`[vision] ok=${visionRes.ok} tempo_ms=${visionRes.elapsedMs}${visionRes.ok ? "" : ` reason=${(visionRes as { reason: string }).reason}`}`);
-
-        if (visionRes.ok) {
-          // VISION passou em todas as validações cruzadas → fonte da verdade.
-          extracao = visionRes.data as typeof extracao;
-          metodoValidacao = "ia";
-          pipelineOk = true;
-
-          // Se também tínhamos um candidato do regex e os valores divergem,
-          // logamos para auditoria (mas mantemos o VISION).
-          if (regexCandidate) {
-            const vV = (visionRes.data as { valor_resultado?: number }).valor_resultado;
-            const rV = (regexCandidate as { valor_resultado?: number }).valor_resultado;
-            const vT = (visionRes.data as { tipo_resultado?: string }).tipo_resultado;
-            const rT = (regexCandidate as { tipo_resultado?: string }).tipo_resultado;
-            if (vV !== rV || vT !== rT) {
-              console.warn(`[divergencia] regex=${rT}/${rV} vs vision=${vT}/${vV} — usando VISION`);
-            } else {
-              console.log(`[concordancia] regex e vision concordam: ${vT}/${vV}`);
-            }
-          }
-        } else {
-          // VISION falhou (validações cruzadas ou gateway).
-          nativeReason = nativeReason || (visionRes as { reason: string }).reason;
-          const reason = (visionRes as { reason: string }).reason;
-          const gatewayFailure =
-            reason.startsWith("vision_gateway_") ||
-            reason === "rate_limit_vision" ||
-            reason === "creditos_vision_esgotados" ||
-            reason === "LOVABLE_API_KEY ausente" ||
-            reason === "pdf_muito_grande_para_vision" ||
-            reason.startsWith("vision_excecao");
-          if (regexCandidate && gatewayFailure) {
-            console.log(`[fallback] VISION indisponível (${reason}) — usando candidato do regex`);
-            extracao = regexCandidate as typeof extracao;
-            metodoValidacao = regexMetodo as typeof metodoValidacao;
-            pipelineOk = true;
-          } else if (!gatewayFailure) {
-            // FALHA DE EVIDÊNCIA: NÃO confiar em IA-texto (ela alucina valores
-            // como totais de rendimentos). Vai DIRETO para revisão manual.
-            console.log(`[vision] resultado rejeitado por evidência: ${reason} — revisão manual obrigatória`);
-            return manualReview(
-              `Não foi possível confirmar o resultado da declaração com segurança (${reason}). Por favor, informe manualmente o tipo (Restituição/Pagamento/Nenhum) e o valor exatos.`
-            );
-          } else {
-            console.log(`[vision] indisponível (${reason}) e sem candidato regex — revisão manual`);
-            return manualReview(
-              `Serviço de leitura visual indisponível (${reason}). Confirme os dados da declaração manualmente.`
-            );
-          }
-        }
-
-        // Se ainda não validamos e o OCR não devolveu texto algum, tenta nativo
-        // (pode salvar PDFs que o OCR.space não conseguiu ler).
-        if (!pipelineOk && !ocrText) {
-          console.log(`[cascade] tipo=declaracao -> OCR sem texto, tentando parser nativo`);
-          await runNative();
-        }
-      } else {
-        // Recibo / MEI / DARF — nativo continua sendo a 1ª opção (rápido e barato).
-        await runNative();
-        if (!pipelineOk && isScan) {
-          await runOcr();
-        }
-      }
-
-      // 3) ÚLTIMO RECURSO: Lovable AI (consome créditos).
-      // Só roda IA quando já temos texto extraído (de OCR ou nativo).
-      // NUNCA reprocessa o PDF com extractRawTextFromPdf aqui — esse caminho
-      // já rodou e/ou pode estourar CPU em arquivos imagem.
-      if (!pipelineOk) {
-        const sourceText = ocrText;
-        // Para DECLARAÇÃO, NUNCA usar IA-texto: ela tende a confundir o valor
-        // do resultado com totais de rendimentos. Cai direto em revisão manual.
-        if (tipo === "declaracao") {
-          console.log(`[ia] declaracao NÃO acionada: precisão exige Vision/manual (motivo: "${nativeReason}")`);
-        } else if (sourceText && sourceText.length > 150) {
-          console.log(`[ia] ${tipo} acionando fallback de IA (motivo: "${nativeReason}", chars=${sourceText.length})`);
-          const aiRes = await runAiExtraction(sourceText, tipo, anoBaseNum, cliente.cpf || "");
-          console.log(`[ia] ${tipo} ok=${aiRes.ok} tempo_ms=${aiRes.elapsedMs} ${aiRes.ok ? "" : `reason=${aiRes.reason}`}`);
-          if (aiRes.ok) {
-            extracao = aiRes.data as typeof extracao;
-            metodoValidacao = "ia";
-            pipelineOk = true;
-          } else {
-            return manualReview(
-              `Extração automática falhou (${nativeReason}). IA também não validou (${aiRes.reason}). Confirme os dados manualmente.`
-            );
-          }
-        } else {
-          console.log(`[ia] ${tipo} não acionada: sem texto OCR suficiente (motivo: "${nativeReason}")`);
-        }
-      }
-
-      // 4) Falha total → modal manual.
-      if (!pipelineOk) {
+      if (textLength < 80) {
         return manualReview(
-          `Não foi possível extrair os dados automaticamente (${nativeReason || "documento não reconhecido"}). Confirme os dados manualmente para registrar.`
+          "Não foi possível ler texto suficiente do PDF. Confirme os dados manualmente para registrar."
+        );
+      }
+
+      console.log(`[ia] ${tipo} acionando extração via Lovable AI`);
+      const aiRes = await runAiExtraction(rawText, tipo, anoBaseNum, cliente.cpf || "");
+      console.log(`[ia] ${tipo} ok=${aiRes.ok} tempo_ms=${aiRes.elapsedMs}${aiRes.ok ? "" : ` reason=${aiRes.reason}`}`);
+
+      if (aiRes.ok) {
+        extracao = aiRes.data as typeof extracao;
+        metodoValidacao = "ia";
+        pipelineOk = true;
+      } else {
+        return manualReview(
+          `IA não conseguiu validar automaticamente (${aiRes.reason}). Confirme os dados manualmente para registrar.`
         );
       }
     }
