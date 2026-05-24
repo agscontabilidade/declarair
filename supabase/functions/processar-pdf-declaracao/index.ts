@@ -141,11 +141,12 @@ Deno.serve(async (req) => {
     }
 
     const promptDeclaracao = {
-      eh_declaracao_irpf: "boolean — true somente se for de fato uma Declaração de Ajuste Anual do IRPF (DIRPF) emitida pelo programa da Receita Federal",
+      eh_declaracao_irpf: "boolean — true se for: (a) Declaração de Ajuste Anual do IRPF (DIRPF), (b) Declaração de Saída Definitiva do País (DSDP), ou (c) Comunicação de Saída Definitiva do País — todas emitidas pelo programa/sistema da Receita Federal. Marque false para recibo, DARF, extratos bancários, informes de rendimento ou qualquer outro documento.",
+      subtipo: "'dirpf'|'saida_definitiva'|'comunicacao_saida'|null — qual variante foi reconhecida; null se eh_declaracao_irpf=false",
       cpf: "string — CPF do declarante apenas dígitos (11)",
       nome: "string — nome completo do declarante",
       ano_exercicio: "number — ano-exercício (ex.: 2026)",
-      tipo_resultado: "'restituicao'|'pagamento'|'nenhum' — leia a folha 'Resumo da Declaração'/'Cálculo do Imposto'. Use 'pagamento' se houver 'Saldo de Imposto a Pagar' > 0 (ou linhas equivalentes 'Imposto a Pagar', 'Imposto sobre a Renda Devido' líquido positivo a recolher). Use 'restituicao' se houver 'Imposto a Restituir' > 0. Use 'nenhum' SOMENTE se ambos forem zero (declaração isenta/sem imposto a pagar nem a restituir). Nunca chute 'nenhum' por incerteza — releia o resumo.",
+      tipo_resultado: "'restituicao'|'pagamento'|'nenhum' — Para DIRPF: leia a folha 'Resumo da Declaração'/'Cálculo do Imposto'. Use 'pagamento' se houver 'Saldo de Imposto a Pagar' > 0 (ou equivalentes). Use 'restituicao' se houver 'Imposto a Restituir' > 0. Use 'nenhum' SOMENTE se ambos forem zero. Para DSDP/Comunicação de Saída: se o documento não trouxer apuração de imposto a pagar/restituir, retorne 'nenhum' com valor_resultado=0; só use 'pagamento'/'restituicao' se os valores estiverem explícitos no próprio documento.",
       valor_resultado: "number — valor em reais (sem sinal, ex.: 1234.56) correspondente ao tipo_resultado escolhido; 0 se nenhum",
       motivo_rejeicao: "string|null — preencha se eh_declaracao_irpf=false explicando o motivo",
     };
@@ -191,7 +192,7 @@ Esquema esperado: ${JSON.stringify(schema)}.
 Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao extrair valores numéricos: leia a folha de resumo/cálculo e converta vírgula decimal brasileira corretamente.`;
 
     const userPromptMap: Record<typeof tipo, string> = {
-      declaracao: "Identifique se este PDF é a Declaração do IRPF (DIRPF) e extraia: CPF, nome, ano-exercício e o RESULTADO. Para o resultado, vá até a folha 'Resumo da Declaração' (ou equivalente) e verifique as linhas 'Saldo de Imposto a Pagar' e 'Imposto a Restituir'. Retorne 'pagamento' com o valor exato a recolher quando houver imposto a pagar, 'restituicao' com o valor a restituir, ou 'nenhum' apenas quando ambos forem zero.",
+      declaracao: "Identifique se este PDF é uma declaração do IRPF aceita: (a) DIRPF (Declaração de Ajuste Anual), (b) Declaração de Saída Definitiva do País (DSDP), ou (c) Comunicação de Saída Definitiva do País — todas emitidas pelo programa/sistema da Receita Federal. Extraia CPF, nome, ano-exercício e o RESULTADO. Para DIRPF, vá até a folha 'Resumo da Declaração' (ou equivalente) e verifique 'Saldo de Imposto a Pagar' e 'Imposto a Restituir' — retorne 'pagamento'/'restituicao' com o valor exato, ou 'nenhum' se ambos forem zero. Para DSDP/Comunicação de Saída, se não houver folha de apuração com imposto a pagar/restituir, retorne 'nenhum' e valor_resultado=0. Preencha também o campo 'subtipo' com 'dirpf', 'saida_definitiva' ou 'comunicacao_saida'.",
       recibo: "Identifique se este PDF é o Recibo de Entrega da DIRPF emitido pela Receita Federal e extraia o número do recibo, CPF, ano-exercício e data de transmissão.",
       mei: "Identifique se este PDF é a DASN-SIMEI (Declaração Anual do MEI) ou seu recibo, e extraia CNPJ, CPF do titular, ano-calendário, número do recibo e data de transmissão.",
       darf: "Identifique se este PDF é um DARF de IRPF Pessoa Física. Extraia código de receita, CPF, período de apuração, data de vencimento, valor principal e valor total.",
