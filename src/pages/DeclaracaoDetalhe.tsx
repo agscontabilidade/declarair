@@ -228,6 +228,8 @@ export default function DeclaracaoDetalhe() {
             arquivoDarfNome={decl?.arquivo_darf_nome}
             arquivoMeiUrl={decl?.arquivo_mei_url}
             arquivoMeiNome={decl?.arquivo_mei_nome}
+            arquivosOutros={(decl as any)?.arquivos_outros}
+
             onSuccess={() => {
               hook.refetch();
             }}
