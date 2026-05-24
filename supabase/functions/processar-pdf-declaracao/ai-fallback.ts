@@ -49,9 +49,18 @@ function valueExistsInSource(v: number, source: string): boolean {
   return source.includes(brStr);
 }
 
-function truncateForAi(text: string): string {
+function truncateForAi(text: string, tipo: Tipo): string {
+  if (tipo === "declaracao") {
+    // Para declaração, prioriza a janela do RESUMO + cabeçalho.
+    const head = text.slice(0, 3_000);
+    const idxResumo = text.search(/\bresumo\b/i);
+    if (idxResumo > 0) {
+      const tail = text.slice(idxResumo, idxResumo + 6_000);
+      const combined = `${head}\n\n[...]\n\n${tail}`;
+      return combined.length <= MAX_TEXT_CHARS ? combined : combined.slice(0, MAX_TEXT_CHARS);
+    }
+  }
   if (text.length <= MAX_TEXT_CHARS) return text;
-  // Estratégia: pega o cabeçalho (primeiros 4k) + janela do RESUMO (até 8k)
   const head = text.slice(0, 4_000);
   const idxResumo = text.search(/\bresumo\b/i);
   if (idxResumo > 0) {
@@ -155,7 +164,7 @@ export async function runAiExtraction(
     return { ok: false, reason: "texto insuficiente para IA", elapsedMs: 0 };
   }
 
-  const truncated = truncateForAi(fullText);
+  const truncated = truncateForAi(fullText, tipo);
   const tool = schemaFor(tipo);
 
   const systemPrompt = [
