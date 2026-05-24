@@ -353,12 +353,7 @@ Deno.serve(async (req) => {
       if (!jaTransmitida && ["aguardando_documentos", "documentacao_recebida"].includes(statusAtual)) {
         updates.status = "declaracao_pronta";
       }
-      if (extracao?.tipo_resultado && ["restituicao", "pagamento", "nenhum"].includes(extracao.tipo_resultado)) {
-        updates.tipo_resultado = extracao.tipo_resultado;
-      }
-      if (typeof extracao?.valor_resultado === "number") {
-        updates.valor_resultado = extracao.valor_resultado;
-      }
+      // Resultado (restituição/pagamento) é extraído do RECIBO, não daqui.
     } else if (tipo === "recibo") {
       updates.arquivo_recibo_url = storage_path;
       updates.arquivo_recibo_nome = arquivo_nome || storage_path.split("/").pop();
@@ -368,6 +363,12 @@ Deno.serve(async (req) => {
       updates.numero_recibo = String(extracao.numero_recibo);
       if (extracao?.data_transmissao) {
         updates.data_transmissao = new Date(extracao.data_transmissao).toISOString();
+      }
+      if (extracao?.tipo_resultado && ["restituicao", "pagamento", "nenhum"].includes(extracao.tipo_resultado)) {
+        updates.tipo_resultado = extracao.tipo_resultado;
+      }
+      if (typeof extracao?.valor_resultado === "number") {
+        updates.valor_resultado = extracao.valor_resultado;
       }
       if (statusAtual !== "transmitida") {
         updates.status = "transmitida";
