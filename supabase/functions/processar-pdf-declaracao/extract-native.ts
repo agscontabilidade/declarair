@@ -692,7 +692,7 @@ export async function tryNativeValidation(
 
   // CAMADA 3 — fingerprint
   const fingerprint = detectFingerprint(structure.metadata);
-  console.log(`[pipeline] tipo=${tipo} paginas=${structure.numPages} textLen=${textLen} fingerprint=${fingerprint.produtor}(${fingerprint.confianca}) detalhes="${fingerprint.detalhes.slice(0, 120)}"`);
+  console.log(`[pipeline] tipo=${tipo} paginas=${structure.numPages} textLen=${textLen} source=${textSource} fingerprint=${fingerprint.produtor}(${fingerprint.confianca}) detalhes="${fingerprint.detalhes.slice(0, 120)}"`);
 
   // CAMADAS 4+5 — domain + parsers
   const cpfDigits = onlyDigits(cpfCliente);
