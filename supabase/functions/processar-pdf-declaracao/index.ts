@@ -435,11 +435,12 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
     }
 
     // Auditoria
+    const sufixoMetodo = metodoValidacao === "regex" ? "automaticamente" : "por IA";
     const atividadeMap: Record<typeof tipo, { tipo: string; descricao: string }> = {
-      declaracao: { tipo: "declaracao_validada", descricao: "Declaração validada por IA." },
-      recibo: { tipo: "recibo_validado", descricao: `Recibo da Receita Federal validado por IA (nº ${extracao?.numero_recibo ?? "?"}).` },
-      mei: { tipo: "mei_validado", descricao: "Declaração MEI (DASN-SIMEI) validada por IA." },
-      darf: { tipo: "darf_validado", descricao: `DARF IRPF validado por IA (código ${extracao?.codigo_receita ?? "?"}, R$ ${extracao?.valor_total ?? 0}).` },
+      declaracao: { tipo: "declaracao_validada", descricao: `Declaração validada ${sufixoMetodo}.` },
+      recibo: { tipo: "recibo_validado", descricao: `Recibo da Receita Federal validado ${sufixoMetodo} (nº ${extracao?.numero_recibo ?? "?"}).` },
+      mei: { tipo: "mei_validado", descricao: `Declaração MEI (DASN-SIMEI) validada ${sufixoMetodo}.` },
+      darf: { tipo: "darf_validado", descricao: `DARF IRPF validado ${sufixoMetodo} (código ${extracao?.codigo_receita ?? "?"}, R$ ${extracao?.valor_total ?? 0}).` },
     };
     await admin.from("declaracao_atividades").insert({
       declaracao_id,
