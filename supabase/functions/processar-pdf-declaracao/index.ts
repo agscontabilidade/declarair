@@ -164,7 +164,6 @@ Deno.serve(async (req) => {
     // ========== Pipeline: Lovable AI > manual ==========
     let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo & ExtracaoMei & ExtracaoDarf> = {};
     let metodoValidacao: "ia" | "manual" = "ia";
-    let pipelineOk = false;
 
 
     const cpfClienteDigits = digits(cliente.cpf);
@@ -185,7 +184,6 @@ Deno.serve(async (req) => {
     // 1) Confirmação manual enviada pelo contador — pula o pipeline
     if (manual_confirmacao) {
       metodoValidacao = "manual";
-      pipelineOk = true;
       const mc = manual_confirmacao;
       // Validações básicas por tipo
       if (tipo === "declaracao") {
@@ -246,7 +244,7 @@ Deno.serve(async (req) => {
           motivo_rejeicao: null,
         };
       }
-      console.log(`[hibrido] ${tipo} validado MANUALMENTE pelo contador`);
+      console.log(`[manual] ${tipo} validado MANUALMENTE pelo contador`);
     } else {
       const rawText = await extractRawTextFromPdf(bytes);
       const textLength = rawText.replace(/\s/g, "").length;
@@ -265,7 +263,6 @@ Deno.serve(async (req) => {
       if (aiRes.ok) {
         extracao = aiRes.data as typeof extracao;
         metodoValidacao = "ia";
-        pipelineOk = true;
       } else {
         return manualReview(
           `IA não conseguiu validar automaticamente (${aiRes.reason}). Confirme os dados manualmente para registrar.`
