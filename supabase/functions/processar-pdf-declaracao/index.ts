@@ -187,6 +187,17 @@ Deno.serve(async (req) => {
       const mc = manual_confirmacao;
       // Validações básicas por tipo
       if (tipo === "declaracao") {
+        extracao = {
+          eh_declaracao_irpf: true,
+          cpf: cpfClienteDigits,
+          nome: cliente.nome,
+          ano_exercicio: anoBaseNum,
+          motivo_rejeicao: null,
+        };
+      } else if (tipo === "recibo") {
+        if (!mc.numero_recibo || !mc.data_transmissao) {
+          return fail("Confirmação manual: número do recibo e data de transmissão são obrigatórios");
+        }
         if (!mc.tipo_resultado || !["restituicao", "pagamento", "nenhum"].includes(mc.tipo_resultado)) {
           return fail("Confirmação manual: informe o tipo de resultado");
         }
@@ -194,24 +205,13 @@ Deno.serve(async (req) => {
           return fail("Confirmação manual: informe o valor (R$)");
         }
         extracao = {
-          eh_declaracao_irpf: true,
-          cpf: cpfClienteDigits,
-          nome: cliente.nome,
-          ano_exercicio: anoBaseNum,
-          tipo_resultado: mc.tipo_resultado,
-          valor_resultado: mc.tipo_resultado === "nenhum" ? 0 : Number(mc.valor_resultado || 0),
-          motivo_rejeicao: null,
-        };
-      } else if (tipo === "recibo") {
-        if (!mc.numero_recibo || !mc.data_transmissao) {
-          return fail("Confirmação manual: número do recibo e data de transmissão são obrigatórios");
-        }
-        extracao = {
           eh_recibo_rfb: true,
           numero_recibo: String(mc.numero_recibo).trim(),
           cpf: cpfClienteDigits,
           ano_exercicio: anoBaseNum,
           data_transmissao: mc.data_transmissao,
+          tipo_resultado: mc.tipo_resultado,
+          valor_resultado: mc.tipo_resultado === "nenhum" ? 0 : Number(mc.valor_resultado || 0),
           motivo_rejeicao: null,
         };
       } else if (tipo === "mei") {
