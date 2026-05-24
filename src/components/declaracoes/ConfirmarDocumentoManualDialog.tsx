@@ -102,7 +102,26 @@ export function ConfirmarDocumentoManualDialog({ open, onOpenChange, tipo, motiv
 
         <div className="space-y-3">
           {tipo === 'declaracao' && (
+            <p className="text-sm text-muted-foreground">
+              O arquivo da declaração será apenas registrado. O resultado
+              (restituição/pagamento) é extraído automaticamente do <strong>Recibo</strong>.
+            </p>
+          )}
+
+          {tipo === 'recibo' && (
             <>
+              <div>
+                <Label>Número do recibo</Label>
+                <Input
+                  placeholder="Ex.: 12.34.56.78.90-12"
+                  value={numeroRecibo}
+                  onChange={(e) => setNumeroRecibo(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Data de transmissão</Label>
+                <Input type="date" value={dataTransmissao} onChange={(e) => setDataTransmissao(e.target.value)} />
+              </div>
               <div>
                 <Label>Resultado da declaração</Label>
                 <Select value={tipoResultado} onValueChange={(v: 'restituicao' | 'pagamento' | 'nenhum') => setTipoResultado(v)}>
@@ -127,22 +146,6 @@ export function ConfirmarDocumentoManualDialog({ open, onOpenChange, tipo, motiv
             </>
           )}
 
-          {tipo === 'recibo' && (
-            <>
-              <div>
-                <Label>Número do recibo</Label>
-                <Input
-                  placeholder="Ex.: 12.34.56.78.90-12"
-                  value={numeroRecibo}
-                  onChange={(e) => setNumeroRecibo(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Data de transmissão</Label>
-                <Input type="date" value={dataTransmissao} onChange={(e) => setDataTransmissao(e.target.value)} />
-              </div>
-            </>
-          )}
 
           {tipo === 'mei' && (
             <>
