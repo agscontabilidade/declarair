@@ -1,7 +1,6 @@
 // Edge function: valida PDF anexado (Declaração / Recibo / MEI / DARF),
 // extrai dados via Lovable AI, atualiza o status da declaração e dispara notificações.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { extractRawTextFromPdf } from "./extract-text.ts";
 import { runAiExtraction } from "./ai-fallback.ts";
 
 const corsHeaders = {
@@ -246,18 +245,8 @@ Deno.serve(async (req) => {
       }
       console.log(`[manual] ${tipo} validado MANUALMENTE pelo contador`);
     } else {
-      const rawText = await extractRawTextFromPdf(bytes);
-      const textLength = rawText.replace(/\s/g, "").length;
-      console.log(`[ia] ${tipo} texto extraído chars=${textLength}`);
-
-      if (textLength < 80) {
-        return manualReview(
-          "Não foi possível ler texto suficiente do PDF. Confirme os dados manualmente para registrar."
-        );
-      }
-
-      console.log(`[ia] ${tipo} acionando extração via Lovable AI`);
-      const aiRes = await runAiExtraction(rawText, tipo, anoBaseNum, cliente.cpf || "");
+      console.log(`[ia] ${tipo} enviando PDF (${bytes.byteLength} bytes) para Lovable AI (multimodal)`);
+      const aiRes = await runAiExtraction(bytes, tipo, anoBaseNum, cliente.cpf || "");
       console.log(`[ia] ${tipo} ok=${aiRes.ok} tempo_ms=${aiRes.elapsedMs}${aiRes.ok ? "" : ` reason=${aiRes.reason}`}`);
 
       if (aiRes.ok) {

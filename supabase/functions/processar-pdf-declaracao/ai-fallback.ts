@@ -1,15 +1,10 @@
 // =============================================================================
-// Extração via Lovable AI Gateway.
-//
-// Para economizar créditos:
-//   - Usa o modelo mais barato (google/gemini-3-flash-preview).
-//   - Trunca o texto em 12k chars (cabeçalho + janela do RESUMO basta).
-//   - Tool calling com schema estrito (sem JSON solto).
-//   - Anti-alucinação: qualquer valor numérico retornado precisa existir
-//     literalmente no texto enviado; senão descarta.
+// Extração via Lovable AI Gateway — MULTIMODAL (envia PDF inteiro pro Gemini).
+// O Gemini lê PDF nativo, faz OCR de imagens e entende layout, então funciona
+// para PDF de texto, PDF/A e PDF escaneado.
 // =============================================================================
 
-import type { Tipo } from "./extract-text.ts";
+export type Tipo = "declaracao" | "recibo" | "mei" | "darf";
 
 export type AiExtractionResult =
   | { ok: true; data: Record<string, unknown>; elapsedMs: number }
@@ -17,7 +12,6 @@ export type AiExtractionResult =
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_MODEL = "google/gemini-3-flash-preview";
-const MAX_TEXT_CHARS = 12_000;
 
 function digits(s: string): string {
   return (s || "").replace(/\D/g, "");
@@ -30,37 +24,15 @@ function parseMoneyBR(s: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-// Garante que um valor numérico aparece literalmente no texto-fonte
-// (em formato BR "1.234,56"). Anti-alucinação.
-function valueExistsInSource(v: number, source: string): boolean {
-  if (!Number.isFinite(v) || v <= 0) return true; // 0 é sempre aceitável
-  // formata 1234.56 -> "1.234,56"
-  const fixed = v.toFixed(2);
-  const [intPart, decPart] = fixed.split(".");
-  const intWithDots = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  const brStr = `${intWithDots},${decPart}`;
-  return source.includes(brStr);
-}
-
-function truncateForAi(text: string, tipo: Tipo): string {
-  if (tipo === "declaracao") {
-    // Para declaração, prioriza a janela do RESUMO + cabeçalho.
-    const head = text.slice(0, 3_000);
-    const idxResumo = text.search(/\bresumo\b/i);
-    if (idxResumo > 0) {
-      const tail = text.slice(idxResumo, idxResumo + 6_000);
-      const combined = `${head}\n\n[...]\n\n${tail}`;
-      return combined.length <= MAX_TEXT_CHARS ? combined : combined.slice(0, MAX_TEXT_CHARS);
-    }
+// Converte Uint8Array em base64 (chunked p/ não estourar stack em PDFs grandes)
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
   }
-  if (text.length <= MAX_TEXT_CHARS) return text;
-  const head = text.slice(0, 4_000);
-  const idxResumo = text.search(/\bresumo\b/i);
-  if (idxResumo > 0) {
-    const tail = text.slice(idxResumo, idxResumo + 8_000);
-    return `${head}\n\n[...]\n\n${tail}`;
-  }
-  return text.slice(0, MAX_TEXT_CHARS);
+  return btoa(binary);
 }
 
 function schemaFor(tipo: Tipo) {
@@ -98,7 +70,7 @@ function schemaFor(tipo: Tipo) {
             },
             valor_resultado: {
               type: "number",
-              description: "Valor em reais correspondente ao tipo_resultado. Deve aparecer literalmente no recibo. Use 0 quando tipo_resultado='nenhum'.",
+              description: "Valor em reais correspondente ao tipo_resultado, exatamente como aparece no recibo. Use 0 quando tipo_resultado='nenhum'.",
             },
           },
           required: ["cpf", "ano_exercicio", "numero_recibo", "data_transmissao", "tipo_resultado", "valor_resultado"],
@@ -143,7 +115,7 @@ function schemaFor(tipo: Tipo) {
 }
 
 export async function runAiExtraction(
-  fullText: string,
+  pdfBytes: Uint8Array,
   tipo: Tipo,
   anoBase: number,
   cpfCliente: string,
@@ -153,32 +125,28 @@ export async function runAiExtraction(
   if (!apiKey) {
     return { ok: false, reason: "LOVABLE_API_KEY ausente", elapsedMs: 0 };
   }
-  if (!fullText || fullText.replace(/\s/g, "").length < 80) {
-    return { ok: false, reason: "texto insuficiente para IA", elapsedMs: 0 };
+  if (!pdfBytes || pdfBytes.length < 100) {
+    return { ok: false, reason: "pdf_vazio", elapsedMs: 0 };
   }
 
-  const truncated = truncateForAi(fullText, tipo);
   const tool = schemaFor(tipo);
+  const base64 = bytesToBase64(pdfBytes);
+  const dataUrl = `data:application/pdf;base64,${base64}`;
 
   const systemPrompt = [
-    "Você extrai dados estruturados de documentos fiscais brasileiros (Receita Federal).",
-    "REGRAS ABSOLUTAS:",
-    "1. Use APENAS valores que aparecem literalmente no texto fornecido.",
-    "2. Para o RECIBO de entrega: localize 'IMPOSTO A RESTITUIR' ou 'IMPOSTO A PAGAR' (ou 'SALDO A PAGAR'). Se Restituir > 0 -> tipo_resultado='restituicao'; se Pagar > 0 -> tipo_resultado='pagamento'; se ambos zero/ausentes -> tipo_resultado='nenhum' e valor_resultado=0.",
-    "3. Para DECLARAÇÃO completa: extraia APENAS CPF, ano e nome. NÃO tente extrair valor de resultado — isso vem do recibo.",
-    "4. NUNCA invente dígitos. Se um campo não aparece com clareza no texto, NÃO chame a função.",
+    "Você analisa documentos fiscais brasileiros (Receita Federal) lendo o PDF anexado.",
+    "O PDF pode conter texto ou ser uma imagem escaneada — leia visualmente em qualquer caso.",
+    "REGRAS:",
+    "1. Para o RECIBO de entrega: localize 'IMPOSTO A RESTITUIR' ou 'IMPOSTO A PAGAR' (ou 'SALDO A PAGAR'). Se Restituir > 0 → tipo_resultado='restituicao'; se Pagar > 0 → tipo_resultado='pagamento'; se ambos zero/ausentes → tipo_resultado='nenhum' e valor_resultado=0.",
+    "2. Para DECLARAÇÃO completa: extraia APENAS CPF, ano e nome. NÃO tente extrair valor de resultado.",
+    "3. Use exatamente os números/datas/strings que aparecem no documento. Se um campo obrigatório não está visível, NÃO chame a função.",
   ].join("\n");
 
-
-  const userPrompt = [
+  const userPromptText = [
     `Ano-base esperado: ${anoBase}.`,
     `CPF esperado do cliente: ${digits(cpfCliente) || "(desconhecido)"}.`,
     `Tipo de documento: ${tipo}.`,
-    "",
-    "TEXTO DO DOCUMENTO:",
-    "```",
-    truncated,
-    "```",
+    "Leia o PDF anexado e chame a função com os dados extraídos.",
   ].join("\n");
 
   try {
@@ -192,7 +160,13 @@ export async function runAiExtraction(
         model: AI_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: userPromptText },
+              { type: "image_url", image_url: { url: dataUrl } },
+            ],
+          },
         ],
         tools: [{ type: "function", function: tool }],
         tool_choice: { type: "function", function: { name: tool.name } },
@@ -226,8 +200,7 @@ export async function runAiExtraction(
       return { ok: false, reason: "ia_args_invalidos", elapsedMs };
     }
 
-    // ===== Validação cruzada anti-alucinação =====
-    // CPF
+    // ===== Validações cruzadas (independentes do texto bruto) =====
     if (typeof args.cpf === "string") {
       args.cpf = digits(args.cpf);
       if ((args.cpf as string).length !== 11) {
@@ -238,25 +211,12 @@ export async function runAiExtraction(
         return { ok: false, reason: `ia_cpf_divergente (${args.cpf} ≠ ${cpfCli})`, elapsedMs };
       }
     }
-    // CNPJ (MEI)
     if (tipo === "mei" && typeof args.cnpj === "string") {
       args.cnpj = digits(args.cnpj);
       if ((args.cnpj as string).length !== 14) {
         return { ok: false, reason: "ia_cnpj_invalido", elapsedMs };
       }
     }
-    // Valores monetários precisam aparecer literalmente no texto
-    const moneyFields = ["valor_resultado", "valor_principal", "valor_total"];
-    for (const k of moneyFields) {
-      if (typeof args[k] === "number") {
-        const v = args[k] as number;
-        if (v > 0 && !valueExistsInSource(v, fullText)) {
-          return { ok: false, reason: `ia_valor_nao_encontrado_no_texto (${k}=${v})`, elapsedMs };
-        }
-      }
-    }
-
-    // Ano
     const anoKey = tipo === "mei" ? "ano_calendario" : "ano_exercicio";
     if (typeof args[anoKey] === "number") {
       const ano = args[anoKey] as number;
@@ -265,7 +225,6 @@ export async function runAiExtraction(
         return { ok: false, reason: `ia_ano_divergente (${ano} ≠ ${anoBase})`, elapsedMs };
       }
     }
-    // Número do recibo deve ter formato XX.XX.XX.XX.XX-XX
     if (tipo === "recibo" && typeof args.numero_recibo === "string") {
       const nr = (args.numero_recibo as string).trim();
       if (!/^\d{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2}-\d{2}$/.test(nr)) {
@@ -274,7 +233,7 @@ export async function runAiExtraction(
       args.numero_recibo = nr;
     }
 
-    // ===== Normaliza para o shape do NativeResult =====
+    // ===== Normaliza para o shape interno =====
     let data: Record<string, unknown> = {};
     if (tipo === "declaracao") {
       data = {
@@ -284,7 +243,7 @@ export async function runAiExtraction(
         nome: args.nome || "",
         ano_exercicio: args.ano_exercicio,
         motivo_rejeicao: null,
-        _confianca: 0.70,
+        _confianca: 0.80,
         _metodo: "ia",
       };
     } else if (tipo === "recibo") {
@@ -297,7 +256,7 @@ export async function runAiExtraction(
         tipo_resultado: args.tipo_resultado || "nenhum",
         valor_resultado: typeof args.valor_resultado === "number" ? args.valor_resultado : 0,
         motivo_rejeicao: null,
-        _confianca: 0.70,
+        _confianca: 0.80,
         _metodo: "ia",
       };
     } else if (tipo === "mei") {
@@ -309,7 +268,7 @@ export async function runAiExtraction(
         numero_recibo: args.numero_recibo ?? null,
         data_transmissao: args.data_transmissao ?? null,
         motivo_rejeicao: null,
-        _confianca: 0.70,
+        _confianca: 0.80,
         _metodo: "ia",
       };
     } else if (tipo === "darf") {
@@ -322,7 +281,7 @@ export async function runAiExtraction(
         valor_principal: typeof args.valor_principal === "number" ? args.valor_principal : parseMoneyBR(String(args.valor_principal || "0")) || 0,
         valor_total: typeof args.valor_total === "number" ? args.valor_total : parseMoneyBR(String(args.valor_total || "0")) || 0,
         motivo_rejeicao: null,
-        _confianca: 0.70,
+        _confianca: 0.80,
         _metodo: "ia",
       };
     }
