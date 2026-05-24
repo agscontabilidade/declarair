@@ -587,24 +587,44 @@ function findCNPJ(text: string): string | null {
   return null;
 }
 
-function findAno(text: string, ctx: "exercicio" | "calendario"): number | null {
+function findAno(text: string, ctx: "exercicio" | "calendario", preferAno?: number): number | null {
   const padroes = ctx === "exercicio"
     ? [
-        /exerc[ií]cio\s+(?:de\s+|fiscal\s+)?(\d{4})/i,
-        /ano[-\s]?exerc[ií]cio[:\s]+(\d{4})/i,
-        /irpf\s*(\d{4})/i,
-        /dirpf\s*(\d{4})/i,
+        /exerc[ií]cio\s+(?:de\s+|fiscal\s+)?(\d{4})/gi,
+        /ano[-\s]?exerc[ií]cio[:\s]+(\d{4})/gi,
+        /irpf\s*(\d{4})/gi,
+        /dirpf\s*(\d{4})/gi,
+        /declara[cç][aã]o\s+(?:de\s+)?ajuste\s+anual[^\n\r]{0,40}?(\d{4})/gi,
       ]
     : [
-        /ano[-\s]calend[aá]rio[:\s]+(\d{4})/i,
-        /ano\s+base[:\s]+(\d{4})/i,
-        /per[ií]odo\s+(?:de\s+)?apura[cç][aã]o[:\s]+\d{2}\/(\d{4})/i,
+        /ano[-\s]calend[aá]rio[:\s]+(\d{4})/gi,
+        /ano\s+base[:\s]+(\d{4})/gi,
+        /per[ií]odo\s+(?:de\s+)?apura[cç][aã]o[:\s]+\d{2}\/(\d{4})/gi,
       ];
+  const candidatos: number[] = [];
   for (const re of padroes) {
-    const m = text.match(re);
-    if (m) { const a = parseInt(m[1]); if (a >= 2000 && a <= 2100) return a; }
+    re.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      const a = parseInt(m[1]);
+      if (a >= 2000 && a <= 2100) candidatos.push(a);
+    }
   }
-  return null;
+  if (candidatos.length === 0) {
+    // Fallback exercicio: se o ano esperado aparece em qualquer lugar do texto
+    // como ano de 4 dígitos, aceita (cobre OCR que estraga o label).
+    if (ctx === "exercicio" && preferAno) {
+      const re = new RegExp(`\\b${preferAno}\\b`);
+      if (re.test(text)) return preferAno;
+    }
+    return null;
+  }
+  // Prefere o ano-base esperado se aparece entre os candidatos.
+  if (preferAno && candidatos.includes(preferAno)) return preferAno;
+  // Caso contrário, devolve o mais frequente.
+  const count = new Map<number, number>();
+  for (const a of candidatos) count.set(a, (count.get(a) || 0) + 1);
+  return [...count.entries()].sort((a, b) => b[1] - a[1])[0][0];
 }
 
 function findNumeroRecibo(text: string): string | null {
