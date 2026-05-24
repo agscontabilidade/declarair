@@ -74,7 +74,7 @@ function CopyCpfButton({ cpf }: { cpf: string }) {
           type="button"
           size="icon"
           variant="ghost"
-          className="h-5 w-5 text-muted-foreground hover:text-foreground"
+          className="h-5 w-5 text-muted-foreground hover:text-emerald-600 hover:outline hover:outline-1 hover:outline-emerald-500 hover:bg-transparent"
           aria-label="Copiar CPF (sem pontos)"
           onClick={handleCopy}
         >
