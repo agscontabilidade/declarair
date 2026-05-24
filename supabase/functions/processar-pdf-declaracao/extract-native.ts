@@ -689,42 +689,12 @@ function parseDeclaracao(inp: ParseInput): NativeResult {
   let valor_resultado = 0;
 
   if (subtipo === "dirpf" || subtipo === "saida_definitiva") {
-    const rePagar = /(?:saldo\s+de\s+)?imposto\s+a\s+pagar[^\d\-\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
-    const reRest = /imposto\s+a\s+restituir[^\d\-\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
-    const mPag = text.full.match(rePagar);
-    const mRes = text.full.match(reRest);
-    let vPag = mPag ? parseMoneyBR(mPag[1]) : null;
-    let vRes = mRes ? parseMoneyBR(mRes[1]) : null;
-
-    if (vPag === null || vRes === null) {
-      const lines = text.full.split(/\r?\n/);
-      const moneyRe = /(\d{1,3}(?:\.\d{3})*,\d{2})/;
-      for (let i = 0; i < lines.length; i++) {
-        const ln = lines[i];
-        if (vPag === null && /saldo\s+de\s+imposto\s+a\s+pagar|imposto\s+a\s+pagar/i.test(ln)) {
-          for (let j = 0; j <= 3 && i + j < lines.length; j++) {
-            const mm = lines[i + j].match(moneyRe);
-            if (mm) { vPag = parseMoneyBR(mm[1]); break; }
-          }
-        }
-        if (vRes === null && /imposto\s+a\s+restituir/i.test(ln)) {
-          for (let j = 0; j <= 3 && i + j < lines.length; j++) {
-            const mm = lines[i + j].match(moneyRe);
-            if (mm) { vRes = parseMoneyBR(mm[1]); break; }
-          }
-        }
-      }
+    const res = extractResultadoFromResumo(text.full);
+    if (res.inconsistente) {
+      return { ok: false, reason: `valor_resultado_inconsistente: ${res.motivo}` };
     }
-
-    if (vPag !== null && vPag > 0 && vRes !== null && vRes > 0) {
-      return { ok: false, reason: "PDF traz pagar>0 e restituir>0 simultaneamente (inconsistência)" };
-    } else if (vPag !== null && vPag > 0) {
-      tipo_resultado = "pagamento"; valor_resultado = vPag;
-    } else if (vRes !== null && vRes > 0) {
-      tipo_resultado = "restituicao"; valor_resultado = vRes;
-    } else {
-      tipo_resultado = "nenhum"; valor_resultado = 0;
-    }
+    tipo_resultado = res.tipo;
+    valor_resultado = res.valor;
   }
 
   let score = 0.45;
