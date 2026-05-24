@@ -49,6 +49,8 @@ export function EnviarDeclaracaoEmailModal({
   arquivoDarfNome,
   arquivoMeiUrl,
   arquivoMeiNome,
+  arquivosOutros,
+
   open,
   onOpenChange,
   onSuccess
