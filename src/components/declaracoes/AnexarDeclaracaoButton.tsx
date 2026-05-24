@@ -69,6 +69,12 @@ export function AnexarDeclaracaoButton({
     darf: useRef<HTMLInputElement>(null),
   };
   const [processandoTipo, setProcessandoTipo] = useState<Tipo | null>(null);
+  const [manualReview, setManualReview] = useState<{
+    tipo: Tipo;
+    storage_path: string;
+    arquivo_nome: string;
+    motivo: string;
+  } | null>(null);
 
   const upload = useMutation({
     mutationFn: async ({ file, tipo }: { file: File; tipo: Tipo }) => {
@@ -96,6 +102,16 @@ export function AnexarDeclaracaoButton({
         await supabase.storage.from('documentos-clientes').remove([path]);
         throw new Error(fnErr.message || 'Erro ao processar PDF');
       }
+      // Backend pediu confirmação manual — não apaga o arquivo e abre o modal
+      if (!data?.ok && data?.requires_manual_review) {
+        setManualReview({
+          tipo,
+          storage_path: data.storage_path || path,
+          arquivo_nome: data.arquivo_nome || file.name,
+          motivo: data.motivo || 'Não foi possível validar automaticamente.',
+        });
+        return { __manualReview: true };
+      }
       if (!data?.ok) {
         await supabase.storage.from('documentos-clientes').remove([path]);
         throw new Error(data?.motivo || 'PDF rejeitado pela validação');
@@ -103,6 +119,10 @@ export function AnexarDeclaracaoButton({
       return data;
     },
     onSuccess: (data) => {
+      if (data?.__manualReview) {
+        // Apenas abre o modal — não exibe toast de sucesso ainda
+        return;
+      }
       if (data?.virouTransmitida) {
         toast.success('Recibo validado! Declaração marcada como Transmitida e cliente notificado.', {
           duration: 6000,
@@ -122,6 +142,34 @@ export function AnexarDeclaracaoButton({
     onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao enviar arquivo')),
     onSettled: () => setProcessandoTipo(null),
   });
+
+  const confirmManual = useMutation({
+    mutationFn: async (payload: ManualConfirmacaoPayload) => {
+      if (!manualReview) throw new Error('Sem revisão pendente');
+      const { data, error: fnErr } = await supabase.functions.invoke('processar-pdf-declaracao', {
+        body: {
+          declaracao_id: declaracaoId,
+          tipo: manualReview.tipo,
+          storage_path: manualReview.storage_path,
+          arquivo_nome: manualReview.arquivo_nome,
+          manual_confirmacao: payload,
+        },
+      });
+      if (fnErr) throw new Error(fnErr.message || 'Erro ao confirmar manualmente');
+      if (!data?.ok) throw new Error(data?.motivo || 'Confirmação rejeitada');
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success(data?.virouTransmitida
+        ? 'Recibo confirmado! Declaração marcada como Transmitida.'
+        : 'Documento registrado com a confirmação manual.');
+      setManualReview(null);
+      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
+    },
+    onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao confirmar manualmente')),
+  });
+
 
   async function baixar(path: string | null | undefined) {
     if (!path) return;
