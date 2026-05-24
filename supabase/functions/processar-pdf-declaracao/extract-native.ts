@@ -692,6 +692,7 @@ function extractResultadoFromResumo(full: string): {
   tipo: "restituicao" | "pagamento" | "nenhum";
   valor: number;
   inconsistente: boolean;
+  encontrado: boolean;
   motivo: string;
 } {
   const moneyRe = /\d{1,3}(?:\.\d{3})*,\d{2}/g;
@@ -724,6 +725,9 @@ function extractResultadoFromResumo(full: string): {
   const labelRes = /imposto\s+a\s+restituir/gi;
   const competing = /(base\s+de\s+c[aá]lculo|imposto\s+devido|al[ií]quota|quota\s+[uú]nica|dedu[cç][aã]o|total\s+(?:dos|do)|valor\s+da\s+quota|aliquota\s+efetiva|rendimentos)/i;
 
+  const labelPagPresente = /(?:saldo\s+(?:de\s+)?)?imposto\s+a\s+pagar(?!\s+sobre)/i.test(window);
+  const labelResPresente = /imposto\s+a\s+restituir/i.test(window);
+
   function pickValueAfter(label: RegExp): number | null {
     label.lastIndex = 0;
     let best: number | null = null;
@@ -739,7 +743,6 @@ function extractResultadoFromResumo(full: string): {
       const v = parseMoneyBR(mm[0]);
       if (v === null) continue;
       if (blacklist.has(v)) return -1;
-      // Prefere o primeiro valor encontrado
       if (best === null) best = v;
     }
     return best;
@@ -749,15 +752,28 @@ function extractResultadoFromResumo(full: string): {
   const vRes = pickValueAfter(labelRes);
 
   if (vPag === -1 || vRes === -1) {
-    return { tipo: "nenhum", valor: 0, inconsistente: true, motivo: "valor candidato coincide com total de rendimentos/base/imposto devido" };
+    return { tipo: "nenhum", valor: 0, inconsistente: true, encontrado: false, motivo: "valor candidato coincide com total de rendimentos/base/imposto devido" };
   }
 
   if (vPag !== null && vPag > 0 && vRes !== null && vRes > 0) {
-    return { tipo: "nenhum", valor: 0, inconsistente: true, motivo: "pagar>0 e restituir>0 simultaneamente" };
+    return { tipo: "nenhum", valor: 0, inconsistente: true, encontrado: false, motivo: "pagar>0 e restituir>0 simultaneamente" };
   }
-  if (vPag !== null && vPag > 0) return { tipo: "pagamento", valor: vPag, inconsistente: false, motivo: "" };
-  if (vRes !== null && vRes > 0) return { tipo: "restituicao", valor: vRes, inconsistente: false, motivo: "" };
-  return { tipo: "nenhum", valor: 0, inconsistente: false, motivo: "" };
+  if (vPag !== null && vPag > 0) return { tipo: "pagamento", valor: vPag, inconsistente: false, encontrado: true, motivo: "" };
+  if (vRes !== null && vRes > 0) return { tipo: "restituicao", valor: vRes, inconsistente: false, encontrado: true, motivo: "" };
+
+  // "nenhum" só é aceito quando AMBOS os labels existem e foi capturado 0,00.
+  if (labelPagPresente && labelResPresente && (vPag === 0 || vRes === 0)) {
+    return { tipo: "nenhum", valor: 0, inconsistente: false, encontrado: true, motivo: "ambos zerados" };
+  }
+
+  // Bloco de resultado ausente (OCR parcial / texto truncado).
+  return {
+    tipo: "nenhum",
+    valor: 0,
+    inconsistente: false,
+    encontrado: false,
+    motivo: `bloco de resultado ausente (labels: pagar=${labelPagPresente}, restituir=${labelResPresente})`,
+  };
 }
 
 
@@ -800,6 +816,9 @@ function parseDeclaracao(inp: ParseInput): NativeResult {
     const res = extractResultadoFromResumo(text.full);
     if (res.inconsistente) {
       return { ok: false, reason: `valor_resultado_inconsistente: ${res.motivo}` };
+    }
+    if (!res.encontrado) {
+      return { ok: false, reason: `resultado_nao_encontrado: ${res.motivo}` };
     }
     tipo_resultado = res.tipo;
     valor_resultado = res.valor;
