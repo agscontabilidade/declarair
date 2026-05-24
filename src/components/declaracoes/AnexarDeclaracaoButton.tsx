@@ -357,6 +357,18 @@ export function AnexarDeclaracaoButton({
       </DropdownMenu>
         );
       })()}
+
+      {manualReview && (
+        <ConfirmarDocumentoManualDialog
+          open={!!manualReview}
+          onOpenChange={(v) => { if (!v) setManualReview(null); }}
+          tipo={manualReview.tipo}
+          motivo={manualReview.motivo}
+          isSubmitting={confirmManual.isPending}
+          onConfirm={(payload) => confirmManual.mutate(payload)}
+        />
+      )}
     </div>
   );
 }
+
