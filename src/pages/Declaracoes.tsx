@@ -353,6 +353,7 @@ export default function Declaracoes() {
                                   arquivoDarfUrl={d.arquivo_darf_url}
                                   arquivoDarfNome={d.arquivo_darf_nome}
                                   darfValidadoEm={d.darf_validado_em}
+                                  arquivosOutros={d.arquivos_outros}
                                 />
                               )}
                             </TableCell>
@@ -528,6 +529,7 @@ export default function Declaracoes() {
                               arquivoDarfUrl={d.arquivo_darf_url}
                               arquivoDarfNome={d.arquivo_darf_nome}
                               darfValidadoEm={d.darf_validado_em}
+                                  arquivosOutros={d.arquivos_outros}
                             />
                           )}
                           <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
