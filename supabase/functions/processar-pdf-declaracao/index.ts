@@ -305,19 +305,73 @@ Deno.serve(async (req) => {
       };
 
       if (tipo === "declaracao") {
-        // Layout em colunas confunde o regex nativo (ex.: pega o total de
-        // rendimentos no lugar do imposto a restituir). OCR preserva a
-        // posição visual → vira a 1ª opção.
-        console.log(`[cascade] tipo=declaracao -> tentando OCR primeiro`);
+        // SOLUÇÃO DEFINITIVA: para declaração, o resultado tem que ser
+        // brutalmente preciso. Cascata:
+        //   a) OCR.space (texto-guarda, anti-alucinação)
+        //   b) VISION (Gemini 2.5 Pro lê o PDF original) → FONTE DA VERDADE
+        //   c) Se VISION falhar → tenta regex nativo sobre OCR
+        //   d) Se regex falhar → cai no fallback IA-texto mais adiante
+        console.log(`[cascade] tipo=declaracao -> OCR (guarda) + VISION (fonte da verdade)`);
         await runOcr();
-        // Só tenta parser nativo se o OCR não devolveu texto algum.
-        // Se já temos ocrText (mesmo parcial), pulamos o nativo para evitar
-        // estouro de CPU em PDFs escaneados e seguimos direto para a IA.
+        // runOcr já pode ter setado pipelineOk=true via regex sobre OCR.
+        // Mesmo assim, para declaração, NÃO confiamos no regex sozinho —
+        // só usamos esse resultado se o VISION confirmar. Salvamos e resetamos.
+        const regexCandidate = pipelineOk ? extracao : null;
+        const regexMetodo = pipelineOk ? metodoValidacao : null;
+        pipelineOk = false;
+        extracao = {};
+
+        console.log(`[vision] tipo=declaracao -> enviando PDF para Gemini 2.5 Pro`);
+        const visionRes = await runVisionExtraction(bytes, ocrText, anoBaseNum, cliente.cpf || "");
+        console.log(`[vision] ok=${visionRes.ok} tempo_ms=${visionRes.elapsedMs}${visionRes.ok ? "" : ` reason=${(visionRes as { reason: string }).reason}`}`);
+
+        if (visionRes.ok) {
+          // VISION passou em todas as validações cruzadas → fonte da verdade.
+          extracao = visionRes.data as typeof extracao;
+          metodoValidacao = "ia";
+          pipelineOk = true;
+
+          // Se também tínhamos um candidato do regex e os valores divergem,
+          // logamos para auditoria (mas mantemos o VISION).
+          if (regexCandidate) {
+            const vV = (visionRes.data as { valor_resultado?: number }).valor_resultado;
+            const rV = (regexCandidate as { valor_resultado?: number }).valor_resultado;
+            const vT = (visionRes.data as { tipo_resultado?: string }).tipo_resultado;
+            const rT = (regexCandidate as { tipo_resultado?: string }).tipo_resultado;
+            if (vV !== rV || vT !== rT) {
+              console.warn(`[divergencia] regex=${rT}/${rV} vs vision=${vT}/${vV} — usando VISION`);
+            } else {
+              console.log(`[concordancia] regex e vision concordam: ${vT}/${vV}`);
+            }
+          }
+        } else {
+          // VISION falhou (validações cruzadas ou gateway).
+          nativeReason = nativeReason || (visionRes as { reason: string }).reason;
+          // Se o regex tinha um candidato, tentamos aceitá-lo APENAS quando
+          // o VISION falhou por motivo de gateway/créditos (não por divergência).
+          const reason = (visionRes as { reason: string }).reason;
+          const gatewayFailure =
+            reason.startsWith("vision_gateway_") ||
+            reason === "rate_limit_vision" ||
+            reason === "creditos_vision_esgotados" ||
+            reason === "LOVABLE_API_KEY ausente" ||
+            reason === "pdf_muito_grande_para_vision" ||
+            reason.startsWith("vision_excecao");
+          if (regexCandidate && gatewayFailure) {
+            console.log(`[fallback] VISION indisponível (${reason}) — usando candidato do regex`);
+            extracao = regexCandidate as typeof extracao;
+            metodoValidacao = regexMetodo as typeof metodoValidacao;
+            pipelineOk = true;
+          } else {
+            console.log(`[vision] resultado rejeitado: ${reason} — seguirá para IA-texto/manual`);
+          }
+        }
+
+        // Se ainda não validamos e o OCR não devolveu texto algum, tenta nativo
+        // (pode salvar PDFs que o OCR.space não conseguiu ler).
         if (!pipelineOk && !ocrText) {
           console.log(`[cascade] tipo=declaracao -> OCR sem texto, tentando parser nativo`);
           await runNative();
-        } else if (!pipelineOk && ocrText) {
-          console.log(`[cascade] tipo=declaracao -> regex falhou, indo direto para IA com texto OCR`);
         }
       } else {
         // Recibo / MEI / DARF — nativo continua sendo a 1ª opção (rápido e barato).
