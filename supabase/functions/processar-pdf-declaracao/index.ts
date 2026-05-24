@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-    if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY ausente" }, 500);
+    // LOVABLE_API_KEY pode estar ausente — o fluxo cai para revisão manual sem quebrar.
 
     const anon = createClient(SUPABASE_URL, ANON_KEY);
     const { data: userData, error: userErr } = await anon.auth.getUser(
