@@ -309,7 +309,7 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
       }
       console.log(`[hibrido] ${tipo} validado MANUALMENTE pelo contador`);
     } else {
-      // 2) Tenta regex nativa
+      // 2) Pipeline determinístico (SEM IA): sniff + texto + fingerprint + DV + parsers + scorer
       let nativeReason = "";
       let isScan = false;
       try {
@@ -317,74 +317,26 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
         if (native.ok) {
           extracao = native.data as typeof extracao;
           metodoValidacao = "regex";
-          console.log(`[hibrido] ${tipo} validado por REGEX (sem IA)`);
+          const conf = (native.data as { _confianca?: number })._confianca;
+          const met = (native.data as { _metodo?: string })._metodo;
+          console.log(`[pipeline] ${tipo} validado SEM IA (metodo=${met}, confianca=${conf})`);
         } else {
           nativeReason = native.reason;
           isScan = native.reason === "scan_sem_texto";
-          console.log(`[hibrido] regex falhou para ${tipo}: ${native.reason}`);
+          console.log(`[pipeline] ${tipo} falhou: ${native.reason}`);
         }
       } catch (e) {
-        console.error("[hibrido] erro inesperado na extração nativa:", e);
-        nativeReason = "erro_extracao_nativa";
+        console.error("[pipeline] erro inesperado:", e);
+        nativeReason = "erro_pipeline";
       }
 
-      // 3) Fallback IA — só se regex falhou por ambiguidade (não scan) E houver chave
+      // 3) Sem IA: qualquer falha do pipeline → revisão manual.
       if (metodoValidacao === "ia") {
-        if (isScan || !LOVABLE_API_KEY) {
-          // PDF escaneado ou IA indisponível → revisão manual, sem erro
-          return manualReview(
-            isScan
-              ? "PDF parece escaneado/imagem (sem texto pesquisável). Confirme os dados manualmente para registrar."
-              : "Validação automática indisponível. Confirme os dados manualmente para registrar."
-          );
-        }
-
-        const model = tipo === "declaracao" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
-        let aiRes: Response;
-        try {
-          aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model,
-              response_format: { type: "json_object" },
-              messages: [
-                { role: "system", content: systemPrompt },
-                {
-                  role: "user",
-                  content: [
-                    { type: "text", text: userPrompt },
-                    { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64}` } },
-                  ],
-                },
-              ],
-            }),
-          });
-        } catch (e) {
-          console.error("AI fetch falhou:", e);
-          return manualReview("Validação automática indisponível agora. Confirme os dados manualmente.");
-        }
-
-        if (!aiRes.ok) {
-          const t = await aiRes.text().catch(() => "");
-          console.error("AI error", aiRes.status, t);
-          // 402 (sem créditos), 429 (rate limit) ou qualquer outro erro → revisão manual,
-          // NUNCA expor "créditos esgotados" ao contador.
-          return manualReview(
-            "Validação automática indisponível no momento. Confirme os dados manualmente para registrar o documento."
-          );
-        }
-        const aiJson = await aiRes.json();
-        const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-        try {
-          extracao = JSON.parse(content);
-        } catch {
-          const m = content.match(/\{[\s\S]*\}/);
-          extracao = m ? JSON.parse(m[0]) : {};
-        }
+        return manualReview(
+          isScan
+            ? "PDF parece escaneado/imagem (sem texto pesquisável). Confirme os dados manualmente para registrar."
+            : `Não foi possível extrair os dados automaticamente (${nativeReason || "documento não reconhecido"}). Confirme os dados manualmente para registrar.`
+        );
       }
     }
 
