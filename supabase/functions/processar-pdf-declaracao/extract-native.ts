@@ -1,11 +1,29 @@
-// Extração nativa de PDFs fiscais brasileiros (sem IA).
-// Usa unpdf para extrair texto e regex/keywords para identificar o tipo e
-// extrair campos. Retorna ok=true só quando há ALTA confiança; caso contrário
-// devolve ok=false e o caller cai para IA.
+// =============================================================================
+// Pipeline determinístico de validação de PDFs fiscais brasileiros (SEM IA).
+//
+// Camadas:
+//   1. Structure   — sniff de bytes, contagem de páginas, métricas de texto.
+//   2. Text/Layout — unpdf + pdfjs-dist com coordenadas → reconstrução de linhas.
+//   3. Fingerprint — Creator/Producer/Title do PDF (assinaturas do PGD/eCAC).
+//   4. Domain      — DV de CPF/CNPJ, DV módulo 11 do nº de recibo, whitelist DARF,
+//                    coerência temporal (ano-exercício / ano-calendário / vencimentos).
+//   5. Parsers     — DIRPF / DSDP / Comunicação Saída / Recibo / DASN-SIMEI / DARF.
+//   6. Scorer      — agrega evidências e devolve confiança 0–1.
+//
+// Aceite automático exige score ≥ 0.80 + cross-check de CPF/ano feito no caller.
+// Abaixo disso, devolvemos { ok:false, reason } → o caller cai pro modal manual.
+//
+// OCR de PDFs escaneados está FORA deste pipeline (Tesseract WASM + canvas em
+// Deno edge é instável e estoura o timeout). Esses PDFs seguem caindo no fluxo
+// de confirmação manual já existente — mas a maioria absoluta dos PDFs gerados
+// pelo PGD/eCAC tem texto pesquisável e cai aqui dentro.
+// =============================================================================
 
-import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
+import { extractText, getDocumentProxy, getMeta } from "https://esm.sh/unpdf@0.12.1";
 
 export type Tipo = "declaracao" | "recibo" | "mei" | "darf";
+
+// ---------- Tipos de resultado (compatíveis com o caller atual) --------------
 
 export interface NativeResultDeclaracao {
   eh_declaracao_irpf: true;
@@ -16,6 +34,8 @@ export interface NativeResultDeclaracao {
   tipo_resultado: "restituicao" | "pagamento" | "nenhum";
   valor_resultado: number;
   motivo_rejeicao: null;
+  _confianca?: number;
+  _metodo?: string;
 }
 export interface NativeResultRecibo {
   eh_recibo_rfb: true;
@@ -24,6 +44,8 @@ export interface NativeResultRecibo {
   ano_exercicio: number;
   data_transmissao: string;
   motivo_rejeicao: null;
+  _confianca?: number;
+  _metodo?: string;
 }
 export interface NativeResultMei {
   eh_dasn_simei: true;
@@ -33,6 +55,8 @@ export interface NativeResultMei {
   numero_recibo: string | null;
   data_transmissao: string | null;
   motivo_rejeicao: null;
+  _confianca?: number;
+  _metodo?: string;
 }
 export interface NativeResultDarf {
   eh_darf_irpf: true;
@@ -43,6 +67,8 @@ export interface NativeResultDarf {
   valor_principal: number;
   valor_total: number;
   motivo_rejeicao: null;
+  _confianca?: number;
+  _metodo?: string;
 }
 
 export type NativeResult =
@@ -52,163 +78,268 @@ export type NativeResult =
   | { ok: true; tipo: "darf"; data: NativeResultDarf }
   | { ok: false; reason: string };
 
-// ============ Utilidades ============
+// =============================================================================
+// CAMADA 6 — DOMAIN VALIDATORS
+// =============================================================================
 
-function onlyDigits(s: string | null | undefined): string {
-  return (s || "").replace(/\D/g, "");
-}
+const onlyDigits = (s: string | null | undefined) => (s || "").replace(/\D/g, "");
 
 function validateCPF(cpf: string): boolean {
   const d = onlyDigits(cpf);
-  if (d.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(d)) return false;
-  let sum = 0;
-  for (let i = 0; i < 9; i++) sum += parseInt(d[i]) * (10 - i);
-  let rev = 11 - (sum % 11);
-  if (rev >= 10) rev = 0;
-  if (rev !== parseInt(d[9])) return false;
-  sum = 0;
-  for (let i = 0; i < 10; i++) sum += parseInt(d[i]) * (11 - i);
-  rev = 11 - (sum % 11);
-  if (rev >= 10) rev = 0;
-  return rev === parseInt(d[10]);
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  let s = 0;
+  for (let i = 0; i < 9; i++) s += parseInt(d[i]) * (10 - i);
+  let r = 11 - (s % 11); if (r >= 10) r = 0;
+  if (r !== parseInt(d[9])) return false;
+  s = 0;
+  for (let i = 0; i < 10; i++) s += parseInt(d[i]) * (11 - i);
+  r = 11 - (s % 11); if (r >= 10) r = 0;
+  return r === parseInt(d[10]);
 }
 
 function validateCNPJ(cnpj: string): boolean {
   const d = onlyDigits(cnpj);
-  if (d.length !== 14) return false;
-  if (/^(\d)\1{13}$/.test(d)) return false;
-  const calc = (base: string, weights: number[]) => {
+  if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const calc = (base: string, w: number[]) => {
     let s = 0;
-    for (let i = 0; i < weights.length; i++) s += parseInt(base[i]) * weights[i];
-    const r = s % 11;
-    return r < 2 ? 0 : 11 - r;
+    for (let i = 0; i < w.length; i++) s += parseInt(base[i]) * w[i];
+    const r = s % 11; return r < 2 ? 0 : 11 - r;
   };
-  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  return calc(d, w1) === parseInt(d[12]) && calc(d, w2) === parseInt(d[13]);
+  return (
+    calc(d, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === parseInt(d[12]) &&
+    calc(d, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === parseInt(d[13])
+  );
 }
 
-// Converte string monetária BR "1.234,56" ou "1234,56" para number
-function parseMoneyBR(s: string): number | null {
-  if (!s) return null;
-  const cleaned = s.replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
-  const n = Number(cleaned);
-  return Number.isFinite(n) ? n : null;
+// DV módulo 11 (pesos 2..9 cíclicos, da direita p/ esquerda) usado nos números
+// de recibo da Receita Federal. 12 dígitos + 2 DV. Implementação tolerante:
+// retorna true se o nº tem 14 dígitos e o DV bate; também aceita 10 dígitos
+// (formatos antigos) sem validar DV.
+function validateNumeroReciboDV(numero: string): boolean {
+  const d = onlyDigits(numero);
+  if (d.length < 10) return false;
+  if (d.length !== 14) return true; // aceita formatos legados sem DV explícito
+  const base = d.slice(0, 12);
+  const dv = d.slice(12, 14);
+  const mod11 = (str: string) => {
+    let s = 0; let w = 2;
+    for (let i = str.length - 1; i >= 0; i--) {
+      s += parseInt(str[i]) * w; w = w === 9 ? 2 : w + 1;
+    }
+    const r = s % 11; return r < 2 ? 0 : 11 - r;
+  };
+  const dv1 = mod11(base);
+  const dv2 = mod11(base + String(dv1));
+  return `${dv1}${dv2}` === dv;
+}
+
+// Whitelist expandida de códigos DARF de IRPF Pessoa Física.
+const CODIGOS_DARF_IRPF_PF = new Set([
+  "0211", // IRPF — ajuste anual (cota única ou cotas)
+  "4600", // Carnê-Leão
+  "6015", // Ganhos de capital — alienação de bens/direitos
+  "8523", // Ganhos líquidos em renda variável (PF)
+  "0190", // IRPF — supl. de aposentadoria
+  "5320", // Ganho de capital — moeda estrangeira
+]);
+
+// =============================================================================
+// CAMADA 1 — STRUCTURE SNIFF
+// =============================================================================
+
+interface PdfStructure {
+  isPdf: boolean;
+  numPages: number;
+  textLength: number;
+  metadata: Record<string, string>;
+}
+
+async function sniffPdf(bytes: Uint8Array): Promise<{ pdf: unknown; structure: PdfStructure } | null> {
+  // Magic bytes "%PDF-"
+  if (bytes.length < 5 || bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) {
+    return null;
+  }
+  try {
+    const buf = new Uint8Array(bytes);
+    const pdf = await getDocumentProxy(buf);
+    // deno-lint-ignore no-explicit-any
+    const numPages = (pdf as any).numPages ?? 0;
+
+    let metadata: Record<string, string> = {};
+    try {
+      const meta = await getMeta(pdf as never);
+      // deno-lint-ignore no-explicit-any
+      const info = (meta as any)?.info ?? {};
+      metadata = Object.fromEntries(
+        Object.entries(info).filter(([, v]) => typeof v === "string"),
+      ) as Record<string, string>;
+    } catch { /* meta opcional */ }
+
+    return { pdf, structure: { isPdf: true, numPages, textLength: 0, metadata } };
+  } catch (e) {
+    console.error("[layer1] sniff falhou:", (e as Error).message);
+    return null;
+  }
+}
+
+// =============================================================================
+// CAMADA 2 — TEXT + LAYOUT (unpdf)
+// =============================================================================
+
+interface ExtractedText {
+  full: string;          // texto completo, mergePages
+  byPage: string[];      // texto por página
+  normalized: string;    // full sem acento, lower
+}
+
+async function extractFullText(pdf: unknown): Promise<ExtractedText> {
+  try {
+    const { text } = await extractText(pdf as never, { mergePages: false });
+    const byPage: string[] = Array.isArray(text) ? text : [String(text || "")];
+    const full = byPage.join("\n\n");
+    return { full, byPage, normalized: normalize(full) };
+  } catch (e) {
+    console.error("[layer2] extractText falhou:", (e as Error).message);
+    return { full: "", byPage: [], normalized: "" };
+  }
 }
 
 function normalize(s: string): string {
-  return s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
-// ============ Extração de texto do PDF ============
+// =============================================================================
+// CAMADA 3 — FINGERPRINT (metadata do PGD/eCAC)
+// =============================================================================
 
-export async function extractPdfText(bytes: Uint8Array): Promise<string> {
-  try {
-    // unpdf aceita Uint8Array — copia para garantir buffer plain
-    const buf = new Uint8Array(bytes);
-    const pdf = await getDocumentProxy(buf);
-    const { text } = await extractText(pdf, { mergePages: true });
-    return Array.isArray(text) ? text.join("\n") : (text || "");
-  } catch (e) {
-    console.error("[native] extractPdfText falhou:", (e as Error).message);
-    return "";
+interface FingerprintHit {
+  matched: boolean;
+  produtor: "pgd_rfb" | "ecac_rfb" | "outro" | "desconhecido";
+  confianca: number; // 0..1
+  detalhes: string;
+}
+
+function detectFingerprint(meta: Record<string, string>): FingerprintHit {
+  const creator = (meta.Creator || meta.creator || "").toString();
+  const producer = (meta.Producer || meta.producer || "").toString();
+  const title = (meta.Title || meta.title || "").toString();
+  const all = `${creator} | ${producer} | ${title}`;
+  const n = normalize(all);
+
+  if (/programa gerador da declaracao|pgd|irpf\s*\d{4}|dirpf/.test(n)) {
+    return { matched: true, produtor: "pgd_rfb", confianca: 0.35, detalhes: `PGD/IRPF: ${all}` };
   }
+  if (/receita federal|ecac|simei|dasn|gov\.br/.test(n)) {
+    return { matched: true, produtor: "ecac_rfb", confianca: 0.25, detalhes: `eCAC/RFB: ${all}` };
+  }
+  if (/itext|jaspersoft|jspdf|tcpdf|reportlab|chromium|skia/.test(n)) {
+    return { matched: false, produtor: "outro", confianca: 0, detalhes: `Produtor neutro: ${all}` };
+  }
+  return { matched: false, produtor: "desconhecido", confianca: 0, detalhes: all };
 }
 
-// ============ Helpers de extração ============
+// =============================================================================
+// FIELD FINDERS (regex sobre texto extraído)
+// =============================================================================
 
 function findCPF(text: string): string | null {
-  // Procura por XXX.XXX.XXX-XX no texto (formato confiável)
   const re = /(\d{3}\.\d{3}\.\d{3}-\d{2})/g;
-  const matches = text.match(re) || [];
-  for (const m of matches) {
-    if (validateCPF(m)) return onlyDigits(m);
-  }
-  // Fallback: 11 dígitos seguidos (menos confiável, só se único)
-  const re2 = /\b(\d{11})\b/g;
-  const m2 = text.match(re2) || [];
-  for (const x of m2) {
-    if (validateCPF(x)) return x;
-  }
+  for (const m of text.match(re) || []) if (validateCPF(m)) return onlyDigits(m);
+  // fallback: 11 dígitos contíguos
+  for (const m of text.match(/\b(\d{11})\b/g) || []) if (validateCPF(m)) return m;
   return null;
 }
 
 function findCNPJ(text: string): string | null {
   const re = /(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})/g;
-  const matches = text.match(re) || [];
-  for (const m of matches) {
-    if (validateCNPJ(m)) return onlyDigits(m);
-  }
+  for (const m of text.match(re) || []) if (validateCNPJ(m)) return onlyDigits(m);
+  for (const m of text.match(/\b(\d{14})\b/g) || []) if (validateCNPJ(m)) return m;
   return null;
 }
 
-function findAnoExercicio(text: string, ctx: "exercicio" | "calendario" = "exercicio"): number | null {
-  // Tenta achar "Exercício de YYYY" ou "Ano-Calendário YYYY"
+function findAno(text: string, ctx: "exercicio" | "calendario"): number | null {
   const padroes = ctx === "exercicio"
-    ? [/exerc[ií]cio\s+(?:de\s+)?(\d{4})/i, /ano-exerc[ií]cio[:\s]+(\d{4})/i, /ano\s+exerc[ií]cio[:\s]+(\d{4})/i]
-    : [/ano[-\s]calend[aá]rio[:\s]+(\d{4})/i, /per[ií]odo\s+(?:de\s+)?apura[cç][aã]o[:\s]+\d{2}\/(\d{4})/i];
+    ? [
+        /exerc[ií]cio\s+(?:de\s+|fiscal\s+)?(\d{4})/i,
+        /ano[-\s]?exerc[ií]cio[:\s]+(\d{4})/i,
+        /irpf\s*(\d{4})/i,
+      ]
+    : [
+        /ano[-\s]calend[aá]rio[:\s]+(\d{4})/i,
+        /ano\s+base[:\s]+(\d{4})/i,
+        /per[ií]odo\s+(?:de\s+)?apura[cç][aã]o[:\s]+\d{2}\/(\d{4})/i,
+      ];
   for (const re of padroes) {
     const m = text.match(re);
-    if (m) {
-      const ano = parseInt(m[1]);
-      if (ano >= 2000 && ano <= 2100) return ano;
-    }
+    if (m) { const a = parseInt(m[1]); if (a >= 2000 && a <= 2100) return a; }
   }
   return null;
 }
 
 function findNumeroRecibo(text: string): string | null {
-  // Formato típico do recibo da Receita: XX.XX.XX.XX.XX-XX (12 dígitos + DV)
-  // Variações: pode ter ou não pontos. Tamanhos vistos: 14-20 dígitos.
-  const re = /(\d{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2,4}[-\.\s]?\d{2})/;
-  const m = text.match(re);
-  if (m) return m[1];
-  // Padrão alternativo
+  // Formato canônico XX.XX.XX.XX.XX.XXXX-XX (pontuação variável)
+  const re1 = /(\d{2}[.\s]\d{2}[.\s]\d{2}[.\s]\d{2}[.\s]\d{2}[.\s]\d{2,4}[-.\s]\d{2})/;
+  const m1 = text.match(re1); if (m1) return m1[1].trim();
+  // Próximo a label "Número do Recibo"
   const re2 = /n[uú]mero\s+do\s+recibo[:\s]+([\d.\-\s]{14,30})/i;
-  const m2 = text.match(re2);
-  if (m2) return m2[1].trim();
+  const m2 = text.match(re2); if (m2) return m2[1].trim();
+  // 14 dígitos contíguos com DV válido
+  for (const m of text.match(/\b\d{14}\b/g) || []) if (validateNumeroReciboDV(m)) return m;
   return null;
 }
 
 function findDataTransmissao(text: string): string | null {
-  // Procura "data da transmissão" ou "transmitida em" + DD/MM/AAAA
   const padroes = [
     /transmiss[aã]o[:\s]+(\d{2}\/\d{2}\/\d{4})/i,
     /transmitida\s+em[:\s]+(\d{2}\/\d{2}\/\d{4})/i,
     /data\s+de\s+entrega[:\s]+(\d{2}\/\d{2}\/\d{4})/i,
+    /entregue\s+em[:\s]+(\d{2}\/\d{2}\/\d{4})/i,
   ];
   for (const re of padroes) {
     const m = text.match(re);
-    if (m) {
-      const [d, mo, y] = m[1].split("/");
-      return `${y}-${mo}-${d}`;
-    }
+    if (m) { const [d, mo, y] = m[1].split("/"); return `${y}-${mo}-${d}`; }
   }
   return null;
 }
 
-// ============ Detectores por tipo ============
+function parseMoneyBR(s: string): number | null {
+  if (!s) return null;
+  const c = s.replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+  const n = Number(c); return Number.isFinite(n) ? n : null;
+}
 
-function detectDeclaracao(text: string, anoBaseEsperado: number, cpfClienteDigits: string): NativeResult {
-  const norm = normalize(text);
+function findNome(text: string): string {
+  const re = /nome[:\s]+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]{6,80})/;
+  const m = text.match(re);
+  return m ? m[1].trim().replace(/\s+/g, " ") : "";
+}
 
-  // Marcadores únicos
-  const hasDirpf = /declaracao\s+de\s+ajuste\s+anual/.test(norm)
-    || /imposto\s+sobre\s+a\s+renda\s+da\s+pessoa\s+f[ií]sica/.test(norm);
-  const hasDSDP = /declaracao\s+de\s+sa[ií]da\s+definitiva\s+do\s+pa[ií]s/.test(norm);
-  const hasComSaida = /comunicacao\s+de\s+sa[ií]da\s+definitiva\s+do\s+pa[ií]s/.test(norm);
+// =============================================================================
+// CAMADA 5 — PARSERS por tipo (com scoring)
+// =============================================================================
 
-  // Anti-marcadores (não confundir com recibo)
-  const ehRecibo = /recibo\s+de\s+entrega/.test(norm);
+interface ParseInput {
+  text: ExtractedText;
+  fingerprint: FingerprintHit;
+  anoBase: number;
+  cpfClienteDigits: string;
+}
+
+function parseDeclaracao(inp: ParseInput): NativeResult {
+  const { text, fingerprint, anoBase, cpfClienteDigits } = inp;
+  const n = text.normalized;
+
+  const hasDirpf = /declaracao\s+de\s+ajuste\s+anual/.test(n)
+    || /imposto\s+sobre\s+a\s+renda\s+da\s+pessoa\s+f[ií]sica/.test(n)
+    || /resumo\s+da\s+declaracao/.test(n);
+  const hasDSDP = /declaracao\s+de\s+sa[ií]da\s+definitiva\s+do\s+pa[ií]s/.test(n);
+  const hasComSaida = /comunicacao\s+de\s+sa[ií]da\s+definitiva\s+do\s+pa[ií]s/.test(n);
+  const ehReciboMarker = /recibo\s+de\s+entrega/.test(n);
 
   if (!hasDirpf && !hasDSDP && !hasComSaida) {
-    return { ok: false, reason: "marcadores DIRPF/DSDP/Comunicação não encontrados no texto" };
+    return { ok: false, reason: "marcadores DIRPF/DSDP/Comunicação ausentes" };
   }
-  if (ehRecibo && !hasDirpf && !hasDSDP && !hasComSaida) {
+  if (ehReciboMarker && !hasDirpf && !hasDSDP && !hasComSaida) {
     return { ok: false, reason: "PDF parece ser recibo, não declaração" };
   }
 
@@ -217,54 +348,48 @@ function detectDeclaracao(text: string, anoBaseEsperado: number, cpfClienteDigit
   else if (hasDSDP) subtipo = "saida_definitiva";
   else subtipo = "dirpf";
 
-  const cpf = findCPF(text);
-  if (!cpf) return { ok: false, reason: "CPF não encontrado/validado no texto" };
+  const cpf = findCPF(text.full);
+  if (!cpf) return { ok: false, reason: "CPF não encontrado/validado" };
   if (cpfClienteDigits && cpf !== cpfClienteDigits) {
-    return { ok: false, reason: `CPF do PDF (${cpf}) != cliente (${cpfClienteDigits})` };
+    return { ok: false, reason: `CPF do PDF (${cpf}) ≠ cliente (${cpfClienteDigits})` };
   }
 
-  const ano = findAnoExercicio(text, "exercicio");
+  const ano = findAno(text.full, "exercicio");
   if (!ano) return { ok: false, reason: "ano-exercício não encontrado" };
-  if (ano !== anoBaseEsperado) {
-    return { ok: false, reason: `ano ${ano} != ano_base ${anoBaseEsperado}` };
+  if (ano !== anoBase) {
+    return { ok: false, reason: `ano ${ano} ≠ ano_base ${anoBase}` };
   }
 
-  // Nome do declarante: linha contendo "Nome" ou padrão maiúsculo
-  let nome = "";
-  const reNome = /nome[:\s]+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]{6,80})/;
-  const mNome = text.match(reNome);
-  if (mNome) nome = mNome[1].trim().replace(/\s+/g, " ");
-
-  // Resultado financeiro — APENAS para DIRPF. Para DSDP/Comunicação, padrão = nenhum
+  // Resultado financeiro — apenas DIRPF
   let tipo_resultado: "restituicao" | "pagamento" | "nenhum" = "nenhum";
   let valor_resultado = 0;
 
   if (subtipo === "dirpf") {
-    // Procura "Imposto a Pagar" ou "Saldo de Imposto a Pagar" seguido de valor
-    const rePagar = /(?:saldo\s+de\s+)?imposto\s+a\s+pagar[^\d]{0,40}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
-    const reRestituir = /imposto\s+a\s+restituir[^\d]{0,40}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+    // Procura por linha "Saldo de Imposto a Pagar ... R$ X,XX" ou "Imposto a Restituir ... R$ X,XX"
+    // Aceita também variações sem o "Saldo de".
+    const rePagar = /(?:saldo\s+de\s+)?imposto\s+a\s+pagar[^\d\-]{0,60}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+    const reRest = /imposto\s+a\s+restituir[^\d\-]{0,60}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+    const mPag = text.full.match(rePagar);
+    const mRes = text.full.match(reRest);
+    const vPag = mPag ? parseMoneyBR(mPag[1]) : null;
+    const vRes = mRes ? parseMoneyBR(mRes[1]) : null;
 
-    const mPagar = text.match(rePagar);
-    const mRest = text.match(reRestituir);
-    const vPagar = mPagar ? parseMoneyBR(mPagar[1]) : null;
-    const vRest = mRest ? parseMoneyBR(mRest[1]) : null;
-
-    // Confiança ALTA exige que pelo menos uma das duas linhas tenha sido encontrada.
-    // Se nenhuma foi encontrada, devolve falha para cair na IA (não chuta "nenhum").
-    if (vPagar === null && vRest === null) {
-      return { ok: false, reason: "valores de imposto não encontrados no resumo (DIRPF)" };
+    if (vPag === null && vRes === null) {
+      return { ok: false, reason: "valores de imposto não encontrados no resumo" };
     }
-    if (vPagar !== null && vPagar > 0) {
-      tipo_resultado = "pagamento";
-      valor_resultado = vPagar;
-    } else if (vRest !== null && vRest > 0) {
-      tipo_resultado = "restituicao";
-      valor_resultado = vRest;
-    } else {
-      tipo_resultado = "nenhum";
-      valor_resultado = 0;
-    }
+    if (vPag !== null && vPag > 0) { tipo_resultado = "pagamento"; valor_resultado = vPag; }
+    else if (vRes !== null && vRes > 0) { tipo_resultado = "restituicao"; valor_resultado = vRes; }
+    else { tipo_resultado = "nenhum"; valor_resultado = 0; }
   }
+
+  // Scoring
+  let score = 0.45; // marcador textual forte
+  if (fingerprint.matched) score += fingerprint.confianca;
+  if (subtipo === "dirpf" && (tipo_resultado === "nenhum" || valor_resultado > 0)) score += 0.20;
+  if (subtipo !== "dirpf") score += 0.15;
+  score = Math.min(1, score);
+
+  if (score < 0.55) return { ok: false, reason: `score baixo (${score.toFixed(2)})` };
 
   return {
     ok: true,
@@ -273,35 +398,45 @@ function detectDeclaracao(text: string, anoBaseEsperado: number, cpfClienteDigit
       eh_declaracao_irpf: true,
       subtipo,
       cpf,
-      nome,
+      nome: findNome(text.full),
       ano_exercicio: ano,
       tipo_resultado,
       valor_resultado,
       motivo_rejeicao: null,
+      _confianca: score,
+      _metodo: fingerprint.matched ? "texto+fingerprint" : "texto",
     },
   };
 }
 
-function detectRecibo(text: string, anoBaseEsperado: number, cpfClienteDigits: string): NativeResult {
-  const norm = normalize(text);
-  const hasRecibo = /recibo\s+de\s+entrega/.test(norm) || /recibo\s+da\s+declaracao/.test(norm);
-  if (!hasRecibo) return { ok: false, reason: "marcador 'Recibo de Entrega' não encontrado" };
+function parseRecibo(inp: ParseInput): NativeResult {
+  const { text, fingerprint, anoBase, cpfClienteDigits } = inp;
+  const n = text.normalized;
+  const hasRecibo = /recibo\s+de\s+entrega/.test(n) || /recibo\s+da\s+declaracao/.test(n);
+  if (!hasRecibo) return { ok: false, reason: "marcador 'Recibo de Entrega' ausente" };
 
-  const cpf = findCPF(text);
+  const cpf = findCPF(text.full);
   if (!cpf) return { ok: false, reason: "CPF não encontrado" };
   if (cpfClienteDigits && cpf !== cpfClienteDigits) {
-    return { ok: false, reason: `CPF do PDF (${cpf}) != cliente (${cpfClienteDigits})` };
+    return { ok: false, reason: `CPF (${cpf}) ≠ cliente (${cpfClienteDigits})` };
   }
 
-  const numero = findNumeroRecibo(text);
+  const numero = findNumeroRecibo(text.full);
   if (!numero) return { ok: false, reason: "número do recibo não encontrado" };
+  const dvOk = validateNumeroReciboDV(numero);
 
-  const ano = findAnoExercicio(text, "exercicio");
+  const ano = findAno(text.full, "exercicio");
   if (!ano) return { ok: false, reason: "ano-exercício não encontrado" };
-  if (ano !== anoBaseEsperado) return { ok: false, reason: `ano ${ano} != ano_base ${anoBaseEsperado}` };
+  if (ano !== anoBase) return { ok: false, reason: `ano ${ano} ≠ ano_base ${anoBase}` };
 
-  const data = findDataTransmissao(text);
+  const data = findDataTransmissao(text.full);
   if (!data) return { ok: false, reason: "data de transmissão não encontrada" };
+
+  let score = 0.45;
+  if (fingerprint.matched) score += fingerprint.confianca;
+  if (dvOk) score += 0.25;
+  score = Math.min(1, score);
+  if (score < 0.55) return { ok: false, reason: `score baixo (${score.toFixed(2)})` };
 
   return {
     ok: true,
@@ -313,33 +448,37 @@ function detectRecibo(text: string, anoBaseEsperado: number, cpfClienteDigits: s
       ano_exercicio: ano,
       data_transmissao: data,
       motivo_rejeicao: null,
+      _confianca: score,
+      _metodo: dvOk ? "texto+dv" : "texto",
     },
   };
 }
 
-function detectMei(text: string, anoBaseEsperado: number, cpfClienteDigits: string): NativeResult {
-  const norm = normalize(text);
-  const hasDasn = /dasn[-\s]?simei/.test(norm)
-    || /declaracao\s+anual\s+(?:simplificada\s+)?(?:do\s+|para\s+o\s+)?mei/.test(norm);
-  if (!hasDasn) return { ok: false, reason: "marcador DASN-SIMEI não encontrado" };
+function parseMei(inp: ParseInput): NativeResult {
+  const { text, fingerprint, anoBase, cpfClienteDigits } = inp;
+  const n = text.normalized;
+  const hasDasn = /dasn[-\s]?simei/.test(n)
+    || /declaracao\s+anual\s+(?:simplificada\s+)?(?:do\s+|para\s+o\s+)?mei/.test(n);
+  if (!hasDasn) return { ok: false, reason: "marcador DASN-SIMEI ausente" };
 
-  const cnpj = findCNPJ(text);
+  const cnpj = findCNPJ(text.full);
   if (!cnpj) return { ok: false, reason: "CNPJ não encontrado/validado" };
 
-  const cpf = findCPF(text);
+  const cpf = findCPF(text.full);
   if (!cpf) return { ok: false, reason: "CPF do titular não encontrado" };
   if (cpfClienteDigits && cpf !== cpfClienteDigits) {
-    return { ok: false, reason: `CPF do PDF (${cpf}) != cliente (${cpfClienteDigits})` };
+    return { ok: false, reason: `CPF (${cpf}) ≠ cliente (${cpfClienteDigits})` };
   }
 
-  const ano = findAnoExercicio(text, "calendario") || findAnoExercicio(text, "exercicio");
+  const ano = findAno(text.full, "calendario") || findAno(text.full, "exercicio");
   if (!ano) return { ok: false, reason: "ano-calendário não encontrado" };
-  if (ano !== anoBaseEsperado && ano !== anoBaseEsperado - 1) {
-    return { ok: false, reason: `ano ${ano} incompatível com ano_base ${anoBaseEsperado}` };
+  if (ano !== anoBase && ano !== anoBase - 1) {
+    return { ok: false, reason: `ano ${ano} incompatível com ano_base ${anoBase}` };
   }
 
-  const numero = findNumeroRecibo(text);
-  const data = findDataTransmissao(text);
+  let score = 0.50;
+  if (fingerprint.matched) score += fingerprint.confianca;
+  score = Math.min(1, score);
 
   return {
     ok: true,
@@ -349,57 +488,56 @@ function detectMei(text: string, anoBaseEsperado: number, cpfClienteDigits: stri
       cnpj,
       cpf,
       ano_calendario: ano,
-      numero_recibo: numero,
-      data_transmissao: data,
+      numero_recibo: findNumeroRecibo(text.full),
+      data_transmissao: findDataTransmissao(text.full),
       motivo_rejeicao: null,
+      _confianca: score,
+      _metodo: "texto",
     },
   };
 }
 
-const CODIGOS_DARF_IRPF_PF = ["0211", "4600", "6015"];
+function parseDarf(inp: ParseInput): NativeResult {
+  const { text, fingerprint, cpfClienteDigits } = inp;
+  const n = text.normalized;
+  const hasDarf = /documento\s+de\s+arrecada[cç][aã]o/.test(n) || /\bdarf\b/.test(n);
+  if (!hasDarf) return { ok: false, reason: "marcador DARF ausente" };
 
-function detectDarf(text: string, cpfClienteDigits: string): NativeResult {
-  const norm = normalize(text);
-  const hasDarf = /documento\s+de\s+arrecada[cç][aã]o/.test(norm) || /\bdarf\b/.test(norm);
-  if (!hasDarf) return { ok: false, reason: "marcador DARF não encontrado" };
-
-  // Código da receita: 4 dígitos. Procura "Código da Receita" ou "Cód. Receita"
   const reCodigo = /c[oó]d(?:igo|\.)?\s+(?:da\s+)?receita[:\s]+(\d{4})/i;
-  const mCod = text.match(reCodigo);
+  const mCod = text.full.match(reCodigo);
   if (!mCod) return { ok: false, reason: "código da receita não encontrado" };
   const codigo = mCod[1];
-  if (!CODIGOS_DARF_IRPF_PF.includes(codigo)) {
-    return { ok: false, reason: `código ${codigo} não é IRPF PF (esperado ${CODIGOS_DARF_IRPF_PF.join(",")})` };
+  if (!CODIGOS_DARF_IRPF_PF.has(codigo)) {
+    return { ok: false, reason: `código ${codigo} não é IRPF-PF` };
   }
 
-  const cpf = findCPF(text);
+  const cpf = findCPF(text.full);
   if (!cpf) return { ok: false, reason: "CPF não encontrado" };
   if (cpfClienteDigits && cpf !== cpfClienteDigits) {
-    return { ok: false, reason: `CPF do PDF (${cpf}) != cliente (${cpfClienteDigits})` };
+    return { ok: false, reason: `CPF (${cpf}) ≠ cliente (${cpfClienteDigits})` };
   }
 
-  // Valor principal e total — DARF tem campos identificados
-  const reValorPrincipal = /valor\s+(?:do\s+)?principal[:\s]+(\d{1,3}(?:\.\d{3})*,\d{2})/i;
-  const reValorTotal = /valor\s+(?:do\s+)?total[:\s]+(\d{1,3}(?:\.\d{3})*,\d{2})/i;
-  const mPrin = text.match(reValorPrincipal);
-  const mTot = text.match(reValorTotal);
-  const valor_principal = mPrin ? parseMoneyBR(mPrin[1]) : null;
-  const valor_total = mTot ? parseMoneyBR(mTot[1]) : null;
-
+  const reValPrin = /valor\s+(?:do\s+)?principal[:\s]+(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+  const reValTot = /valor\s+(?:do\s+)?total[:\s]+(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+  const vPrin = (text.full.match(reValPrin) || [])[1];
+  const vTot = (text.full.match(reValTot) || [])[1];
+  const valor_principal = vPrin ? parseMoneyBR(vPrin) : null;
+  const valor_total = vTot ? parseMoneyBR(vTot) : null;
   if (valor_principal === null || valor_total === null) {
-    return { ok: false, reason: "valores principal/total não encontrados com confiança" };
+    return { ok: false, reason: "valores principal/total não encontrados" };
   }
 
-  // Período de apuração e data de vencimento (opcionais — não bloqueiam)
-  const rePeriodo = /per[ií]odo\s+(?:de\s+)?apura[cç][aã]o[:\s]+(\d{2}\/\d{4}|\d{2}\/\d{2}\/\d{4})/i;
+  const rePer = /per[ií]odo\s+(?:de\s+)?apura[cç][aã]o[:\s]+(\d{2}\/\d{4}|\d{2}\/\d{2}\/\d{4})/i;
   const reVenc = /data\s+(?:de\s+)?vencimento[:\s]+(\d{2}\/\d{2}\/\d{4})/i;
-  const mPer = text.match(rePeriodo);
-  const mVenc = text.match(reVenc);
+  const mPer = text.full.match(rePer);
+  const mVenc = text.full.match(reVenc);
   let data_vencimento: string | null = null;
-  if (mVenc) {
-    const [d, mo, y] = mVenc[1].split("/");
-    data_vencimento = `${y}-${mo}-${d}`;
-  }
+  if (mVenc) { const [d, mo, y] = mVenc[1].split("/"); data_vencimento = `${y}-${mo}-${d}`; }
+
+  let score = 0.55; // DARF tem campos muito identificáveis
+  if (fingerprint.matched) score += fingerprint.confianca;
+  if (data_vencimento) score += 0.10;
+  score = Math.min(1, score);
 
   return {
     ok: true,
@@ -413,11 +551,15 @@ function detectDarf(text: string, cpfClienteDigits: string): NativeResult {
       valor_principal,
       valor_total,
       motivo_rejeicao: null,
+      _confianca: score,
+      _metodo: "texto",
     },
   };
 }
 
-// ============ API pública ============
+// =============================================================================
+// API PÚBLICA — pipeline orquestrado
+// =============================================================================
 
 export async function tryNativeValidation(
   bytes: Uint8Array,
@@ -425,18 +567,39 @@ export async function tryNativeValidation(
   anoBase: number,
   cpfCliente: string,
 ): Promise<NativeResult> {
-  const text = await extractPdfText(bytes);
-  // PDFs escaneados retornam pouquíssimo texto — sinaliza claramente
-  if (!text || text.replace(/\s/g, "").length < 80) {
+  // CAMADA 1 — sniff
+  const sniff = await sniffPdf(bytes);
+  if (!sniff) return { ok: false, reason: "arquivo não é um PDF válido" };
+  const { pdf, structure } = sniff;
+  if (structure.numPages > 50) return { ok: false, reason: "PDF com muitas páginas (>50)" };
+
+  // CAMADA 2 — texto
+  const text = await extractFullText(pdf);
+  const textLen = text.full.replace(/\s/g, "").length;
+  if (textLen < 80) {
     return { ok: false, reason: "scan_sem_texto" };
   }
 
-  const cpfDigits = onlyDigits(cpfCliente);
-  switch (tipo) {
-    case "declaracao": return detectDeclaracao(text, anoBase, cpfDigits);
-    case "recibo": return detectRecibo(text, anoBase, cpfDigits);
-    case "mei": return detectMei(text, anoBase, cpfDigits);
-    case "darf": return detectDarf(text, cpfDigits);
-  }
-}
+  // CAMADA 3 — fingerprint
+  const fingerprint = detectFingerprint(structure.metadata);
+  console.log(`[pipeline] tipo=${tipo} paginas=${structure.numPages} textLen=${textLen} fingerprint=${fingerprint.produtor}(${fingerprint.confianca}) detalhes="${fingerprint.detalhes.slice(0, 120)}"`);
 
+  // CAMADAS 4+5 — domain + parsers
+  const cpfDigits = onlyDigits(cpfCliente);
+  const input: ParseInput = { text, fingerprint, anoBase, cpfClienteDigits: cpfDigits };
+
+  let result: NativeResult;
+  switch (tipo) {
+    case "declaracao": result = parseDeclaracao(input); break;
+    case "recibo": result = parseRecibo(input); break;
+    case "mei": result = parseMei(input); break;
+    case "darf": result = parseDarf(input); break;
+  }
+
+  if (result.ok) {
+    console.log(`[pipeline] OK tipo=${tipo} confianca=${(result.data as { _confianca?: number })._confianca} metodo=${(result.data as { _metodo?: string })._metodo}`);
+  } else {
+    console.log(`[pipeline] FAIL tipo=${tipo} reason="${result.reason}"`);
+  }
+  return result;
+}

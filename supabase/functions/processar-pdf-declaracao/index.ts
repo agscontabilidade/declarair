@@ -121,15 +121,9 @@ Deno.serve(async (req) => {
     if (arrayBuf.byteLength > 18 * 1024 * 1024) {
       return fail("Arquivo muito grande (máx. 18MB)");
     }
-    // base64 (chunked p/ evitar stack overflow)
     const bytes = new Uint8Array(arrayBuf);
-    let bin = "";
-    for (let i = 0; i < bytes.length; i += 0x8000) {
-      bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    }
-    const base64 = btoa(bin);
 
-    // Prompts e schemas por tipo
+    // Tipos das extrações (mantidos para tipagem do `extracao` consolidado)
     interface ExtracaoDeclaracao {
       eh_declaracao_irpf: boolean;
       cpf: string;
@@ -167,71 +161,15 @@ Deno.serve(async (req) => {
       motivo_rejeicao: string | null;
     }
 
-    const promptDeclaracao = {
-      eh_declaracao_irpf: "boolean — true se for: (a) Declaração de Ajuste Anual do IRPF (DIRPF), (b) Declaração de Saída Definitiva do País (DSDP), ou (c) Comunicação de Saída Definitiva do País — todas emitidas pelo programa/sistema da Receita Federal. Marque false para recibo, DARF, extratos bancários, informes de rendimento ou qualquer outro documento.",
-      subtipo: "'dirpf'|'saida_definitiva'|'comunicacao_saida'|null — qual variante foi reconhecida; null se eh_declaracao_irpf=false",
-      cpf: "string — CPF do declarante apenas dígitos (11)",
-      nome: "string — nome completo do declarante",
-      ano_exercicio: "number — ano-exercício (ex.: 2026)",
-      tipo_resultado: "'restituicao'|'pagamento'|'nenhum' — Para DIRPF: leia a folha 'Resumo da Declaração'/'Cálculo do Imposto'. Use 'pagamento' se houver 'Saldo de Imposto a Pagar' > 0 (ou equivalentes). Use 'restituicao' se houver 'Imposto a Restituir' > 0. Use 'nenhum' SOMENTE se ambos forem zero. Para DSDP/Comunicação de Saída: se o documento não trouxer apuração de imposto a pagar/restituir, retorne 'nenhum' com valor_resultado=0; só use 'pagamento'/'restituicao' se os valores estiverem explícitos no próprio documento.",
-      valor_resultado: "number — valor em reais (sem sinal, ex.: 1234.56) correspondente ao tipo_resultado escolhido; 0 se nenhum",
-      motivo_rejeicao: "string|null — preencha se eh_declaracao_irpf=false explicando o motivo",
-    };
-    const promptRecibo = {
-      eh_recibo_rfb: "boolean — true somente se for o Recibo de Entrega da DIRPF emitido pela Receita Federal",
-      numero_recibo: "string — número do recibo conforme aparece no documento",
-      cpf: "string — CPF do declarante (11 dígitos)",
-      ano_exercicio: "number",
-      data_transmissao: "string ISO (YYYY-MM-DD) — data de transmissão",
-      motivo_rejeicao: "string|null",
-    };
-    const promptMei = {
-      eh_dasn_simei: "boolean — true somente se for a Declaração Anual do Simples Nacional para o MEI (DASN-SIMEI) ou seu recibo de entrega emitido pela Receita Federal",
-      cnpj: "string — CNPJ do MEI (14 dígitos)",
-      cpf: "string — CPF do titular (11 dígitos)",
-      ano_calendario: "number — ano-calendário declarado (ex.: 2025)",
-      numero_recibo: "string|null — número do recibo se houver",
-      data_transmissao: "string|null ISO (YYYY-MM-DD)",
-      motivo_rejeicao: "string|null",
-    };
-    const promptDarf = {
-      eh_darf_irpf: "boolean — true SOMENTE se for um DARF de IRPF Pessoa Física. Códigos típicos: 0211 (IRPF Ajuste Anual), 4600 (Carnê-Leão), 6015 (ganhos de capital). Marque false para qualquer outro tributo.",
-      cpf: "string — CPF do contribuinte (11 dígitos)",
-      codigo_receita: "string — código da receita (4 dígitos)",
-      periodo_apuracao: "string|null — DD/MM/AAAA ou MM/AAAA",
-      data_vencimento: "string|null ISO (YYYY-MM-DD)",
-      valor_principal: "number — valor principal em reais",
-      valor_total: "number — valor total em reais (principal + multa + juros)",
-      motivo_rejeicao: "string|null",
-    };
-    const schemaPorTipo: Record<typeof tipo, unknown> = {
-      declaracao: promptDeclaracao,
-      recibo: promptRecibo,
-      mei: promptMei,
-      darf: promptDarf,
-    } as const;
-    const schema = schemaPorTipo[tipo];
-
-    const systemPrompt = `Você é um validador rigoroso de documentos fiscais brasileiros.
-Você receberá um PDF anexado. Analise visual e textualmente, página por página.
-Responda SOMENTE um JSON válido (sem markdown, sem texto fora do JSON).
-Esquema esperado: ${JSON.stringify(schema)}.
-Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao extrair valores numéricos: leia a folha de resumo/cálculo e converta vírgula decimal brasileira corretamente.`;
-
-    const userPromptMap: Record<typeof tipo, string> = {
-      declaracao: "Identifique se este PDF é uma declaração do IRPF aceita: (a) DIRPF (Declaração de Ajuste Anual), (b) Declaração de Saída Definitiva do País (DSDP), ou (c) Comunicação de Saída Definitiva do País — todas emitidas pelo programa/sistema da Receita Federal. Extraia CPF, nome, ano-exercício e o RESULTADO. Para DIRPF, vá até a folha 'Resumo da Declaração' (ou equivalente) e verifique 'Saldo de Imposto a Pagar' e 'Imposto a Restituir' — retorne 'pagamento'/'restituicao' com o valor exato, ou 'nenhum' se ambos forem zero. Para DSDP/Comunicação de Saída, se não houver folha de apuração com imposto a pagar/restituir, retorne 'nenhum' e valor_resultado=0. Preencha também o campo 'subtipo' com 'dirpf', 'saida_definitiva' ou 'comunicacao_saida'.",
-      recibo: "Identifique se este PDF é o Recibo de Entrega da DIRPF emitido pela Receita Federal e extraia o número do recibo, CPF, ano-exercício e data de transmissão.",
-      mei: "Identifique se este PDF é a DASN-SIMEI (Declaração Anual do MEI) ou seu recibo, e extraia CNPJ, CPF do titular, ano-calendário, número do recibo e data de transmissão.",
-      darf: "Identifique se este PDF é um DARF de IRPF Pessoa Física. Extraia código de receita, CPF, período de apuração, data de vencimento, valor principal e valor total.",
-    };
-    const userPrompt = userPromptMap[tipo];
-
-    // ========== HÍBRIDO: regex nativa primeiro; IA só se útil; manual como último recurso ==========
+    // ========== Pipeline determinístico (SEM IA): regex+layout > manual ==========
     let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo & ExtracaoMei & ExtracaoDarf> = {};
-    let metodoValidacao: "regex" | "ia" | "manual" = "ia";
+    let metodoValidacao: "regex" | "manual" = "regex";
+    let pipelineOk = false;
+
 
     const cpfClienteDigits = digits(cliente.cpf);
     const anoBaseNum = Number(dec.ano_base);
+
 
     // Helper: construir resposta padronizada para revisão manual (não apaga o arquivo)
     const manualReview = (motivo: string) =>
@@ -244,9 +182,10 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
         tipo,
       });
 
-    // 1) Confirmação manual enviada pelo contador — pula regex/IA
+    // 1) Confirmação manual enviada pelo contador — pula o pipeline
     if (manual_confirmacao) {
       metodoValidacao = "manual";
+      pipelineOk = true;
       const mc = manual_confirmacao;
       // Validações básicas por tipo
       if (tipo === "declaracao") {
@@ -309,7 +248,7 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
       }
       console.log(`[hibrido] ${tipo} validado MANUALMENTE pelo contador`);
     } else {
-      // 2) Tenta regex nativa
+      // 2) Pipeline determinístico (SEM IA): sniff + texto + fingerprint + DV + parsers + scorer
       let nativeReason = "";
       let isScan = false;
       try {
@@ -317,74 +256,27 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
         if (native.ok) {
           extracao = native.data as typeof extracao;
           metodoValidacao = "regex";
-          console.log(`[hibrido] ${tipo} validado por REGEX (sem IA)`);
+          pipelineOk = true;
+          const conf = (native.data as { _confianca?: number })._confianca;
+          const met = (native.data as { _metodo?: string })._metodo;
+          console.log(`[pipeline] ${tipo} validado SEM IA (metodo=${met}, confianca=${conf})`);
         } else {
           nativeReason = native.reason;
           isScan = native.reason === "scan_sem_texto";
-          console.log(`[hibrido] regex falhou para ${tipo}: ${native.reason}`);
+          console.log(`[pipeline] ${tipo} falhou: ${native.reason}`);
         }
       } catch (e) {
-        console.error("[hibrido] erro inesperado na extração nativa:", e);
-        nativeReason = "erro_extracao_nativa";
+        console.error("[pipeline] erro inesperado:", e);
+        nativeReason = "erro_pipeline";
       }
 
-      // 3) Fallback IA — só se regex falhou por ambiguidade (não scan) E houver chave
-      if (metodoValidacao === "ia") {
-        if (isScan || !LOVABLE_API_KEY) {
-          // PDF escaneado ou IA indisponível → revisão manual, sem erro
-          return manualReview(
-            isScan
-              ? "PDF parece escaneado/imagem (sem texto pesquisável). Confirme os dados manualmente para registrar."
-              : "Validação automática indisponível. Confirme os dados manualmente para registrar."
-          );
-        }
-
-        const model = tipo === "declaracao" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
-        let aiRes: Response;
-        try {
-          aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model,
-              response_format: { type: "json_object" },
-              messages: [
-                { role: "system", content: systemPrompt },
-                {
-                  role: "user",
-                  content: [
-                    { type: "text", text: userPrompt },
-                    { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64}` } },
-                  ],
-                },
-              ],
-            }),
-          });
-        } catch (e) {
-          console.error("AI fetch falhou:", e);
-          return manualReview("Validação automática indisponível agora. Confirme os dados manualmente.");
-        }
-
-        if (!aiRes.ok) {
-          const t = await aiRes.text().catch(() => "");
-          console.error("AI error", aiRes.status, t);
-          // 402 (sem créditos), 429 (rate limit) ou qualquer outro erro → revisão manual,
-          // NUNCA expor "créditos esgotados" ao contador.
-          return manualReview(
-            "Validação automática indisponível no momento. Confirme os dados manualmente para registrar o documento."
-          );
-        }
-        const aiJson = await aiRes.json();
-        const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-        try {
-          extracao = JSON.parse(content);
-        } catch {
-          const m = content.match(/\{[\s\S]*\}/);
-          extracao = m ? JSON.parse(m[0]) : {};
-        }
+      // 3) Sem IA: qualquer falha do pipeline → revisão manual (modal já existente).
+      if (!pipelineOk) {
+        return manualReview(
+          isScan
+            ? "PDF parece escaneado/imagem (sem texto pesquisável). Confirme os dados manualmente para registrar."
+            : `Não foi possível extrair os dados automaticamente (${nativeReason || "documento não reconhecido"}). Confirme os dados manualmente para registrar.`
+        );
       }
     }
 
@@ -562,7 +454,7 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
     }
 
     // Auditoria
-    const sufixoMetodo = metodoValidacao === "regex" ? "automaticamente" : metodoValidacao === "manual" ? "manualmente pelo contador" : "por IA";
+    const sufixoMetodo = metodoValidacao === "regex" ? "automaticamente" : "manualmente pelo contador";
     const atividadeMap: Record<typeof tipo, { tipo: string; descricao: string }> = {
       declaracao: { tipo: "declaracao_validada", descricao: `Declaração validada ${sufixoMetodo}.` },
       recibo: { tipo: "recibo_validado", descricao: `Recibo da Receita Federal validado ${sufixoMetodo} (nº ${extracao?.numero_recibo ?? "?"}).` },
