@@ -184,6 +184,63 @@ export function AnexarDeclaracaoButton({
   });
 
 
+  const outrosInputRef = useRef<HTMLInputElement>(null);
+  const [outrosBusy, setOutrosBusy] = useState(false);
+  const outrosLista: OutroDocumento[] = Array.isArray(arquivosOutros) ? arquivosOutros : [];
+
+  const uploadOutros = useMutation({
+    mutationFn: async (files: File[]) => {
+      setOutrosBusy(true);
+      const novos: OutroDocumento[] = [];
+      for (const file of files) {
+        if (file.size > 18 * 1024 * 1024) {
+          throw new Error(`"${file.name}" excede 18MB`);
+        }
+        const safeName = file.name.replace(/[^\w.\-]/g, '_');
+        const path = `${escritorioId}/declaracoes/${declaracaoId}/outros-${Date.now()}-${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from('documentos-clientes')
+          .upload(path, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
+        if (upErr) throw new Error(upErr.message);
+        novos.push({ path, nome: file.name, uploaded_at: new Date().toISOString() });
+      }
+      const merged = [...outrosLista, ...novos];
+      const { error } = await supabase
+        .from('declaracoes')
+        .update({ arquivos_outros: merged })
+        .eq('id', declaracaoId);
+      if (error) throw new Error(error.message);
+      return novos.length;
+    },
+    onSuccess: (n) => {
+      toast.success(n === 1 ? 'Documento anexado.' : `${n} documentos anexados.`);
+      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
+    },
+    onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao anexar documento')),
+    onSettled: () => setOutrosBusy(false),
+  });
+
+  const removerOutro = useMutation({
+    mutationFn: async (path: string) => {
+      setOutrosBusy(true);
+      await supabase.storage.from('documentos-clientes').remove([path]);
+      const filtered = outrosLista.filter((o) => o.path !== path);
+      const { error } = await supabase
+        .from('declaracoes')
+        .update({ arquivos_outros: filtered })
+        .eq('id', declaracaoId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success('Documento removido.');
+      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
+    },
+    onError: (e: unknown) => toast.error(getErrorMessage(e, 'Erro ao remover documento')),
+    onSettled: () => setOutrosBusy(false),
+  });
+
   async function baixar(path: string | null | undefined) {
     if (!path) return;
     try {
@@ -202,6 +259,13 @@ export function AnexarDeclaracaoButton({
     if (f) upload.mutate({ file: f, tipo });
     e.target.value = '';
   }
+
+  function onSelectOutros(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) uploadOutros.mutate(files);
+    e.target.value = '';
+  }
+
 
   const transmitida = !!reciboValidadoEm;
 
