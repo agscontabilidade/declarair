@@ -1,43 +1,78 @@
 ## Diagnóstico
 
-Os logs mostram que o OCR está sendo chamado, mas o OCR.space retorna erro:
+O problema principal não é mais falha de chamada: a função está retornando `200` e a IA aparece como `ok=true`. O gargalo atual é precisão/validação:
+
+- O OCR.space está devolvendo texto parcial por limite de 3 páginas.
+- O regex falha porque lê `ano 2025` como se fosse ano-exercício, quando em declaração IRPF 2026 esse `2025` costuma ser ano-calendário.
+- Quando o regex falha, a IA consegue extrair algo, mas hoje a validação ainda depende pouco de evidências específicas do bloco `RESUMO`.
+- O app atualiza `declaracoes`, mas pode gravar resultado incorreto se a IA escolher um valor que existe no texto fora do campo correto.
+
+## Plano de correção definitiva
+
+### 1. Corrigir interpretação de ano em declaração IRPF
+
+Ajustar o parser para declaração aceitar a relação correta:
+
+- `ano_exercicio` deve bater com `ano_base`.
+- `ano_calendario` pode ser `ano_base - 1`.
+- Se o OCR só encontrar `2025` perto de “ano-calendário”, isso não deve reprovar uma declaração `2026`.
+- A busca de ano deve priorizar labels fortes como `Exercício 2026`, `IRPF 2026`, `Declaração de Ajuste Anual 2026`, e só depois considerar `ano-calendário` como evidência auxiliar.
+
+### 2. Criar extração determinística específica para o bloco RESUMO
+
+Substituir a lógica genérica de “pegar primeiro dinheiro depois do label” por uma extração focada em pares label/valor do resumo:
+
+- Normalizar OCR com quebras ruins, espaços duplicados e acentos.
+- Recortar somente a janela `RESUMO` até `INFORMAÇÕES BANCÁRIAS`, `PAGAMENTOS EFETUADOS` ou final da página.
+- Procurar explicitamente:
+  - `IMPOSTO A RESTITUIR`
+  - `SALDO DE IMPOSTO A PAGAR`
+  - variações comuns do OCR sem acento ou com quebras de linha.
+- Usar validação cruzada: se ambos aparecem positivos, rejeita para revisão/IA; se um aparece positivo e outro zero/ausente, aceita.
+- Evitar pegar `rendimentos`, `base de cálculo`, `imposto devido` e `total de deduções` como resultado final.
+
+### 3. Usar OCR como fonte principal para declarações escaneadas, mas sem depender de IA
+
+Manter a cascata para `declaracao` assim:
 
 ```text
-The maximum page limit of 3 was reached and only pages upto the limit were parsed successfully
+OCR.space -> parser RESUMO determinístico -> IA somente se RESUMO não fechar -> revisão manual
 ```
 
-Como a função trata esse retorno como falha total, ela não guarda nenhum texto OCR. Em seguida, a IA também não roda porque depende de texto extraído com segurança. Resultado: os dados não são atualizados.
+A IA continuará como último recurso para controlar créditos.
 
-## Plano de ajuste
+### 4. Fortalecer IA com validação por evidência textual
 
-1. **Ajustar a chamada do OCR.space para declaração**
-   - Enviar parâmetros explícitos para processar apenas as primeiras páginas úteis do PDF, evitando o erro de limite de páginas.
-   - Para declaração IRPF, priorizar as páginas finais/iniciais necessárias para identificar CPF, ano e bloco `RESUMO`, sem tentar OCR do PDF inteiro quando isso estoura limite.
+Quando a IA for acionada:
 
-2. **Aceitar OCR parcial quando houver texto útil**
-   - Hoje, se `IsErroredOnProcessing` vem true, o código descarta tudo.
-   - Vou alterar para aproveitar `ParsedResults[].ParsedText` quando existir texto suficiente, mesmo que o OCR.space informe aviso/limite de páginas.
-   - Só falhar se não houver texto realmente aproveitável.
+- Enviar preferencialmente só a janela do `RESUMO` + cabeçalho com CPF/nome/ano.
+- Exigir que o valor retornado esteja próximo do label correto, não apenas “em qualquer lugar do texto”.
+- Rejeitar IA se o valor estiver presente no documento mas associado a outro campo, como rendimentos/base/imposto devido.
+- Manter bloqueio de CPF divergente e ano divergente.
 
-3. **Permitir IA como 2ª opção quando OCR retornar texto parcial**
-   - Fluxo para `tipo=declaracao` ficará:
+### 5. Melhorar logs para auditoria de produção
 
-```text
-OCR.space -> regex sobre OCR -> IA sobre texto OCR parcial -> revisão manual
-```
+Adicionar logs compactos com:
 
-   - A IA continuará sem ler o PDF diretamente, para evitar novo `WORKER_RESOURCE_LIMIT`.
-   - A IA só receberá texto que já veio do OCR, mantendo baixo consumo e sem processamento pesado.
+- método usado: `ocr-resumo`, `regex`, `ia`, `manual`;
+- ano encontrado e contexto (`exercicio` ou `calendario`);
+- valores candidatos de restituição/pagamento;
+- motivo exato quando cair para IA/manual.
 
-4. **Evitar o parser nativo como fallback para declaração escaneada**
-   - Se o PDF for detectado como scan/imagem, não insistir no parser nativo depois do OCR, pois ele não consegue extrair texto real e só aumenta risco de CPU.
-   - Para `recibo`, `mei` e `darf`, manter o fluxo atual para não mexer no que não foi pedido.
+Isso permite diagnosticar documentos problemáticos sem expor dados sensíveis demais.
 
-5. **Melhorar logs de validação**
-   - Registrar quando o OCR foi parcial mas aproveitado.
-   - Registrar quando a IA foi acionada com texto OCR.
-   - Registrar claramente o motivo de cair em revisão manual.
+### 6. Validar com os documentos reais já enviados
 
-6. **Deploy da função**
-   - Depois dos ajustes, redeploy apenas da função `processar-pdf-declaracao`.
-   - Sem alterações em banco, RLS, UI ou schema.
+Após implementar:
+
+- Reprocessar/testar a função com o último PDF enviado (`ALMVEIDA 2.pdf`) usando o storage path já registrado.
+- Conferir no banco se `tipo_resultado`, `valor_resultado`, `declaracao_extracao` e `declaracao_validada_em` foram atualizados corretamente.
+- Verificar logs da função para confirmar que a IA só foi usada se o parser determinístico não conseguiu fechar o RESUMO.
+
+## Arquivos envolvidos
+
+- `supabase/functions/processar-pdf-declaracao/extract-native.ts`
+- `supabase/functions/processar-pdf-declaracao/ai-fallback.ts`
+- `supabase/functions/processar-pdf-declaracao/index.ts`
+
+Sem mudança de schema, RLS, tabelas ou frontend neste ajuste.
