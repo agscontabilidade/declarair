@@ -3,10 +3,14 @@
 // para a API externa, obtém o texto reconhecido e devolve para os mesmos
 // parsers regex usados pelos PDFs nativos.
 //
-// Free tier OCR.space (filesize <= 1MB):  25.000 req/mês.
-// PRO API (filesize <= 5MB):              ajuste OCR_MAX_BYTES.
+// Free tier OCR.space pode limitar alguns envios por tamanho; PRO aceita mais.
+// Mantemos 5MB como teto operacional para tentar OCR antes da IA/manual, e pode
+// ser reduzido via OCRSPACE_MAX_BYTES se necessário.
 
-export const OCR_MAX_BYTES = 1_000_000; // limite do free tier
+const configuredMaxBytes = Number(Deno.env.get("OCRSPACE_MAX_BYTES") || "5000000");
+export const OCR_MAX_BYTES = Number.isFinite(configuredMaxBytes) && configuredMaxBytes > 0
+  ? configuredMaxBytes
+  : 5_000_000;
 
 export interface OcrResult {
   ok: boolean;
