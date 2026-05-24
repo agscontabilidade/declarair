@@ -1,191 +1,151 @@
-## Diagnóstico do caso enviado
+## Problema confirmado
 
-O PDF enviado é uma **Declaração de Saída Definitiva do País**, exercício **2026**, ano-calendário **2025**, com texto pesquisável e resultado no resumo:
+O backend ainda está retornando `requires_manual_review` porque a função `processar-pdf-declaracao` classifica o PDF como `scan_sem_texto`.
 
-- CPF detectável: `326.877.918-22`
-- Tipo: `DECLARAÇÃO DE SAÍDA DEFINITIVA DO PAÍS`
-- Exercício: `2026`
-- Resultado: `IMPOSTO A RESTITUIR | 892,31`
-
-O modal está aparecendo porque o pipeline atual depende quase só do `unpdf.extractText()`. Neste arquivo, o parser da plataforma provavelmente está retornando texto insuficiente e classificando como `scan_sem_texto`, mesmo o PDF tendo texto extraível. Ou seja: o problema principal não é falta de IA, é **extrator nativo fraco / sem fallback real de layout**.
-
-## Plano de implementação
-
-### 1. Fortalecer a extração de texto sem IA
-
-Atualizar `supabase/functions/processar-pdf-declaracao/extract-native.ts` para usar uma cadeia determinística de extração:
+Pelo request real do preview:
 
 ```text
-PDF bytes
-  ├─ unpdf.extractText()
-  ├─ fallback pdfjs getTextContent() página por página
-  ├─ reconstrução de linhas por coordenadas Y/X
-  ├─ normalização fiscal PT-BR
-  └─ parsers por tipo documental
+arquivo: ANDREA R A K MACHADO - DECLARAÇÃO IR 2026.pdf
+motivo: PDF parece escaneado/imagem (sem texto pesquisável)
 ```
 
-O fallback com `pdfjs getTextContent()` será obrigatório quando:
-
-- `unpdf` retornar menos de 80 caracteres úteis;
-- o texto vier sem marcadores fiscais esperados;
-- o PDF tiver muitas quebras de layout/tabelas;
-- for declaração de saída definitiva, recibo ou DARF com valores em colunas.
-
-### 2. Parser específico para Declaração de Saída Definitiva
-
-Criar regras específicas para `saida_definitiva`, sem tratar como DIRPF genérica:
-
-Campos obrigatórios:
-
-- `DECLARAÇÃO DE SAÍDA DEFINITIVA DO PAÍS`
-- `IMPOSTO SOBRE A RENDA - PESSOA FÍSICA`
-- CPF válido por dígito verificador
-- Exercício compatível com `ano_base`
-- Ano-calendário compatível, quando presente
-
-Campos extraídos:
-
-- CPF
-- Nome
-- Exercício
-- Ano-calendário
-- País de destino, quando existir
-- Data de caracterização da condição de não residente, quando existir
-- Resultado financeiro no resumo:
-  - `SALDO DE IMPOSTO A PAGAR`
-  - `IMPOSTO A RESTITUIR`
-  - `Valor da quota`
-
-Regra para o PDF enviado:
+E pelos logs da função:
 
 ```text
-SALDO DE IMPOSTO A PAGAR = 0,00
-IMPOSTO A RESTITUIR = 892,31
-=> tipo_resultado = restituicao
-=> valor_resultado = 892.31
+[pipeline] unpdf insuficiente (len=0, markers=false); tentando pdfjs…
+[pipeline] declaracao falhou: scan_sem_texto
 ```
 
-### 3. Melhorar leitura de resultado financeiro em qualquer declaração
+Ou seja: o problema não é a regra fiscal nem o modal. O problema está antes: os dois extratores atuais (`unpdf.extractText` e `page.getTextContent`) estão retornando texto vazio para esse PDF específico. Enquanto o texto for zero, qualquer parser posterior nunca roda.
 
-Hoje a leitura depende de regex simples em texto corrido. Vou trocar por um resolvedor fiscal mais tolerante:
+## Plano de correção brutal, sem IA
+
+### 1. Trocar a base de extração por um extrator multi-engine
+
+No `supabase/functions/processar-pdf-declaracao/extract-native.ts`, transformar a camada de texto em uma cadeia real de fallback:
 
 ```text
-1. localizar página/trecho RESUMO
-2. procurar labels financeiras normalizadas
-3. ler valor na mesma linha
-4. se não houver, ler valor imediatamente abaixo
-5. comparar pagar x restituir
-6. aplicar regra de decisão:
-   - pagar > 0 => pagamento
-   - restituir > 0 => restituicao
-   - ambos zero => nenhum
-   - ambos > 0 => rejeição por inconsistência
+A. unpdf.extractText
+B. PDFDocumentProxy.getTextContent com layout por coordenada
+C. pdfjs-serverless/getDocument direto, com opções para fontes/CMaps
+D. extração bruta dos streams internos do PDF
+E. parser fiscal por tokens/bytes quando texto visual não vem por PDF.js
 ```
 
-Isso cobre PDFs onde o valor aparece como:
+A camada C é necessária porque há casos em que o wrapper `unpdf` mantém o documento aberto, mas não resolve corretamente fontes/ToUnicode. Usaremos `pdfjs-serverless` diretamente no Edge Function, sem API externa e sem IA.
 
-- `IMPOSTO A RESTITUIR | 892,31`
-- `IMPOSTO A RESTITUIR 892,31`
-- label em uma linha e valor na linha seguinte
-- tabela extraída fora de ordem
+### 2. Implementar extração bruta de streams PDF
 
-### 4. Reclassificar corretamente “scan_sem_texto”
+Quando PDF.js retornar `textLen=0`, não concluir imediatamente `scan_sem_texto`.
 
-Depois do fallback `pdfjs`, só classificar como `scan_sem_texto` quando **todos** os extratores retornarem texto insuficiente.
+Adicionar um extrator determinístico que lê o conteúdo bruto do PDF:
 
-Novo fluxo:
+- localizar objetos `stream/endstream`;
+- tentar descompressão Flate/zlib quando aplicável;
+- procurar operadores textuais PDF (`BT`, `ET`, `Tj`, `TJ`, `'`, `"`);
+- decodificar strings literais `(...)` e hex strings `<...>`;
+- aplicar heurísticas de UTF-16BE, WinAnsi, MacRoman e Latin-1;
+- montar um texto aproximado mesmo quando `getTextContent()` falha.
+
+Isso é essencial para PDFs gerados por sistemas oficiais com fontes embarcadas ou mapas ToUnicode ruins.
+
+### 3. Adicionar parser específico para declarações Receita/PGD com texto fragmentado
+
+Ajustar os detectores para aceitar texto fragmentado, sem depender de frase perfeita:
+
+- `DECLARAÇÃO DE AJUSTE ANUAL`;
+- `DECLARAÇÃO DE SAÍDA DEFINITIVA DO PAÍS`;
+- `IMPOSTO SOBRE A RENDA DA PESSOA FÍSICA`;
+- `EXERCÍCIO 2026`;
+- `ANO-CALENDÁRIO 2025`;
+- CPF com pontuação ou CPF separado por espaços;
+- nome do contribuinte próximo ao CPF;
+- resultado financeiro em bloco de resumo.
+
+Também vou corrigir um detalhe atual: o texto já é normalizado sem acento, mas algumas regex ainda procuram acentos em cima do texto normalizado. Isso pode causar falso negativo mesmo quando o texto vier.
+
+### 4. Resolver resultado financeiro por matriz de evidências
+
+Para declaração normal e saída definitiva, extrair resultado por prioridade:
 
 ```text
-unpdf falhou ou retornou pouco texto
-  ↓
-pdfjs getTextContent por página
-  ↓
-se texto útil >= limite: continuar validação normal
-  ↓
-se texto útil ainda baixo: scan_sem_texto real
+1. Campo explícito: IMPOSTO A RESTITUIR > 0
+2. Campo explícito: SALDO DE IMPOSTO A PAGAR > 0
+3. Quotas com valor > 0 => pagamento
+4. Campos zerados => nenhum
+5. Conflito pagar>0 e restituir>0 => rejeição real, não modal genérico
 ```
 
-Esse PDF enviado não deve mais cair no modal.
+O parser não deve cair no modal se CPF e ano baterem e só o valor financeiro estiver difícil. Nesse caso, registra a declaração como válida e usa `tipo_resultado: nenhum` somente se os campos indicarem zero ou se o resultado não existir no subtipo.
 
-### 5. Scoring mais rígido, mas sem falso negativo nesse padrão
+### 5. Melhorar a decisão `scan_sem_texto`
 
-Substituir o score genérico por evidências fiscais obrigatórias:
+Hoje a função decide `scan_sem_texto` com `textLen < 80` depois de apenas duas tentativas.
+
+Depois da correção, `scan_sem_texto` só será retornado se TODAS as camadas falharem:
 
 ```text
-Declaração aceita automaticamente se:
-- tipo documental reconhecido
-- CPF válido e igual ao cliente
-- exercício igual ao ano_base
-- Receita Federal / IRPF / DSDP reconhecido
-- resultado financeiro resolvido ou subtipo permitir resultado neutro
+unpdf = vazio
+pdfjs proxy = vazio
+pdfjs-serverless direto = vazio
+raw stream parser = vazio
+metadata/fingerprint insuficiente
 ```
 
-Para dados financeiros, manter regra conservadora:
+E mesmo assim, a resposta terá diagnóstico mais preciso:
 
-- se conseguir ler com consistência, grava automaticamente;
-- se detectar conflito real, rejeita;
-- se o PDF for texto válido mas só o resultado financeiro falhar, registrar arquivo e resultado como `nenhum` apenas quando ambos os campos forem explicitamente zero; caso contrário não inventar valor.
+- `scan_sem_texto_real` para PDF imagem de verdade;
+- `texto_pdf_inacessivel` para PDF com texto visual mas sem mapa extraível;
+- `documento_nao_reconhecido` para arquivo que não é declaração/recibo/DARF/MEI.
 
-### 6. Ampliar parsers dos outros documentos sem IA
+### 6. Instrumentar logs técnicos úteis
 
-No mesmo arquivo, fortalecer os parsers existentes:
+Adicionar logs sem dados sensíveis completos:
 
-**Recibo RFB**
-- leitura de número próximo de `Nº do recibo`, `Recibo de Entrega`, `declaração recebida`
-- DV módulo 11 quando formato permitir
-- data/hora de transmissão com múltiplos formatos
+```text
+[pipeline/text] engine=unpdf len=0 markers=false
+[pipeline/text] engine=pdfjs-proxy len=0 items=0 pages=...
+[pipeline/text] engine=pdfjs-direct len=...
+[pipeline/text] engine=raw-stream len=...
+[pipeline/parse] tipo=declaracao cpf_match=true ano=2026 subtipo=...
+```
 
-**DARF**
-- código de receita em formatos com ou sem label
-- CPF/CNPJ do contribuinte
-- período de apuração
-- vencimento
-- valor principal, multa, juros e total
-- whitelist de IRPF PF expandida
+Isso permite diagnosticar o próximo PDF sem depender de tentativa cega.
 
-**DASN-SIMEI / MEI**
-- CNPJ por DV
-- CPF do responsável/titular quando presente
-- ano-calendário
-- número de recibo e data de transmissão quando existirem
+### 7. Corrigir comentário/legado de IA no `index.ts`
 
-### 7. Teste real com o PDF enviado antes de concluir
+O `index.ts` ainda tem comentário e variável `LOVABLE_API_KEY` herdados do fluxo antigo. Vou remover isso para deixar claro que o processamento é 100% determinístico e não tenta IA.
 
-Após implementar, testar a função com o PDF enviado e confirmar que retorna algo equivalente a:
+### 8. Validar com a requisição real
+
+Depois de implementar, vou testar a função com o mesmo `storage_path` capturado no preview:
+
+```text
+191e3bd0-2a37-4eb6-86d7-70f2f7f0bda0/declaracoes/b132e72c-9e57-4843-9aca-461d05847e94/declaracao-1779649624980-ANDREA_R_A_K_MACHADO_-_DECLARA__O_IR_2026.pdf
+```
+
+Critério de aceite:
 
 ```json
 {
   "ok": true,
   "tipo": "declaracao",
+  "metodo_validacao": "regex",
   "extracao": {
     "eh_declaracao_irpf": true,
-    "subtipo": "saida_definitiva",
-    "cpf": "32687791822",
+    "cpf": "...",
     "ano_exercicio": 2026,
-    "tipo_resultado": "restituicao",
-    "valor_resultado": 892.31
-  },
-  "metodo_validacao": "regex"
+    "subtipo": "dirpf" ou "saida_definitiva",
+    "tipo_resultado": "restituicao" | "pagamento" | "nenhum"
+  }
 }
 ```
 
-### 8. Não alterar UI e não mexer no banco
+E o upload não deve abrir o modal.
 
-Para reduzir risco em produção:
+## Arquivos a alterar
 
-- não alterar schema;
-- não mexer em RLS;
-- não alterar o modal;
-- não alterar fluxo visual;
-- alterar apenas o motor de validação determinística e, se necessário, pequenos logs técnicos no backend.
+- `supabase/functions/processar-pdf-declaracao/extract-native.ts`
+- `supabase/functions/processar-pdf-declaracao/index.ts`
 
-## Resultado esperado
-
-- Esse PDF de saída definitiva será validado automaticamente.
-- PDFs textuais da Receita não devem mais cair como `scan_sem_texto` por falha do extrator primário.
-- A plataforma continua sem usar IA para validação.
-- Dados financeiros serão extraídos por regras determinísticas, com validação cruzada de CPF, ano, tipo documental e consistência dos valores.
-
-## Limite técnico honesto
-
-Para PDF puramente escaneado/imagem, sem camada de texto, a única forma não-IA de leitura automática é OCR determinístico. Posso adicionar OCR depois como segunda etapa, mas para este caso específico não é necessário: o arquivo enviado tem texto e deve ser resolvido com extração nativa robusta.
+Sem alteração de UI, sem banco, sem RLS, sem schema, sem IA.
