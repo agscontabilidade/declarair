@@ -270,12 +270,38 @@ Deno.serve(async (req) => {
         nativeReason = "erro_pipeline";
       }
 
-      // 3) Sem IA: qualquer falha do pipeline → revisão manual (modal já existente).
+      // 3) Fallback OCR (OCR.space) quando o PDF é uma imagem escaneada.
+      if (!pipelineOk && isScan) {
+        if (bytes.length > OCR_MAX_BYTES) {
+          return manualReview(
+            `PDF escaneado de ${(bytes.length / 1024 / 1024).toFixed(1)}MB excede o limite do OCR gratuito (${(OCR_MAX_BYTES / 1024 / 1024).toFixed(0)}MB). Peça ao cliente o PDF original gerado pelo programa da Receita, ou confirme os dados manualmente.`
+          );
+        }
+        const ocr = await runOcrFallback(bytes, arquivo_nome || "documento.pdf");
+        console.log(`[ocr] tipo=${tipo} ok=${ocr.ok} tempo_ms=${ocr.elapsedMs} chars=${ocr.text.length} reason=${ocr.reason || "-"}`);
+        if (ocr.ok && ocr.text.length > 100) {
+          const ocrResult = parseFromText(ocr.text, tipo, anoBaseNum, cliente.cpf || "");
+          if (ocrResult.ok) {
+            extracao = ocrResult.data as typeof extracao;
+            metodoValidacao = "ocr";
+            pipelineOk = true;
+            console.log(`[ocr] ${tipo} validado via OCR.space`);
+          } else {
+            return manualReview(
+              `OCR processou o PDF mas não conseguiu validar (${ocrResult.reason}). Confirme os dados manualmente.`
+            );
+          }
+        } else {
+          return manualReview(
+            `Não foi possível ler o PDF escaneado automaticamente (${ocr.reason || "OCR retornou vazio"}). Confirme os dados manualmente.`
+          );
+        }
+      }
+
+      // 4) Outras falhas (não-scan) → modal manual direto.
       if (!pipelineOk) {
         return manualReview(
-          isScan
-            ? "PDF é uma imagem escaneada (sem texto pesquisável em nenhuma camada). Confirme os dados manualmente para registrar."
-            : `Não foi possível extrair os dados automaticamente (${nativeReason || "documento não reconhecido"}). Confirme os dados manualmente para registrar.`
+          `Não foi possível extrair os dados automaticamente (${nativeReason || "documento não reconhecido"}). Confirme os dados manualmente para registrar.`
         );
       }
     }
