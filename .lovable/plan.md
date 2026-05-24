@@ -1,151 +1,86 @@
-## Problema confirmado
 
-O backend ainda está retornando `requires_manual_review` porque a função `processar-pdf-declaracao` classifica o PDF como `scan_sem_texto`.
+## Objetivo
 
-Pelo request real do preview:
+Quando o pipeline determinístico atual detectar que o PDF é uma imagem escaneada (`scan_sem_texto_real`), em vez de cair direto no modal manual, enviar o PDF para a API do OCR.space, recuperar o texto reconhecido e re-executar os mesmos parsers regex já existentes. Modal manual vira último recurso real (só se OCR também falhar).
 
-```text
-arquivo: ANDREA R A K MACHADO - DECLARAÇÃO IR 2026.pdf
-motivo: PDF parece escaneado/imagem (sem texto pesquisável)
-```
+## Pré-requisito do usuário
 
-E pelos logs da função:
+1. Criar conta gratuita em https://ocr.space/ocrapi
+2. Copiar a API key (free tier: 25.000 requisições/mês, arquivos até 1MB no plano free; plano PRO ~US$ 30/mês permite até 5MB)
+3. Eu vou pedir a key via `add_secret` com o nome `OCRSPACE_API_KEY`
 
-```text
-[pipeline] unpdf insuficiente (len=0, markers=false); tentando pdfjs…
-[pipeline] declaracao falhou: scan_sem_texto
-```
+## Mudanças no código
 
-Ou seja: o problema não é a regra fiscal nem o modal. O problema está antes: os dois extratores atuais (`unpdf.extractText` e `page.getTextContent`) estão retornando texto vazio para esse PDF específico. Enquanto o texto for zero, qualquer parser posterior nunca roda.
+Tudo isolado em `supabase/functions/processar-pdf-declaracao/`. Nenhuma mudança em UI, banco, RLS ou schema.
 
-## Plano de correção brutal, sem IA
+### 1. Novo arquivo: `ocr-fallback.ts`
+- Função `runOcrFallback(bytes: Uint8Array): Promise<string>`
+- Faz POST multipart para `https://api.ocr.space/parse/image` com:
+  - `apikey`: do env
+  - `language`: `por`
+  - `isCreateSearchablePdf`: false
+  - `OCREngine`: 2 (melhor para formulários)
+  - `scale`: true
+  - `file`: o PDF
+- Concatena `ParsedText` de todas as páginas
+- Timeout de 45s, retorna string vazia em erro (não joga exceção)
+- Loga tamanho do texto retornado e tempo gasto
 
-### 1. Trocar a base de extração por um extrator multi-engine
+### 2. `extract-native.ts` — exportar parsers isoladamente
+- Refatorar para expor `parseFromText(text, tipo, anoBase, cpfCliente)` que recebe texto já pronto e roda só a fase de regex/scorer/DV (sem extração PDF).
+- A função atual `tryNativeValidation` continua igual; passa a chamar internamente `parseFromText` depois de obter o texto via cascata.
+- **Escopo:** refatoração mínima de extração interna; lógica de parsing não muda.
 
-No `supabase/functions/processar-pdf-declaracao/extract-native.ts`, transformar a camada de texto em uma cadeia real de fallback:
-
-```text
-A. unpdf.extractText
-B. PDFDocumentProxy.getTextContent com layout por coordenada
-C. pdfjs-serverless/getDocument direto, com opções para fontes/CMaps
-D. extração bruta dos streams internos do PDF
-E. parser fiscal por tokens/bytes quando texto visual não vem por PDF.js
-```
-
-A camada C é necessária porque há casos em que o wrapper `unpdf` mantém o documento aberto, mas não resolve corretamente fontes/ToUnicode. Usaremos `pdfjs-serverless` diretamente no Edge Function, sem API externa e sem IA.
-
-### 2. Implementar extração bruta de streams PDF
-
-Quando PDF.js retornar `textLen=0`, não concluir imediatamente `scan_sem_texto`.
-
-Adicionar um extrator determinístico que lê o conteúdo bruto do PDF:
-
-- localizar objetos `stream/endstream`;
-- tentar descompressão Flate/zlib quando aplicável;
-- procurar operadores textuais PDF (`BT`, `ET`, `Tj`, `TJ`, `'`, `"`);
-- decodificar strings literais `(...)` e hex strings `<...>`;
-- aplicar heurísticas de UTF-16BE, WinAnsi, MacRoman e Latin-1;
-- montar um texto aproximado mesmo quando `getTextContent()` falha.
-
-Isso é essencial para PDFs gerados por sistemas oficiais com fontes embarcadas ou mapas ToUnicode ruins.
-
-### 3. Adicionar parser específico para declarações Receita/PGD com texto fragmentado
-
-Ajustar os detectores para aceitar texto fragmentado, sem depender de frase perfeita:
-
-- `DECLARAÇÃO DE AJUSTE ANUAL`;
-- `DECLARAÇÃO DE SAÍDA DEFINITIVA DO PAÍS`;
-- `IMPOSTO SOBRE A RENDA DA PESSOA FÍSICA`;
-- `EXERCÍCIO 2026`;
-- `ANO-CALENDÁRIO 2025`;
-- CPF com pontuação ou CPF separado por espaços;
-- nome do contribuinte próximo ao CPF;
-- resultado financeiro em bloco de resumo.
-
-Também vou corrigir um detalhe atual: o texto já é normalizado sem acento, mas algumas regex ainda procuram acentos em cima do texto normalizado. Isso pode causar falso negativo mesmo quando o texto vier.
-
-### 4. Resolver resultado financeiro por matriz de evidências
-
-Para declaração normal e saída definitiva, extrair resultado por prioridade:
+### 3. `index.ts` — encadear OCR
+No bloco onde hoje retorna `manualReview` por falha do pipeline:
 
 ```text
-1. Campo explícito: IMPOSTO A RESTITUIR > 0
-2. Campo explícito: SALDO DE IMPOSTO A PAGAR > 0
-3. Quotas com valor > 0 => pagamento
-4. Campos zerados => nenhum
-5. Conflito pagar>0 e restituir>0 => rejeição real, não modal genérico
+se native.ok → segue normal
+senão se native.reason ∈ {scan_sem_texto_real, scan_sem_texto, texto_pdf_inacessivel}:
+    texto_ocr = await runOcrFallback(bytes)
+    se texto_ocr.length > 100:
+        ocrResult = parseFromText(texto_ocr, tipo, anoBase, cpfCliente)
+        se ocrResult.ok:
+            extracao = ocrResult.data
+            metodoValidacao = "ocr"
+            pipelineOk = true
+            log: validado via OCR.space
+        senão:
+            manualReview com motivo específico OCR
+    senão:
+        manualReview "OCR não retornou texto suficiente"
+senão:
+    manualReview (caminho atual)
 ```
 
-O parser não deve cair no modal se CPF e ano baterem e só o valor financeiro estiver difícil. Nesse caso, registra a declaração como válida e usa `tipo_resultado: nenhum` somente se os campos indicarem zero ou se o resultado não existir no subtipo.
+### 4. Auditoria e logs
+- Adicionar `metodoValidacao = "ocr"` ao tipo (hoje só aceita `regex | manual`)
+- Mensagem de atividade: "validada automaticamente via OCR" para distinguir de regex puro
+- Log `[ocr] tipo=X tamanho_texto=N tempo_ms=Y`
 
-### 5. Melhorar a decisão `scan_sem_texto`
+## Pontos técnicos importantes
 
-Hoje a função decide `scan_sem_texto` com `textLen < 80` depois de apenas duas tentativas.
+- **Limite de tamanho:** Free tier OCR.space aceita até 1MB. A função já valida 18MB; vou adicionar pré-validação: se `bytes.length > 1_000_000` e API for free, retornar modal manual com mensagem "PDF muito grande para OCR gratuito (>1MB) — confirme manualmente ou peça o PDF original do PGD." Caso o usuário tenha plano PRO, basta ajustar a constante.
+- **Sem custo de CPU adicional na edge function:** OCR roda no servidor do OCR.space, não consome o worker Supabase (resolve o `WORKER_RESOURCE_LIMIT`).
+- **Não muda o caminho feliz:** PDFs nativos do PGD continuam sendo processados em milissegundos pelo pipeline determinístico. OCR só dispara em scan real.
+- **Segurança:** API key fica em secret, nunca exposta ao frontend.
 
-Depois da correção, `scan_sem_texto` só será retornado se TODAS as camadas falharem:
+## Arquivos afetados
 
-```text
-unpdf = vazio
-pdfjs proxy = vazio
-pdfjs-serverless direto = vazio
-raw stream parser = vazio
-metadata/fingerprint insuficiente
-```
+- `supabase/functions/processar-pdf-declaracao/ocr-fallback.ts` (novo)
+- `supabase/functions/processar-pdf-declaracao/extract-native.ts` (refatoração mínima para expor `parseFromText`)
+- `supabase/functions/processar-pdf-declaracao/index.ts` (encadeamento OCR + tipo `metodoValidacao`)
 
-E mesmo assim, a resposta terá diagnóstico mais preciso:
+## Validação após deploy
 
-- `scan_sem_texto_real` para PDF imagem de verdade;
-- `texto_pdf_inacessivel` para PDF com texto visual mas sem mapa extraível;
-- `documento_nao_reconhecido` para arquivo que não é declaração/recibo/DARF/MEI.
+1. Re-enviar o PDF escaneado que está dando problema → deve validar automaticamente via OCR
+2. Re-enviar um PDF nativo do PGD → continua via `regex` (rápido, sem chamar OCR)
+3. Conferir logs: `[ocr]` aparece só nos casos esperados
+4. Conferir contador de uso em ocr.space/dashboard
 
-### 6. Instrumentar logs técnicos úteis
+## O que NÃO está no escopo
 
-Adicionar logs sem dados sensíveis completos:
-
-```text
-[pipeline/text] engine=unpdf len=0 markers=false
-[pipeline/text] engine=pdfjs-proxy len=0 items=0 pages=...
-[pipeline/text] engine=pdfjs-direct len=...
-[pipeline/text] engine=raw-stream len=...
-[pipeline/parse] tipo=declaracao cpf_match=true ano=2026 subtipo=...
-```
-
-Isso permite diagnosticar o próximo PDF sem depender de tentativa cega.
-
-### 7. Corrigir comentário/legado de IA no `index.ts`
-
-O `index.ts` ainda tem comentário e variável `LOVABLE_API_KEY` herdados do fluxo antigo. Vou remover isso para deixar claro que o processamento é 100% determinístico e não tenta IA.
-
-### 8. Validar com a requisição real
-
-Depois de implementar, vou testar a função com o mesmo `storage_path` capturado no preview:
-
-```text
-191e3bd0-2a37-4eb6-86d7-70f2f7f0bda0/declaracoes/b132e72c-9e57-4843-9aca-461d05847e94/declaracao-1779649624980-ANDREA_R_A_K_MACHADO_-_DECLARA__O_IR_2026.pdf
-```
-
-Critério de aceite:
-
-```json
-{
-  "ok": true,
-  "tipo": "declaracao",
-  "metodo_validacao": "regex",
-  "extracao": {
-    "eh_declaracao_irpf": true,
-    "cpf": "...",
-    "ano_exercicio": 2026,
-    "subtipo": "dirpf" ou "saida_definitiva",
-    "tipo_resultado": "restituicao" | "pagamento" | "nenhum"
-  }
-}
-```
-
-E o upload não deve abrir o modal.
-
-## Arquivos a alterar
-
-- `supabase/functions/processar-pdf-declaracao/extract-native.ts`
-- `supabase/functions/processar-pdf-declaracao/index.ts`
-
-Sem alteração de UI, sem banco, sem RLS, sem schema, sem IA.
+- Nenhuma mudança em UI/modal
+- Nenhum schema/migration
+- Não toco no `ConfirmarDocumentoManualDialog` (continua existindo como último recurso)
+- Não mudo limite de tamanho do arquivo (segue 18MB)
