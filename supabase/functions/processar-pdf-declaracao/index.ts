@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
 
     // ========== Pipeline determinístico (SEM IA): regex+layout > manual ==========
     let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo & ExtracaoMei & ExtracaoDarf> = {};
-    let metodoValidacao: "regex" | "ocr" | "manual" = "regex";
+    let metodoValidacao: "regex" | "ocr" | "ia" | "manual" = "regex";
     let pipelineOk = false;
 
 
