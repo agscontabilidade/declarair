@@ -321,8 +321,13 @@ Deno.serve(async (req) => {
       }
 
       // 3) ÚLTIMO RECURSO: Lovable AI (consome créditos).
+      // Importante: para PDFs escaneados sem texto, NÃO reprocessamos o PDF com
+      // extractRawTextFromPdf aqui. Esse caminho roda várias engines PDF.js/raw e
+      // pode estourar CPU em arquivos imagem (WORKER_RESOURCE_LIMIT). IA só entra
+      // quando já temos texto OCR; caso contrário, cai para revisão manual.
       if (!pipelineOk) {
-        const sourceText = ocrText || await extractRawTextFromPdf(bytes).catch(() => "");
+        const shouldTryRawTextForAi = tipo !== "declaracao" && !isScan && bytes.length <= OCR_MAX_BYTES;
+        const sourceText = ocrText || (shouldTryRawTextForAi ? await extractRawTextFromPdf(bytes).catch(() => "") : "");
         if (sourceText && sourceText.length > 200) {
           console.log(`[ia] ${tipo} acionando fallback de IA (motivo: "${nativeReason}", chars=${sourceText.length})`);
           const aiRes = await runAiExtraction(sourceText, tipo, anoBaseNum, cliente.cpf || "");
@@ -336,6 +341,8 @@ Deno.serve(async (req) => {
               `Extração automática falhou (${nativeReason}). IA também não validou (${aiRes.reason}). Confirme os dados manualmente.`
             );
           }
+        } else if (tipo === "declaracao") {
+          console.log(`[ia] declaracao não acionada: sem texto OCR seguro para enviar à IA (motivo: "${nativeReason}")`);
         }
       }
 
