@@ -67,13 +67,21 @@ export async function runOcrFallback(bytes: Uint8Array, filename = "documento.pd
 
     // deno-lint-ignore no-explicit-any
     const data: any = await res.json();
-    if (data?.IsErroredOnProcessing) {
-      const msg = Array.isArray(data.ErrorMessage) ? data.ErrorMessage.join(" | ") : String(data.ErrorMessage || "erro OCR");
-      return { ok: false, text: "", reason: msg, elapsedMs: Date.now() - t0 };
-    }
     // deno-lint-ignore no-explicit-any
     const pages: any[] = Array.isArray(data?.ParsedResults) ? data.ParsedResults : [];
     const text = pages.map((p) => String(p?.ParsedText || "")).join("\n\n").trim();
+
+    if (data?.IsErroredOnProcessing) {
+      const msg = Array.isArray(data.ErrorMessage)
+        ? data.ErrorMessage.join(" | ")
+        : String(data.ErrorMessage || "erro OCR");
+      // Aproveita texto parcial quando o OCR.space avisa de limite de páginas
+      // mas ainda devolveu conteúdo útil (caso típico do free tier com 3 páginas).
+      if (text.length > 100) {
+        return { ok: true, text, reason: `parcial: ${msg}`, elapsedMs: Date.now() - t0 };
+      }
+      return { ok: false, text: "", reason: msg, elapsedMs: Date.now() - t0 };
+    }
     return { ok: true, text, elapsedMs: Date.now() - t0 };
   } catch (e) {
     return {
