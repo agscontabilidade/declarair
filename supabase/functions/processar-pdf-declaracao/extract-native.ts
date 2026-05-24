@@ -653,6 +653,103 @@ interface ParseInput {
   cpfClienteDigits: string;
 }
 
+// ---------- Extração robusta do resultado (Restituir / Pagar) ----------------
+//
+// Estratégia (anti-falso-positivo, ex.: pegar 18.406,97 dos rendimentos):
+//   1. Recorta a janela do RESUMO (bloco "RESUMO ... INFORMAÇÕES BANCÁRIAS"
+//      ou início/fim do texto se a âncora não existir).
+//   2. Procura os labels "IMPOSTO A RESTITUIR" e "SALDO DE IMPOSTO A PAGAR"
+//      apenas dentro dessa janela.
+//   3. Para cada label, pega o PRIMEIRO valor monetário que aparece à frente,
+//      desde que entre o label e o valor NÃO exista nenhum outro label
+//      conhecido (Base de cálculo, Imposto devido, Alíquota, Quota, etc.).
+//      Isso evita pegar "Base de cálculo 13.033,63" quando o label-alvo é
+//      "Imposto a Restituir" mas o 892,31 ficou em outra Y-row.
+//   4. Coleta totais de rendimentos / base de cálculo / imposto devido na
+//      mesma janela; se o candidato bater com algum deles, descarta e
+//      sinaliza `inconsistente` — o caller cai para AI/manual.
+function extractResultadoFromResumo(full: string): {
+  tipo: "restituicao" | "pagamento" | "nenhum";
+  valor: number;
+  inconsistente: boolean;
+  motivo: string;
+} {
+  const moneyRe = /\d{1,3}(?:\.\d{3})*,\d{2}/g;
+
+  // 1) Recorta janela do RESUMO
+  const reResumo = /\bresumo\b[\s\S]{0,4000}?(?=informa[cç][oõ]es\s+banc[aá]rias|pagamentos\s+efetuados|p[aá]gina\s+\d|$)/i;
+  const mWin = full.match(reResumo);
+  const window = mWin ? mWin[0] : full;
+
+  // 2) Coletar números "perigosos" (totais que NÃO podem ser confundidos com o resultado)
+  const blacklist = new Set<number>();
+  const pushBL = (s: string | undefined) => {
+    if (!s) return;
+    const v = parseMoneyBR(s);
+    if (v !== null && v > 0) blacklist.add(v);
+  };
+  // TOTAL de rendimentos tributáveis
+  const reRendTotal = /rendimentos\s+tribut[aá]veis[\s\S]{0,800}?\btotal\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+  pushBL(window.match(reRendTotal)?.[1]);
+  // Base de cálculo
+  const reBase = /base\s+de\s+c[aá]lculo[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+  pushBL(window.match(reBase)?.[1]);
+  // Imposto devido (linha)
+  const reDev = /imposto\s+devido\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+  pushBL(window.match(reDev)?.[1]);
+  // Total do imposto devido
+  const reTotDev = /total\s+do\s+imposto\s+devido[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+  pushBL(window.match(reTotDev)?.[1]);
+  // Total de deduções
+  const reDed = /dedu[cç][oõ]es[\s\S]{0,800}?\btotal\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+  pushBL(window.match(reDed)?.[1]);
+
+  // 3) Para cada label, pega o primeiro valor que NÃO tem outro label entre eles
+  const labelPag = /saldo\s+de\s+imposto\s+a\s+pagar|imposto\s+a\s+pagar(?!\s+sobre)/gi;
+  const labelRes = /imposto\s+a\s+restituir/gi;
+  // Labels concorrentes que invalidam a captura se aparecerem antes do número
+  const competing = /(base\s+de\s+c[aá]lculo|imposto\s+devido|al[ií]quota|quota\s+[uú]nica|dedu[cç][aã]o|total\b|valor\s+da\s+quota|aliquota\s+efetiva)/i;
+
+  function pickValueAfter(label: RegExp): number | null {
+    label.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = label.exec(window)) !== null) {
+      const start = m.index + m[0].length;
+      const slice = window.slice(start, start + 250);
+      // Primeira ocorrência de dinheiro na fatia
+      moneyRe.lastIndex = 0;
+      const mm = moneyRe.exec(slice);
+      if (!mm) continue;
+      // Entre label e número não pode ter label concorrente
+      const between = slice.slice(0, mm.index);
+      if (competing.test(between)) continue;
+      const v = parseMoneyBR(mm[0]);
+      if (v === null) continue;
+      // 4) Blacklist
+      if (blacklist.has(v)) {
+        return -1; // sinaliza inconsistência (bateu com total/base)
+      }
+      return v;
+    }
+    return null;
+  }
+
+  const vPag = pickValueAfter(labelPag);
+  const vRes = pickValueAfter(labelRes);
+
+  if (vPag === -1 || vRes === -1) {
+    return { tipo: "nenhum", valor: 0, inconsistente: true, motivo: "valor candidato coincide com total de rendimentos/base/imposto devido" };
+  }
+
+  if (vPag !== null && vPag > 0 && vRes !== null && vRes > 0) {
+    return { tipo: "nenhum", valor: 0, inconsistente: true, motivo: "pagar>0 e restituir>0 simultaneamente" };
+  }
+  if (vPag !== null && vPag > 0) return { tipo: "pagamento", valor: vPag, inconsistente: false, motivo: "" };
+  if (vRes !== null && vRes > 0) return { tipo: "restituicao", valor: vRes, inconsistente: false, motivo: "" };
+  return { tipo: "nenhum", valor: 0, inconsistente: false, motivo: "" };
+}
+
+
 function parseDeclaracao(inp: ParseInput): NativeResult {
   const { text, fingerprint, anoBase, cpfClienteDigits } = inp;
   const n = text.normalized;
