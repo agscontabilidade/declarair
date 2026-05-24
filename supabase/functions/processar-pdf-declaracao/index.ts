@@ -449,9 +449,7 @@ Deno.serve(async (req) => {
     // Auditoria
     const sufixoMetodo = metodoValidacao === "ia"
       ? "automaticamente via IA"
-      : metodoValidacao === "manual"
-        ? "manualmente pelo contador"
-        : "automaticamente";
+      : "manualmente pelo contador";
     const atividadeMap: Record<typeof tipo, { tipo: string; descricao: string }> = {
       declaracao: { tipo: "declaracao_validada", descricao: `Declaração validada ${sufixoMetodo}.` },
       recibo: { tipo: "recibo_validado", descricao: `Recibo da Receita Federal validado ${sufixoMetodo} (nº ${extracao?.numero_recibo ?? "?"}).` },
