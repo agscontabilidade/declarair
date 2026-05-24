@@ -1,23 +1,35 @@
-Plano focado para resolver o resultado errado sem quebrar a aplicação:
+## Objetivo
 
-1. Bloquear gravação quando a visão divergir
-- Hoje o Vision lê corretamente `Imposto a Restituir 892,31`, mas é rejeitado porque a validação exige que a linha literal apareça no OCR.
-- Depois disso, o código cai no fallback de IA por texto e grava `1.836,56`, que é o erro.
-- Vou alterar a cascata de `tipo === "declaracao"` para: se Vision falhar por validação de evidência/linha/valor, não usar mais IA-texto; cair direto em revisão manual. IA-texto só ficará permitido para outros tipos ou falhas técnicas claras.
+Reverter a edge function `processar-pdf-declaracao` para a versão antiga: extração feita exclusivamente pela Lovable AI sobre o texto do PDF, sem OCR.space, sem Vision (Gemini visual) e sem a cascata híbrida que foi adicionada depois.
 
-2. Tornar a validação do Vision compatível com OCR imperfeito
-- O OCR junta palavras e pode remover espaços, por isso `impostoarestituir892,31` não bate com a linha citada formatada.
-- Vou trocar a checagem rígida de `linha_citada` por uma validação de evidência flexível: label esperado + valor monetário precisam aparecer próximos no OCR compactado, aceitando ruído de espaços/pontuação.
-- Isso permitirá aceitar casos como `Imposto a Restituir 892,31` quando o OCR trouxe `impostoarestituir892,31`.
+## O que será feito
 
-3. Reforçar o parser determinístico do RESUMO
-- Vou ajustar `extractResultadoFromResumo` para também capturar valor quando o label e o dinheiro aparecem colados ou em linhas reconstruídas de forma ruim.
-- A prioridade seguirá estrita: `IMPOSTO A RESTITUIR` ou `SALDO DE IMPOSTO A PAGAR`, nunca totais, rendimentos, base de cálculo ou imposto devido.
+1. **`supabase/functions/processar-pdf-declaracao/index.ts`**
+   - Remover imports e chamadas de `runOcrFallback`, `runVisionExtraction` e do parser nativo determinístico (`tryNativeValidation`, `parseFromText`).
+   - Manter apenas: download do PDF, extração de texto bruto via `extractRawTextFromPdf`, chamada de `runAiExtraction` (Lovable AI) e a confirmação manual do contador como fallback.
+   - Fluxo final para todos os tipos (declaração, recibo, mei, darf):
+     1. Se veio `manual_confirmacao` → usa direto.
+     2. Senão → extrai texto do PDF → chama IA → grava resultado.
+     3. Se IA falhar ou texto for insuficiente → devolve `requires_manual_review` para abrir o modal de confirmação manual.
+   - Remover toda a lógica de "vision/regex candidate/divergência" e logs relacionados.
 
-4. Manter o restante intacto
-- Não haverá mudança de schema, RLS, storage, UI, email, recibo, MEI ou DARF.
-- Só serão editados os arquivos da função `processar-pdf-declaracao` ligados à extração de declaração.
+2. **Excluir arquivos não usados**
+   - `supabase/functions/processar-pdf-declaracao/ocr-fallback.ts`
+   - `supabase/functions/processar-pdf-declaracao/vision-fallback.ts`
+   - Manter `ai-fallback.ts` (é a IA) e `extract-native.ts` apenas se ainda for usado por `extractRawTextFromPdf`. Se sim, deixo só essa função e removo os parsers determinísticos não usados; se não, removo o arquivo todo.
 
-5. Validação após implementar
-- Conferir logs da função para garantir que o caso atual não grava mais `1.836,56`.
-- Resultado esperado: aceitar `892,31` quando Vision+evidência validarem; se não validar com segurança, não salvar nada errado e pedir revisão manual.
+3. **Não tocar em**
+   - Frontend (modal de confirmação manual já existe e continua funcionando).
+   - Schema/RLS/storage.
+   - Outras edge functions.
+   - Anexar/Email/Documentos extras (alterações anteriores ficam intactas).
+
+## Resultado esperado
+
+- Comportamento idêntico à versão "antes dos créditos acabarem": IA lê o texto do PDF e devolve os dados; se não der, abre o modal manual.
+- Sem chamadas OCR/Vision, sem cascata complexa, sem rejeições por "evidência".
+
+## Validação
+
+- Deploy automático da função.
+- Conferir nos logs (`supabase--edge_function_logs processar-pdf-declaracao`) que só aparece `[ia]` e nunca mais `[ocr]`, `[vision]` ou `[cascade]`.
