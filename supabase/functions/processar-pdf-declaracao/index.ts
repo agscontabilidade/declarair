@@ -129,8 +129,6 @@ Deno.serve(async (req) => {
       cpf: string;
       nome: string;
       ano_exercicio: number;
-      tipo_resultado: 'restituicao' | 'pagamento' | 'nenhum';
-      valor_resultado: number;
       motivo_rejeicao: string | null;
     }
     interface ExtracaoRecibo {
@@ -139,6 +137,8 @@ Deno.serve(async (req) => {
       cpf: string;
       ano_exercicio: number;
       data_transmissao: string;
+      tipo_resultado: 'restituicao' | 'pagamento' | 'nenhum';
+      valor_resultado: number;
       motivo_rejeicao: string | null;
     }
     interface ExtracaoMei {
