@@ -665,9 +665,27 @@ export async function tryNativeValidation(
   const { pdf, structure } = sniff;
   if (structure.numPages > 50) return { ok: false, reason: "PDF com muitas páginas (>50)" };
 
-  // CAMADA 2 — texto
-  const text = await extractFullText(pdf);
-  const textLen = text.full.replace(/\s/g, "").length;
+  // CAMADA 2 — texto (unpdf primeiro, pdfjs como fallback)
+  let text = await extractFullText(pdf);
+  let textLen = text.full.replace(/\s/g, "").length;
+  let textSource = "unpdf";
+
+  // Marcadores fiscais esperados — se faltarem, vale a pena tentar pdfjs mesmo
+  // com textLen > 80 (caso unpdf decodifique caracteres errados).
+  const hasFiscalMarkers = (s: string) =>
+    /declaracao|recibo|darf|simei|exercicio|imposto/i.test(s);
+
+  if (textLen < 200 || !hasFiscalMarkers(text.normalized)) {
+    console.log(`[pipeline] unpdf insuficiente (len=${textLen}, markers=${hasFiscalMarkers(text.normalized)}); tentando pdfjs…`);
+    const alt = await extractWithPdfjs(bytes);
+    const altLen = alt.full.replace(/\s/g, "").length;
+    if (altLen > textLen && hasFiscalMarkers(alt.normalized)) {
+      text = alt; textLen = altLen; textSource = "pdfjs";
+    } else if (altLen > textLen) {
+      text = alt; textLen = altLen; textSource = "pdfjs";
+    }
+  }
+
   if (textLen < 80) {
     return { ok: false, reason: "scan_sem_texto" };
   }
