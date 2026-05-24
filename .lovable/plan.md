@@ -1,30 +1,34 @@
-## Problema
+Vou corrigir a validação para cumprir o objetivo principal: **validar documentos por algoritmo sempre que possível e nunca bloquear o sistema por falta de créditos de IA**.
 
-No upload da aba "Declaração (PDF)" em `/declaracoes`, a IA rejeita arquivos da **Declaração de Saída Definitiva do País (DSDP)** porque o validador (`supabase/functions/processar-pdf-declaracao/index.ts`) só aceita explicitamente a DIRPF (Declaração de Ajuste Anual). O prompt diz: *"true somente se for de fato uma Declaração de Ajuste Anual do IRPF (DIRPF)"* — então a IA marca `eh_declaracao_irpf: false` e o upload é bloqueado com "PDF não reconhecido como Declaração do IRPF".
+Plano:
 
-Saída Definitiva também é uma obrigação acessória do IRPF entregue via programa da Receita (DSDP) e deve ser aceita como "Declaração" para o fluxo do escritório.
+1. **Fortalecer a extração nativa sem IA**
+   - Manter `unpdf`, mas melhorar os critérios de qualidade do texto extraído.
+   - Ajustar regex/heurísticas para reconhecer melhor DIRPF, Saída Definitiva, Comunicação de Saída, Recibo, DASN-SIMEI e DARF.
+   - Não exigir IA quando o documento textual tiver marcadores confiáveis, CPF válido e ano compatível.
+   - Para valores financeiros, manter regra conservadora: só preencher automaticamente quando o valor for encontrado com alta confiança; caso contrário, não inventar valor.
 
-## Mudanças
+2. **Parar de transformar PDF escaneado em erro de créditos**
+   - Quando o PDF for imagem/scan sem texto extraível, o backend **não deve chamar IA obrigatoriamente**.
+   - Em vez disso, retornar um status controlado, por exemplo `requires_manual_review`, com mensagem clara: “PDF escaneado ou sem texto pesquisável; valide manualmente ou envie um PDF gerado pelo programa da Receita”.
+   - Isso elimina o erro “Créditos de IA esgotados” para o usuário final.
 
-Apenas no edge function `supabase/functions/processar-pdf-declaracao/index.ts`, no ramo `tipo === "declaracao"`:
+3. **Usar IA só como fallback opcional e seguro**
+   - Se a extração nativa falhar por ambiguidade, a IA poderá ser tentada apenas quando fizer sentido.
+   - Se a IA retornar 402/429 ou qualquer falha, o sistema cai para revisão manual, sem mostrar erro de crédito e sem apagar o fluxo do usuário.
 
-1. **Ampliar `promptDeclaracao.eh_declaracao_irpf`** para aceitar tanto a DIRPF quanto a **Declaração de Saída Definitiva do País (DSDP)** e a **Comunicação de Saída Definitiva do País** (quando o contador anexa o documento de saída no lugar da DIRPF). Manter rejeição rigorosa para outros documentos (recibo, DARF, extratos, etc.).
+4. **Adicionar revisão manual no upload**
+   - No componente de anexar PDFs, quando o backend retornar `requires_manual_review`, manter o arquivo enviado e abrir/indicar uma confirmação manual para o contador.
+   - A confirmação manual deve exigir pelo menos: tipo do documento, CPF/cliente já conhecido, ano e campos críticos conforme o tipo.
+   - Isso garante funcionamento mesmo para scans, sem depender de IA.
 
-2. **Adicionar campo `subtipo`** ao schema da extração: `'dirpf' | 'saida_definitiva' | 'comunicacao_saida'`, para o backend saber qual variante foi reconhecida e logar/armazenar em `declaracao_extracao`.
+5. **Preservar lógica existente**
+   - Não alterar schema salvo se for indispensável.
+   - Manter atualizações atuais de status: declaração pronta, transmitida ao validar recibo, anexos MEI/DARF e checklist.
+   - Manter isolamento por `escritorio_id` e validações de CPF/ano.
 
-3. **Ajustar `tipo_resultado` para saída definitiva**: na DSDP normalmente não há "Saldo de Imposto a Pagar"/"Imposto a Restituir" no mesmo formato. Instruir a IA a retornar `'nenhum'` com `valor_resultado: 0` quando for saída definitiva e não houver imposto apurado, e a usar `pagamento`/`restituicao` apenas se o próprio documento trouxer esses valores.
-
-4. **Atualizar `userPromptMap.declaracao`** para mencionar explicitamente: "Aceite tanto a DIRPF (Declaração de Ajuste Anual) quanto a Declaração de Saída Definitiva do País (DSDP) e a Comunicação de Saída Definitiva. Para DSDP, se não houver folha de Resumo com imposto a pagar/restituir, retorne `nenhum` e `valor_resultado: 0`."
-
-5. **Validação de ano**: manter a regra atual (`anoArquivo === anoBase`). DSDP usa ano-exercício no mesmo formato da DIRPF, então não precisa de exceção. Se durante testes aparecer divergência (ex.: DSDP usa ano-calendário), tratamos depois.
-
-## Fora do escopo
-
-- Não mexer no frontend (`AnexarDeclaracaoButton.tsx`), texto do botão continua "Declaração (PDF)".
-- Não criar tipo novo no banco (nenhuma migration); a DSDP entra no mesmo slot `arquivo_declaracao_*`.
-- Não alterar fluxos de recibo, MEI ou DARF.
-
-## Verificação
-
-- Reler o diff do edge function.
-- Pedir ao usuário para testar o upload de uma DSDP real e, se possível, compartilhar o `motivo_rejeicao` retornado caso ainda falhe — assim ajustamos o prompt com base no texto que aparece no PDF.
+Resultado esperado:
+- PDFs textuais da Receita validam rápido e sem IA.
+- PDFs escaneados deixam de consumir IA automaticamente.
+- Falta de créditos de IA não quebra o upload.
+- Dados financeiros continuam conservadores: só entram automaticamente quando há leitura confiável; caso contrário, passam por revisão manual.

@@ -25,7 +25,28 @@ interface Body {
   tipo?: "declaracao" | "recibo" | "mei" | "darf";
   storage_path?: string;
   arquivo_nome?: string;
+  manual_confirmacao?: ManualConfirmacao;
 }
+
+interface ManualConfirmacao {
+  // Comum
+  cpf?: string;
+  ano?: number;
+  // Declaração
+  tipo_resultado?: "restituicao" | "pagamento" | "nenhum";
+  valor_resultado?: number;
+  subtipo?: "dirpf" | "saida_definitiva" | "comunicacao_saida";
+  // Recibo
+  numero_recibo?: string;
+  data_transmissao?: string; // YYYY-MM-DD
+  // MEI
+  cnpj?: string;
+  // DARF
+  codigo_receita?: string;
+  valor_principal?: number;
+  valor_total?: number;
+}
+
 
 function digits(s: string | null | undefined) {
   return (s || "").replace(/\D/g, "");
@@ -35,6 +56,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const CODIGOS_DARF_IRPF_PF = ["0211", "4600", "6015"];
+
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -42,7 +67,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-    if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY ausente" }, 500);
+    // LOVABLE_API_KEY pode estar ausente — o fluxo cai para revisão manual sem quebrar.
 
     const anon = createClient(SUPABASE_URL, ANON_KEY);
     const { data: userData, error: userErr } = await anon.auth.getUser(
@@ -60,7 +85,8 @@ Deno.serve(async (req) => {
     if (!usuario?.escritorio_id) return json({ error: "Usuário sem escritório" }, 403);
 
     const body = (await req.json()) as Body;
-    const { declaracao_id, tipo, storage_path, arquivo_nome } = body;
+    const { declaracao_id, tipo, storage_path, arquivo_nome, manual_confirmacao } = body;
+
     if (!declaracao_id || !tipo || !storage_path) {
       return json({ error: "Parâmetros obrigatórios ausentes" }, 400);
     }
@@ -200,68 +226,168 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
     };
     const userPrompt = userPromptMap[tipo];
 
-    // ========== HÍBRIDO: tenta extração nativa (regex) antes da IA ==========
+    // ========== HÍBRIDO: regex nativa primeiro; IA só se útil; manual como último recurso ==========
     let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo & ExtracaoMei & ExtracaoDarf> = {};
-    let metodoValidacao: "regex" | "ia" = "ia";
+    let metodoValidacao: "regex" | "ia" | "manual" = "ia";
 
-    try {
-      const native = await tryNativeValidation(bytes, tipo, Number(dec.ano_base), cliente.cpf || "");
-      if (native.ok) {
-        extracao = native.data as typeof extracao;
-        metodoValidacao = "regex";
-        console.log(`[hibrido] ${tipo} validado por REGEX (sem IA)`);
-      } else {
-        console.log(`[hibrido] regex falhou para ${tipo}: ${native.reason} — caindo para IA`);
-      }
-    } catch (e) {
-      console.error("[hibrido] erro inesperado na extração nativa:", e);
-    }
+    const cpfClienteDigits = digits(cliente.cpf);
+    const anoBaseNum = Number(dec.ano_base);
 
-    if (metodoValidacao === "ia") {
-      // Modelo: pro para declaração (precisão na leitura visual do resumo), flash para os demais
-      const model = tipo === "declaracao" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
-
-      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: systemPrompt },
-            {
-              role: "user",
-              content: [
-                { type: "text", text: userPrompt },
-                {
-                  type: "image_url",
-                  image_url: { url: `data:application/pdf;base64,${base64}` },
-                },
-              ],
-            },
-          ],
-        }),
+    // Helper: construir resposta padronizada para revisão manual (não apaga o arquivo)
+    const manualReview = (motivo: string) =>
+      json({
+        ok: false,
+        requires_manual_review: true,
+        motivo,
+        storage_path,
+        arquivo_nome: arquivo_nome || storage_path.split("/").pop(),
+        tipo,
       });
 
-      if (!aiRes.ok) {
-        const t = await aiRes.text();
-        console.error("AI error", aiRes.status, t);
-        if (aiRes.status === 429) return fail("Limite de IA atingido. Tente novamente em alguns minutos.");
-        if (aiRes.status === 402) return fail("Créditos de IA esgotados. Contate o suporte.");
-        return fail("Falha ao analisar o PDF com IA");
+    // 1) Confirmação manual enviada pelo contador — pula regex/IA
+    if (manual_confirmacao) {
+      metodoValidacao = "manual";
+      const mc = manual_confirmacao;
+      // Validações básicas por tipo
+      if (tipo === "declaracao") {
+        if (!mc.tipo_resultado || !["restituicao", "pagamento", "nenhum"].includes(mc.tipo_resultado)) {
+          return fail("Confirmação manual: informe o tipo de resultado");
+        }
+        if (mc.tipo_resultado !== "nenhum" && (typeof mc.valor_resultado !== "number" || mc.valor_resultado < 0)) {
+          return fail("Confirmação manual: informe o valor (R$)");
+        }
+        extracao = {
+          eh_declaracao_irpf: true,
+          cpf: cpfClienteDigits,
+          nome: cliente.nome,
+          ano_exercicio: anoBaseNum,
+          tipo_resultado: mc.tipo_resultado,
+          valor_resultado: mc.tipo_resultado === "nenhum" ? 0 : Number(mc.valor_resultado || 0),
+          motivo_rejeicao: null,
+        };
+      } else if (tipo === "recibo") {
+        if (!mc.numero_recibo || !mc.data_transmissao) {
+          return fail("Confirmação manual: número do recibo e data de transmissão são obrigatórios");
+        }
+        extracao = {
+          eh_recibo_rfb: true,
+          numero_recibo: String(mc.numero_recibo).trim(),
+          cpf: cpfClienteDigits,
+          ano_exercicio: anoBaseNum,
+          data_transmissao: mc.data_transmissao,
+          motivo_rejeicao: null,
+        };
+      } else if (tipo === "mei") {
+        if (!mc.cnpj) return fail("Confirmação manual: CNPJ do MEI é obrigatório");
+        extracao = {
+          eh_dasn_simei: true,
+          cnpj: digits(mc.cnpj),
+          cpf: cpfClienteDigits,
+          ano_calendario: Number(mc.ano || anoBaseNum - 1),
+          numero_recibo: mc.numero_recibo || null,
+          data_transmissao: mc.data_transmissao || null,
+          motivo_rejeicao: null,
+        };
+      } else if (tipo === "darf") {
+        const cod = String(mc.codigo_receita || "").padStart(4, "0");
+        if (!CODIGOS_DARF_IRPF_PF.includes(cod)) {
+          return fail(`Confirmação manual: código de receita deve ser um destes: ${CODIGOS_DARF_IRPF_PF.join(", ")}`);
+        }
+        if (typeof mc.valor_principal !== "number" || typeof mc.valor_total !== "number") {
+          return fail("Confirmação manual: informe valor principal e valor total");
+        }
+        extracao = {
+          eh_darf_irpf: true,
+          cpf: cpfClienteDigits,
+          codigo_receita: cod,
+          periodo_apuracao: null,
+          data_vencimento: mc.data_transmissao || null,
+          valor_principal: mc.valor_principal,
+          valor_total: mc.valor_total,
+          motivo_rejeicao: null,
+        };
       }
-      const aiJson = await aiRes.json();
-      const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
+      console.log(`[hibrido] ${tipo} validado MANUALMENTE pelo contador`);
+    } else {
+      // 2) Tenta regex nativa
+      let nativeReason = "";
+      let isScan = false;
       try {
-        extracao = JSON.parse(content);
-      } catch {
-        const m = content.match(/\{[\s\S]*\}/);
-        extracao = m ? JSON.parse(m[0]) : {};
+        const native = await tryNativeValidation(bytes, tipo, anoBaseNum, cliente.cpf || "");
+        if (native.ok) {
+          extracao = native.data as typeof extracao;
+          metodoValidacao = "regex";
+          console.log(`[hibrido] ${tipo} validado por REGEX (sem IA)`);
+        } else {
+          nativeReason = native.reason;
+          isScan = native.reason === "scan_sem_texto";
+          console.log(`[hibrido] regex falhou para ${tipo}: ${native.reason}`);
+        }
+      } catch (e) {
+        console.error("[hibrido] erro inesperado na extração nativa:", e);
+        nativeReason = "erro_extracao_nativa";
+      }
+
+      // 3) Fallback IA — só se regex falhou por ambiguidade (não scan) E houver chave
+      if (metodoValidacao === "ia") {
+        if (isScan || !LOVABLE_API_KEY) {
+          // PDF escaneado ou IA indisponível → revisão manual, sem erro
+          return manualReview(
+            isScan
+              ? "PDF parece escaneado/imagem (sem texto pesquisável). Confirme os dados manualmente para registrar."
+              : "Validação automática indisponível. Confirme os dados manualmente para registrar."
+          );
+        }
+
+        const model = tipo === "declaracao" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+        let aiRes: Response;
+        try {
+          aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model,
+              response_format: { type: "json_object" },
+              messages: [
+                { role: "system", content: systemPrompt },
+                {
+                  role: "user",
+                  content: [
+                    { type: "text", text: userPrompt },
+                    { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64}` } },
+                  ],
+                },
+              ],
+            }),
+          });
+        } catch (e) {
+          console.error("AI fetch falhou:", e);
+          return manualReview("Validação automática indisponível agora. Confirme os dados manualmente.");
+        }
+
+        if (!aiRes.ok) {
+          const t = await aiRes.text().catch(() => "");
+          console.error("AI error", aiRes.status, t);
+          // 402 (sem créditos), 429 (rate limit) ou qualquer outro erro → revisão manual,
+          // NUNCA expor "créditos esgotados" ao contador.
+          return manualReview(
+            "Validação automática indisponível no momento. Confirme os dados manualmente para registrar o documento."
+          );
+        }
+        const aiJson = await aiRes.json();
+        const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
+        try {
+          extracao = JSON.parse(content);
+        } catch {
+          const m = content.match(/\{[\s\S]*\}/);
+          extracao = m ? JSON.parse(m[0]) : {};
+        }
       }
     }
+
 
     // Validação cruzada
     const cpfArquivo = digits(extracao?.cpf);
@@ -271,7 +397,8 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
       (extracao as Partial<ExtracaoMei>)?.ano_calendario,
     );
     const anoBase = Number(dec.ano_base);
-    const CODIGOS_DARF_IRPF_PF = ["0211", "4600", "6015"];
+
+
 
     if (tipo === "declaracao") {
       if (!extracao?.eh_declaracao_irpf) {
@@ -435,7 +562,7 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
     }
 
     // Auditoria
-    const sufixoMetodo = metodoValidacao === "regex" ? "automaticamente" : "por IA";
+    const sufixoMetodo = metodoValidacao === "regex" ? "automaticamente" : metodoValidacao === "manual" ? "manualmente pelo contador" : "por IA";
     const atividadeMap: Record<typeof tipo, { tipo: string; descricao: string }> = {
       declaracao: { tipo: "declaracao_validada", descricao: `Declaração validada ${sufixoMetodo}.` },
       recibo: { tipo: "recibo_validado", descricao: `Recibo da Receita Federal validado ${sufixoMetodo} (nº ${extracao?.numero_recibo ?? "?"}).` },

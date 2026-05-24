@@ -426,9 +426,9 @@ export async function tryNativeValidation(
   cpfCliente: string,
 ): Promise<NativeResult> {
   const text = await extractPdfText(bytes);
-  // PDFs escaneados retornam pouquíssimo texto — manda para IA
+  // PDFs escaneados retornam pouquíssimo texto — sinaliza claramente
   if (!text || text.replace(/\s/g, "").length < 80) {
-    return { ok: false, reason: "PDF sem texto extraível (provável imagem/scan)" };
+    return { ok: false, reason: "scan_sem_texto" };
   }
 
   const cpfDigits = onlyDigits(cpfCliente);
@@ -439,3 +439,4 @@ export async function tryNativeValidation(
     case "darf": return detectDarf(text, cpfDigits);
   }
 }
+
