@@ -480,7 +480,11 @@ Deno.serve(async (req) => {
     }
 
     // Auditoria
-    const sufixoMetodo = metodoValidacao === "regex" ? "automaticamente" : "manualmente pelo contador";
+    const sufixoMetodo = metodoValidacao === "regex"
+      ? "automaticamente"
+      : metodoValidacao === "ocr"
+        ? "automaticamente via OCR"
+        : "manualmente pelo contador";
     const atividadeMap: Record<typeof tipo, { tipo: string; descricao: string }> = {
       declaracao: { tipo: "declaracao_validada", descricao: `Declaração validada ${sufixoMetodo}.` },
       recibo: { tipo: "recibo_validado", descricao: `Recibo da Receita Federal validado ${sufixoMetodo} (nº ${extracao?.numero_recibo ?? "?"}).` },
