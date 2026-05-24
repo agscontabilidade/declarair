@@ -334,7 +334,14 @@ export function EnviarDeclaracaoEmailModal({
       icon: FileText,
       tone: 'bg-blue-500/10 text-blue-600',
     },
+    ...((arquivosOutros || []).map((o) => ({
+      nome: o.nome || 'Documento',
+      tipo: 'Outro',
+      icon: FileText,
+      tone: 'bg-slate-500/10 text-slate-600',
+    }))),
   ].filter(Boolean) as Array<{ nome: string; tipo: string; icon: typeof FileText; tone: string }>;
+
 
   const valorFmt = cobrancaValor != null
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaValor)
