@@ -1,6 +1,7 @@
 // Edge function: valida PDF anexado (Declaração ou Recibo) com IA,
 // atualiza o status da declaração e dispara notificações ao cliente.
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { tryNativeValidation } from "./extract-native.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
