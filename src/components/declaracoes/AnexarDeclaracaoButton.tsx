@@ -21,7 +21,10 @@ import {
   Briefcase,
   Banknote,
   Paperclip,
+  Plus,
+  X,
 } from 'lucide-react';
+
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
