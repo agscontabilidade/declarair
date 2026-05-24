@@ -235,49 +235,55 @@ export async function runVisionExtraction(
     return { ok: false, reason: "vision_tipo_com_valor_zero", elapsedMs };
   }
 
-  // Anti-alucinação 1: linha_citada precisa aparecer no OCR (se temos OCR)
-  if (ocrText && linhaCitada.length >= 10) {
-    const ocrNorm = normalizeForMatch(ocrText);
-    const linhaNorm = normalizeForMatch(linhaCitada);
-    // Pega um trecho de 25 caracteres significativos da linha (sem espaços/pontos)
-    const trecho = linhaNorm.replace(/[^a-z0-9,]/g, "").slice(0, 25);
-    if (trecho.length >= 10) {
-      const ocrCompact = ocrNorm.replace(/[^a-z0-9,]/g, "");
-      if (!ocrCompact.includes(trecho)) {
+  // Anti-alucinação UNIFICADA — validação de evidência flexível:
+  // label esperado + valor monetário precisam coexistir no OCR compactado,
+  // próximos um do outro. Tolera OCR que junta palavras
+  // (ex.: "impostoarestituir892,31") e variações de quebra de linha.
+  if (ocrText && (tipoResultado === "restituicao" || tipoResultado === "pagamento")) {
+    const ocrCompact = normalizeForMatch(ocrText).replace(/[^a-z0-9,]/g, "");
+    const valorBR = (() => {
+      if (!Number.isFinite(valor) || valor <= 0) return "";
+      const fixed = valor.toFixed(2);
+      const [intPart, decPart] = fixed.split(".");
+      const intDotted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      return `${intDotted},${decPart}`;
+    })();
+    const valorCompact = valorBR.replace(/\./g, "");
+
+    // 1) valor precisa existir no OCR (formato BR canônico ou compactado)
+    if (valor > 0 && !valueExistsInSource(valor, ocrText) && !ocrCompact.includes(valorCompact)) {
+      return {
+        ok: false,
+        reason: `vision_valor_nao_encontrado_no_ocr (${valor})`,
+        elapsedMs,
+      };
+    }
+
+    // 2) label esperado precisa existir no OCR compactado
+    const labelKey = tipoResultado === "restituicao" ? "impostoarestituir" : "impostoapagar";
+    const labelIdx = ocrCompact.indexOf(labelKey);
+    if (labelIdx === -1) {
+      return {
+        ok: false,
+        reason: `vision_label_nao_encontrado_no_ocr (${labelKey})`,
+        elapsedMs,
+      };
+    }
+
+    // 3) valor precisa estar próximo do label (janela de 80 chars depois)
+    if (valor > 0) {
+      const janela = ocrCompact.slice(labelIdx, labelIdx + labelKey.length + 80);
+      if (!janela.includes(valorCompact)) {
         return {
           ok: false,
-          reason: `vision_linha_nao_encontrada_no_ocr (trecho="${trecho}")`,
+          reason: `vision_valor_distante_do_label (${valor} fora da janela de "${labelKey}")`,
           elapsedMs,
         };
       }
     }
   }
 
-  // Anti-alucinação 2: label correto para o tipo
-  if (tipoResultado === "restituicao") {
-    if (!/restitu/i.test(linhaCitada)) {
-      return {
-        ok: false,
-        reason: "vision_linha_sem_label_restituir",
-        elapsedMs,
-      };
-    }
-  } else if (tipoResultado === "pagamento") {
-    if (!/pagar|pagamento/i.test(linhaCitada)) {
-      return { ok: false, reason: "vision_linha_sem_label_pagar", elapsedMs };
-    }
-  }
-
-  // Anti-alucinação 3: valor existe no OCR
-  if (valor > 0 && ocrText && !valueExistsInSource(valor, ocrText)) {
-    return {
-      ok: false,
-      reason: `vision_valor_nao_encontrado_no_ocr (${valor})`,
-      elapsedMs,
-    };
-  }
-
-  // Anti-alucinação 4: valor não pode coincidir com totais "proibidos" no OCR
+  // Anti-alucinação extra: valor não pode coincidir com totais "proibidos" no OCR
   if (valor > 0 && ocrText) {
     const labelsProibidos = [
       /rendimentos\s+tribut[aá]veis[\s\S]{0,400}?\btotal\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i,

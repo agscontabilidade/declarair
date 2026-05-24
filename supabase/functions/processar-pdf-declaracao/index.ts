@@ -347,8 +347,6 @@ Deno.serve(async (req) => {
         } else {
           // VISION falhou (validações cruzadas ou gateway).
           nativeReason = nativeReason || (visionRes as { reason: string }).reason;
-          // Se o regex tinha um candidato, tentamos aceitá-lo APENAS quando
-          // o VISION falhou por motivo de gateway/créditos (não por divergência).
           const reason = (visionRes as { reason: string }).reason;
           const gatewayFailure =
             reason.startsWith("vision_gateway_") ||
@@ -362,8 +360,18 @@ Deno.serve(async (req) => {
             extracao = regexCandidate as typeof extracao;
             metodoValidacao = regexMetodo as typeof metodoValidacao;
             pipelineOk = true;
+          } else if (!gatewayFailure) {
+            // FALHA DE EVIDÊNCIA: NÃO confiar em IA-texto (ela alucina valores
+            // como totais de rendimentos). Vai DIRETO para revisão manual.
+            console.log(`[vision] resultado rejeitado por evidência: ${reason} — revisão manual obrigatória`);
+            return manualReview(
+              `Não foi possível confirmar o resultado da declaração com segurança (${reason}). Por favor, informe manualmente o tipo (Restituição/Pagamento/Nenhum) e o valor exatos.`
+            );
           } else {
-            console.log(`[vision] resultado rejeitado: ${reason} — seguirá para IA-texto/manual`);
+            console.log(`[vision] indisponível (${reason}) e sem candidato regex — revisão manual`);
+            return manualReview(
+              `Serviço de leitura visual indisponível (${reason}). Confirme os dados da declaração manualmente.`
+            );
           }
         }
 
@@ -387,7 +395,11 @@ Deno.serve(async (req) => {
       // já rodou e/ou pode estourar CPU em arquivos imagem.
       if (!pipelineOk) {
         const sourceText = ocrText;
-        if (sourceText && sourceText.length > 150) {
+        // Para DECLARAÇÃO, NUNCA usar IA-texto: ela tende a confundir o valor
+        // do resultado com totais de rendimentos. Cai direto em revisão manual.
+        if (tipo === "declaracao") {
+          console.log(`[ia] declaracao NÃO acionada: precisão exige Vision/manual (motivo: "${nativeReason}")`);
+        } else if (sourceText && sourceText.length > 150) {
           console.log(`[ia] ${tipo} acionando fallback de IA (motivo: "${nativeReason}", chars=${sourceText.length})`);
           const aiRes = await runAiExtraction(sourceText, tipo, anoBaseNum, cliente.cpf || "");
           console.log(`[ia] ${tipo} ok=${aiRes.ok} tempo_ms=${aiRes.elapsedMs} ${aiRes.ok ? "" : `reason=${aiRes.reason}`}`);
