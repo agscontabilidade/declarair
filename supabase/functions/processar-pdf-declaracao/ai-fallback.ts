@@ -68,31 +68,22 @@ function schemaFor(tipo: Tipo) {
     case "declaracao":
       return {
         name: "extrair_declaracao_irpf",
-        description: "Extrai dados do RESUMO de uma Declaração de IRPF (DIRPF/DSDP).",
+        description: "Valida que um PDF é uma Declaração de IRPF (DIRPF/DSDP) e extrai apenas CPF, ano e nome. O RESULTADO (restituição/pagamento) NÃO é extraído daqui — é extraído do Recibo.",
         parameters: {
           type: "object",
           properties: {
             cpf: { type: "string", description: "CPF do contribuinte titular, apenas dígitos (11)." },
             ano_exercicio: { type: "integer", description: "Ano-exercício da declaração (ex.: 2026)." },
-            tipo_resultado: {
-              type: "string",
-              enum: ["restituicao", "pagamento", "nenhum"],
-              description: "Apenas com base no bloco RESUMO: 'restituicao' se IMPOSTO A RESTITUIR > 0; 'pagamento' se SALDO DE IMPOSTO A PAGAR > 0; 'nenhum' se ambos forem zero.",
-            },
-            valor_resultado: {
-              type: "number",
-              description: "Valor exato em reais correspondente ao tipo_resultado escolhido. Deve aparecer literalmente no texto, dentro do RESUMO. Use 0 quando tipo_resultado='nenhum'.",
-            },
             nome: { type: "string", description: "Nome completo do contribuinte titular." },
           },
-          required: ["cpf", "ano_exercicio", "tipo_resultado", "valor_resultado"],
+          required: ["cpf", "ano_exercicio"],
           additionalProperties: false,
         },
       };
     case "recibo":
       return {
         name: "extrair_recibo_rfb",
-        description: "Extrai dados de um Recibo de Entrega da Receita Federal.",
+        description: "Extrai dados de um Recibo de Entrega da Receita Federal, incluindo o resultado da declaração (restituição/pagamento).",
         parameters: {
           type: "object",
           properties: {
@@ -100,8 +91,17 @@ function schemaFor(tipo: Tipo) {
             ano_exercicio: { type: "integer" },
             numero_recibo: { type: "string", description: "Número do recibo no formato dd.dd.dd.dd.dd-dd." },
             data_transmissao: { type: "string", description: "Data no formato YYYY-MM-DD." },
+            tipo_resultado: {
+              type: "string",
+              enum: ["restituicao", "pagamento", "nenhum"],
+              description: "Procure no recibo: 'restituicao' se houver IMPOSTO A RESTITUIR > 0; 'pagamento' se houver IMPOSTO A PAGAR / SALDO A PAGAR > 0; 'nenhum' se ambos forem zero ou ausentes.",
+            },
+            valor_resultado: {
+              type: "number",
+              description: "Valor em reais correspondente ao tipo_resultado. Deve aparecer literalmente no recibo. Use 0 quando tipo_resultado='nenhum'.",
+            },
           },
-          required: ["cpf", "ano_exercicio", "numero_recibo", "data_transmissao"],
+          required: ["cpf", "ano_exercicio", "numero_recibo", "data_transmissao", "tipo_resultado", "valor_resultado"],
           additionalProperties: false,
         },
       };
