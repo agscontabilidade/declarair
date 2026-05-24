@@ -147,7 +147,9 @@ export default function Declaracoes() {
     arquivo_darf_nome: string | null;
     arquivo_mei_url: string | null;
     arquivo_mei_nome: string | null;
+    arquivos_outros: Array<{ path: string; nome: string; uploaded_at?: string }> | null;
     recibo_validado_em: string | null;
+
     em_processamento: boolean | null;
     status_processamento_rfb: StatusProcessamentoRfb | null;
     declaracao_enviada_em: string | null;
