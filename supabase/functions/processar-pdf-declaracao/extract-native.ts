@@ -1064,3 +1064,22 @@ export function parseFromText(
   }
   return result;
 }
+
+// =============================================================================
+// Helper: extrai apenas o texto bruto (usado pelo fallback de IA, que precisa
+// do mesmo texto que o parser nativo viu, sem rodar tudo de novo a partir do
+// zero quando o caller já chamou tryNativeValidation). Re-extrai porque o
+// pipeline atual descarta o texto após validar.
+// =============================================================================
+export async function extractRawTextFromPdf(bytes: Uint8Array): Promise<string> {
+  try {
+    const sniff = await sniffPdf(bytes);
+    if (!sniff) return "";
+    const { text } = await extractTextCascade(sniff.pdf, bytes);
+    return text.full || "";
+  } catch (e) {
+    console.error("[extractRawTextFromPdf] falhou:", (e as Error).message);
+    return "";
+  }
+}
+
