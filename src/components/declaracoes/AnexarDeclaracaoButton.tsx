@@ -30,6 +30,12 @@ import { ConfirmarDocumentoManualDialog, type ManualConfirmacaoPayload } from '.
 
 type Tipo = 'declaracao' | 'recibo' | 'mei' | 'darf';
 
+export interface OutroDocumento {
+  path: string;
+  nome: string;
+  uploaded_at: string;
+}
+
 interface Props {
   declaracaoId: string;
   escritorioId: string;
@@ -44,7 +50,9 @@ interface Props {
   arquivoDarfUrl?: string | null;
   arquivoDarfNome?: string | null;
   darfValidadoEm?: string | null;
+  arquivosOutros?: OutroDocumento[] | null;
 }
+
 
 export function AnexarDeclaracaoButton({
   declaracaoId,
