@@ -164,12 +164,11 @@ export async function runAiExtraction(
     "Você extrai dados estruturados de documentos fiscais brasileiros (Receita Federal).",
     "REGRAS ABSOLUTAS:",
     "1. Use APENAS valores que aparecem literalmente no texto fornecido.",
-    "2. Para declarações IRPF, leia EXCLUSIVAMENTE o bloco 'RESUMO' (ignore totais de rendimentos, base de cálculo e imposto devido — esses NÃO são o resultado).",
-    "3. Se IMPOSTO A RESTITUIR > 0 -> tipo_resultado='restituicao', valor_resultado=esse número.",
-    "4. Se SALDO DE IMPOSTO A PAGAR > 0 -> tipo_resultado='pagamento', valor_resultado=esse número.",
-    "5. Se ambos forem zero -> tipo_resultado='nenhum', valor_resultado=0.",
-    "6. NUNCA invente dígitos. Se um campo não aparece com clareza no texto, NÃO chame a função.",
+    "2. Para o RECIBO de entrega: localize 'IMPOSTO A RESTITUIR' ou 'IMPOSTO A PAGAR' (ou 'SALDO A PAGAR'). Se Restituir > 0 -> tipo_resultado='restituicao'; se Pagar > 0 -> tipo_resultado='pagamento'; se ambos zero/ausentes -> tipo_resultado='nenhum' e valor_resultado=0.",
+    "3. Para DECLARAÇÃO completa: extraia APENAS CPF, ano e nome. NÃO tente extrair valor de resultado — isso vem do recibo.",
+    "4. NUNCA invente dígitos. Se um campo não aparece com clareza no texto, NÃO chame a função.",
   ].join("\n");
+
 
   const userPrompt = [
     `Ano-base esperado: ${anoBase}.`,
