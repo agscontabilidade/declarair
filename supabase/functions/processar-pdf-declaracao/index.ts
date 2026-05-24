@@ -164,6 +164,8 @@ Deno.serve(async (req) => {
     // ========== Pipeline determinístico (SEM IA): regex+layout > manual ==========
     let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo & ExtracaoMei & ExtracaoDarf> = {};
     let metodoValidacao: "regex" | "manual" = "regex";
+    let pipelineOk = false;
+
 
     const cpfClienteDigits = digits(cliente.cpf);
     const anoBaseNum = Number(dec.ano_base);
