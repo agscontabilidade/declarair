@@ -287,6 +287,7 @@ Deno.serve(async (req) => {
         console.log(`[ocr] tipo=${tipo} ok=${ocr.ok} tempo_ms=${ocr.elapsedMs} chars=${ocr.text.length} reason=${ocr.reason || "-"}`);
         if (ocr.ok && ocr.text.length > 100) {
           ocrText = ocr.text;
+          if (ocr.reason) console.log(`[ocr] tipo=${tipo} aproveitando texto PARCIAL (${ocr.reason})`);
           const ocrResult = parseFromText(ocr.text, tipo, anoBaseNum, cliente.cpf || "");
           if (ocrResult.ok) {
             extracao = ocrResult.data as typeof extracao;
@@ -295,7 +296,7 @@ Deno.serve(async (req) => {
             console.log(`[ocr] ${tipo} validado via OCR.space`);
           } else {
             nativeReason = nativeReason || `OCR ok mas regex falhou: ${ocrResult.reason}`;
-            console.log(`[ocr] ${tipo} regex falhou sobre texto OCR: ${ocrResult.reason}`);
+            console.log(`[ocr] ${tipo} regex falhou sobre texto OCR: ${ocrResult.reason} — texto disponível para IA`);
           }
         } else {
           nativeReason = nativeReason || `OCR vazio: ${ocr.reason || "sem texto"}`;
@@ -308,9 +309,14 @@ Deno.serve(async (req) => {
         // posição visual → vira a 1ª opção.
         console.log(`[cascade] tipo=declaracao -> tentando OCR primeiro`);
         await runOcr();
-        if (!pipelineOk) {
-          console.log(`[cascade] tipo=declaracao -> OCR não validou, tentando parser nativo`);
+        // Só tenta parser nativo se o OCR não devolveu texto algum.
+        // Se já temos ocrText (mesmo parcial), pulamos o nativo para evitar
+        // estouro de CPU em PDFs escaneados e seguimos direto para a IA.
+        if (!pipelineOk && !ocrText) {
+          console.log(`[cascade] tipo=declaracao -> OCR sem texto, tentando parser nativo`);
           await runNative();
+        } else if (!pipelineOk && ocrText) {
+          console.log(`[cascade] tipo=declaracao -> regex falhou, indo direto para IA com texto OCR`);
         }
       } else {
         // Recibo / MEI / DARF — nativo continua sendo a 1ª opção (rápido e barato).
@@ -321,14 +327,12 @@ Deno.serve(async (req) => {
       }
 
       // 3) ÚLTIMO RECURSO: Lovable AI (consome créditos).
-      // Importante: para PDFs escaneados sem texto, NÃO reprocessamos o PDF com
-      // extractRawTextFromPdf aqui. Esse caminho roda várias engines PDF.js/raw e
-      // pode estourar CPU em arquivos imagem (WORKER_RESOURCE_LIMIT). IA só entra
-      // quando já temos texto OCR; caso contrário, cai para revisão manual.
+      // Só roda IA quando já temos texto extraído (de OCR ou nativo).
+      // NUNCA reprocessa o PDF com extractRawTextFromPdf aqui — esse caminho
+      // já rodou e/ou pode estourar CPU em arquivos imagem.
       if (!pipelineOk) {
-        const shouldTryRawTextForAi = tipo !== "declaracao" && !isScan && bytes.length <= OCR_MAX_BYTES;
-        const sourceText = ocrText || (shouldTryRawTextForAi ? await extractRawTextFromPdf(bytes).catch(() => "") : "");
-        if (sourceText && sourceText.length > 200) {
+        const sourceText = ocrText;
+        if (sourceText && sourceText.length > 150) {
           console.log(`[ia] ${tipo} acionando fallback de IA (motivo: "${nativeReason}", chars=${sourceText.length})`);
           const aiRes = await runAiExtraction(sourceText, tipo, anoBaseNum, cliente.cpf || "");
           console.log(`[ia] ${tipo} ok=${aiRes.ok} tempo_ms=${aiRes.elapsedMs} ${aiRes.ok ? "" : `reason=${aiRes.reason}`}`);
@@ -341,8 +345,8 @@ Deno.serve(async (req) => {
               `Extração automática falhou (${nativeReason}). IA também não validou (${aiRes.reason}). Confirme os dados manualmente.`
             );
           }
-        } else if (tipo === "declaracao") {
-          console.log(`[ia] declaracao não acionada: sem texto OCR seguro para enviar à IA (motivo: "${nativeReason}")`);
+        } else {
+          console.log(`[ia] ${tipo} não acionada: sem texto OCR suficiente (motivo: "${nativeReason}")`);
         }
       }
 
