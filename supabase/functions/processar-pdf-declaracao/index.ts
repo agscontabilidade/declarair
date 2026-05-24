@@ -395,7 +395,11 @@ Deno.serve(async (req) => {
       // já rodou e/ou pode estourar CPU em arquivos imagem.
       if (!pipelineOk) {
         const sourceText = ocrText;
-        if (sourceText && sourceText.length > 150) {
+        // Para DECLARAÇÃO, NUNCA usar IA-texto: ela tende a confundir o valor
+        // do resultado com totais de rendimentos. Cai direto em revisão manual.
+        if (tipo === "declaracao") {
+          console.log(`[ia] declaracao NÃO acionada: precisão exige Vision/manual (motivo: "${nativeReason}")`);
+        } else if (sourceText && sourceText.length > 150) {
           console.log(`[ia] ${tipo} acionando fallback de IA (motivo: "${nativeReason}", chars=${sourceText.length})`);
           const aiRes = await runAiExtraction(sourceText, tipo, anoBaseNum, cliente.cpf || "");
           console.log(`[ia] ${tipo} ok=${aiRes.ok} tempo_ms=${aiRes.elapsedMs} ${aiRes.ok ? "" : `reason=${aiRes.reason}`}`);
