@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, Search, Paperclip, Pin } from 'lucide-react';
+import { FileText, Search, Paperclip, Pin, Copy, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,6 +51,36 @@ const RESULTADO_META: Record<string, { label: string; cls: string }> = {
   pagamento: { label: 'A pagar', cls: 'bg-amber-100 text-amber-800' },
   nenhum: { label: 'Sem imposto', cls: 'bg-gray-100 text-gray-700' },
 };
+
+function CopyCpfButton({ cpf }: { cpf: string }) {
+  const [copied, setCopied] = useState(false);
+  const digits = (cpf || '').replace(/\D/g, '');
+  if (!digits) return null;
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(digits);
+      setCopied(true);
+      toast.success('CPF copiado');
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error('Não foi possível copiar');
+    }
+  };
+  return (
+    <Button
+      type="button"
+      size="icon"
+      variant="ghost"
+      className="h-5 w-5 text-muted-foreground hover:text-foreground"
+      aria-label="Copiar CPF (sem pontos)"
+      title="Copiar CPF (sem pontos)"
+      onClick={handleCopy}
+    >
+      {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+    </Button>
+  );
+}
 
 export default function Declaracoes() {
   const { profile } = useAuth();
@@ -270,7 +301,10 @@ export default function Declaracoes() {
                           >
                             <TableCell className="py-2">
                               <div className="font-medium leading-tight">{d.clienteNome}</div>
-                              <div className="text-xs text-muted-foreground tabular-nums mt-0.5">{maskCpf(d.clienteCpf)}</div>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <span className="text-xs text-muted-foreground tabular-nums">{maskCpf(d.clienteCpf)}</span>
+                                <CopyCpfButton cpf={d.clienteCpf} />
+                              </div>
                             </TableCell>
                             <TableCell>
                               <Badge className={`${STATUS_COLORS[d.status] || ''} whitespace-nowrap`}>{STATUS_LABELS[d.status] || d.status}</Badge>
@@ -397,7 +431,10 @@ export default function Declaracoes() {
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <p className="font-medium text-foreground truncate">{d.clienteNome}</p>
-                              <p className="text-xs text-muted-foreground tabular-nums mt-0.5">{maskCpf(d.clienteCpf)}</p>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <p className="text-xs text-muted-foreground tabular-nums">{maskCpf(d.clienteCpf)}</p>
+                                <CopyCpfButton cpf={d.clienteCpf} />
+                              </div>
                             </div>
                             <Badge className={`${STATUS_COLORS[d.status] || ''} whitespace-nowrap shrink-0`}>
                               {STATUS_LABELS[d.status] || d.status}
