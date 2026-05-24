@@ -459,7 +459,16 @@ async function extractD_rawStreams(bytes: Uint8Array): Promise<ExtractedText> {
         if (!/(BT|Tf|Td|TD|Tm|T\*)/.test(asText)) continue;
       }
       const extracted = extractStringsFromContent(asText);
-      if (extracted.length > 0) collected.push(extracted);
+      if (extracted.length === 0) continue;
+      // Filtro anti-binário: rejeita pedaços onde menos de 70% dos chars são
+      // ASCII imprimíveis (caso típico: tabelas Huffman de JPEG embarcado).
+      let printable = 0;
+      for (let k = 0; k < extracted.length; k++) {
+        const code = extracted.charCodeAt(k);
+        if ((code >= 32 && code <= 126) || code === 9 || code === 10 || code === 13 || (code >= 160 && code <= 255 && code !== 0xFF)) printable++;
+      }
+      if (printable / extracted.length < 0.7) continue;
+      collected.push(extracted);
     }
 
     const full = collected.join("\n");
