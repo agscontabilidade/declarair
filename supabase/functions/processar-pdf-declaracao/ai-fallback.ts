@@ -1,12 +1,5 @@
 // =============================================================================
-// Fallback de extração via Lovable AI Gateway (ÚLTIMO RECURSO).
-//
-// Só é chamado quando:
-//   1. O pipeline determinístico (regex+layout) falhou OU retornou
-//      `valor_resultado_inconsistente`.
-//   2. Não é o caso de PDF escaneado (esses caem em OCR.space → regex).
-//      OBS: se OCR.space conseguiu o texto mas o regex sobre o texto OCR
-//      também falhou, então sim chamamos a IA como último passo.
+// Extração via Lovable AI Gateway.
 //
 // Para economizar créditos:
 //   - Usa o modelo mais barato (google/gemini-3-flash-preview).
