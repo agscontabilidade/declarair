@@ -524,6 +524,7 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
       tipo,
       virouTransmitida,
       extracao,
+      metodo_validacao: metodoValidacao,
       novo_status: updates.status ?? dec.status,
     });
   } catch (e) {
