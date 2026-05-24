@@ -25,6 +25,42 @@ function formatTelefone(tel: string | null) {
   return tel;
 }
 
+function CopyCpfButton({ cpf }: { cpf: string }) {
+  const [copied, setCopied] = useState(false);
+  const digits = (cpf || '').replace(/\D/g, '');
+  if (!digits) return null;
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(digits);
+      setCopied(true);
+      toast.success('CPF copiado');
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error('Não foi possível copiar');
+    }
+  };
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          className="h-5 w-5 text-muted-foreground hover:text-foreground"
+          aria-label="Copiar CPF (sem pontos)"
+          onClick={handleCopy}
+        >
+          {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        <p>Copiar CPF (sem pontos)</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 interface Props {
   clientes: ClienteRow[];
   isLoading: boolean;
