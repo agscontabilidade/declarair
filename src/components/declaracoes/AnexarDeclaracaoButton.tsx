@@ -68,7 +68,9 @@ export function AnexarDeclaracaoButton({
   arquivoDarfUrl,
   arquivoDarfNome,
   darfValidadoEm,
+  arquivosOutros,
 }: Props) {
+
   const queryClient = useQueryClient();
   const inputRefs: Record<Tipo, React.RefObject<HTMLInputElement>> = {
     declaracao: useRef<HTMLInputElement>(null),
