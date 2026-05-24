@@ -696,62 +696,53 @@ function extractResultadoFromResumo(full: string): {
 } {
   const moneyRe = /\d{1,3}(?:\.\d{3})*,\d{2}/g;
 
-  // 1) Recorta janela do RESUMO
-  const reResumo = /\bresumo\b[\s\S]{0,4000}?(?=informa[cç][oõ]es\s+banc[aá]rias|pagamentos\s+efetuados|p[aá]gina\s+\d|$)/i;
+  // 1) Recorta janela do RESUMO (tolerante a OCR: sem acentos, com quebras)
+  const reResumo = /\bresumo\b[\s\S]{0,5000}?(?=informa[cç][oõ]es\s+banc[aá]rias|pagamentos\s+efetuados|p[aá]gina\s+\d|$)/i;
   const mWin = full.match(reResumo);
   const window = mWin ? mWin[0] : full;
 
-  // 2) Coletar números "perigosos" (totais que NÃO podem ser confundidos com o resultado)
+  // 2) Coletar números "perigosos"
   const blacklist = new Set<number>();
   const pushBL = (s: string | undefined) => {
     if (!s) return;
     const v = parseMoneyBR(s);
     if (v !== null && v > 0) blacklist.add(v);
   };
-  // TOTAL de rendimentos tributáveis
   const reRendTotal = /rendimentos\s+tribut[aá]veis[\s\S]{0,800}?\btotal\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
   pushBL(window.match(reRendTotal)?.[1]);
-  // Base de cálculo
   const reBase = /base\s+de\s+c[aá]lculo[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
   pushBL(window.match(reBase)?.[1]);
-  // Imposto devido (linha)
   const reDev = /imposto\s+devido\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
   pushBL(window.match(reDev)?.[1]);
-  // Total do imposto devido
   const reTotDev = /total\s+do\s+imposto\s+devido[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
   pushBL(window.match(reTotDev)?.[1]);
-  // Total de deduções
   const reDed = /dedu[cç][oõ]es[\s\S]{0,800}?\btotal\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
   pushBL(window.match(reDed)?.[1]);
 
-  // 3) Para cada label, pega o primeiro valor que NÃO tem outro label entre eles
-  const labelPag = /saldo\s+de\s+imposto\s+a\s+pagar|imposto\s+a\s+pagar(?!\s+sobre)/gi;
+  // 3) Labels — tolerantes a quebras de linha do OCR e variações sem acento
+  const labelPag = /(?:saldo\s+(?:de\s+)?)?imposto\s+a\s+pagar(?!\s+sobre)/gi;
   const labelRes = /imposto\s+a\s+restituir/gi;
-  // Labels concorrentes que invalidam a captura se aparecerem antes do número
-  const competing = /(base\s+de\s+c[aá]lculo|imposto\s+devido|al[ií]quota|quota\s+[uú]nica|dedu[cç][aã]o|total\b|valor\s+da\s+quota|aliquota\s+efetiva)/i;
+  const competing = /(base\s+de\s+c[aá]lculo|imposto\s+devido|al[ií]quota|quota\s+[uú]nica|dedu[cç][aã]o|total\s+(?:dos|do)|valor\s+da\s+quota|aliquota\s+efetiva|rendimentos)/i;
 
   function pickValueAfter(label: RegExp): number | null {
     label.lastIndex = 0;
+    let best: number | null = null;
     let m: RegExpExecArray | null;
     while ((m = label.exec(window)) !== null) {
       const start = m.index + m[0].length;
-      const slice = window.slice(start, start + 250);
-      // Primeira ocorrência de dinheiro na fatia
+      const slice = window.slice(start, start + 300);
       moneyRe.lastIndex = 0;
       const mm = moneyRe.exec(slice);
       if (!mm) continue;
-      // Entre label e número não pode ter label concorrente
       const between = slice.slice(0, mm.index);
       if (competing.test(between)) continue;
       const v = parseMoneyBR(mm[0]);
       if (v === null) continue;
-      // 4) Blacklist
-      if (blacklist.has(v)) {
-        return -1; // sinaliza inconsistência (bateu com total/base)
-      }
-      return v;
+      if (blacklist.has(v)) return -1;
+      // Prefere o primeiro valor encontrado
+      if (best === null) best = v;
     }
-    return null;
+    return best;
   }
 
   const vPag = pickValueAfter(labelPag);
