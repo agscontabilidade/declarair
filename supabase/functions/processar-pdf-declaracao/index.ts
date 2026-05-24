@@ -1,7 +1,8 @@
 // Edge function: valida PDF anexado (Declaração / Recibo / MEI / DARF) 100%
 // determinístico (SEM IA), atualiza o status da declaração e dispara notificações.
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { tryNativeValidation } from "./extract-native.ts";
+import { tryNativeValidation, parseFromText } from "./extract-native.ts";
+import { runOcrFallback, OCR_MAX_BYTES } from "./ocr-fallback.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
