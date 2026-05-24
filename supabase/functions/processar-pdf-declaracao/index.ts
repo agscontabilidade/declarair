@@ -4,6 +4,7 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 import { tryNativeValidation, parseFromText, extractRawTextFromPdf } from "./extract-native.ts";
 import { runOcrFallback, OCR_MAX_BYTES } from "./ocr-fallback.ts";
 import { runAiExtraction } from "./ai-fallback.ts";
+import { runVisionExtraction } from "./vision-fallback.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
