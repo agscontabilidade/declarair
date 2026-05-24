@@ -20,16 +20,6 @@
 // =============================================================================
 
 import { extractText, getDocumentProxy, getMeta } from "https://esm.sh/unpdf@0.12.1";
-// Fallback determinístico: pdfjs-dist puro. Usado quando unpdf devolve texto
-// insuficiente em PDFs com camada de texto válida (caso comum em PDFs do PGD/eCAC
-// gerados com fontes embutidas que o unpdf não decodifica bem).
-// deno-lint-ignore no-explicit-any
-let _pdfjsLib: any = null;
-async function loadPdfjs() {
-  if (_pdfjsLib) return _pdfjsLib;
-  _pdfjsLib = await import("https://esm.sh/pdfjs-dist@4.0.379/legacy/build/pdf.mjs");
-  return _pdfjsLib;
-}
 
 export type Tipo = "declaracao" | "recibo" | "mei" | "darf";
 
