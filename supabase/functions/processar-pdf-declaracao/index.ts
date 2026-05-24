@@ -81,7 +81,8 @@ Deno.serve(async (req) => {
     if (!usuario?.escritorio_id) return json({ error: "Usuário sem escritório" }, 403);
 
     const body = (await req.json()) as Body;
-    const { declaracao_id, tipo, storage_path, arquivo_nome } = body;
+    const { declaracao_id, tipo, storage_path, arquivo_nome, manual_confirmacao } = body;
+
     if (!declaracao_id || !tipo || !storage_path) {
       return json({ error: "Parâmetros obrigatórios ausentes" }, 400);
     }
