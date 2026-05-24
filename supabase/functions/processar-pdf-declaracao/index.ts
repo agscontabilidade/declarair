@@ -562,7 +562,7 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
     }
 
     // Auditoria
-    const sufixoMetodo = metodoValidacao === "regex" ? "automaticamente" : "por IA";
+    const sufixoMetodo = metodoValidacao === "regex" ? "automaticamente" : metodoValidacao === "manual" ? "manualmente pelo contador" : "por IA";
     const atividadeMap: Record<typeof tipo, { tipo: string; descricao: string }> = {
       declaracao: { tipo: "declaracao_validada", descricao: `Declaração validada ${sufixoMetodo}.` },
       recibo: { tipo: "recibo_validado", descricao: `Recibo da Receita Federal validado ${sufixoMetodo} (nº ${extracao?.numero_recibo ?? "?"}).` },
