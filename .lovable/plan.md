@@ -1,56 +1,70 @@
-O problema real é que o pipeline está tratando “não encontrei o resultado” como “resultado nenhum”. Nos logs, a declaração ANDRIA foi aceita via OCR parcial com `resultado=nenhum valor=0`, porque o OCR.space devolveu só as 3 primeiras páginas e o parser validou CPF/ano/documento, mesmo sem evidência explícita de `IMPOSTO A RESTITUIR` ou `SALDO DE IMPOSTO A PAGAR`.
 
-Do I know what the issue is? Sim: a extração de declaração está permitindo falso positivo quando o bloco/linhas de resultado não aparecem no texto disponível.
+## Diagnóstico
 
-## Plano seguro
+Hoje a extração do `tipo_resultado` / `valor_resultado` da declaração depende de:
 
-1. **Não aceitar mais “nenhum/0” sem evidência explícita**
-   - Em `extract-native.ts`, ajustar `extractResultadoFromResumo` para diferenciar:
-     - resultado encontrado com restituição/pagamento;
-     - resultado encontrado explicitamente zerado;
-     - resultado ausente/inconclusivo.
-   - Se as linhas de resultado não aparecerem, retornar falha controlada em vez de salvar `nenhum`.
+1. OCR.space → texto cru (perde colunas, junta números, limita 3 páginas no free)
+2. Regex sobre o texto → frágil em PDFs em 2 colunas (pega "Total de Rendimentos" no lugar de "Imposto a Restituir")
+3. IA **somente texto** (Gemini Flash) → recebe o mesmo texto bagunçado do OCR
 
-2. **Preservar a lógica principal do sistema**
-   - Manter o fluxo atual: upload → validação → atualização de `declaracoes` → espelho no checklist → auditoria.
-   - Não mexer em tabelas, RLS, status, autenticação ou frontend.
-   - Só alterar a decisão de aceitar/rejeitar a extração automática do resultado.
+Resultado: para PDFs como o da Andrea, o valor "R$ 1.836,56" não bate com o que está na declaração porque o modelo nunca vê o layout real — vê uma sopa de números.
 
-3. **Corrigir a cascata para declarações parcialmente OCRizadas**
-   - Em `index.ts`, quando o OCR for parcial e não trouxer resultado confiável, não salvar `nenhum`.
-   - Tentar fallback seguro com texto nativo quando houver chance de texto real no PDF.
-   - Se ainda não houver bloco de resultado, mandar para IA apenas com o texto disponível; se a IA não validar com evidência, exigir revisão manual em vez de gravar dado errado.
+A causa raiz é ler texto em vez de **ver** o documento. Receita Federal usa layout fixo (RESUMO em tabela). Modelos multimodais (Gemini 2.5 Pro / GPT-5) leem esse bloco com precisão de humano.
 
-4. **Melhorar o parser do RESUMO sem ampliar escopo**
-   - Aceitar variações comuns de OCR/Receita:
-     - `IMPOSTO A RESTITUIR`
-     - `SALDO DE IMPOSTO A PAGAR`
-     - `IMPOSTO A PAGAR`
-     - quebras de linha entre label e valor
-     - valores zerados `0,00`
-   - Considerar `nenhum` válido somente se encontrar explicitamente os dois resultados zerados ou estrutura equivalente.
+## Solução definitiva
 
-5. **Logs de produção para não ficarmos cegos**
-   - Logar se o resultado foi:
-     - encontrado;
-     - ausente;
-     - zerado explicitamente;
-     - bloqueado por OCR parcial.
-   - Isso permitirá confirmar no próximo upload sem alterar UI.
+Trocar o fallback de IA por **leitura visual do PDF** com validação dupla. O texto OCR deixa de ser fonte de verdade e passa a ser apenas guarda anti-alucinação.
 
-6. **Deploy e validação**
-   - Deploy somente da função `processar-pdf-declaracao`.
-   - Validar pelos logs que ANDRIA não será mais salva como `nenhum/0` sem evidência.
-   - Resultado esperado: se o PDF/texto contém o valor, salvar restituição/pagamento corretamente; se a página do resultado não está acessível pelo OCR parcial, o sistema abre revisão manual em vez de gravar errado.
+### Novo pipeline (apenas para `tipo = "declaracao"`)
 
-## Observação importante
+```
+1. Native regex (rápido, só aceita se confiança alta + valor bate com label)
+        ↓ falhou
+2. VISION AI (NOVO):
+        a. Renderiza páginas 1–4 do PDF em PNG (pdf.js / Deno)
+        b. Envia imagens + prompt para google/gemini-2.5-pro com tool calling
+        c. Modelo retorna: tipo_resultado, valor_resultado, label_lido,
+           pagina_origem, linha_citada (texto exato copiado do PDF)
+        ↓ validações cruzadas obrigatórias
+3. Anti-alucinação dupla:
+        - linha_citada precisa existir (fuzzy) no texto OCR
+        - valor_resultado precisa aparecer no OCR
+        - valor não pode coincidir com total de rendimentos / base de cálculo / imposto devido
+        - se restituição: linha_citada precisa conter "RESTITUIR"
+        - se pagamento:   linha_citada precisa conter "PAGAR"
+        ↓ tudo ok
+4. Grava no banco
+        ↓ qualquer falha
+5. Modal de confirmação manual (já existe)
+```
 
-A solução definitiva contra OCR limitado a 3 páginas é usar OCR que leia todas as páginas do PDF. A própria documentação do OCR.space indica limite de 3 páginas no plano Free/PRO comum e 999+ páginas no PRO PDF. Então o ajuste de código evita dados errados imediatamente; para automatizar PDFs longos/escaneados com precisão total, será necessário usar uma chave/endpoint OCR.space PRO PDF ou outro OCR completo.
+Recibo / MEI / DARF continuam no pipeline atual (rápido, barato, já funciona bem).
 
-<presentation-actions>
-  <presentation-open-history>View History</presentation-open-history>
-</presentation-actions>
+### Por que isso resolve em definitivo
 
-<presentation-actions>
-<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
-</presentation-actions>
+- O modelo **vê** a célula "Imposto a Restituir" do bloco RESUMO, não adivinha pelo texto solto
+- Gemini 2.5 Pro tem visão nativa de alta precisão para tabelas PT-BR
+- A `linha_citada` força o modelo a copiar literalmente o que viu — se inventar, a validação contra o OCR rejeita
+- Se a validação falhar, **nada é salvo**: vai para revisão manual em vez de gravar valor errado
+
+## Mudanças técnicas
+
+### Arquivos a editar
+- `supabase/functions/processar-pdf-declaracao/ai-fallback.ts` — adicionar `runVisionExtraction(pdfBytes, ocrText, anoBase, cpf)` usando `google/gemini-2.5-pro` com mensagens multimodais (`image_url` data-URI). Manter `runAiExtraction` apenas como último recurso para recibo/MEI/DARF.
+- `supabase/functions/processar-pdf-declaracao/index.ts` — quando `tipo === "declaracao"` e nativo falhar, chamar `runVisionExtraction` antes do fallback de texto. Cascata final: native → vision → manual.
+- Adicionar utilitário `pdfToImages(bytes, maxPages=4)` em `extract-native.ts` usando `pdfjs-dist` (já em uso) + canvas do Deno (ou `npm:pdf-to-png-converter` se mais simples no edge runtime).
+
+### Sem mudanças
+- Schema do banco, RLS, UI, fluxos de Recibo/MEI/DARF, fluxo manual, modal de upload, e-mails.
+
+### Custo
+- Gemini 2.5 Pro com 2–4 imagens por declaração é mais caro que Flash, mas só roda quando o native falha (caso real, não rotina). Trade-off: precisão > custo, pois um erro de extração quebra a confiança do contador.
+
+### Risco e mitigação
+- Renderização de PDF no Deno pode falhar em PDFs corrompidos → mantém fallback para modal manual.
+- Limite de tokens/imagens do gateway → cap em 4 páginas (suficiente: RESUMO sempre na pág. 1–2).
+- Se a Lovable AI estourar créditos (402) → modal manual, sem dado errado salvo.
+
+## Critério de sucesso
+
+Reenviar a declaração da Andrea + as últimas 5 declarações que falharam. O valor extraído precisa bater 100% com o RESUMO impresso. Qualquer divergência → revisão manual (nunca gravar errado).
