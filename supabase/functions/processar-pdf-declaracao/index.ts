@@ -121,15 +121,9 @@ Deno.serve(async (req) => {
     if (arrayBuf.byteLength > 18 * 1024 * 1024) {
       return fail("Arquivo muito grande (máx. 18MB)");
     }
-    // base64 (chunked p/ evitar stack overflow)
     const bytes = new Uint8Array(arrayBuf);
-    let bin = "";
-    for (let i = 0; i < bytes.length; i += 0x8000) {
-      bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    }
-    const base64 = btoa(bin);
 
-    // Prompts e schemas por tipo
+    // Tipos das extrações (mantidos para tipagem do `extracao` consolidado)
     interface ExtracaoDeclaracao {
       eh_declaracao_irpf: boolean;
       cpf: string;
@@ -167,71 +161,13 @@ Deno.serve(async (req) => {
       motivo_rejeicao: string | null;
     }
 
-    const promptDeclaracao = {
-      eh_declaracao_irpf: "boolean — true se for: (a) Declaração de Ajuste Anual do IRPF (DIRPF), (b) Declaração de Saída Definitiva do País (DSDP), ou (c) Comunicação de Saída Definitiva do País — todas emitidas pelo programa/sistema da Receita Federal. Marque false para recibo, DARF, extratos bancários, informes de rendimento ou qualquer outro documento.",
-      subtipo: "'dirpf'|'saida_definitiva'|'comunicacao_saida'|null — qual variante foi reconhecida; null se eh_declaracao_irpf=false",
-      cpf: "string — CPF do declarante apenas dígitos (11)",
-      nome: "string — nome completo do declarante",
-      ano_exercicio: "number — ano-exercício (ex.: 2026)",
-      tipo_resultado: "'restituicao'|'pagamento'|'nenhum' — Para DIRPF: leia a folha 'Resumo da Declaração'/'Cálculo do Imposto'. Use 'pagamento' se houver 'Saldo de Imposto a Pagar' > 0 (ou equivalentes). Use 'restituicao' se houver 'Imposto a Restituir' > 0. Use 'nenhum' SOMENTE se ambos forem zero. Para DSDP/Comunicação de Saída: se o documento não trouxer apuração de imposto a pagar/restituir, retorne 'nenhum' com valor_resultado=0; só use 'pagamento'/'restituicao' se os valores estiverem explícitos no próprio documento.",
-      valor_resultado: "number — valor em reais (sem sinal, ex.: 1234.56) correspondente ao tipo_resultado escolhido; 0 se nenhum",
-      motivo_rejeicao: "string|null — preencha se eh_declaracao_irpf=false explicando o motivo",
-    };
-    const promptRecibo = {
-      eh_recibo_rfb: "boolean — true somente se for o Recibo de Entrega da DIRPF emitido pela Receita Federal",
-      numero_recibo: "string — número do recibo conforme aparece no documento",
-      cpf: "string — CPF do declarante (11 dígitos)",
-      ano_exercicio: "number",
-      data_transmissao: "string ISO (YYYY-MM-DD) — data de transmissão",
-      motivo_rejeicao: "string|null",
-    };
-    const promptMei = {
-      eh_dasn_simei: "boolean — true somente se for a Declaração Anual do Simples Nacional para o MEI (DASN-SIMEI) ou seu recibo de entrega emitido pela Receita Federal",
-      cnpj: "string — CNPJ do MEI (14 dígitos)",
-      cpf: "string — CPF do titular (11 dígitos)",
-      ano_calendario: "number — ano-calendário declarado (ex.: 2025)",
-      numero_recibo: "string|null — número do recibo se houver",
-      data_transmissao: "string|null ISO (YYYY-MM-DD)",
-      motivo_rejeicao: "string|null",
-    };
-    const promptDarf = {
-      eh_darf_irpf: "boolean — true SOMENTE se for um DARF de IRPF Pessoa Física. Códigos típicos: 0211 (IRPF Ajuste Anual), 4600 (Carnê-Leão), 6015 (ganhos de capital). Marque false para qualquer outro tributo.",
-      cpf: "string — CPF do contribuinte (11 dígitos)",
-      codigo_receita: "string — código da receita (4 dígitos)",
-      periodo_apuracao: "string|null — DD/MM/AAAA ou MM/AAAA",
-      data_vencimento: "string|null ISO (YYYY-MM-DD)",
-      valor_principal: "number — valor principal em reais",
-      valor_total: "number — valor total em reais (principal + multa + juros)",
-      motivo_rejeicao: "string|null",
-    };
-    const schemaPorTipo: Record<typeof tipo, unknown> = {
-      declaracao: promptDeclaracao,
-      recibo: promptRecibo,
-      mei: promptMei,
-      darf: promptDarf,
-    } as const;
-    const schema = schemaPorTipo[tipo];
-
-    const systemPrompt = `Você é um validador rigoroso de documentos fiscais brasileiros.
-Você receberá um PDF anexado. Analise visual e textualmente, página por página.
-Responda SOMENTE um JSON válido (sem markdown, sem texto fora do JSON).
-Esquema esperado: ${JSON.stringify(schema)}.
-Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao extrair valores numéricos: leia a folha de resumo/cálculo e converta vírgula decimal brasileira corretamente.`;
-
-    const userPromptMap: Record<typeof tipo, string> = {
-      declaracao: "Identifique se este PDF é uma declaração do IRPF aceita: (a) DIRPF (Declaração de Ajuste Anual), (b) Declaração de Saída Definitiva do País (DSDP), ou (c) Comunicação de Saída Definitiva do País — todas emitidas pelo programa/sistema da Receita Federal. Extraia CPF, nome, ano-exercício e o RESULTADO. Para DIRPF, vá até a folha 'Resumo da Declaração' (ou equivalente) e verifique 'Saldo de Imposto a Pagar' e 'Imposto a Restituir' — retorne 'pagamento'/'restituicao' com o valor exato, ou 'nenhum' se ambos forem zero. Para DSDP/Comunicação de Saída, se não houver folha de apuração com imposto a pagar/restituir, retorne 'nenhum' e valor_resultado=0. Preencha também o campo 'subtipo' com 'dirpf', 'saida_definitiva' ou 'comunicacao_saida'.",
-      recibo: "Identifique se este PDF é o Recibo de Entrega da DIRPF emitido pela Receita Federal e extraia o número do recibo, CPF, ano-exercício e data de transmissão.",
-      mei: "Identifique se este PDF é a DASN-SIMEI (Declaração Anual do MEI) ou seu recibo, e extraia CNPJ, CPF do titular, ano-calendário, número do recibo e data de transmissão.",
-      darf: "Identifique se este PDF é um DARF de IRPF Pessoa Física. Extraia código de receita, CPF, período de apuração, data de vencimento, valor principal e valor total.",
-    };
-    const userPrompt = userPromptMap[tipo];
-
-    // ========== HÍBRIDO: regex nativa primeiro; IA só se útil; manual como último recurso ==========
+    // ========== Pipeline determinístico (SEM IA): regex+layout > manual ==========
     let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo & ExtracaoMei & ExtracaoDarf> = {};
-    let metodoValidacao: "regex" | "ia" | "manual" = "ia";
+    let metodoValidacao: "regex" | "manual" = "regex";
 
     const cpfClienteDigits = digits(cliente.cpf);
     const anoBaseNum = Number(dec.ano_base);
+
 
     // Helper: construir resposta padronizada para revisão manual (não apaga o arquivo)
     const manualReview = (motivo: string) =>
