@@ -175,6 +175,8 @@ export default function Declaracoes() {
           arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em,
           arquivo_mei_url, arquivo_mei_nome, mei_validado_em,
           arquivo_darf_url, arquivo_darf_nome, darf_validado_em,
+          arquivos_outros,
+
           em_processamento, status_processamento_rfb, declaracao_enviada_em,
           clientes(nome, cpf, email),
           declaracao_notas_internas(conteudo),
