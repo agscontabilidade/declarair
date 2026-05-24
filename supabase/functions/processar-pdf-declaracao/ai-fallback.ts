@@ -16,7 +16,7 @@
 //     literalmente no texto enviado; senão descarta.
 // =============================================================================
 
-import type { Tipo } from "./extract-native.ts";
+import type { Tipo } from "./extract-text.ts";
 
 export type AiExtractionResult =
   | { ok: true; data: Record<string, unknown>; elapsedMs: number }

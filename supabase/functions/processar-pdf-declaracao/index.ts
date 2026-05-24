@@ -1,7 +1,7 @@
 // Edge function: valida PDF anexado (Declaração / Recibo / MEI / DARF),
 // extrai dados via Lovable AI, atualiza o status da declaração e dispara notificações.
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { extractRawTextFromPdf } from "./extract-native.ts";
+import { extractRawTextFromPdf } from "./extract-text.ts";
 import { runAiExtraction } from "./ai-fallback.ts";
 
 const corsHeaders = {
