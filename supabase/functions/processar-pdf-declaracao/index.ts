@@ -347,8 +347,6 @@ Deno.serve(async (req) => {
         } else {
           // VISION falhou (validações cruzadas ou gateway).
           nativeReason = nativeReason || (visionRes as { reason: string }).reason;
-          // Se o regex tinha um candidato, tentamos aceitá-lo APENAS quando
-          // o VISION falhou por motivo de gateway/créditos (não por divergência).
           const reason = (visionRes as { reason: string }).reason;
           const gatewayFailure =
             reason.startsWith("vision_gateway_") ||
@@ -362,8 +360,18 @@ Deno.serve(async (req) => {
             extracao = regexCandidate as typeof extracao;
             metodoValidacao = regexMetodo as typeof metodoValidacao;
             pipelineOk = true;
+          } else if (!gatewayFailure) {
+            // FALHA DE EVIDÊNCIA: NÃO confiar em IA-texto (ela alucina valores
+            // como totais de rendimentos). Vai DIRETO para revisão manual.
+            console.log(`[vision] resultado rejeitado por evidência: ${reason} — revisão manual obrigatória`);
+            return manualReview(
+              `Não foi possível confirmar o resultado da declaração com segurança (${reason}). Por favor, informe manualmente o tipo (Restituição/Pagamento/Nenhum) e o valor exatos.`
+            );
           } else {
-            console.log(`[vision] resultado rejeitado: ${reason} — seguirá para IA-texto/manual`);
+            console.log(`[vision] indisponível (${reason}) e sem candidato regex — revisão manual`);
+            return manualReview(
+              `Serviço de leitura visual indisponível (${reason}). Confirme os dados da declaração manualmente.`
+            );
           }
         }
 
