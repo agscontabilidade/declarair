@@ -10,6 +10,12 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+interface ArquivoOutro {
+  path: string;
+  nome: string;
+  uploaded_at?: string;
+}
+
 interface Props {
   declaracaoId: string;
   clienteNome: string;
@@ -23,10 +29,12 @@ interface Props {
   arquivoDarfNome?: string | null;
   arquivoMeiUrl?: string | null;
   arquivoMeiNome?: string | null;
+  arquivosOutros?: ArquivoOutro[] | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
+
 
 export function EnviarDeclaracaoEmailModal({
   declaracaoId,
