@@ -214,6 +214,57 @@ async function extractFullText(pdf: unknown): Promise<ExtractedText> {
   }
 }
 
+// Fallback: extrai texto via pdfjs-dist (legacy) item a item, reconstruindo
+// linhas pela coordenada Y. Roda quando unpdf devolve pouco texto mas o PDF
+// realmente tem camada de texto.
+async function extractWithPdfjs(bytes: Uint8Array): Promise<ExtractedText> {
+  try {
+    const pdfjs = await loadPdfjs();
+    // Em Deno edge não há worker; desabilitamos para evitar fetch externo.
+    try { pdfjs.GlobalWorkerOptions.workerSrc = ""; } catch { /* ignore */ }
+
+    const loadingTask = pdfjs.getDocument({
+      data: bytes,
+      disableWorker: true,
+      isEvalSupported: false,
+      useSystemFonts: false,
+      disableFontFace: true,
+    });
+    const doc = await loadingTask.promise;
+    const numPages: number = doc.numPages || 0;
+    const byPage: string[] = [];
+
+    for (let i = 1; i <= numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent({ includeMarkedContent: false, disableNormalization: false });
+      // deno-lint-ignore no-explicit-any
+      const items: any[] = content.items || [];
+      // Agrupa por linha (y arredondado), ordena por x
+      const lines = new Map<number, { x: number; s: string }[]>();
+      for (const it of items) {
+        const str = (it.str ?? "").toString();
+        if (!str) continue;
+        const tr = it.transform || [1, 0, 0, 1, 0, 0];
+        const x = Number(tr[4]) || 0;
+        const y = Math.round((Number(tr[5]) || 0) * 2) / 2; // bucket 0.5pt
+        if (!lines.has(y)) lines.set(y, []);
+        lines.get(y)!.push({ x, s: str });
+      }
+      const ys = [...lines.keys()].sort((a, b) => b - a); // top → bottom
+      const pageText = ys
+        .map((y) => lines.get(y)!.sort((a, b) => a.x - b.x).map((c) => c.s).join(" ").replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .join("\n");
+      byPage.push(pageText);
+    }
+    const full = byPage.join("\n\n");
+    return { full, byPage, normalized: normalize(full) };
+  } catch (e) {
+    console.error("[layer2/pdfjs] fallback falhou:", (e as Error).message);
+    return { full: "", byPage: [], normalized: "" };
+  }
+}
+
 function normalize(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
