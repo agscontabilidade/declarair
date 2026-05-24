@@ -657,7 +657,7 @@ export async function tryNativeValidation(
 
   if (textLen < 200 || !hasFiscalMarkers(text.normalized)) {
     console.log(`[pipeline] unpdf insuficiente (len=${textLen}, markers=${hasFiscalMarkers(text.normalized)}); tentando pdfjs…`);
-    const alt = await extractWithPdfjs(bytes);
+    const alt = await extractWithProxy(pdf);
     const altLen = alt.full.replace(/\s/g, "").length;
     if (altLen > textLen && hasFiscalMarkers(alt.normalized)) {
       text = alt; textLen = altLen; textSource = "pdfjs";
