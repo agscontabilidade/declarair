@@ -207,7 +207,7 @@ export function AnexarDeclaracaoButton({
       const merged = [...outrosLista, ...novos];
       const { error } = await supabase
         .from('declaracoes')
-        .update({ arquivos_outros: merged })
+        .update({ arquivos_outros: merged as unknown as never })
         .eq('id', declaracaoId);
       if (error) throw new Error(error.message);
       return novos.length;
@@ -228,7 +228,7 @@ export function AnexarDeclaracaoButton({
       const filtered = outrosLista.filter((o) => o.path !== path);
       const { error } = await supabase
         .from('declaracoes')
-        .update({ arquivos_outros: filtered })
+        .update({ arquivos_outros: filtered as unknown as never })
         .eq('id', declaracaoId);
       if (error) throw new Error(error.message);
     },
