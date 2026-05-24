@@ -1,86 +1,55 @@
+## Diagnóstico
 
-## Objetivo
+Verifiquei os logs: o upload do PDF foi processado com sucesso pelo parser nativo (`metodo=texto, confianca=0.65, winner=unpdf`), mas ele continuou extraindo o valor errado (R$ 18.406,97 em vez de R$ 892,31).
 
-Quando o pipeline determinístico atual detectar que o PDF é uma imagem escaneada (`scan_sem_texto_real`), em vez de cair direto no modal manual, enviar o PDF para a API do OCR.space, recuperar o texto reconhecido e re-executar os mesmos parsers regex já existentes. Modal manual vira último recurso real (só se OCR também falhar).
+**Por que o hardening anterior não pegou:** quando o `unpdf` quebra a diagramação em duas colunas do "RESUMO", o valor 18.406,97 acaba ficando textualmente próximo do label "Imposto a Restituir", sem nenhum label concorrente entre eles — então a verificação de proximidade aprova, e o valor também não bate exatamente com os totais da blacklist. Resultado: o parser nativo declara sucesso e nem OCR nem IA são acionados.
 
-## Pré-requisito do usuário
+A correção é inverter a estratégia para declarações: dar prioridade ao OCR (que preserva a posição visual e separa as colunas corretamente), com IA como segunda opção. O nativo continua atendendo recibos / MEI / DARF, onde funciona bem.
 
-1. Criar conta gratuita em https://ocr.space/ocrapi
-2. Copiar a API key (free tier: 25.000 requisições/mês, arquivos até 1MB no plano free; plano PRO ~US$ 30/mês permite até 5MB)
-3. Eu vou pedir a key via `add_secret` com o nome `OCRSPACE_API_KEY`
+## Plano
 
-## Mudanças no código
+### 1. Nova cascata para `tipo=declaracao` (subtipo DIRPF / Saída Definitiva)
 
-Tudo isolado em `supabase/functions/processar-pdf-declaracao/`. Nenhuma mudança em UI, banco, RLS ou schema.
+Ordem passa a ser:
 
-### 1. Novo arquivo: `ocr-fallback.ts`
-- Função `runOcrFallback(bytes: Uint8Array): Promise<string>`
-- Faz POST multipart para `https://api.ocr.space/parse/image` com:
-  - `apikey`: do env
-  - `language`: `por`
-  - `isCreateSearchablePdf`: false
-  - `OCREngine`: 2 (melhor para formulários)
-  - `scale`: true
-  - `file`: o PDF
-- Concatena `ParsedText` de todas as páginas
-- Timeout de 45s, retorna string vazia em erro (não joga exceção)
-- Loga tamanho do texto retornado e tempo gasto
-
-### 2. `extract-native.ts` — exportar parsers isoladamente
-- Refatorar para expor `parseFromText(text, tipo, anoBase, cpfCliente)` que recebe texto já pronto e roda só a fase de regex/scorer/DV (sem extração PDF).
-- A função atual `tryNativeValidation` continua igual; passa a chamar internamente `parseFromText` depois de obter o texto via cascata.
-- **Escopo:** refatoração mínima de extração interna; lógica de parsing não muda.
-
-### 3. `index.ts` — encadear OCR
-No bloco onde hoje retorna `manualReview` por falha do pipeline:
-
-```text
-se native.ok → segue normal
-senão se native.reason ∈ {scan_sem_texto_real, scan_sem_texto, texto_pdf_inacessivel}:
-    texto_ocr = await runOcrFallback(bytes)
-    se texto_ocr.length > 100:
-        ocrResult = parseFromText(texto_ocr, tipo, anoBase, cpfCliente)
-        se ocrResult.ok:
-            extracao = ocrResult.data
-            metodoValidacao = "ocr"
-            pipelineOk = true
-            log: validado via OCR.space
-        senão:
-            manualReview com motivo específico OCR
-    senão:
-        manualReview "OCR não retornou texto suficiente"
-senão:
-    manualReview (caminho atual)
+```
+OCR.space  →  IA (Lovable AI)  →  Revisão manual
 ```
 
-### 4. Auditoria e logs
-- Adicionar `metodoValidacao = "ocr"` ao tipo (hoje só aceita `regex | manual`)
-- Mensagem de atividade: "validada automaticamente via OCR" para distinguir de regex puro
-- Log `[ocr] tipo=X tamanho_texto=N tempo_ms=Y`
+- O parser nativo regex continua rodando em paralelo apenas como **verificação silenciosa** (cross-check). Se OCR e nativo concordarem, ganha confiança extra; se divergirem, ignora o nativo.
+- Se o PDF tiver mais de `OCR_MAX_BYTES` (1 MB free tier), pula OCR e vai direto para IA — sem cair em manual antes da hora.
+- Anti-alucinação da IA (validação de que os números retornados existem literalmente no texto) continua ativa.
 
-## Pontos técnicos importantes
+### 2. Demais tipos (`recibo`, `mei`, `darf`) — sem mudança
 
-- **Limite de tamanho:** Free tier OCR.space aceita até 1MB. A função já valida 18MB; vou adicionar pré-validação: se `bytes.length > 1_000_000` e API for free, retornar modal manual com mensagem "PDF muito grande para OCR gratuito (>1MB) — confirme manualmente ou peça o PDF original do PGD." Caso o usuário tenha plano PRO, basta ajustar a constante.
-- **Sem custo de CPU adicional na edge function:** OCR roda no servidor do OCR.space, não consome o worker Supabase (resolve o `WORKER_RESOURCE_LIMIT`).
-- **Não muda o caminho feliz:** PDFs nativos do PGD continuam sendo processados em milissegundos pelo pipeline determinístico. OCR só dispara em scan real.
-- **Segurança:** API key fica em secret, nunca exposta ao frontend.
+Mantém a cascata atual `Nativo → OCR (se scan) → IA → Manual`, porque nesses documentos o regex é confiável e barato.
 
-## Arquivos afetados
+### 3. Logs e telemetria
 
-- `supabase/functions/processar-pdf-declaracao/ocr-fallback.ts` (novo)
-- `supabase/functions/processar-pdf-declaracao/extract-native.ts` (refatoração mínima para expor `parseFromText`)
-- `supabase/functions/processar-pdf-declaracao/index.ts` (encadeamento OCR + tipo `metodoValidacao`)
+- Adicionar `[cascade] tipo=declaracao -> ocr|ia|manual` em cada decisão.
+- Registrar quando OCR e nativo divergem (para futuro ajuste).
+- Campo `metodo_validacao` na auditoria continua refletindo o método que ganhou (`ocr` / `ia` / `manual`).
 
-## Validação após deploy
+### 4. Custo
 
-1. Re-enviar o PDF escaneado que está dando problema → deve validar automaticamente via OCR
-2. Re-enviar um PDF nativo do PGD → continua via `regex` (rápido, sem chamar OCR)
-3. Conferir logs: `[ocr]` aparece só nos casos esperados
-4. Conferir contador de uso em ocr.space/dashboard
+- OCR.space: gratuito até 25k req/mês — sem impacto.
+- IA: só dispara se OCR falhar OU o PDF estourar 1 MB — mantém o consumo de créditos baixo, conforme você pediu.
 
-## O que NÃO está no escopo
+### 5. Arquivos alterados
 
-- Nenhuma mudança em UI/modal
-- Nenhum schema/migration
-- Não toco no `ConfirmarDocumentoManualDialog` (continua existindo como último recurso)
-- Não mudo limite de tamanho do arquivo (segue 18MB)
+- `supabase/functions/processar-pdf-declaracao/index.ts` — reordenação da cascata só para `tipo === "declaracao"`.
+- `supabase/functions/processar-pdf-declaracao/extract-native.ts` — expor helper para rodar o parser nativo como cross-check sem retornar erro fatal.
+
+Sem mudanças em schema, RLS, UI ou banco.
+
+### 6. Validação
+
+Depois do deploy, reenviar o `ANDRIA .pdf`. Esperado nos logs:
+
+```
+[cascade] tipo=declaracao -> ocr
+[ocr] OK len=~12000 elapsedMs=...
+[pipeline] OK metodo=ocr confianca=0.85
+```
+
+E o card deve passar a exibir **Restituição R$ 892,31**.
