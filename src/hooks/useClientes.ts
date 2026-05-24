@@ -77,7 +77,7 @@ export function useClientes() {
   });
 
   const createCliente = useMutation({
-    mutationFn: async (input: Omit<TablesInsert<'clientes'>, 'escritorio_id'>) => {
+    mutationFn: async (input: Omit<TablesInsert<'clientes'>, 'escritorio_id'>): Promise<{ clienteId: string; declaracaoId: string | null }> => {
       if (!escritorioId) throw new Error('Sem escritório');
       const { data: cliente, error } = await supabase
         .from('clientes')
@@ -99,10 +99,7 @@ export function useClientes() {
         .select('id')
         .single();
 
-      // Checklist will be populated by the client as they upload files, or by the accountant manually.
-      if (newDecl) {
-        // No automatic checklist items created, as requested to keep upload simple and free-form.
-      }
+      return { clienteId: cliente.id, declaracaoId: newDecl?.id ?? null };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clientes', escritorioId] });
