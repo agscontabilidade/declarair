@@ -54,7 +54,13 @@ const EMPTY = {
 export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente, onSavedAndUpload }: Props) {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState<null | 'save' | 'save-upload'>(null);
-  const [form, setForm, clearForm] = usePersistedForm('cliente_modal', EMPTY);
+  const [form, setForm] = useState(EMPTY);
+  const clearForm = () => setForm(EMPTY);
+
+  // Cleanup legacy persisted data
+  useEffect(() => {
+    localStorage.removeItem('form_persistence_cliente_modal');
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -70,11 +76,10 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
           procuracao_ecac_validade: cliente.procuracao_ecac_validade ?? '',
         });
       } else {
-        const saved = localStorage.getItem('form_persistence_cliente_modal');
-        if (!saved) setForm(EMPTY);
+        setForm(EMPTY);
       }
     }
-  }, [open, mode, cliente, setForm]);
+  }, [open, mode, cliente]);
 
   const isEdit = mode === 'edit';
   const cpfDigits = form.cpf.replace(/\D/g, '');
