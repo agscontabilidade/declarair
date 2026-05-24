@@ -295,7 +295,7 @@ export function AnexarDeclaracaoButton({
       url: arquivoReciboUrl,
       nome: arquivoReciboNome,
       validado: !!arquivoReciboUrl && transmitida,
-      descricao: 'Ao validar o recibo, a declaração será marcada como transmitida e o cliente notificado.',
+      descricao: 'Ao validar o recibo, a declaração será marcada como transmitida.',
     },
     {
       tipo: 'mei',
