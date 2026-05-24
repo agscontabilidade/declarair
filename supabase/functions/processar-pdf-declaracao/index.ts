@@ -25,7 +25,28 @@ interface Body {
   tipo?: "declaracao" | "recibo" | "mei" | "darf";
   storage_path?: string;
   arquivo_nome?: string;
+  manual_confirmacao?: ManualConfirmacao;
 }
+
+interface ManualConfirmacao {
+  // Comum
+  cpf?: string;
+  ano?: number;
+  // Declaração
+  tipo_resultado?: "restituicao" | "pagamento" | "nenhum";
+  valor_resultado?: number;
+  subtipo?: "dirpf" | "saida_definitiva" | "comunicacao_saida";
+  // Recibo
+  numero_recibo?: string;
+  data_transmissao?: string; // YYYY-MM-DD
+  // MEI
+  cnpj?: string;
+  // DARF
+  codigo_receita?: string;
+  valor_principal?: number;
+  valor_total?: number;
+}
+
 
 function digits(s: string | null | undefined) {
   return (s || "").replace(/\D/g, "");
