@@ -249,36 +249,39 @@ Deno.serve(async (req) => {
       }
       console.log(`[hibrido] ${tipo} validado MANUALMENTE pelo contador`);
     } else {
-      // 2) Pipeline determinístico (SEM IA): sniff + texto + fingerprint + DV + parsers + scorer
+      // 2) Pipeline determinístico — cascata depende do tipo:
+      //    - declaracao  → OCR  →  Nativo (fallback)  →  IA  →  Manual
+      //    - recibo/mei/darf → Nativo  →  OCR (se scan)  →  IA  →  Manual
       let nativeReason = "";
       let isScan = false;
-      try {
-        const native = await tryNativeValidation(bytes, tipo, anoBaseNum, cliente.cpf || "");
-        if (native.ok) {
-          extracao = native.data as typeof extracao;
-          metodoValidacao = "regex";
-          pipelineOk = true;
-          const conf = (native.data as { _confianca?: number })._confianca;
-          const met = (native.data as { _metodo?: string })._metodo;
-          console.log(`[pipeline] ${tipo} validado SEM IA (metodo=${met}, confianca=${conf})`);
-        } else {
-          nativeReason = native.reason;
-          isScan = native.reason === "scan_sem_texto_real" || native.reason === "scan_sem_texto";
-          console.log(`[pipeline] ${tipo} falhou: ${native.reason}`);
-        }
-      } catch (e) {
-        console.error("[pipeline] erro inesperado:", e);
-        nativeReason = "erro_pipeline";
-      }
-
-      // 3) Fallback OCR (OCR.space) quando o PDF é uma imagem escaneada.
-      //    Captura o texto OCR pra eventualmente passar pra IA também.
       let ocrText = "";
-      if (!pipelineOk && isScan) {
+
+      const runNative = async () => {
+        try {
+          const native = await tryNativeValidation(bytes, tipo, anoBaseNum, cliente.cpf || "");
+          if (native.ok) {
+            extracao = native.data as typeof extracao;
+            metodoValidacao = "regex";
+            pipelineOk = true;
+            const conf = (native.data as { _confianca?: number })._confianca;
+            const met = (native.data as { _metodo?: string })._metodo;
+            console.log(`[pipeline] ${tipo} validado SEM IA (metodo=${met}, confianca=${conf})`);
+          } else {
+            nativeReason = native.reason;
+            isScan = native.reason === "scan_sem_texto_real" || native.reason === "scan_sem_texto";
+            console.log(`[pipeline] ${tipo} nativo falhou: ${native.reason}`);
+          }
+        } catch (e) {
+          console.error("[pipeline] erro inesperado:", e);
+          nativeReason = "erro_pipeline";
+        }
+      };
+
+      const runOcr = async (): Promise<void> => {
         if (bytes.length > OCR_MAX_BYTES) {
-          return manualReview(
-            `PDF escaneado de ${(bytes.length / 1024 / 1024).toFixed(1)}MB excede o limite do OCR gratuito (${(OCR_MAX_BYTES / 1024 / 1024).toFixed(0)}MB). Peça ao cliente o PDF original gerado pelo programa da Receita, ou confirme os dados manualmente.`
-          );
+          console.log(`[ocr] tipo=${tipo} pulado: ${(bytes.length / 1024 / 1024).toFixed(2)}MB > limite ${(OCR_MAX_BYTES / 1024 / 1024).toFixed(0)}MB`);
+          nativeReason = nativeReason || `PDF de ${(bytes.length / 1024 / 1024).toFixed(1)}MB excede limite OCR`;
+          return;
         }
         const ocr = await runOcrFallback(bytes, arquivo_nome || "documento.pdf");
         console.log(`[ocr] tipo=${tipo} ok=${ocr.ok} tempo_ms=${ocr.elapsedMs} chars=${ocr.text.length} reason=${ocr.reason || "-"}`);
@@ -291,25 +294,37 @@ Deno.serve(async (req) => {
             pipelineOk = true;
             console.log(`[ocr] ${tipo} validado via OCR.space`);
           } else {
-            // não retorna ainda — IA é o último recurso antes do manual
             nativeReason = nativeReason || `OCR ok mas regex falhou: ${ocrResult.reason}`;
             console.log(`[ocr] ${tipo} regex falhou sobre texto OCR: ${ocrResult.reason}`);
           }
         } else {
           nativeReason = nativeReason || `OCR vazio: ${ocr.reason || "sem texto"}`;
         }
+      };
+
+      if (tipo === "declaracao") {
+        // Layout em colunas confunde o regex nativo (ex.: pega o total de
+        // rendimentos no lugar do imposto a restituir). OCR preserva a
+        // posição visual → vira a 1ª opção.
+        console.log(`[cascade] tipo=declaracao -> tentando OCR primeiro`);
+        await runOcr();
+        if (!pipelineOk) {
+          console.log(`[cascade] tipo=declaracao -> OCR não validou, tentando parser nativo`);
+          await runNative();
+        }
+      } else {
+        // Recibo / MEI / DARF — nativo continua sendo a 1ª opção (rápido e barato).
+        await runNative();
+        if (!pipelineOk && isScan) {
+          await runOcr();
+        }
       }
 
-      // 4) ÚLTIMO RECURSO: Lovable AI (consome créditos — só roda se tudo acima falhou).
-      //    Dispara apenas se já temos texto pra analisar (nativo ou OCR).
-      //    Casos cobertos:
-      //    - texto bom mas resultado inconsistente (`valor_resultado_inconsistente: ...`)
-      //    - texto bom mas regex falhou por layout/formatação inesperada
-      //    - OCR conseguiu o texto mas regex sobre OCR falhou
-      if (!pipelineOk && !isScan && nativeReason && nativeReason !== "scan_sem_texto_real") {
-        const sourceText = ocrText || await extractRawTextFromPdf(bytes);
+      // 3) ÚLTIMO RECURSO: Lovable AI (consome créditos).
+      if (!pipelineOk) {
+        const sourceText = ocrText || await extractRawTextFromPdf(bytes).catch(() => "");
         if (sourceText && sourceText.length > 200) {
-          console.log(`[ia] ${tipo} acionando fallback de IA (motivo nativo: "${nativeReason}", chars=${sourceText.length})`);
+          console.log(`[ia] ${tipo} acionando fallback de IA (motivo: "${nativeReason}", chars=${sourceText.length})`);
           const aiRes = await runAiExtraction(sourceText, tipo, anoBaseNum, cliente.cpf || "");
           console.log(`[ia] ${tipo} ok=${aiRes.ok} tempo_ms=${aiRes.elapsedMs} ${aiRes.ok ? "" : `reason=${aiRes.reason}`}`);
           if (aiRes.ok) {
@@ -318,27 +333,13 @@ Deno.serve(async (req) => {
             pipelineOk = true;
           } else {
             return manualReview(
-              `Extração automática falhou (${nativeReason}). IA também não conseguiu validar (${aiRes.reason}). Confirme os dados manualmente.`
+              `Extração automática falhou (${nativeReason}). IA também não validou (${aiRes.reason}). Confirme os dados manualmente.`
             );
           }
         }
-      } else if (!pipelineOk && isScan && ocrText) {
-        // OCR rodou mas o regex sobre OCR falhou → tenta IA como último recurso.
-        console.log(`[ia] ${tipo} acionando fallback de IA sobre texto OCR (chars=${ocrText.length})`);
-        const aiRes = await runAiExtraction(ocrText, tipo, anoBaseNum, cliente.cpf || "");
-        console.log(`[ia] ${tipo} ok=${aiRes.ok} tempo_ms=${aiRes.elapsedMs} ${aiRes.ok ? "" : `reason=${aiRes.reason}`}`);
-        if (aiRes.ok) {
-          extracao = aiRes.data as typeof extracao;
-          metodoValidacao = "ia";
-          pipelineOk = true;
-        } else {
-          return manualReview(
-            `OCR processou o PDF mas não conseguiu validar (${nativeReason}). IA também falhou (${aiRes.reason}). Confirme os dados manualmente.`
-          );
-        }
       }
 
-      // 5) Demais falhas → modal manual direto.
+      // 4) Falha total → modal manual.
       if (!pipelineOk) {
         return manualReview(
           `Não foi possível extrair os dados automaticamente (${nativeReason || "documento não reconhecido"}). Confirme os dados manualmente para registrar.`
