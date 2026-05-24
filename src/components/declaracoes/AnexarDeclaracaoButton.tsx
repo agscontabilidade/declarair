@@ -430,8 +430,73 @@ export function AnexarDeclaracaoButton({
               </div>
             );
           })}
+
+          <DropdownMenuSeparator />
+          <div className="px-2 py-1.5">
+            <div className="flex items-center gap-2 text-xs font-medium mb-1.5">
+              <Paperclip className="h-3.5 w-3.5" /> Outros documentos
+              <span className="ml-auto text-[10px] font-normal text-muted-foreground">
+                sem validação
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mb-1.5">
+              Documentos diversos (ações, comprovantes etc.) anexados ao e-mail enviado ao cliente.
+            </p>
+            <input
+              ref={outrosInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={onSelectOutros}
+            />
+            {outrosLista.length > 0 && (
+              <ul className="mb-1.5 space-y-1">
+                {outrosLista.map((o) => (
+                  <li
+                    key={o.path}
+                    className="flex items-center gap-1 rounded-md border border-border/60 bg-muted/30 px-1.5 py-1 text-[11px]"
+                  >
+                    <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    <span className="flex-1 truncate" title={o.nome}>{o.nome}</span>
+                    <button
+                      type="button"
+                      className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      onClick={() => baixar(o.path)}
+                      title="Baixar"
+                    >
+                      <Download className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                      onClick={() => removerOutro.mutate(o.path)}
+                      disabled={outrosBusy}
+                      title="Remover"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full h-7 text-xs border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+              onClick={() => outrosInputRef.current?.click()}
+              disabled={outrosBusy}
+            >
+              {outrosBusy ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Plus className="h-3 w-3" />
+              )}
+              <span className="ml-1">Anexar documento</span>
+            </Button>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
+
         );
       })()}
 
