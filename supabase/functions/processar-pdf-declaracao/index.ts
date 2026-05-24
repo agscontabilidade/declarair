@@ -287,6 +287,7 @@ Deno.serve(async (req) => {
         console.log(`[ocr] tipo=${tipo} ok=${ocr.ok} tempo_ms=${ocr.elapsedMs} chars=${ocr.text.length} reason=${ocr.reason || "-"}`);
         if (ocr.ok && ocr.text.length > 100) {
           ocrText = ocr.text;
+          if (ocr.reason) console.log(`[ocr] tipo=${tipo} aproveitando texto PARCIAL (${ocr.reason})`);
           const ocrResult = parseFromText(ocr.text, tipo, anoBaseNum, cliente.cpf || "");
           if (ocrResult.ok) {
             extracao = ocrResult.data as typeof extracao;
@@ -295,7 +296,7 @@ Deno.serve(async (req) => {
             console.log(`[ocr] ${tipo} validado via OCR.space`);
           } else {
             nativeReason = nativeReason || `OCR ok mas regex falhou: ${ocrResult.reason}`;
-            console.log(`[ocr] ${tipo} regex falhou sobre texto OCR: ${ocrResult.reason}`);
+            console.log(`[ocr] ${tipo} regex falhou sobre texto OCR: ${ocrResult.reason} — texto disponível para IA`);
           }
         } else {
           nativeReason = nativeReason || `OCR vazio: ${ocr.reason || "sem texto"}`;
