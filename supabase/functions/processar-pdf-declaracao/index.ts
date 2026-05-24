@@ -397,7 +397,8 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
       (extracao as Partial<ExtracaoMei>)?.ano_calendario,
     );
     const anoBase = Number(dec.ano_base);
-    const CODIGOS_DARF_IRPF_PF = ["0211", "4600", "6015"];
+
+
 
     if (tipo === "declaracao") {
       if (!extracao?.eh_declaracao_irpf) {
