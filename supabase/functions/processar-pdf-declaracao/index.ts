@@ -485,6 +485,9 @@ Deno.serve(async (req) => {
       console.error("Update error", upErr);
       return fail("Erro ao atualizar declaração: " + upErr.message);
     }
+    console.log(
+      `[final] tipo=${tipo} metodo=${metodoValidacao} ano=${(extracao as { ano_exercicio?: number; ano_calendario?: number }).ano_exercicio ?? (extracao as { ano_calendario?: number }).ano_calendario ?? "?"} resultado=${(extracao as { tipo_resultado?: string }).tipo_resultado ?? "-"} valor=${(extracao as { valor_resultado?: number }).valor_resultado ?? "-"} novo_status=${updates.status ?? dec.status}`,
+    );
 
     // Espelha o arquivo do contador no checklist_documentos
     try {
