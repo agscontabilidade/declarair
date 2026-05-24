@@ -137,7 +137,18 @@ export default function Clientes() {
         contadores={contadores}
         onSave={(data) => createCliente.mutateAsync(data as Parameters<typeof createCliente.mutateAsync>[0])}
         mode="create"
+        onSavedAndUpload={(ctx) => {
+          if (ctx.declaracaoId) setUploadDocs({ declaracaoId: ctx.declaracaoId, nome: ctx.nome });
+        }}
       />
+
+      <DocumentosDeclaracaoModal
+        open={!!uploadDocs}
+        onOpenChange={(o) => !o && setUploadDocs(null)}
+        declaracaoId={uploadDocs?.declaracaoId ?? null}
+        clienteNome={uploadDocs?.nome}
+      />
+
 
       <ClienteModal
         open={!!editCliente}
