@@ -125,7 +125,12 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                       }
                     }}
                   >
-                    <TableCell className="tabular-nums">{formatCPF(c.cpf)}</TableCell>
+                    <TableCell className="tabular-nums">
+                      <div className="flex items-center gap-1">
+                        {formatCPF(c.cpf)}
+                        <CopyCpfButton cpf={c.cpf} />
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium">{c.nome}</TableCell>
                     <TableCell className="hidden sm:table-cell tabular-nums">{formatTelefone(c.telefone)}</TableCell>
                     <TableCell>
