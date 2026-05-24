@@ -52,6 +52,36 @@ const RESULTADO_META: Record<string, { label: string; cls: string }> = {
   nenhum: { label: 'Sem imposto', cls: 'bg-gray-100 text-gray-700' },
 };
 
+function CopyCpfButton({ cpf }: { cpf: string }) {
+  const [copied, setCopied] = useState(false);
+  const digits = (cpf || '').replace(/\D/g, '');
+  if (!digits) return null;
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(digits);
+      setCopied(true);
+      toast.success('CPF copiado');
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error('Não foi possível copiar');
+    }
+  };
+  return (
+    <Button
+      type="button"
+      size="icon"
+      variant="ghost"
+      className="h-5 w-5 text-muted-foreground hover:text-foreground"
+      aria-label="Copiar CPF (sem pontos)"
+      title="Copiar CPF (sem pontos)"
+      onClick={handleCopy}
+    >
+      {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+    </Button>
+  );
+}
+
 export default function Declaracoes() {
   const { profile } = useAuth();
   const navigate = useNavigate();
