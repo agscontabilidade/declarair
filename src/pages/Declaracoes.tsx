@@ -301,7 +301,10 @@ export default function Declaracoes() {
                           >
                             <TableCell className="py-2">
                               <div className="font-medium leading-tight">{d.clienteNome}</div>
-                              <div className="text-xs text-muted-foreground tabular-nums mt-0.5">{maskCpf(d.clienteCpf)}</div>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <span className="text-xs text-muted-foreground tabular-nums">{maskCpf(d.clienteCpf)}</span>
+                                <CopyCpfButton cpf={d.clienteCpf} />
+                              </div>
                             </TableCell>
                             <TableCell>
                               <Badge className={`${STATUS_COLORS[d.status] || ''} whitespace-nowrap`}>{STATUS_LABELS[d.status] || d.status}</Badge>
