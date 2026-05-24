@@ -272,6 +272,8 @@ Deno.serve(async (req) => {
       }
 
       // 3) Fallback OCR (OCR.space) quando o PDF é uma imagem escaneada.
+      //    Captura o texto OCR pra eventualmente passar pra IA também.
+      let ocrText = "";
       if (!pipelineOk && isScan) {
         if (bytes.length > OCR_MAX_BYTES) {
           return manualReview(
@@ -281,6 +283,7 @@ Deno.serve(async (req) => {
         const ocr = await runOcrFallback(bytes, arquivo_nome || "documento.pdf");
         console.log(`[ocr] tipo=${tipo} ok=${ocr.ok} tempo_ms=${ocr.elapsedMs} chars=${ocr.text.length} reason=${ocr.reason || "-"}`);
         if (ocr.ok && ocr.text.length > 100) {
+          ocrText = ocr.text;
           const ocrResult = parseFromText(ocr.text, tipo, anoBaseNum, cliente.cpf || "");
           if (ocrResult.ok) {
             extracao = ocrResult.data as typeof extracao;
@@ -288,18 +291,54 @@ Deno.serve(async (req) => {
             pipelineOk = true;
             console.log(`[ocr] ${tipo} validado via OCR.space`);
           } else {
-            return manualReview(
-              `OCR processou o PDF mas não conseguiu validar (${ocrResult.reason}). Confirme os dados manualmente.`
-            );
+            // não retorna ainda — IA é o último recurso antes do manual
+            nativeReason = nativeReason || `OCR ok mas regex falhou: ${ocrResult.reason}`;
+            console.log(`[ocr] ${tipo} regex falhou sobre texto OCR: ${ocrResult.reason}`);
           }
         } else {
+          nativeReason = nativeReason || `OCR vazio: ${ocr.reason || "sem texto"}`;
+        }
+      }
+
+      // 4) ÚLTIMO RECURSO: Lovable AI (consome créditos — só roda se tudo acima falhou).
+      //    Dispara apenas se já temos texto pra analisar (nativo ou OCR).
+      //    Casos cobertos:
+      //    - texto bom mas resultado inconsistente (`valor_resultado_inconsistente: ...`)
+      //    - texto bom mas regex falhou por layout/formatação inesperada
+      //    - OCR conseguiu o texto mas regex sobre OCR falhou
+      if (!pipelineOk && !isScan && nativeReason && nativeReason !== "scan_sem_texto_real") {
+        const sourceText = ocrText || await extractRawTextFromPdf(bytes);
+        if (sourceText && sourceText.length > 200) {
+          console.log(`[ia] ${tipo} acionando fallback de IA (motivo nativo: "${nativeReason}", chars=${sourceText.length})`);
+          const aiRes = await runAiExtraction(sourceText, tipo, anoBaseNum, cliente.cpf || "");
+          console.log(`[ia] ${tipo} ok=${aiRes.ok} tempo_ms=${aiRes.elapsedMs} ${aiRes.ok ? "" : `reason=${aiRes.reason}`}`);
+          if (aiRes.ok) {
+            extracao = aiRes.data as typeof extracao;
+            metodoValidacao = "ia";
+            pipelineOk = true;
+          } else {
+            return manualReview(
+              `Extração automática falhou (${nativeReason}). IA também não conseguiu validar (${aiRes.reason}). Confirme os dados manualmente.`
+            );
+          }
+        }
+      } else if (!pipelineOk && isScan && ocrText) {
+        // OCR rodou mas o regex sobre OCR falhou → tenta IA como último recurso.
+        console.log(`[ia] ${tipo} acionando fallback de IA sobre texto OCR (chars=${ocrText.length})`);
+        const aiRes = await runAiExtraction(ocrText, tipo, anoBaseNum, cliente.cpf || "");
+        console.log(`[ia] ${tipo} ok=${aiRes.ok} tempo_ms=${aiRes.elapsedMs} ${aiRes.ok ? "" : `reason=${aiRes.reason}`}`);
+        if (aiRes.ok) {
+          extracao = aiRes.data as typeof extracao;
+          metodoValidacao = "ia";
+          pipelineOk = true;
+        } else {
           return manualReview(
-            `Não foi possível ler o PDF escaneado automaticamente (${ocr.reason || "OCR retornou vazio"}). Confirme os dados manualmente.`
+            `OCR processou o PDF mas não conseguiu validar (${nativeReason}). IA também falhou (${aiRes.reason}). Confirme os dados manualmente.`
           );
         }
       }
 
-      // 4) Outras falhas (não-scan) → modal manual direto.
+      // 5) Demais falhas → modal manual direto.
       if (!pipelineOk) {
         return manualReview(
           `Não foi possível extrair os dados automaticamente (${nativeReason || "documento não reconhecido"}). Confirme os dados manualmente para registrar.`
