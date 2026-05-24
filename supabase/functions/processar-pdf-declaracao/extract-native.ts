@@ -242,8 +242,13 @@ async function extractB_proxy(pdf: unknown): Promise<ExtractedText> {
 async function extractC_pdfjsDirect(bytes: Uint8Array): Promise<ExtractedText> {
   try {
     // deno-lint-ignore no-explicit-any
-    const pdfjs: any = await import("https://esm.sh/pdfjs-serverless@0.5.0");
-    const doc = await pdfjs.getDocument({
+    const mod: any = await import("https://esm.sh/pdfjs-serverless@0.5.0");
+    const getDocument = mod.getDocument || mod.default?.getDocument;
+    if (typeof getDocument !== "function") {
+      console.error("[engine/pdfjs-direct] getDocument indisponível no módulo");
+      return buildText("", []);
+    }
+    const doc = await getDocument({
       data: new Uint8Array(bytes),
       useSystemFonts: false,
       disableFontFace: true,
