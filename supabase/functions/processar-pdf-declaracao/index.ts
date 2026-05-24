@@ -182,9 +182,10 @@ Deno.serve(async (req) => {
         tipo,
       });
 
-    // 1) Confirmação manual enviada pelo contador — pula regex/IA
+    // 1) Confirmação manual enviada pelo contador — pula o pipeline
     if (manual_confirmacao) {
       metodoValidacao = "manual";
+      pipelineOk = true;
       const mc = manual_confirmacao;
       // Validações básicas por tipo
       if (tipo === "declaracao") {
