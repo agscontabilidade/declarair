@@ -439,8 +439,19 @@ async function extractD_rawStreams(bytes: Uint8Array): Promise<ExtractedText> {
       cursor = eIdx + endMarker.length;
       streamCount++;
 
+      // Inspeciona o dict imediatamente antes de "stream" (até 400 bytes) pra
+      // detectar streams de imagem (JPEG/JBIG2/CCITT/JPX) e pulá-los — eles
+      // são lixo binário pra parsing textual e queimam CPU em vão.
+      const dictStart = Math.max(0, sIdx - 400);
+      const dictPeek = latin.substring(dictStart, sIdx);
+      if (/\/(DCTDecode|JBIG2Decode|CCITTFaxDecode|JPXDecode|RunLengthDecode)\b/.test(dictPeek)) continue;
+      if (/\/Subtype\s*\/Image\b/.test(dictPeek)) continue;
+
       const slice = bytes.subarray(dataStart, dataEnd);
       if (slice.length === 0) continue;
+      // Limite de tamanho — streams enormes raramente são content streams textuais
+      if (slice.length > 2_000_000) continue;
+
 
       let decoded: Uint8Array | null = null;
       // Heurística: zlib header começa com 0x78 (0x78 0x9C / 0x78 0xDA / 0x78 0x01)
@@ -904,12 +915,25 @@ export async function tryNativeValidation(
   const { pdf, structure } = sniff;
   if (structure.numPages > 50) return { ok: false, reason: "PDF com muitas páginas (>50)" };
 
-  const { text, engines } = await extractTextCascade(pdf, bytes);
-  const textLen = text.full.replace(/\s/g, "").length;
-  if (textLen < 80) {
-    console.log(`[pipeline] FAIL tipo=${tipo} engines=[${engines.join("; ")}] -> scan_sem_texto_real`);
+  // Pré-detecção de PDF imagem (escaneado): se não há /Font no documento mas
+  // existem /Image ou filtros de imagem, é um scan — curto-circuita pra evitar
+  // queimar CPU em todas as engines.
+  const head = bytesToLatin1(bytes.subarray(0, Math.min(bytes.length, 2_000_000)));
+  const hasFont = /\/Font\b/.test(head);
+  const hasImage = /\/(DCTDecode|JBIG2Decode|CCITTFaxDecode|JPXDecode)\b|\/Subtype\s*\/Image\b/.test(head);
+  if (!hasFont && hasImage) {
+    console.log(`[pipeline] FAIL tipo=${tipo} -> scan_sem_texto_real (sem /Font, com imagem)`);
     return { ok: false, reason: "scan_sem_texto_real" };
   }
+
+  const { text, engines } = await extractTextCascade(pdf, bytes);
+  const textLen = text.full.replace(/\s/g, "").length;
+  const hasFiscal = /declaracao|recibo|darf|simei|exerc[ií]cio|imposto|receita\s+federal|cpf|restitui|pagamento/i.test(text.normalized);
+  if (textLen < 80 || !hasFiscal) {
+    console.log(`[pipeline] FAIL tipo=${tipo} textLen=${textLen} hasFiscal=${hasFiscal} engines=[${engines.join("; ")}] -> scan_sem_texto_real`);
+    return { ok: false, reason: "scan_sem_texto_real" };
+  }
+
 
   const fingerprint = detectFingerprint(structure.metadata);
   console.log(`[pipeline] tipo=${tipo} paginas=${structure.numPages} textLen=${textLen} fingerprint=${fingerprint.produtor}(${fingerprint.confianca})`);
