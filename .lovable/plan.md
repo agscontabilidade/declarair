@@ -1,55 +1,43 @@
 ## Diagnóstico
 
-Verifiquei os logs: o upload do PDF foi processado com sucesso pelo parser nativo (`metodo=texto, confianca=0.65, winner=unpdf`), mas ele continuou extraindo o valor errado (R$ 18.406,97 em vez de R$ 892,31).
+Os logs mostram que o OCR está sendo chamado, mas o OCR.space retorna erro:
 
-**Por que o hardening anterior não pegou:** quando o `unpdf` quebra a diagramação em duas colunas do "RESUMO", o valor 18.406,97 acaba ficando textualmente próximo do label "Imposto a Restituir", sem nenhum label concorrente entre eles — então a verificação de proximidade aprova, e o valor também não bate exatamente com os totais da blacklist. Resultado: o parser nativo declara sucesso e nem OCR nem IA são acionados.
-
-A correção é inverter a estratégia para declarações: dar prioridade ao OCR (que preserva a posição visual e separa as colunas corretamente), com IA como segunda opção. O nativo continua atendendo recibos / MEI / DARF, onde funciona bem.
-
-## Plano
-
-### 1. Nova cascata para `tipo=declaracao` (subtipo DIRPF / Saída Definitiva)
-
-Ordem passa a ser:
-
-```
-OCR.space  →  IA (Lovable AI)  →  Revisão manual
+```text
+The maximum page limit of 3 was reached and only pages upto the limit were parsed successfully
 ```
 
-- O parser nativo regex continua rodando em paralelo apenas como **verificação silenciosa** (cross-check). Se OCR e nativo concordarem, ganha confiança extra; se divergirem, ignora o nativo.
-- Se o PDF tiver mais de `OCR_MAX_BYTES` (1 MB free tier), pula OCR e vai direto para IA — sem cair em manual antes da hora.
-- Anti-alucinação da IA (validação de que os números retornados existem literalmente no texto) continua ativa.
+Como a função trata esse retorno como falha total, ela não guarda nenhum texto OCR. Em seguida, a IA também não roda porque depende de texto extraído com segurança. Resultado: os dados não são atualizados.
 
-### 2. Demais tipos (`recibo`, `mei`, `darf`) — sem mudança
+## Plano de ajuste
 
-Mantém a cascata atual `Nativo → OCR (se scan) → IA → Manual`, porque nesses documentos o regex é confiável e barato.
+1. **Ajustar a chamada do OCR.space para declaração**
+   - Enviar parâmetros explícitos para processar apenas as primeiras páginas úteis do PDF, evitando o erro de limite de páginas.
+   - Para declaração IRPF, priorizar as páginas finais/iniciais necessárias para identificar CPF, ano e bloco `RESUMO`, sem tentar OCR do PDF inteiro quando isso estoura limite.
 
-### 3. Logs e telemetria
+2. **Aceitar OCR parcial quando houver texto útil**
+   - Hoje, se `IsErroredOnProcessing` vem true, o código descarta tudo.
+   - Vou alterar para aproveitar `ParsedResults[].ParsedText` quando existir texto suficiente, mesmo que o OCR.space informe aviso/limite de páginas.
+   - Só falhar se não houver texto realmente aproveitável.
 
-- Adicionar `[cascade] tipo=declaracao -> ocr|ia|manual` em cada decisão.
-- Registrar quando OCR e nativo divergem (para futuro ajuste).
-- Campo `metodo_validacao` na auditoria continua refletindo o método que ganhou (`ocr` / `ia` / `manual`).
+3. **Permitir IA como 2ª opção quando OCR retornar texto parcial**
+   - Fluxo para `tipo=declaracao` ficará:
 
-### 4. Custo
-
-- OCR.space: gratuito até 25k req/mês — sem impacto.
-- IA: só dispara se OCR falhar OU o PDF estourar 1 MB — mantém o consumo de créditos baixo, conforme você pediu.
-
-### 5. Arquivos alterados
-
-- `supabase/functions/processar-pdf-declaracao/index.ts` — reordenação da cascata só para `tipo === "declaracao"`.
-- `supabase/functions/processar-pdf-declaracao/extract-native.ts` — expor helper para rodar o parser nativo como cross-check sem retornar erro fatal.
-
-Sem mudanças em schema, RLS, UI ou banco.
-
-### 6. Validação
-
-Depois do deploy, reenviar o `ANDRIA .pdf`. Esperado nos logs:
-
-```
-[cascade] tipo=declaracao -> ocr
-[ocr] OK len=~12000 elapsedMs=...
-[pipeline] OK metodo=ocr confianca=0.85
+```text
+OCR.space -> regex sobre OCR -> IA sobre texto OCR parcial -> revisão manual
 ```
 
-E o card deve passar a exibir **Restituição R$ 892,31**.
+   - A IA continuará sem ler o PDF diretamente, para evitar novo `WORKER_RESOURCE_LIMIT`.
+   - A IA só receberá texto que já veio do OCR, mantendo baixo consumo e sem processamento pesado.
+
+4. **Evitar o parser nativo como fallback para declaração escaneada**
+   - Se o PDF for detectado como scan/imagem, não insistir no parser nativo depois do OCR, pois ele não consegue extrair texto real e só aumenta risco de CPU.
+   - Para `recibo`, `mei` e `darf`, manter o fluxo atual para não mexer no que não foi pedido.
+
+5. **Melhorar logs de validação**
+   - Registrar quando o OCR foi parcial mas aproveitado.
+   - Registrar quando a IA foi acionada com texto OCR.
+   - Registrar claramente o motivo de cair em revisão manual.
+
+6. **Deploy da função**
+   - Depois dos ajustes, redeploy apenas da função `processar-pdf-declaracao`.
+   - Sem alterações em banco, RLS, UI ou schema.
