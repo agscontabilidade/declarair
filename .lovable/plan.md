@@ -1,138 +1,191 @@
+## Diagnóstico do caso enviado
 
-# Plano BRUTAL: validação determinística de documentos fiscais (sem IA)
+O PDF enviado é uma **Declaração de Saída Definitiva do País**, exercício **2026**, ano-calendário **2025**, com texto pesquisável e resultado no resumo:
 
-## Objetivo
+- CPF detectável: `326.877.918-22`
+- Tipo: `DECLARAÇÃO DE SAÍDA DEFINITIVA DO PAÍS`
+- Exercício: `2026`
+- Resultado: `IMPOSTO A RESTITUIR | 892,31`
 
-Zerar a dependência da IA na validação de Declaração IRPF, Recibo, DASN-SIMEI e DARF. Hoje a regex em `extract-native.ts` cobre só PDFs com texto pesquisável — qualquer scan cai em "revisão manual". Vamos transformar a edge function `processar-pdf-declaracao` em um **pipeline de 6 camadas** que ataca o documento com técnicas independentes, atribui confiança e só pede revisão manual quando TODAS falham.
+O modal está aparecendo porque o pipeline atual depende quase só do `unpdf.extractText()`. Neste arquivo, o parser da plataforma provavelmente está retornando texto insuficiente e classificando como `scan_sem_texto`, mesmo o PDF tendo texto extraível. Ou seja: o problema principal não é falta de IA, é **extrator nativo fraco / sem fallback real de layout**.
 
-## Princípio
+## Plano de implementação
 
-Para cada documento, rodar várias estratégias em paralelo, cada uma devolvendo `{campos, confianca 0–1, razao}`. Um *scorer* final consolida os resultados. Aceite automático exige confiança ≥ 0.85 + checagens cruzadas (CPF/ano/cliente) compatíveis. Abaixo disso → manual.
+### 1. Fortalecer a extração de texto sem IA
 
-## As 6 camadas
+Atualizar `supabase/functions/processar-pdf-declaracao/extract-native.ts` para usar uma cadeia determinística de extração:
 
 ```text
 PDF bytes
-  │
-  ├─ 1. Sniff & estrutura (tipo MIME real, nº páginas, tem texto?, tem imagens?, tem fontes?)
-  │
-  ├─ 2. Extração de texto nativa (unpdf + pdfjs fallback)  ──► regex + parser por coordenadas
-  │
-  ├─ 3. OCR determinístico (Tesseract WASM em Deno)         ──► regex sobre o texto reconhecido
-  │
-  ├─ 4. Códigos de barra / QR (DARF tem Code-128 com CPF+valor+venc; recibo da RFB tem hash)
-  │
-  ├─ 5. Template fingerprint (assinatura visual/textual do PDF gerado pelo PGD/eCAC)
-  │
-  └─ 6. Validadores de domínio (DV de CPF/CNPJ, DV do número de recibo, código DARF, ano coerente)
-        │
-        ▼
-   Scorer + cross-check com cliente/declaração ──► aceitar | rejeitar | manual
+  ├─ unpdf.extractText()
+  ├─ fallback pdfjs getTextContent() página por página
+  ├─ reconstrução de linhas por coordenadas Y/X
+  ├─ normalização fiscal PT-BR
+  └─ parsers por tipo documental
 ```
 
-## Detalhamento por camada
+O fallback com `pdfjs getTextContent()` será obrigatório quando:
 
-### 1. Sniff & estrutura
-- Validar magic bytes `%PDF-`, versão, número de páginas, presença de `/Font`, `/Image`, `/XObject`.
-- Calcular razão `imagem/texto` por página → decide se vale OCR.
-- Bloquear arquivos suspeitos (criptografados, > 18MB, > 50 páginas).
+- `unpdf` retornar menos de 80 caracteres úteis;
+- o texto vier sem marcadores fiscais esperados;
+- o PDF tiver muitas quebras de layout/tabelas;
+- for declaração de saída definitiva, recibo ou DARF com valores em colunas.
 
-### 2. Extração de texto nativa (reforçada)
-- Manter `unpdf` como primário; adicionar `pdfjs-dist` como fallback (alguns PDFs do PGD têm streams mal codificados que o unpdf entrega vazios).
-- **Extrair com coordenadas** (`getTextContent` do pdfjs): permite ler "Saldo de Imposto a Pagar" como **célula** alinhada com o valor da direita, em vez de regex frágil que pega o número errado.
-- Construir um *layout map* (linhas reconstruídas a partir de y±tolerância) e procurar rótulos canônicos:
-  - DIRPF: `Saldo de Imposto a Pagar`, `Imposto a Restituir`, `Resumo da Declaração`, `Exercício de YYYY`, `Identificação do Contribuinte`.
-  - Recibo: `Recibo de Entrega`, `Número do Recibo`, `Data da Transmissão`, hash SHA na última página.
-  - DASN-SIMEI: `DASN-SIMEI`, `Ano-Calendário`, CNPJ formatado.
-  - DARF: `0211/4600/6015`, `Valor do Principal`, `Valor Total`, `Período de Apuração`, `Data de Vencimento`.
+### 2. Parser específico para Declaração de Saída Definitiva
 
-### 3. OCR determinístico (escaneados)
-- Rodar **Tesseract WASM** dentro da edge function (Deno + `npm:tesseract.js`), em português, treinado para dígitos+letras.
-- Pré-processo: render do PDF em PNG via `pdfjs` + binarização + deskew (canvas no Deno via `npm:@napi-rs/canvas` ou ImageMagick WASM).
-- Roda OCR só nas páginas críticas (1ª de identificação + páginas com palavras-chave detectadas em baixa qualidade).
-- Mesmo regex/parser da camada 2 é reaplicado sobre o texto OCR.
-- Custo de inicialização: cache do `.traineddata` no `/tmp` da função entre invocações.
+Criar regras específicas para `saida_definitiva`, sem tratar como DIRPF genérica:
 
-### 4. Códigos de barra / QR
-- DARF tem **Code-128 (linha digitável de 48 dígitos)** que codifica código de receita, CPF, valor e vencimento — é a fonte de verdade.
-- Recibo da DIRPF tem **hash SHA** no rodapé (10 grupos de 4 chars) e às vezes QR de autenticação no eCAC.
-- Implementar com `@zxing/library` (TS puro, roda em Deno) sobre as imagens renderizadas pelo pdfjs.
-- Quando o barcode bate com os campos textuais → confiança = 1.0, encerra o pipeline.
+Campos obrigatórios:
 
-### 5. Template fingerprint
-- PDFs gerados pelo PGD/eCAC têm assinaturas estáveis:
-  - String `Creator: Programa Gerador da Declaração - PGD`, `Producer: iText` versão X.
-  - Hashes de rodapés/cabeçalhos fixos por exercício (gerar tabela com fingerprints conhecidos por ano).
-- Se o fingerprint bate, o parser usa **offsets fixos** (mais barato e mais preciso que regex livre).
-- Tabela `fingerprints_documentos_rfb` (constante em código, não no banco) versionada por ano-exercício.
+- `DECLARAÇÃO DE SAÍDA DEFINITIVA DO PAÍS`
+- `IMPOSTO SOBRE A RENDA - PESSOA FÍSICA`
+- CPF válido por dígito verificador
+- Exercício compatível com `ano_base`
+- Ano-calendário compatível, quando presente
 
-### 6. Validadores de domínio (já parcialmente existem)
-- DV de CPF e CNPJ — já temos.
-- **DV do número do recibo da RFB**: 12 dígitos + 2 DV (módulo 11) — implementar para rejeitar recibos forjados/digitados errado.
-- Tabela branca de códigos DARF para IRPF-PF (`0211`, `4600`, `6015`, `8523` se carnê-leão antigo).
-- Coerência temporal: `ano_exercicio === ano_base`, `ano_calendario === ano_base - 1` para MEI, `data_transmissao` entre 01/03 e 31/12 do ano_base, vencimento DARF coerente com período de apuração.
-- Cruzar **sempre** CPF do PDF com `clientes.cpf` da declaração; mismatch = rejeição dura.
+Campos extraídos:
 
-## Scorer e decisão final
+- CPF
+- Nome
+- Exercício
+- Ano-calendário
+- País de destino, quando existir
+- Data de caracterização da condição de não residente, quando existir
+- Resultado financeiro no resumo:
+  - `SALDO DE IMPOSTO A PAGAR`
+  - `IMPOSTO A RESTITUIR`
+  - `Valor da quota`
+
+Regra para o PDF enviado:
 
 ```text
-score = w1 * camada_texto + w2 * camada_ocr + w3 * camada_barcode
-      + w4 * fingerprint + w5 * dominio
-        (pesos: barcode > fingerprint > texto > ocr > dominio_isolado)
-
-decisão:
-  score ≥ 0.85 e cross-check OK     → aceitar automático
-  0.55 ≤ score < 0.85               → aceitar com flag "revisar"
-  score < 0.55 ou cross-check falha → revisão manual (modal já existe)
+SALDO DE IMPOSTO A PAGAR = 0,00
+IMPOSTO A RESTITUIR = 892,31
+=> tipo_resultado = restituicao
+=> valor_resultado = 892.31
 ```
 
-Log estruturado por camada vai para `console.log` (visível em Edge Logs) com `metodo_validacao` salvo em `declaracoes` (`regex` | `ocr` | `barcode` | `fingerprint` | `manual`) — útil pra medir taxa de "queda na manual" e ajustar.
+### 3. Melhorar leitura de resultado financeiro em qualquer declaração
 
-## Mudanças no código
+Hoje a leitura depende de regex simples em texto corrido. Vou trocar por um resolvedor fiscal mais tolerante:
 
-### Backend (`supabase/functions/processar-pdf-declaracao/`)
+```text
+1. localizar página/trecho RESUMO
+2. procurar labels financeiras normalizadas
+3. ler valor na mesma linha
+4. se não houver, ler valor imediatamente abaixo
+5. comparar pagar x restituir
+6. aplicar regra de decisão:
+   - pagar > 0 => pagamento
+   - restituir > 0 => restituicao
+   - ambos zero => nenhum
+   - ambos > 0 => rejeição por inconsistência
+```
 
-1. `extract-native.ts` — refatorar em módulos:
-   - `pipeline.ts` — orquestrador das 6 camadas + scorer.
-   - `layers/structure.ts` — sniff e métricas do PDF.
-   - `layers/text.ts` — unpdf + pdfjs com coordenadas (substitui o atual).
-   - `layers/ocr.ts` — Tesseract WASM + render via pdfjs.
-   - `layers/barcode.ts` — zxing para Code-128/QR.
-   - `layers/fingerprint.ts` — assinaturas RFB por ano.
-   - `layers/domain.ts` — DVs, whitelists, coerência temporal.
-   - `parsers/{dirpf,recibo,dasn,darf}.ts` — parsers por tipo consumindo o layout map.
-2. `index.ts` — remover o ramo IA inteiro; substituir por chamada única `await runPipeline(bytes, tipo, anoBase, cliente)`. Manter o ramo `manual_confirmacao` (modal já existe).
-3. Apagar dependência de `LOVABLE_API_KEY` desta função (continua existindo em outras).
-4. Aumentar timeout/memória do edge runtime se necessário (OCR é pesado).
+Isso cobre PDFs onde o valor aparece como:
 
-### Banco
+- `IMPOSTO A RESTITUIR | 892,31`
+- `IMPOSTO A RESTITUIR 892,31`
+- label em uma linha e valor na linha seguinte
+- tabela extraída fora de ordem
 
-- Coluna nova (opcional, recomendada): `declaracoes.metodo_validacao text` e `declaracoes.confianca_validacao numeric(3,2)` para auditoria. Não é obrigatório pro funcionamento — só telemetria.
-- Migration mínima e aditiva (sem quebrar nada existente).
+### 4. Reclassificar corretamente “scan_sem_texto”
 
-### Frontend
+Depois do fallback `pdfjs`, só classificar como `scan_sem_texto` quando **todos** os extratores retornarem texto insuficiente.
 
-- **Nenhuma mudança de UX**. `AnexarDeclaracaoButton.tsx` e `ConfirmarDocumentoManualDialog.tsx` continuam iguais — a função ainda devolve `ok:true` ou `requires_manual_review:true`. O modal vai aparecer muito menos.
+Novo fluxo:
 
-## O que NÃO vou mudar
+```text
+unpdf falhou ou retornou pouco texto
+  ↓
+pdfjs getTextContent por página
+  ↓
+se texto útil >= limite: continuar validação normal
+  ↓
+se texto útil ainda baixo: scan_sem_texto real
+```
 
-- Schema das tabelas existentes (só adições opcionais).
-- RLS, multi-tenancy, fluxo de status do kanban.
-- Modal de confirmação manual.
-- Outras edge functions.
-- Demais regras (limites de plano, cobranças etc.).
+Esse PDF enviado não deve mais cair no modal.
 
-## Riscos e mitigações
+### 5. Scoring mais rígido, mas sem falso negativo nesse padrão
 
-- **Tamanho do bundle Deno com Tesseract + pdfjs + zxing**: ~8–12MB. Edge function aguenta; verificar cold start. Mitigação: lazy-import por camada (só carrega OCR se camada 2 falhou).
-- **Tempo de execução em scans grandes**: limitar OCR a 3 páginas-chave; usar `Promise.race` com timeout de 25s por camada.
-- **Falsos positivos via fingerprint**: exigir SEMPRE cross-check de CPF+ano antes de aceitar.
-- **Mudança anual do PGD**: tabela de fingerprints versionada por ano-exercício; adicionar novo fingerprint quando a Receita liberar o programa de 2027.
+Substituir o score genérico por evidências fiscais obrigatórias:
 
-## Critério de pronto
+```text
+Declaração aceita automaticamente se:
+- tipo documental reconhecido
+- CPF válido e igual ao cliente
+- exercício igual ao ano_base
+- Receita Federal / IRPF / DSDP reconhecido
+- resultado financeiro resolvido ou subtipo permitir resultado neutro
+```
 
-- 100% dos PDFs nativos do PGD são validados sem IA e sem manual.
-- ≥ 90% dos PDFs escaneados legíveis são validados via OCR sem manual.
-- DARF com código de barras legível = validação instantânea.
-- Função nunca retorna mais "Créditos de IA esgotados" — esse caminho deixa de existir.
+Para dados financeiros, manter regra conservadora:
 
+- se conseguir ler com consistência, grava automaticamente;
+- se detectar conflito real, rejeita;
+- se o PDF for texto válido mas só o resultado financeiro falhar, registrar arquivo e resultado como `nenhum` apenas quando ambos os campos forem explicitamente zero; caso contrário não inventar valor.
+
+### 6. Ampliar parsers dos outros documentos sem IA
+
+No mesmo arquivo, fortalecer os parsers existentes:
+
+**Recibo RFB**
+- leitura de número próximo de `Nº do recibo`, `Recibo de Entrega`, `declaração recebida`
+- DV módulo 11 quando formato permitir
+- data/hora de transmissão com múltiplos formatos
+
+**DARF**
+- código de receita em formatos com ou sem label
+- CPF/CNPJ do contribuinte
+- período de apuração
+- vencimento
+- valor principal, multa, juros e total
+- whitelist de IRPF PF expandida
+
+**DASN-SIMEI / MEI**
+- CNPJ por DV
+- CPF do responsável/titular quando presente
+- ano-calendário
+- número de recibo e data de transmissão quando existirem
+
+### 7. Teste real com o PDF enviado antes de concluir
+
+Após implementar, testar a função com o PDF enviado e confirmar que retorna algo equivalente a:
+
+```json
+{
+  "ok": true,
+  "tipo": "declaracao",
+  "extracao": {
+    "eh_declaracao_irpf": true,
+    "subtipo": "saida_definitiva",
+    "cpf": "32687791822",
+    "ano_exercicio": 2026,
+    "tipo_resultado": "restituicao",
+    "valor_resultado": 892.31
+  },
+  "metodo_validacao": "regex"
+}
+```
+
+### 8. Não alterar UI e não mexer no banco
+
+Para reduzir risco em produção:
+
+- não alterar schema;
+- não mexer em RLS;
+- não alterar o modal;
+- não alterar fluxo visual;
+- alterar apenas o motor de validação determinística e, se necessário, pequenos logs técnicos no backend.
+
+## Resultado esperado
+
+- Esse PDF de saída definitiva será validado automaticamente.
+- PDFs textuais da Receita não devem mais cair como `scan_sem_texto` por falha do extrator primário.
+- A plataforma continua sem usar IA para validação.
+- Dados financeiros serão extraídos por regras determinísticas, com validação cruzada de CPF, ano, tipo documental e consistência dos valores.
+
+## Limite técnico honesto
+
+Para PDF puramente escaneado/imagem, sem camada de texto, a única forma não-IA de leitura automática é OCR determinístico. Posso adicionar OCR depois como segunda etapa, mas para este caso específico não é necessário: o arquivo enviado tem texto e deve ser resolvido com extração nativa robusta.
