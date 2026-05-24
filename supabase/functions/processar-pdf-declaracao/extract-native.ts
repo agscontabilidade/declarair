@@ -1,22 +1,26 @@
 // =============================================================================
 // Pipeline determinístico de validação de PDFs fiscais brasileiros (SEM IA).
 //
-// Camadas:
-//   1. Structure   — sniff de bytes, contagem de páginas, métricas de texto.
-//   2. Text/Layout — unpdf + pdfjs-dist com coordenadas → reconstrução de linhas.
-//   3. Fingerprint — Creator/Producer/Title do PDF (assinaturas do PGD/eCAC).
-//   4. Domain      — DV de CPF/CNPJ, DV módulo 11 do nº de recibo, whitelist DARF,
-//                    coerência temporal (ano-exercício / ano-calendário / vencimentos).
-//   5. Parsers     — DIRPF / DSDP / Comunicação Saída / Recibo / DASN-SIMEI / DARF.
-//   6. Scorer      — agrega evidências e devolve confiança 0–1.
+// Camadas de extração de TEXTO (cascata, tudo determinístico):
+//   A. unpdf.extractText                     — wrapper rápido sobre pdfjs
+//   B. pdfjs (proxy do unpdf) getTextContent — reconstrói linhas por Y/X
+//   C. pdfjs-serverless direto               — força PDF.js sem CMaps externos
+//   D. raw stream parser                     — varre os streams do PDF byte-a-byte,
+//                                              decodifica Flate e extrai operadores
+//                                              de texto (Tj, TJ, ', "). Esta é a
+//                                              camada que salva PDFs do PGD/eCAC
+//                                              que nenhum PDF.js consegue ler.
 //
-// Aceite automático exige score ≥ 0.80 + cross-check de CPF/ano feito no caller.
-// Abaixo disso, devolvemos { ok:false, reason } → o caller cai pro modal manual.
+// Camadas de validação (depois do texto):
+//   1. Structure   — sniff de bytes e métricas
+//   2. Fingerprint — Creator/Producer/Title do PDF (assinaturas do PGD/eCAC)
+//   3. Domain      — DV CPF/CNPJ, DV módulo 11 nº recibo, whitelist DARF
+//   4. Parsers     — DIRPF / DSDP / Comunicação Saída / Recibo / DASN-SIMEI / DARF
+//   5. Scorer      — agrega evidências e devolve confiança 0–1
 //
-// OCR de PDFs escaneados está FORA deste pipeline (Tesseract WASM + canvas em
-// Deno edge é instável e estoura o timeout). Esses PDFs seguem caindo no fluxo
-// de confirmação manual já existente — mas a maioria absoluta dos PDFs gerados
-// pelo PGD/eCAC tem texto pesquisável e cai aqui dentro.
+// Aceite automático exige score ≥ 0.55 + cross-check de CPF/ano feito no caller.
+// Se TODAS as camadas A..D falharem, retornamos `scan_sem_texto_real` (PDF imagem
+// de verdade) — esses sim caem no modal manual já existente.
 // =============================================================================
 
 import { extractText, getDocumentProxy, getMeta } from "https://esm.sh/unpdf@0.12.1";
@@ -79,7 +83,7 @@ export type NativeResult =
   | { ok: false; reason: string };
 
 // =============================================================================
-// CAMADA 6 — DOMAIN VALIDATORS
+// DOMAIN VALIDATORS
 // =============================================================================
 
 const onlyDigits = (s: string | null | undefined) => (s || "").replace(/\D/g, "");
@@ -111,14 +115,10 @@ function validateCNPJ(cnpj: string): boolean {
   );
 }
 
-// DV módulo 11 (pesos 2..9 cíclicos, da direita p/ esquerda) usado nos números
-// de recibo da Receita Federal. 12 dígitos + 2 DV. Implementação tolerante:
-// retorna true se o nº tem 14 dígitos e o DV bate; também aceita 10 dígitos
-// (formatos antigos) sem validar DV.
 function validateNumeroReciboDV(numero: string): boolean {
   const d = onlyDigits(numero);
   if (d.length < 10) return false;
-  if (d.length !== 14) return true; // aceita formatos legados sem DV explícito
+  if (d.length !== 14) return true;
   const base = d.slice(0, 12);
   const dv = d.slice(12, 14);
   const mod11 = (str: string) => {
@@ -133,29 +133,21 @@ function validateNumeroReciboDV(numero: string): boolean {
   return `${dv1}${dv2}` === dv;
 }
 
-// Whitelist expandida de códigos DARF de IRPF Pessoa Física.
 const CODIGOS_DARF_IRPF_PF = new Set([
-  "0211", // IRPF — ajuste anual (cota única ou cotas)
-  "4600", // Carnê-Leão
-  "6015", // Ganhos de capital — alienação de bens/direitos
-  "8523", // Ganhos líquidos em renda variável (PF)
-  "0190", // IRPF — supl. de aposentadoria
-  "5320", // Ganho de capital — moeda estrangeira
+  "0211", "4600", "6015", "8523", "0190", "5320",
 ]);
 
 // =============================================================================
-// CAMADA 1 — STRUCTURE SNIFF
+// STRUCTURE SNIFF
 // =============================================================================
 
 interface PdfStructure {
   isPdf: boolean;
   numPages: number;
-  textLength: number;
   metadata: Record<string, string>;
 }
 
 async function sniffPdf(bytes: Uint8Array): Promise<{ pdf: unknown; structure: PdfStructure } | null> {
-  // Magic bytes "%PDF-"
   if (bytes.length < 5 || bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) {
     return null;
   }
@@ -164,7 +156,6 @@ async function sniffPdf(bytes: Uint8Array): Promise<{ pdf: unknown; structure: P
     const pdf = await getDocumentProxy(buf);
     // deno-lint-ignore no-explicit-any
     const numPages = (pdf as any).numPages ?? 0;
-
     let metadata: Record<string, string> = {};
     try {
       const meta = await getMeta(pdf as never);
@@ -174,47 +165,50 @@ async function sniffPdf(bytes: Uint8Array): Promise<{ pdf: unknown; structure: P
         Object.entries(info).filter(([, v]) => typeof v === "string"),
       ) as Record<string, string>;
     } catch { /* meta opcional */ }
-
-    return { pdf, structure: { isPdf: true, numPages, textLength: 0, metadata } };
+    return { pdf, structure: { isPdf: true, numPages, metadata } };
   } catch (e) {
-    console.error("[layer1] sniff falhou:", (e as Error).message);
+    console.error("[sniff] falhou:", (e as Error).message);
     return null;
   }
 }
 
 // =============================================================================
-// CAMADA 2 — TEXT + LAYOUT (unpdf)
+// EXTRATORES DE TEXTO
 // =============================================================================
 
 interface ExtractedText {
-  full: string;          // texto completo, mergePages
-  byPage: string[];      // texto por página
-  normalized: string;    // full sem acento, lower
+  full: string;
+  byPage: string[];
+  normalized: string;
 }
 
-async function extractFullText(pdf: unknown): Promise<ExtractedText> {
+function normalize(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function buildText(full: string, byPage: string[]): ExtractedText {
+  return { full, byPage, normalized: normalize(full) };
+}
+
+// --- A: unpdf.extractText (rápido) ---
+async function extractA_unpdf(pdf: unknown): Promise<ExtractedText> {
   try {
     const { text } = await extractText(pdf as never, { mergePages: false });
     const byPage: string[] = Array.isArray(text) ? text : [String(text || "")];
-    const full = byPage.join("\n\n");
-    return { full, byPage, normalized: normalize(full) };
+    return buildText(byPage.join("\n\n"), byPage);
   } catch (e) {
-    console.error("[layer2] extractText falhou:", (e as Error).message);
-    return { full: "", byPage: [], normalized: "" };
+    console.error("[engine/unpdf] falhou:", (e as Error).message);
+    return buildText("", []);
   }
 }
 
-// Fallback: usa o próprio PDFDocumentProxy do unpdf (que embute pdfjs sem
-// canvas) e reconstrói o texto item-a-item via getTextContent, agrupando por
-// coordenada Y. Cobre PDFs onde extractText(mergePages) devolve texto vazio
-// ou corrompido — comum nos PDFs do PGD/eCAC com fontes embutidas.
-async function extractWithProxy(pdf: unknown): Promise<ExtractedText> {
+// --- B: pdfjs proxy do unpdf, reconstrução por coordenada ---
+async function extractB_proxy(pdf: unknown): Promise<ExtractedText> {
   try {
     // deno-lint-ignore no-explicit-any
     const doc: any = pdf;
     const numPages: number = doc.numPages || 0;
     const byPage: string[] = [];
-
     for (let i = 1; i <= numPages; i++) {
       const page = await doc.getPage(i);
       const content = await page.getTextContent({ includeMarkedContent: false, disableNormalization: false });
@@ -226,37 +220,306 @@ async function extractWithProxy(pdf: unknown): Promise<ExtractedText> {
         if (!str) continue;
         const tr = it.transform || [1, 0, 0, 1, 0, 0];
         const x = Number(tr[4]) || 0;
-        const y = Math.round((Number(tr[5]) || 0) * 2) / 2; // bucket 0.5pt
+        const y = Math.round((Number(tr[5]) || 0) * 2) / 2;
         if (!lines.has(y)) lines.set(y, []);
         lines.get(y)!.push({ x, s: str });
       }
-      const ys = [...lines.keys()].sort((a, b) => b - a); // top → bottom
+      const ys = [...lines.keys()].sort((a, b) => b - a);
       const pageText = ys
         .map((y) => lines.get(y)!.sort((a, b) => a.x - b.x).map((c) => c.s).join(" ").replace(/[ \t]+/g, " ").trim())
         .filter(Boolean)
         .join("\n");
       byPage.push(pageText);
     }
-    const full = byPage.join("\n\n");
-    return { full, byPage, normalized: normalize(full) };
+    return buildText(byPage.join("\n\n"), byPage);
   } catch (e) {
-    console.error("[layer2/proxy] fallback falhou:", (e as Error).message);
-    return { full: "", byPage: [], normalized: "" };
+    console.error("[engine/proxy] falhou:", (e as Error).message);
+    return buildText("", []);
   }
 }
 
-function normalize(s: string): string {
-  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+// --- C: pdfjs-serverless direto (drop-in do PDF.js sem CMaps externos) ---
+async function extractC_pdfjsDirect(bytes: Uint8Array): Promise<ExtractedText> {
+  try {
+    // deno-lint-ignore no-explicit-any
+    const pdfjs: any = await import("https://esm.sh/pdfjs-serverless@0.5.0");
+    const doc = await pdfjs.getDocument({
+      data: new Uint8Array(bytes),
+      useSystemFonts: false,
+      disableFontFace: true,
+      isEvalSupported: false,
+    }).promise;
+    const numPages: number = doc.numPages || 0;
+    const byPage: string[] = [];
+    for (let i = 1; i <= numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      // deno-lint-ignore no-explicit-any
+      const items: any[] = content.items || [];
+      const lines = new Map<number, { x: number; s: string }[]>();
+      for (const it of items) {
+        const str = (it.str ?? "").toString();
+        if (!str) continue;
+        const tr = it.transform || [1, 0, 0, 1, 0, 0];
+        const x = Number(tr[4]) || 0;
+        const y = Math.round((Number(tr[5]) || 0) * 2) / 2;
+        if (!lines.has(y)) lines.set(y, []);
+        lines.get(y)!.push({ x, s: str });
+      }
+      const ys = [...lines.keys()].sort((a, b) => b - a);
+      const pageText = ys
+        .map((y) => lines.get(y)!.sort((a, b) => a.x - b.x).map((c) => c.s).join(" ").replace(/[ \t]+/g, " ").trim())
+        .filter(Boolean)
+        .join("\n");
+      byPage.push(pageText);
+    }
+    return buildText(byPage.join("\n\n"), byPage);
+  } catch (e) {
+    console.error("[engine/pdfjs-direct] falhou:", (e as Error).message);
+    return buildText("", []);
+  }
+}
+
+// --- D: RAW STREAM PARSER ---
+// Lê o PDF como bytes, encontra blocos `stream`...`endstream`, tenta descomprimir
+// com Flate (DecompressionStream nativo do Deno) e extrai texto dos operadores
+// PDF (Tj, TJ, ', "). Decodifica strings literais (...) e hex <...>.
+// Aplica heurística UTF-16BE quando a string começa com BOM FE FF.
+//
+// Esta camada NÃO depende de ToUnicode / CMap / fontes — por isso roda mesmo
+// nos PDFs do PGD/eCAC que travam o PDF.js.
+
+async function inflateRaw(data: Uint8Array): Promise<Uint8Array | null> {
+  // Tenta deflate-raw e zlib (deflate). PDFs usam zlib (header 0x78).
+  const formats: CompressionFormat[] = ["deflate", "deflate-raw"];
+  for (const fmt of formats) {
+    try {
+      const ds = new DecompressionStream(fmt);
+      const stream = new Blob([data]).stream().pipeThrough(ds);
+      const out = new Uint8Array(await new Response(stream).arrayBuffer());
+      if (out.length > 0) return out;
+    } catch { /* tenta próximo formato */ }
+  }
+  return null;
+}
+
+function bytesToLatin1(b: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+  return s;
+}
+
+// Decodifica uma string literal PDF do tipo "(...)" tratando escapes \n \r \t \b \f \\ \( \) \ooo
+function decodePdfLiteral(raw: string): string {
+  // raw já vem sem os parênteses externos
+  // Detecta UTF-16BE BOM "\xFE\xFF"
+  if (raw.length >= 2 && raw.charCodeAt(0) === 0xFE && raw.charCodeAt(1) === 0xFF) {
+    let out = "";
+    for (let i = 2; i + 1 < raw.length; i += 2) {
+      out += String.fromCharCode((raw.charCodeAt(i) << 8) | raw.charCodeAt(i + 1));
+    }
+    return out;
+  }
+  let out = "";
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i];
+    if (c === "\\" && i + 1 < raw.length) {
+      const n = raw[i + 1];
+      if (n === "n") { out += "\n"; i++; }
+      else if (n === "r") { out += "\r"; i++; }
+      else if (n === "t") { out += "\t"; i++; }
+      else if (n === "b") { out += "\b"; i++; }
+      else if (n === "f") { out += "\f"; i++; }
+      else if (n === "(" || n === ")" || n === "\\") { out += n; i++; }
+      else if (n >= "0" && n <= "7") {
+        // octal até 3 dígitos
+        let oct = n; i++;
+        if (i + 1 < raw.length && raw[i + 1] >= "0" && raw[i + 1] <= "7") { oct += raw[i + 1]; i++; }
+        if (i + 1 < raw.length && raw[i + 1] >= "0" && raw[i + 1] <= "7") { oct += raw[i + 1]; i++; }
+        out += String.fromCharCode(parseInt(oct, 8));
+      } else {
+        // escape desconhecido — preserva o próximo caractere
+        out += n; i++;
+      }
+    } else if (c === "\r") {
+      // CR ou CRLF dentro de literal vira LF
+      if (raw[i + 1] === "\n") i++;
+      out += "\n";
+    } else {
+      out += c;
+    }
+  }
+  return out;
+}
+
+function decodePdfHex(hex: string): string {
+  // hex já vem sem os "<>"
+  const clean = hex.replace(/\s+/g, "");
+  // pad ímpar com 0
+  const h = clean.length % 2 === 0 ? clean : clean + "0";
+  // UTF-16BE se começa com FEFF
+  if (h.length >= 4 && h.substring(0, 4).toUpperCase() === "FEFF") {
+    let out = "";
+    for (let i = 4; i + 3 < h.length; i += 4) {
+      out += String.fromCharCode(parseInt(h.substring(i, i + 4), 16));
+    }
+    return out;
+  }
+  let out = "";
+  for (let i = 0; i + 1 < h.length; i += 2) {
+    const code = parseInt(h.substring(i, i + 2), 16);
+    if (!Number.isNaN(code)) out += String.fromCharCode(code);
+  }
+  return out;
+}
+
+// Extrai conteúdo de strings literais e hex de um content-stream textual.
+// Mantém ordem de leitura. Não tenta posicionar por coordenada.
+function extractStringsFromContent(content: string): string {
+  const pieces: string[] = [];
+  let i = 0;
+  while (i < content.length) {
+    const c = content[i];
+    if (c === "(") {
+      // achar matching paren considerando escape e nesting
+      let depth = 1; let j = i + 1; let raw = "";
+      while (j < content.length && depth > 0) {
+        const cj = content[j];
+        if (cj === "\\" && j + 1 < content.length) { raw += cj + content[j + 1]; j += 2; continue; }
+        if (cj === "(") { depth++; raw += cj; j++; continue; }
+        if (cj === ")") { depth--; if (depth === 0) break; raw += cj; j++; continue; }
+        raw += cj; j++;
+      }
+      pieces.push(decodePdfLiteral(raw));
+      i = j + 1;
+    } else if (c === "<" && content[i + 1] !== "<") {
+      const end = content.indexOf(">", i + 1);
+      if (end === -1) { i++; continue; }
+      const hex = content.substring(i + 1, end);
+      // Evita confundir com dict <<...>>
+      if (/^[0-9a-fA-F\s]*$/.test(hex)) pieces.push(decodePdfHex(hex));
+      i = end + 1;
+    } else {
+      i++;
+    }
+  }
+  // Junta com espaço — o objetivo é reconhecer marcadores fiscais e CPFs,
+  // não preservar layout perfeito.
+  return pieces.join(" ").replace(/\s+/g, " ").trim();
+}
+
+async function extractD_rawStreams(bytes: Uint8Array): Promise<ExtractedText> {
+  try {
+    const latin = bytesToLatin1(bytes);
+    const collected: string[] = [];
+
+    // Itera por todos os tokens "stream"..."endstream"
+    const streamMarker = "stream";
+    const endMarker = "endstream";
+    let cursor = 0;
+    let streamCount = 0;
+    while (true) {
+      const sIdx = latin.indexOf(streamMarker, cursor);
+      if (sIdx === -1) break;
+      // O byte logo após "stream" pode ser \n ou \r\n
+      let dataStart = sIdx + streamMarker.length;
+      if (latin[dataStart] === "\r") dataStart++;
+      if (latin[dataStart] === "\n") dataStart++;
+      const eIdx = latin.indexOf(endMarker, dataStart);
+      if (eIdx === -1) break;
+      // O byte anterior a "endstream" também pode ser EOL
+      let dataEnd = eIdx;
+      if (latin[dataEnd - 1] === "\n") dataEnd--;
+      if (latin[dataEnd - 1] === "\r") dataEnd--;
+      cursor = eIdx + endMarker.length;
+      streamCount++;
+
+      const slice = bytes.subarray(dataStart, dataEnd);
+      if (slice.length === 0) continue;
+
+      let decoded: Uint8Array | null = null;
+      // Heurística: zlib header começa com 0x78 (0x78 0x9C / 0x78 0xDA / 0x78 0x01)
+      if (slice[0] === 0x78) {
+        decoded = await inflateRaw(slice);
+      }
+      // Se não conseguiu inflar ou não é zlib, tenta usar bruto mesmo
+      const textBytes = decoded ?? slice;
+      const asText = bytesToLatin1(textBytes);
+
+      // Só vale a pena varrer se há algum operador textual
+      if (!/[\(<].*[\)>]/.test(asText)) continue;
+      if (!/Tj|TJ|\'|\"/.test(asText)) {
+        // Mesmo sem operador explícito, às vezes vale extrair strings; mas
+        // pra evitar lixo de imagens, exigimos algum sinal textual.
+        if (!/(BT|Tf|Td|TD|Tm|T\*)/.test(asText)) continue;
+      }
+      const extracted = extractStringsFromContent(asText);
+      if (extracted.length > 0) collected.push(extracted);
+    }
+
+    const full = collected.join("\n");
+    console.log(`[engine/raw-stream] streams=${streamCount} pedacos=${collected.length} chars=${full.length}`);
+    return buildText(full, collected);
+  } catch (e) {
+    console.error("[engine/raw-stream] falhou:", (e as Error).message);
+    return buildText("", []);
+  }
+}
+
+// Orquestra cascata de extratores. Retorna o melhor resultado encontrado.
+async function extractTextCascade(pdf: unknown, bytes: Uint8Array): Promise<{ text: ExtractedText; engines: string[] }> {
+  const engines: string[] = [];
+  const hasFiscalMarkers = (s: string) =>
+    /declaracao|recibo|darf|simei|exerc[ií]cio|imposto|receita\s+federal/i.test(s);
+  const score = (t: ExtractedText) => {
+    const len = t.full.replace(/\s/g, "").length;
+    const markers = hasFiscalMarkers(t.normalized) ? 1 : 0;
+    return len + markers * 500;
+  };
+
+  let best = buildText("", []);
+  let bestEngine = "none";
+
+  const tryEngine = (name: string, t: ExtractedText) => {
+    const len = t.full.replace(/\s/g, "").length;
+    const markers = hasFiscalMarkers(t.normalized);
+    engines.push(`${name}:len=${len},markers=${markers}`);
+    console.log(`[engine/${name}] len=${len} markers=${markers}`);
+    if (score(t) > score(best)) { best = t; bestEngine = name; }
+  };
+
+  tryEngine("unpdf", await extractA_unpdf(pdf));
+  // Se já temos texto suficiente com marcadores fiscais, dá pra parar.
+  if (score(best) >= 300 && hasFiscalMarkers(best.normalized)) {
+    console.log(`[cascade] winner=${bestEngine} (early)`);
+    return { text: best, engines };
+  }
+
+  tryEngine("pdfjs-proxy", await extractB_proxy(pdf));
+  if (score(best) >= 300 && hasFiscalMarkers(best.normalized)) {
+    console.log(`[cascade] winner=${bestEngine} (after proxy)`);
+    return { text: best, engines };
+  }
+
+  tryEngine("pdfjs-direct", await extractC_pdfjsDirect(bytes));
+  if (score(best) >= 300 && hasFiscalMarkers(best.normalized)) {
+    console.log(`[cascade] winner=${bestEngine} (after direct)`);
+    return { text: best, engines };
+  }
+
+  tryEngine("raw-stream", await extractD_rawStreams(bytes));
+  console.log(`[cascade] winner=${bestEngine} engines=[${engines.join("; ")}]`);
+  return { text: best, engines };
 }
 
 // =============================================================================
-// CAMADA 3 — FINGERPRINT (metadata do PGD/eCAC)
+// FINGERPRINT
 // =============================================================================
 
 interface FingerprintHit {
   matched: boolean;
   produtor: "pgd_rfb" | "ecac_rfb" | "outro" | "desconhecido";
-  confianca: number; // 0..1
+  confianca: number;
   detalhes: string;
 }
 
@@ -266,27 +529,28 @@ function detectFingerprint(meta: Record<string, string>): FingerprintHit {
   const title = (meta.Title || meta.title || "").toString();
   const all = `${creator} | ${producer} | ${title}`;
   const n = normalize(all);
-
-  if (/programa gerador da declaracao|pgd|irpf\s*\d{4}|dirpf/.test(n)) {
+  if (/programa gerador da declaracao|pgd|irpf\s*\d{4}|dirpf|saida\s+definitiva/.test(n)) {
     return { matched: true, produtor: "pgd_rfb", confianca: 0.35, detalhes: `PGD/IRPF: ${all}` };
   }
   if (/receita federal|ecac|simei|dasn|gov\.br/.test(n)) {
     return { matched: true, produtor: "ecac_rfb", confianca: 0.25, detalhes: `eCAC/RFB: ${all}` };
   }
-  if (/itext|jaspersoft|jspdf|tcpdf|reportlab|chromium|skia/.test(n)) {
-    return { matched: false, produtor: "outro", confianca: 0, detalhes: `Produtor neutro: ${all}` };
-  }
   return { matched: false, produtor: "desconhecido", confianca: 0, detalhes: all };
 }
 
 // =============================================================================
-// FIELD FINDERS (regex sobre texto extraído)
+// FIELD FINDERS
 // =============================================================================
 
 function findCPF(text: string): string | null {
   const re = /(\d{3}\.\d{3}\.\d{3}-\d{2})/g;
   for (const m of text.match(re) || []) if (validateCPF(m)) return onlyDigits(m);
-  // fallback: 11 dígitos contíguos
+  // CPF com espaços ou pontos não-canônicos
+  const re2 = /(\d{3})[.\s-](\d{3})[.\s-](\d{3})[.\s-](\d{2})/g;
+  for (const m of text.matchAll(re2)) {
+    const joined = m[1] + m[2] + m[3] + m[4];
+    if (validateCPF(joined)) return joined;
+  }
   for (const m of text.match(/\b(\d{11})\b/g) || []) if (validateCPF(m)) return m;
   return null;
 }
@@ -304,6 +568,7 @@ function findAno(text: string, ctx: "exercicio" | "calendario"): number | null {
         /exerc[ií]cio\s+(?:de\s+|fiscal\s+)?(\d{4})/i,
         /ano[-\s]?exerc[ií]cio[:\s]+(\d{4})/i,
         /irpf\s*(\d{4})/i,
+        /dirpf\s*(\d{4})/i,
       ]
     : [
         /ano[-\s]calend[aá]rio[:\s]+(\d{4})/i,
@@ -318,13 +583,10 @@ function findAno(text: string, ctx: "exercicio" | "calendario"): number | null {
 }
 
 function findNumeroRecibo(text: string): string | null {
-  // Formato canônico XX.XX.XX.XX.XX.XXXX-XX (pontuação variável)
   const re1 = /(\d{2}[.\s]\d{2}[.\s]\d{2}[.\s]\d{2}[.\s]\d{2}[.\s]\d{2,4}[-.\s]\d{2})/;
   const m1 = text.match(re1); if (m1) return m1[1].trim();
-  // Próximo a label "Número do Recibo"
   const re2 = /n[uú]mero\s+do\s+recibo[:\s]+([\d.\-\s]{14,30})/i;
   const m2 = text.match(re2); if (m2) return m2[1].trim();
-  // 14 dígitos contíguos com DV válido
   for (const m of text.match(/\b\d{14}\b/g) || []) if (validateNumeroReciboDV(m)) return m;
   return null;
 }
@@ -356,7 +618,7 @@ function findNome(text: string): string {
 }
 
 // =============================================================================
-// CAMADA 5 — PARSERS por tipo (com scoring)
+// PARSERS
 // =============================================================================
 
 interface ParseInput {
@@ -372,16 +634,13 @@ function parseDeclaracao(inp: ParseInput): NativeResult {
 
   const hasDirpf = /declaracao\s+de\s+ajuste\s+anual/.test(n)
     || /imposto\s+sobre\s+a\s+renda\s+da\s+pessoa\s+f[ií]sica/.test(n)
-    || /resumo\s+da\s+declaracao/.test(n);
+    || /resumo\s+da\s+declaracao/.test(n)
+    || /dirpf/.test(n);
   const hasDSDP = /declaracao\s+de\s+sa[ií]da\s+definitiva\s+do\s+pa[ií]s/.test(n);
   const hasComSaida = /comunicacao\s+de\s+sa[ií]da\s+definitiva\s+do\s+pa[ií]s/.test(n);
-  const ehReciboMarker = /recibo\s+de\s+entrega/.test(n);
 
   if (!hasDirpf && !hasDSDP && !hasComSaida) {
-    return { ok: false, reason: "marcadores DIRPF/DSDP/Comunicação ausentes" };
-  }
-  if (ehReciboMarker && !hasDirpf && !hasDSDP && !hasComSaida) {
-    return { ok: false, reason: "PDF parece ser recibo, não declaração" };
+    return { ok: false, reason: "marcadores DIRPF/DSDP/Comunicação ausentes no texto extraído" };
   }
 
   let subtipo: "dirpf" | "saida_definitiva" | "comunicacao_saida";
@@ -401,15 +660,10 @@ function parseDeclaracao(inp: ParseInput): NativeResult {
     return { ok: false, reason: `ano ${ano} ≠ ano_base ${anoBase}` };
   }
 
-  // Resultado financeiro — DIRPF e Saída Definitiva (que também têm RESUMO).
-  // Comunicação de Saída não tem apuração de imposto.
   let tipo_resultado: "restituicao" | "pagamento" | "nenhum" = "nenhum";
   let valor_resultado = 0;
 
   if (subtipo === "dirpf" || subtipo === "saida_definitiva") {
-    // Resolvedor tolerante: aceita label e valor na mesma linha OU em linhas
-    // adjacentes (PDFs do PGD frequentemente quebram label/valor entre linhas).
-    // 1) tenta padrão direto "Label ... 1.234,56"
     const rePagar = /(?:saldo\s+de\s+)?imposto\s+a\s+pagar[^\d\-\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
     const reRest = /imposto\s+a\s+restituir[^\d\-\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
     const mPag = text.full.match(rePagar);
@@ -417,8 +671,6 @@ function parseDeclaracao(inp: ParseInput): NativeResult {
     let vPag = mPag ? parseMoneyBR(mPag[1]) : null;
     let vRes = mRes ? parseMoneyBR(mRes[1]) : null;
 
-    // 2) fallback linha-a-linha: procura label e pega o 1º valor monetário nas
-    //    próximas 3 linhas (cobre PDFs com label em linha separada do valor).
     if (vPag === null || vRes === null) {
       const lines = text.full.split(/\r?\n/);
       const moneyRe = /(\d{1,3}(?:\.\d{3})*,\d{2})/;
@@ -439,11 +691,7 @@ function parseDeclaracao(inp: ParseInput): NativeResult {
       }
     }
 
-    if (vPag === null && vRes === null) {
-      // Não rejeita a declaração inteira — apenas registra como "nenhum" e
-      // deixa o score decidir. Evita falso negativo em DSDP minimalista.
-      tipo_resultado = "nenhum"; valor_resultado = 0;
-    } else if (vPag !== null && vPag > 0 && vRes !== null && vRes > 0) {
+    if (vPag !== null && vPag > 0 && vRes !== null && vRes > 0) {
       return { ok: false, reason: "PDF traz pagar>0 e restituir>0 simultaneamente (inconsistência)" };
     } else if (vPag !== null && vPag > 0) {
       tipo_resultado = "pagamento"; valor_resultado = vPag;
@@ -454,11 +702,9 @@ function parseDeclaracao(inp: ParseInput): NativeResult {
     }
   }
 
-  // Scoring
-  let score = 0.45; // marcador textual forte
+  let score = 0.45;
   if (fingerprint.matched) score += fingerprint.confianca;
-  if ((subtipo === "dirpf" || subtipo === "saida_definitiva") && (tipo_resultado === "nenhum" || valor_resultado > 0)) score += 0.20;
-  if (subtipo === "comunicacao_saida") score += 0.20;
+  score += 0.20; // CPF e ano bateram
   score = Math.min(1, score);
 
   if (score < 0.55) return { ok: false, reason: `score baixo (${score.toFixed(2)})` };
@@ -606,7 +852,7 @@ function parseDarf(inp: ParseInput): NativeResult {
   let data_vencimento: string | null = null;
   if (mVenc) { const [d, mo, y] = mVenc[1].split("/"); data_vencimento = `${y}-${mo}-${d}`; }
 
-  let score = 0.55; // DARF tem campos muito identificáveis
+  let score = 0.55;
   if (fingerprint.matched) score += fingerprint.confianca;
   if (data_vencimento) score += 0.10;
   score = Math.min(1, score);
@@ -639,42 +885,21 @@ export async function tryNativeValidation(
   anoBase: number,
   cpfCliente: string,
 ): Promise<NativeResult> {
-  // CAMADA 1 — sniff
   const sniff = await sniffPdf(bytes);
   if (!sniff) return { ok: false, reason: "arquivo não é um PDF válido" };
   const { pdf, structure } = sniff;
   if (structure.numPages > 50) return { ok: false, reason: "PDF com muitas páginas (>50)" };
 
-  // CAMADA 2 — texto (unpdf primeiro, pdfjs como fallback)
-  let text = await extractFullText(pdf);
-  let textLen = text.full.replace(/\s/g, "").length;
-  let textSource = "unpdf";
-
-  // Marcadores fiscais esperados — se faltarem, vale a pena tentar pdfjs mesmo
-  // com textLen > 80 (caso unpdf decodifique caracteres errados).
-  const hasFiscalMarkers = (s: string) =>
-    /declaracao|recibo|darf|simei|exercicio|imposto/i.test(s);
-
-  if (textLen < 200 || !hasFiscalMarkers(text.normalized)) {
-    console.log(`[pipeline] unpdf insuficiente (len=${textLen}, markers=${hasFiscalMarkers(text.normalized)}); tentando pdfjs…`);
-    const alt = await extractWithProxy(pdf);
-    const altLen = alt.full.replace(/\s/g, "").length;
-    if (altLen > textLen && hasFiscalMarkers(alt.normalized)) {
-      text = alt; textLen = altLen; textSource = "pdfjs";
-    } else if (altLen > textLen) {
-      text = alt; textLen = altLen; textSource = "pdfjs";
-    }
-  }
-
+  const { text, engines } = await extractTextCascade(pdf, bytes);
+  const textLen = text.full.replace(/\s/g, "").length;
   if (textLen < 80) {
-    return { ok: false, reason: "scan_sem_texto" };
+    console.log(`[pipeline] FAIL tipo=${tipo} engines=[${engines.join("; ")}] -> scan_sem_texto_real`);
+    return { ok: false, reason: "scan_sem_texto_real" };
   }
 
-  // CAMADA 3 — fingerprint
   const fingerprint = detectFingerprint(structure.metadata);
-  console.log(`[pipeline] tipo=${tipo} paginas=${structure.numPages} textLen=${textLen} source=${textSource} fingerprint=${fingerprint.produtor}(${fingerprint.confianca}) detalhes="${fingerprint.detalhes.slice(0, 120)}"`);
+  console.log(`[pipeline] tipo=${tipo} paginas=${structure.numPages} textLen=${textLen} fingerprint=${fingerprint.produtor}(${fingerprint.confianca})`);
 
-  // CAMADAS 4+5 — domain + parsers
   const cpfDigits = onlyDigits(cpfCliente);
   const input: ParseInput = { text, fingerprint, anoBase, cpfClienteDigits: cpfDigits };
 
@@ -687,9 +912,11 @@ export async function tryNativeValidation(
   }
 
   if (result.ok) {
-    console.log(`[pipeline] OK tipo=${tipo} confianca=${(result.data as { _confianca?: number })._confianca} metodo=${(result.data as { _metodo?: string })._metodo}`);
+    const conf = (result.data as { _confianca?: number })._confianca;
+    const met = (result.data as { _metodo?: string })._metodo;
+    console.log(`[pipeline] OK tipo=${tipo} confianca=${conf} metodo=${met}`);
   } else {
-    console.log(`[pipeline] FAIL tipo=${tipo} reason="${result.reason}"`);
+    console.log(`[pipeline] FAIL tipo=${tipo} reason="${result.reason}" textPreview="${text.full.slice(0, 200).replace(/\s+/g, " ")}"`);
   }
   return result;
 }
