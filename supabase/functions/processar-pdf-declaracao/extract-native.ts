@@ -796,7 +796,7 @@ function parseDeclaracao(inp: ParseInput): NativeResult {
     return { ok: false, reason: `CPF do PDF (${cpf}) ≠ cliente (${cpfClienteDigits})` };
   }
 
-  const ano = findAno(text.full, "exercicio");
+  const ano = findAno(text.full, "exercicio", anoBase);
   if (!ano) return { ok: false, reason: "ano-exercício não encontrado" };
   if (ano !== anoBase) {
     return { ok: false, reason: `ano ${ano} ≠ ano_base ${anoBase}` };
@@ -855,7 +855,7 @@ function parseRecibo(inp: ParseInput): NativeResult {
   if (!numero) return { ok: false, reason: "número do recibo não encontrado" };
   const dvOk = validateNumeroReciboDV(numero);
 
-  const ano = findAno(text.full, "exercicio");
+  const ano = findAno(text.full, "exercicio", anoBase);
   if (!ano) return { ok: false, reason: "ano-exercício não encontrado" };
   if (ano !== anoBase) return { ok: false, reason: `ano ${ano} ≠ ano_base ${anoBase}` };
 
@@ -900,7 +900,7 @@ function parseMei(inp: ParseInput): NativeResult {
     return { ok: false, reason: `CPF (${cpf}) ≠ cliente (${cpfClienteDigits})` };
   }
 
-  const ano = findAno(text.full, "calendario") || findAno(text.full, "exercicio");
+  const ano = findAno(text.full, "calendario", anoBase - 1) || findAno(text.full, "exercicio", anoBase);
   if (!ano) return { ok: false, reason: "ano-calendário não encontrado" };
   if (ano !== anoBase && ano !== anoBase - 1) {
     return { ok: false, reason: `ano ${ano} incompatível com ano_base ${anoBase}` };
