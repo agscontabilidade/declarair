@@ -957,6 +957,7 @@ export type Database = {
           arquivo_recibo_nome: string | null
           arquivo_recibo_uploaded_at: string | null
           arquivo_recibo_url: string | null
+          arquivos_outros: Json
           cliente_id: string
           contador_id: string | null
           created_at: string
@@ -1002,6 +1003,7 @@ export type Database = {
           arquivo_recibo_nome?: string | null
           arquivo_recibo_uploaded_at?: string | null
           arquivo_recibo_url?: string | null
+          arquivos_outros?: Json
           cliente_id: string
           contador_id?: string | null
           created_at?: string
@@ -1047,6 +1049,7 @@ export type Database = {
           arquivo_recibo_nome?: string | null
           arquivo_recibo_uploaded_at?: string | null
           arquivo_recibo_url?: string | null
+          arquivos_outros?: Json
           cliente_id?: string
           contador_id?: string | null
           created_at?: string
@@ -2791,6 +2794,7 @@ export type Database = {
           arquivo_recibo_nome: string | null
           arquivo_recibo_uploaded_at: string | null
           arquivo_recibo_url: string | null
+          arquivos_outros: Json
           cliente_id: string
           contador_id: string | null
           created_at: string

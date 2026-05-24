@@ -1,0 +1,1 @@
+ALTER TABLE public.declaracoes ADD COLUMN IF NOT EXISTS arquivos_outros jsonb NOT NULL DEFAULT '[]'::jsonb;
