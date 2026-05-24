@@ -204,6 +204,47 @@ async function extractFullText(pdf: unknown): Promise<ExtractedText> {
   }
 }
 
+// Fallback: usa o próprio PDFDocumentProxy do unpdf (que embute pdfjs sem
+// canvas) e reconstrói o texto item-a-item via getTextContent, agrupando por
+// coordenada Y. Cobre PDFs onde extractText(mergePages) devolve texto vazio
+// ou corrompido — comum nos PDFs do PGD/eCAC com fontes embutidas.
+async function extractWithProxy(pdf: unknown): Promise<ExtractedText> {
+  try {
+    // deno-lint-ignore no-explicit-any
+    const doc: any = pdf;
+    const numPages: number = doc.numPages || 0;
+    const byPage: string[] = [];
+
+    for (let i = 1; i <= numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent({ includeMarkedContent: false, disableNormalization: false });
+      // deno-lint-ignore no-explicit-any
+      const items: any[] = content.items || [];
+      const lines = new Map<number, { x: number; s: string }[]>();
+      for (const it of items) {
+        const str = (it.str ?? "").toString();
+        if (!str) continue;
+        const tr = it.transform || [1, 0, 0, 1, 0, 0];
+        const x = Number(tr[4]) || 0;
+        const y = Math.round((Number(tr[5]) || 0) * 2) / 2; // bucket 0.5pt
+        if (!lines.has(y)) lines.set(y, []);
+        lines.get(y)!.push({ x, s: str });
+      }
+      const ys = [...lines.keys()].sort((a, b) => b - a); // top → bottom
+      const pageText = ys
+        .map((y) => lines.get(y)!.sort((a, b) => a.x - b.x).map((c) => c.s).join(" ").replace(/[ \t]+/g, " ").trim())
+        .filter(Boolean)
+        .join("\n");
+      byPage.push(pageText);
+    }
+    const full = byPage.join("\n\n");
+    return { full, byPage, normalized: normalize(full) };
+  } catch (e) {
+    console.error("[layer2/proxy] fallback falhou:", (e as Error).message);
+    return { full: "", byPage: [], normalized: "" };
+  }
+}
+
 function normalize(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
@@ -360,33 +401,64 @@ function parseDeclaracao(inp: ParseInput): NativeResult {
     return { ok: false, reason: `ano ${ano} ≠ ano_base ${anoBase}` };
   }
 
-  // Resultado financeiro — apenas DIRPF
+  // Resultado financeiro — DIRPF e Saída Definitiva (que também têm RESUMO).
+  // Comunicação de Saída não tem apuração de imposto.
   let tipo_resultado: "restituicao" | "pagamento" | "nenhum" = "nenhum";
   let valor_resultado = 0;
 
-  if (subtipo === "dirpf") {
-    // Procura por linha "Saldo de Imposto a Pagar ... R$ X,XX" ou "Imposto a Restituir ... R$ X,XX"
-    // Aceita também variações sem o "Saldo de".
-    const rePagar = /(?:saldo\s+de\s+)?imposto\s+a\s+pagar[^\d\-]{0,60}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
-    const reRest = /imposto\s+a\s+restituir[^\d\-]{0,60}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+  if (subtipo === "dirpf" || subtipo === "saida_definitiva") {
+    // Resolvedor tolerante: aceita label e valor na mesma linha OU em linhas
+    // adjacentes (PDFs do PGD frequentemente quebram label/valor entre linhas).
+    // 1) tenta padrão direto "Label ... 1.234,56"
+    const rePagar = /(?:saldo\s+de\s+)?imposto\s+a\s+pagar[^\d\-\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+    const reRest = /imposto\s+a\s+restituir[^\d\-\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
     const mPag = text.full.match(rePagar);
     const mRes = text.full.match(reRest);
-    const vPag = mPag ? parseMoneyBR(mPag[1]) : null;
-    const vRes = mRes ? parseMoneyBR(mRes[1]) : null;
+    let vPag = mPag ? parseMoneyBR(mPag[1]) : null;
+    let vRes = mRes ? parseMoneyBR(mRes[1]) : null;
+
+    // 2) fallback linha-a-linha: procura label e pega o 1º valor monetário nas
+    //    próximas 3 linhas (cobre PDFs com label em linha separada do valor).
+    if (vPag === null || vRes === null) {
+      const lines = text.full.split(/\r?\n/);
+      const moneyRe = /(\d{1,3}(?:\.\d{3})*,\d{2})/;
+      for (let i = 0; i < lines.length; i++) {
+        const ln = lines[i];
+        if (vPag === null && /saldo\s+de\s+imposto\s+a\s+pagar|imposto\s+a\s+pagar/i.test(ln)) {
+          for (let j = 0; j <= 3 && i + j < lines.length; j++) {
+            const mm = lines[i + j].match(moneyRe);
+            if (mm) { vPag = parseMoneyBR(mm[1]); break; }
+          }
+        }
+        if (vRes === null && /imposto\s+a\s+restituir/i.test(ln)) {
+          for (let j = 0; j <= 3 && i + j < lines.length; j++) {
+            const mm = lines[i + j].match(moneyRe);
+            if (mm) { vRes = parseMoneyBR(mm[1]); break; }
+          }
+        }
+      }
+    }
 
     if (vPag === null && vRes === null) {
-      return { ok: false, reason: "valores de imposto não encontrados no resumo" };
+      // Não rejeita a declaração inteira — apenas registra como "nenhum" e
+      // deixa o score decidir. Evita falso negativo em DSDP minimalista.
+      tipo_resultado = "nenhum"; valor_resultado = 0;
+    } else if (vPag !== null && vPag > 0 && vRes !== null && vRes > 0) {
+      return { ok: false, reason: "PDF traz pagar>0 e restituir>0 simultaneamente (inconsistência)" };
+    } else if (vPag !== null && vPag > 0) {
+      tipo_resultado = "pagamento"; valor_resultado = vPag;
+    } else if (vRes !== null && vRes > 0) {
+      tipo_resultado = "restituicao"; valor_resultado = vRes;
+    } else {
+      tipo_resultado = "nenhum"; valor_resultado = 0;
     }
-    if (vPag !== null && vPag > 0) { tipo_resultado = "pagamento"; valor_resultado = vPag; }
-    else if (vRes !== null && vRes > 0) { tipo_resultado = "restituicao"; valor_resultado = vRes; }
-    else { tipo_resultado = "nenhum"; valor_resultado = 0; }
   }
 
   // Scoring
   let score = 0.45; // marcador textual forte
   if (fingerprint.matched) score += fingerprint.confianca;
-  if (subtipo === "dirpf" && (tipo_resultado === "nenhum" || valor_resultado > 0)) score += 0.20;
-  if (subtipo !== "dirpf") score += 0.15;
+  if ((subtipo === "dirpf" || subtipo === "saida_definitiva") && (tipo_resultado === "nenhum" || valor_resultado > 0)) score += 0.20;
+  if (subtipo === "comunicacao_saida") score += 0.20;
   score = Math.min(1, score);
 
   if (score < 0.55) return { ok: false, reason: `score baixo (${score.toFixed(2)})` };
@@ -573,16 +645,34 @@ export async function tryNativeValidation(
   const { pdf, structure } = sniff;
   if (structure.numPages > 50) return { ok: false, reason: "PDF com muitas páginas (>50)" };
 
-  // CAMADA 2 — texto
-  const text = await extractFullText(pdf);
-  const textLen = text.full.replace(/\s/g, "").length;
+  // CAMADA 2 — texto (unpdf primeiro, pdfjs como fallback)
+  let text = await extractFullText(pdf);
+  let textLen = text.full.replace(/\s/g, "").length;
+  let textSource = "unpdf";
+
+  // Marcadores fiscais esperados — se faltarem, vale a pena tentar pdfjs mesmo
+  // com textLen > 80 (caso unpdf decodifique caracteres errados).
+  const hasFiscalMarkers = (s: string) =>
+    /declaracao|recibo|darf|simei|exercicio|imposto/i.test(s);
+
+  if (textLen < 200 || !hasFiscalMarkers(text.normalized)) {
+    console.log(`[pipeline] unpdf insuficiente (len=${textLen}, markers=${hasFiscalMarkers(text.normalized)}); tentando pdfjs…`);
+    const alt = await extractWithProxy(pdf);
+    const altLen = alt.full.replace(/\s/g, "").length;
+    if (altLen > textLen && hasFiscalMarkers(alt.normalized)) {
+      text = alt; textLen = altLen; textSource = "pdfjs";
+    } else if (altLen > textLen) {
+      text = alt; textLen = altLen; textSource = "pdfjs";
+    }
+  }
+
   if (textLen < 80) {
     return { ok: false, reason: "scan_sem_texto" };
   }
 
   // CAMADA 3 — fingerprint
   const fingerprint = detectFingerprint(structure.metadata);
-  console.log(`[pipeline] tipo=${tipo} paginas=${structure.numPages} textLen=${textLen} fingerprint=${fingerprint.produtor}(${fingerprint.confianca}) detalhes="${fingerprint.detalhes.slice(0, 120)}"`);
+  console.log(`[pipeline] tipo=${tipo} paginas=${structure.numPages} textLen=${textLen} source=${textSource} fingerprint=${fingerprint.produtor}(${fingerprint.confianca}) detalhes="${fingerprint.detalhes.slice(0, 120)}"`);
 
   // CAMADAS 4+5 — domain + parsers
   const cpfDigits = onlyDigits(cpfCliente);
