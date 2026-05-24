@@ -472,57 +472,10 @@ Deno.serve(async (req) => {
         link_destino: `/declaracoes/${declaracao_id}`,
       });
 
-      // Email ao cliente
-      if (cliente.email) {
-        try {
-          const emailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${SERVICE_KEY}`,
-              apikey: SERVICE_KEY,
-            },
-            body: JSON.stringify({
-              templateName: "declaracao-transmitida",
-              recipientEmail: cliente.email,
-              templateData: {
-                nomeCliente: cliente.nome,
-                nomeEscritorio,
-                anoBase: String(dec.ano_base),
-                numeroRecibo: extracao.numero_recibo,
-              },
-            }),
-          });
-          if (!emailRes.ok) console.error("Email status", emailRes.status, await emailRes.text());
-        } catch (e) {
-          console.error("Email error", e);
-        }
-      }
-
-      // WhatsApp (best-effort, ignora se não configurado)
-      if (cliente.telefone) {
-        try {
-          const msg = `Olá ${cliente.nome}! 🎉 Sua declaração de IRPF ${dec.ano_base} foi transmitida com sucesso.\n\nRecibo nº ${extracao.numero_recibo}.\n\n— ${nomeEscritorio}`;
-          await fetch(`${SUPABASE_URL}/functions/v1/whatsapp-service`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${SERVICE_KEY}`,
-              apikey: SERVICE_KEY,
-            },
-            body: JSON.stringify({
-              action: "send-text",
-              telefone: cliente.telefone,
-              mensagem: msg,
-              cliente_id: cliente.id,
-              escritorio_id: usuario.escritorio_id,
-            }),
-          });
-        } catch (e) {
-          console.error("WhatsApp error", e);
-        }
-      }
+      // Notificações ao cliente (e-mail/WhatsApp) NÃO são disparadas aqui.
+      // O envio ao cliente só ocorre quando o contador clica no botão de envio manual (aviãozinho).
     }
+
 
     return ok({
       tipo,
