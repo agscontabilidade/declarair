@@ -141,11 +141,12 @@ Deno.serve(async (req) => {
     }
 
     const promptDeclaracao = {
-      eh_declaracao_irpf: "boolean — true somente se for de fato uma Declaração de Ajuste Anual do IRPF (DIRPF) emitida pelo programa da Receita Federal",
+      eh_declaracao_irpf: "boolean — true se for: (a) Declaração de Ajuste Anual do IRPF (DIRPF), (b) Declaração de Saída Definitiva do País (DSDP), ou (c) Comunicação de Saída Definitiva do País — todas emitidas pelo programa/sistema da Receita Federal. Marque false para recibo, DARF, extratos bancários, informes de rendimento ou qualquer outro documento.",
+      subtipo: "'dirpf'|'saida_definitiva'|'comunicacao_saida'|null — qual variante foi reconhecida; null se eh_declaracao_irpf=false",
       cpf: "string — CPF do declarante apenas dígitos (11)",
       nome: "string — nome completo do declarante",
       ano_exercicio: "number — ano-exercício (ex.: 2026)",
-      tipo_resultado: "'restituicao'|'pagamento'|'nenhum' — leia a folha 'Resumo da Declaração'/'Cálculo do Imposto'. Use 'pagamento' se houver 'Saldo de Imposto a Pagar' > 0 (ou linhas equivalentes 'Imposto a Pagar', 'Imposto sobre a Renda Devido' líquido positivo a recolher). Use 'restituicao' se houver 'Imposto a Restituir' > 0. Use 'nenhum' SOMENTE se ambos forem zero (declaração isenta/sem imposto a pagar nem a restituir). Nunca chute 'nenhum' por incerteza — releia o resumo.",
+      tipo_resultado: "'restituicao'|'pagamento'|'nenhum' — Para DIRPF: leia a folha 'Resumo da Declaração'/'Cálculo do Imposto'. Use 'pagamento' se houver 'Saldo de Imposto a Pagar' > 0 (ou equivalentes). Use 'restituicao' se houver 'Imposto a Restituir' > 0. Use 'nenhum' SOMENTE se ambos forem zero. Para DSDP/Comunicação de Saída: se o documento não trouxer apuração de imposto a pagar/restituir, retorne 'nenhum' com valor_resultado=0; só use 'pagamento'/'restituicao' se os valores estiverem explícitos no próprio documento.",
       valor_resultado: "number — valor em reais (sem sinal, ex.: 1234.56) correspondente ao tipo_resultado escolhido; 0 se nenhum",
       motivo_rejeicao: "string|null — preencha se eh_declaracao_irpf=false explicando o motivo",
     };
