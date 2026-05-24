@@ -68,17 +68,23 @@ function CopyCpfButton({ cpf }: { cpf: string }) {
     }
   };
   return (
-    <Button
-      type="button"
-      size="icon"
-      variant="ghost"
-      className="h-5 w-5 text-muted-foreground hover:text-foreground"
-      aria-label="Copiar CPF (sem pontos)"
-      title="Copiar CPF (sem pontos)"
-      onClick={handleCopy}
-    >
-      {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          className="h-5 w-5 text-muted-foreground hover:text-foreground"
+          aria-label="Copiar CPF (sem pontos)"
+          onClick={handleCopy}
+        >
+          {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        <p>Copiar CPF (sem pontos)</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
