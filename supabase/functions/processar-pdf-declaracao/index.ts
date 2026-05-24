@@ -200,49 +200,67 @@ Seja conservador quanto à autenticidade/tipo do documento, mas seja PRECISO ao 
     };
     const userPrompt = userPromptMap[tipo];
 
-    // Modelo: pro para declaração (precisão na leitura visual do resumo), flash para os demais
-    const model = tipo === "declaracao" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+    // ========== HÍBRIDO: tenta extração nativa (regex) antes da IA ==========
+    let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo & ExtracaoMei & ExtracaoDarf> = {};
+    let metodoValidacao: "regex" | "ia" = "ia";
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: userPrompt },
-              {
-                type: "image_url",
-                image_url: { url: `data:application/pdf;base64,${base64}` },
-              },
-            ],
-          },
-        ],
-      }),
-    });
-
-    if (!aiRes.ok) {
-      const t = await aiRes.text();
-      console.error("AI error", aiRes.status, t);
-      if (aiRes.status === 429) return fail("Limite de IA atingido. Tente novamente em alguns minutos.");
-      if (aiRes.status === 402) return fail("Créditos de IA esgotados. Contate o suporte.");
-      return fail("Falha ao analisar o PDF com IA");
-    }
-    const aiJson = await aiRes.json();
-    const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-    let extracao: Partial<ExtracaoDeclaracao & ExtracaoRecibo & ExtracaoMei & ExtracaoDarf>;
     try {
-      extracao = JSON.parse(content);
-    } catch {
-      const m = content.match(/\{[\s\S]*\}/);
-      extracao = m ? JSON.parse(m[0]) : {};
+      const native = await tryNativeValidation(bytes, tipo, Number(dec.ano_base), cliente.cpf || "");
+      if (native.ok) {
+        extracao = native.data as typeof extracao;
+        metodoValidacao = "regex";
+        console.log(`[hibrido] ${tipo} validado por REGEX (sem IA)`);
+      } else {
+        console.log(`[hibrido] regex falhou para ${tipo}: ${native.reason} — caindo para IA`);
+      }
+    } catch (e) {
+      console.error("[hibrido] erro inesperado na extração nativa:", e);
+    }
+
+    if (metodoValidacao === "ia") {
+      // Modelo: pro para declaração (precisão na leitura visual do resumo), flash para os demais
+      const model = tipo === "declaracao" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+
+      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: systemPrompt },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: userPrompt },
+                {
+                  type: "image_url",
+                  image_url: { url: `data:application/pdf;base64,${base64}` },
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      if (!aiRes.ok) {
+        const t = await aiRes.text();
+        console.error("AI error", aiRes.status, t);
+        if (aiRes.status === 429) return fail("Limite de IA atingido. Tente novamente em alguns minutos.");
+        if (aiRes.status === 402) return fail("Créditos de IA esgotados. Contate o suporte.");
+        return fail("Falha ao analisar o PDF com IA");
+      }
+      const aiJson = await aiRes.json();
+      const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
+      try {
+        extracao = JSON.parse(content);
+      } catch {
+        const m = content.match(/\{[\s\S]*\}/);
+        extracao = m ? JSON.parse(m[0]) : {};
+      }
     }
 
     // Validação cruzada
