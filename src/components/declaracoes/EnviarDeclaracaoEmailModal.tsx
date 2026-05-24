@@ -231,6 +231,12 @@ export function EnviarDeclaracaoEmailModal({
           path: arquivoMeiUrl
         });
       }
+      (arquivosOutros || []).forEach((o) => {
+        if (o?.path) {
+          attachmentPaths.push({ filename: o.nome || 'documento', path: o.path });
+        }
+      });
+
 
       const templateData = {
         nomeCliente: clienteNome,
