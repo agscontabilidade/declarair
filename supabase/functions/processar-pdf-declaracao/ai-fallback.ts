@@ -263,6 +263,52 @@ export async function runAiExtraction(
         }
       }
     }
+    // Anti-alucinação extra para declaração: o valor não pode coincidir com
+    // totais de rendimentos / base de cálculo / imposto devido (campos que a
+    // IA costuma confundir com o resultado final).
+    if (tipo === "declaracao" && typeof args.valor_resultado === "number" && (args.valor_resultado as number) > 0) {
+      const v = args.valor_resultado as number;
+      const moneyRe = /\d{1,3}(?:\.\d{3})*,\d{2}/g;
+      const labelsProibidos = [
+        /rendimentos\s+tribut[aá]veis[\s\S]{0,400}?\btotal\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i,
+        /base\s+de\s+c[aá]lculo[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i,
+        /imposto\s+devido\b[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i,
+        /total\s+do\s+imposto\s+devido[^\d\n\r]{0,80}(\d{1,3}(?:\.\d{3})*,\d{2})/i,
+      ];
+      const proibidos = new Set<number>();
+      for (const re of labelsProibidos) {
+        const m = fullText.match(re);
+        if (m) {
+          const n = parseFloat(m[1].replace(/\./g, "").replace(",", "."));
+          if (Number.isFinite(n) && n > 0) proibidos.add(Math.round(n * 100));
+        }
+      }
+      if (proibidos.has(Math.round(v * 100))) {
+        return { ok: false, reason: `ia_valor_coincide_com_total_proibido (${v})`, elapsedMs };
+      }
+      // O valor precisa estar próximo do label correto (até 250 chars depois).
+      const labelEsperado = args.tipo_resultado === "pagamento"
+        ? /saldo\s+de\s+imposto\s+a\s+pagar|imposto\s+a\s+pagar(?!\s+sobre)/i
+        : args.tipo_resultado === "restituicao"
+          ? /imposto\s+a\s+restituir/i
+          : null;
+      if (labelEsperado) {
+        const mL = fullText.match(labelEsperado);
+        if (mL && typeof mL.index === "number") {
+          const slice = fullText.slice(mL.index, mL.index + 400);
+          moneyRe.lastIndex = 0;
+          let found = false;
+          let m: RegExpExecArray | null;
+          while ((m = moneyRe.exec(slice)) !== null) {
+            const n = parseFloat(m[0].replace(/\./g, "").replace(",", "."));
+            if (Math.abs(n - v) < 0.01) { found = true; break; }
+          }
+          if (!found) {
+            return { ok: false, reason: `ia_valor_distante_do_label (${v})`, elapsedMs };
+          }
+        }
+      }
+    }
     // Ano
     const anoKey = tipo === "mei" ? "ano_calendario" : "ano_exercicio";
     if (typeof args[anoKey] === "number") {
