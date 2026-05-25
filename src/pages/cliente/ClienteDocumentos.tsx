@@ -107,12 +107,18 @@ export default function ClienteDocumentos() {
         .single();
       if (novaErr || !nova) {
         console.error('[upload] falha ao criar declaracao inicial', novaErr);
-        toast.error('Não foi possível preparar sua declaração. Contate seu contador.');
+        const msg = novaErr?.message || '';
+        if (msg.includes('LIMITE_PLANO_ATINGIDO')) {
+          toast.error('O escritório atingiu o limite de declarações do plano. Peça ao seu contador para liberar mais uma.');
+        } else {
+          toast.error('Não foi possível preparar sua declaração. Contate seu contador.');
+        }
         return;
       }
       declaracaoInicial = nova as typeof declaracaoInicial;
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
     }
+
 
     const MAX_BYTES = 20 * 1024 * 1024; // 20MB
     const oversize = list.filter((f) => f.size > MAX_BYTES);
