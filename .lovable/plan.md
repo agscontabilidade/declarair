@@ -1,66 +1,104 @@
-## Diagnóstico
+## Escopo (somente portal do cliente — `/cliente/*`)
 
-Auditei o fluxo do portal do cliente em `/cliente/documentos` (`src/pages/cliente/ClienteDocumentos.tsx`, `useClientePortal.ts`) cruzando com as políticas RLS no banco. O toast vermelho da tela enviada — **"Não foi possível preparar sua declaração. Contate seu contador."** — vem da linha 110 do `ClienteDocumentos.tsx`, que dispara quando o `INSERT` em `declaracoes` falha.
-
-Encontrei **três bloqueios reais de RLS no lado do cliente** e alguns pontos secundários.
-
-### 1. Cliente não consegue criar declaração (CRÍTICO — causa do erro na tela)
-
-Política `Inserir declaracoes no escritorio` só permite quando `escritorio_id = get_user_escritorio_id()`. Essa função busca em `public.usuarios` — clientes não estão lá, então retorna `NULL` e o `INSERT` é bloqueado. Não existe política equivalente para o cliente.
-
-Quando o cliente entra em `/cliente/documentos` antes do contador ter criado a declaração do ano corrente (ou se só existe declaração de ano anterior), o código tenta auto-criar e leva o erro. É exatamente o caso desse cliente.
-
-### 2. Cliente não consegue atualizar status da própria declaração (CRÍTICO — silencioso)
-
-Política `Atualizar declaracoes do escritorio` exige `escritorio_id = get_user_escritorio_id()`. Os `UPDATE` em `ClienteDocumentos.tsx` (linhas 224 e 270) que mudam `status` para `documentacao_recebida` e `status_documentos` para `enviado` rodam, mas o RLS filtra silenciosamente: zero linhas afetadas, sem erro. Resultado: contador nunca vê "documentos enviados", kanban não move, sininho não toca.
-
-### 3. Cliente não consegue inserir notificação para o contador (CRÍTICO — silencioso)
-
-Política `Usuarios inserem notificacoes no escritorio` exige escritório do usuário. Os `INSERT` em `notificacoes` (linhas 282 e 316) feitos pelo cliente são bloqueados. Erro é ignorado (`await` sem checagem). Contador nunca recebe notificação de envio nem de remoção de documento.
-
-### 4. Pontos secundários (não bloqueiam, mas vale corrigir junto)
-
-- **Trigger `enforce_declaracao_limit`**: se o escritório atingiu o limite do plano, qualquer tentativa do cliente criar declaração levanta exceção. Hoje cai no toast genérico; deveria ter mensagem mais clara. (Confirmar se é o caso desse cliente — checar limite vs uso no escritório dele.)
-- **Categoria `documento_enviado`** (linha 204) não existe em `CATEGORIA_META` nem em `LEGACY_MAP`. Não bloqueia, mas o documento pode renderizar sem ícone/label correto.
-- **`removeFile`** (linha 299) usa `declaracao?.id` em `.eq` sem checar — se `declaracao` for `null`, o filtro vira `is null` e pode afetar outras linhas que o RLS deixe passar. Risco baixo, mas vale guardar.
+Alterações no frontend do cliente. Nenhuma mudança em RLS, schema do banco, ou áreas do contador.
 
 ---
 
-## Plano de correção (escopo estrito)
+### 1. Dashboard sempre visível, mesmo sem documentos enviados (`ClienteDashboard.tsx`)
 
-### A. Migração SQL — políticas RLS faltantes para o cliente
+Hoje o dashboard só renderiza stepper + cards se já existe `declaracao`. Como agora a declaração é criada automaticamente no signup do cliente (já confirmado no banco), o caminho "sem declaração" fica como fallback. Vou:
 
-1. **`declaracoes` INSERT para cliente**: nova policy `Cliente pode criar sua declaracao` permitindo `cliente_id = get_user_cliente_id()`.
-2. **`declaracoes` UPDATE para cliente**: nova policy `Cliente pode atualizar sua declaracao` (USING e WITH CHECK = `cliente_id = get_user_cliente_id()`).  
-   Restringir colunas via trigger BEFORE UPDATE: cliente só pode alterar `status`, `status_documentos`, `ultima_atualizacao_status` (preserva `valor_resultado`, `numero_recibo`, `contador_id`, `escritorio_id` etc.).
-3. **`notificacoes` INSERT para cliente**: nova policy `Cliente pode notificar seu escritorio` permitindo inserir quando `escritorio_id` for o escritório do cliente logado (via subquery em `clientes` por `get_user_cliente_id()`).
+- Manter o estado vazio só quando realmente não há `declaracao` (ex.: cliente antigo).
+- Garantir que, existindo `declaracao` mesmo com **0 documentos** e **formulário vazio**, os 3 cards apareçam normalmente com os badges corretos:
+  - Informações Cadastrais → **Pendente** (laranja, 0%)
+  - Envio de Documentos → **Pendente** (laranja, 0 docs)
+  - Resultado Final → Aguardando transmissão
 
-### B. Mensagem de erro do limite de declarações
+### 2. Stepper: timestamps + pulse suave na etapa atual (`StatusStepper.tsx`)
 
-Ajustar `enforce_declaracao_limit` para retornar mensagem mais explícita ("Limite do plano do escritório atingido — peça ao contador para liberar mais uma declaração."), e tratar essa mensagem em `ClienteDocumentos.tsx` para mostrar toast amigável.
+Adicionar prop `stepTimestamps: (string | null)[]` (1 por etapa). Para cada bolinha concluída ou atual, mostrar abaixo do label um pequeno texto `dd/MM HH:mm`. Etapa atual ganha classe `animate-pulse` suave (Tailwind, sem keyframes novos).
 
-### C. Ajustes mínimos no `ClienteDocumentos.tsx`
+Fonte dos timestamps (calculada no `useClientePortal.ts`):
 
-- Após cada `update`/`insert` que afeta o contador, ler o retorno (`.select()`) e logar erro se zero linhas — para não falhar silenciosamente nunca mais.
-- Guardar `removeFile` contra `declaracao` nulo.
-- Registrar a categoria `documento_enviado` em `CATEGORIA_META` (label "Documento Enviado", ícone `FileText`) para render consistente.
+- Etapa 1 (Dados Cadastrais) → `formulario.updated_at` quando `status_preenchimento = 'concluido'`.
+- Etapa 2 (Enviar Documentos) → `MAX(checklist_documentos.data_recebimento)` quando houver ao menos 1 doc com `status = 'recebido'`.
+- Etapa 3 (Documentação Recebida) → mais recente `declaracao_atividades.created_at` onde `descricao LIKE 'Status alterado % para documentacao_recebida'`.
+- Etapa 4 (Declaração Pronta) → mesmo padrão para `declaracao_pronta`.
+- Etapa 5 (Transmitida) → `declaracao.data_transmissao`.
 
-### D. Verificação pós-fix
+Vou adicionar uma query no `useClientePortal` para buscar `declaracao_atividades` filtrada por `declaracao_id` e tipo `status_change`, derivar o map em memória.
 
-1. Rodar como o cliente afetado (ou simular): abrir `/cliente/documentos`, anexar PDF de teste, confirmar:
-   - Declaração criada para o ano corrente.
-   - `status` muda para `documentacao_recebida`.
-   - Notificação aparece para o contador.
-2. Conferir limite atual do escritório do cliente (`SELECT limite_declaracoes, declaracoes_utilizadas FROM escritorios WHERE id=...`) para descartar bloqueio por plano.
+### 3. Porcentagem real do card "Informações Cadastrais"
+
+Substituir a regra binária (50% ou 100%) por cálculo baseado nos campos preenchidos no `formulario_ir`. Pesos simples, somando 100%:
+
+| Bloco | Peso | Critério "preenchido" |
+|---|---|---|
+| Estado civil + data nascimento | 10 | ambos não vazios |
+| Endereço (cep, logradouro, numero, bairro, cidade, uf) | 15 | todos preenchidos |
+| Ocupação principal | 5 | preenchida |
+| Rendimentos (emprego/autônomo/aluguel/outros) | 25 | ao menos 1 item em qualquer array OU `status_preenchimento = 'concluido'` |
+| Bens e direitos | 10 | array não vazio OU concluído |
+| Dívidas | 5 | array não vazio OU concluído (opcional, conta só se houver) |
+| Deduções (médicas/educação/previdência) | 15 | ao menos 1 item OU concluído |
+| Dependentes/alimentandos (opcional) | 5 | declarados OU concluído |
+| Informações adicionais / chave Pix | 10 | preenchidos |
+
+Regras de borda:
+- Se `formulario` não existe → 0% e badge **Pendente**.
+- Se `status_preenchimento = 'concluido'` → 100% e badge **Preenchido** (sobrescreve o cálculo).
+- Caso contrário → mostra `%` calculada e badge **Pendente** (laranja) se < 100%.
+
+Lógica vai em helper `calcularProgressoFormulario(formulario)` em `src/lib/cliente-portal-progress.ts` (novo arquivo pequeno, isolado).
+
+### 4. `ClienteDocumentos`: exclusão já existe — apenas auditar
+
+Conferi: a exclusão **já está implementada** (`removeFile` + `AlertDialog` no card "Arquivos Anexados"). Botão fica oculto quando `docsEnviadosAoContador = true`. Vou:
+
+- Manter como está; apenas verificar se aparece corretamente quando o cliente acabou de subir um doc errado (antes de "Enviar ao Contador").
+- Confirmar que o `AlertDialog` com `Trash2` é claro o suficiente.
+
+Se a intenção do usuário for permitir excluir **mesmo após "Enviado ao Contador"**, isso muda a regra de negócio e prefiro confirmar antes (ver "Pergunta em aberto").
+
+### 5. Cards em tom de alerta laranja suave
+
+Trocar a paleta dos dois cards informativos:
+
+- **Procuração Eletrônica e-CAC** (dashboard) — hoje `border-primary/20 bg-primary/5`.
+- **Não sabe quais documentos enviar?** (documentos) — hoje `border-primary/20 bg-primary/5`.
+
+Para o token semântico já existente do sistema: `border-warning/30 bg-warning/5`, ícone em `text-warning`, mantendo o botão primário (verde) para não competir com o alerta. Sem cores hardcoded.
+
+### 6. Remover "Meu Perfil" do menu do cliente (`ClienteLayout.tsx`)
+
+Tirar o item `{ title: 'Meu Perfil', url: '/perfil', icon: User }` do array `navItems`. A rota `/perfil` é `allowedType="contador"` (já protegida), então clicar nela como cliente já dava erro — remover só limpa a UI. Não mexo na rota nem na página `Perfil.tsx` (usadas pelo contador).
 
 ---
 
-## Fora de escopo
+### Pergunta em aberto
 
-- Não vou mexer em billing, formulário IR, kanban, layout, autenticação, storage policies (bucket `documentos-clientes` já funciona — uploads sobem mesmo quando o resto falha).
-- Não vou refatorar o hook ou os caches do React Query.
-- Sem schema novo além das policies + 1 trigger de coluna restritiva.
+> "retire também qualquer **tabela** que faça referência a esses dados. Não vejo funcionalidade uma vez que temos os dados cadastrais."
 
-## Risco
+Não está claro o que é "tabela" aqui. Hipóteses:
+- (a) Seção/aba na UI do cliente que duplique dados de perfil → **não encontrei nenhuma** no portal do cliente além do próprio formulário. Posso só remover o menu.
+- (b) Tabela do banco (`usuarios` ou similar) referente ao cliente → **risco alto em produção**, não faço sem confirmação explícita.
 
-Baixo. As policies adicionam acesso onde hoje não existe (não removem nem afrouxam regras do contador). O trigger de colunas protege contra cliente alterar campos sensíveis. Todas as mudanças são aditivas e reversíveis.
+**Vou seguir com (a)** — só remover o menu — e deixar (b) para você confirmar se realmente quer. Se confirmar, isolo numa próxima etapa.
+
+---
+
+### Arquivos tocados
+
+- `src/components/layout/ClienteLayout.tsx` — remover item do menu.
+- `src/components/cliente-portal/StatusStepper.tsx` — props para timestamps + pulse.
+- `src/hooks/useClientePortal.ts` — query de `declaracao_atividades` + map de timestamps por etapa.
+- `src/lib/cliente-portal-progress.ts` (novo) — helper de % do formulário.
+- `src/pages/cliente/ClienteDashboard.tsx` — usar % real, passar timestamps ao stepper, cor warning no card e-CAC, garantir render sempre que houver declaração.
+- `src/pages/cliente/ClienteDocumentos.tsx` — cor warning no card de ajuda; exclusão já existente mantida.
+
+### Fora de escopo
+
+- Schema / RLS / triggers / edge functions.
+- Rotas e código do contador.
+- Página `Perfil.tsx` (usada pelo contador).
+- Qualquer alteração em tabelas do banco.

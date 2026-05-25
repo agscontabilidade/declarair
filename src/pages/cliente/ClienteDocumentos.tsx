@@ -439,11 +439,11 @@ export default function ClienteDocumentos() {
     <ClienteLayout>
       <div className="space-y-6">
         {/* Card de ajuda - Relação de documentos */}
-        <Card className="border-primary/20 bg-primary/5 shadow-sm">
+        <Card className="border-warning/30 bg-warning/5 shadow-sm">
           <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <div className="flex items-start gap-3 sm:contents">
-              <div className="h-11 w-11 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                <HelpCircle className="h-5 w-5 text-primary" />
+              <div className="h-11 w-11 rounded-full bg-warning/15 flex items-center justify-center shrink-0">
+                <HelpCircle className="h-5 w-5 text-warning" />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-display text-base font-semibold text-foreground">

@@ -1,4 +1,4 @@
-import { Home, ClipboardList, Upload, LogOut, User } from 'lucide-react';
+import { Home, ClipboardList, Upload, LogOut } from 'lucide-react';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import { NavLink } from '@/components/NavLink';
@@ -14,7 +14,6 @@ const navItems = [
   { title: 'Início', url: '/cliente/dashboard', icon: Home },
   { title: 'Dados Cadastrais', url: '/cliente/formulario', icon: ClipboardList },
   { title: 'Documentos', url: '/cliente/documentos', icon: Upload },
-  { title: 'Meu Perfil', url: '/perfil', icon: User },
 ];
 
 export function ClienteLayout({ children }: { children: React.ReactNode }) {
