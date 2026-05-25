@@ -97,6 +97,9 @@ export default function Declaracoes() {
 
   const [anoBase, setAnoBase] = useState('2026');
   const [statusFilter, setStatusFilter] = useState('todos');
+  const [resultadoFiltro, setResultadoFiltro] = useState<'todos' | 'restituicao' | 'pagamento' | 'nenhum'>('todos');
+  const [processoFiltro, setProcessoFiltro] = useState<'todos' | StatusProcessamentoRfb>('todos');
+  const [arquivosFiltro, setArquivosFiltro] = useState<'todos' | 'completo' | 'nenhum' | 'so_declaracao' | 'so_recibo'>('todos');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
