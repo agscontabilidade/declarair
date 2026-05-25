@@ -328,7 +328,37 @@ export default function Declaracoes() {
                             onClick={() => navigate(`/declaracoes/${d.id}`)}
                           >
                             <TableCell className="py-2">
-                              <div className="font-medium leading-tight">{d.clienteNome}</div>
+                              <div className="font-medium leading-tight flex items-center gap-1.5">
+                                <span className="truncate">{d.clienteNome}</span>
+                                {d.observacoes_cliente && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span
+                                        onClick={(e) => e.stopPropagation()}
+                                        className={
+                                          d.observacoes_cliente_lida_em
+                                            ? 'inline-flex items-center justify-center h-5 w-5 rounded-full text-amber-600 cursor-help'
+                                            : 'inline-flex items-center justify-center h-5 w-5 rounded-full bg-amber-500 text-white cursor-help animate-pulse'
+                                        }
+                                        aria-label={d.observacoes_cliente_lida_em ? 'Observação do cliente' : 'Observação do cliente não lida'}
+                                      >
+                                        <MessageSquareText className="h-3 w-3" />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs text-xs">
+                                      <p className="font-semibold mb-1">
+                                        {d.observacoes_cliente_lida_em ? 'Detalhes do cliente' : 'Detalhes do cliente (não lidos)'}
+                                      </p>
+                                      <p className="whitespace-pre-wrap">
+                                        {d.observacoes_cliente!.length > 200
+                                          ? d.observacoes_cliente!.slice(0, 200) + '…'
+                                          : d.observacoes_cliente}
+                                      </p>
+                                      <p className="mt-1 text-muted-foreground">Abra a declaração para ler.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </div>
                               <div className="flex items-center gap-1 mt-0.5">
                                 <span className="text-xs text-muted-foreground tabular-nums">{maskCpf(d.clienteCpf)}</span>
                                 <CopyCpfButton cpf={d.clienteCpf} />
