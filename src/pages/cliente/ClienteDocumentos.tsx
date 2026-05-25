@@ -23,6 +23,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 import { useClientePortal } from '@/hooks/useClientePortal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -454,13 +456,21 @@ export default function ClienteDocumentos() {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => setRelacaoModalOpen(true)}
-              className="gap-2 bg-warning text-warning-foreground hover:bg-warning/90 shrink-0 w-full sm:w-auto"
-            >
-              <FileText className="h-4 w-4" />
-              Ver lista de documentos
-            </Button>
+            <Tooltip delayDuration={150}>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => setRelacaoModalOpen(true)}
+                  className="gap-2 bg-warning text-warning-foreground hover:bg-warning/90 shrink-0 w-full sm:w-auto"
+                >
+                  <FileText className="h-4 w-4" />
+                  Ver lista de documentos
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[260px] text-xs">
+                Lista completa por categoria fiscal: rendimentos, deduções de saúde e educação, bens, dívidas e mais.
+              </TooltipContent>
+            </Tooltip>
+
 
           </CardContent>
         </Card>
