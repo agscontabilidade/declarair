@@ -124,6 +124,10 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
       queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
       queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracaoId] });
       queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+      // Trigger no banco move status p/ documentacao_recebida; sincroniza Kanban/lista
+      queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracoes'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
     },
     onError: (e) => toast.error(getErrorMessage(e, 'Falha ao enviar arquivo')),
   });
