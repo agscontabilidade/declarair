@@ -77,6 +77,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
           contador_responsavel_id: cliente.contador_responsavel_id ?? '',
           procuracao_ecac: !!cliente.procuracao_ecac,
           procuracao_ecac_validade: cliente.procuracao_ecac_validade ?? '',
+          enviar_convite: false,
         });
       } else {
         setForm(EMPTY);
