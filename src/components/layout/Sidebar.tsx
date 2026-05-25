@@ -78,6 +78,9 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === '/dashboard'}
+                      onMouseEnter={() => prefetchRoute(item.url)}
+                      onFocus={() => prefetchRoute(item.url)}
+                      onTouchStart={() => prefetchRoute(item.url)}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-primary/15 hover:text-sidebar-primary hover:translate-x-1 transform transition-all duration-150"
                       activeClassName="bg-sidebar-primary/20 text-sidebar-primary font-medium"
                     >
