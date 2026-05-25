@@ -293,30 +293,50 @@ export default function ClienteDocumentos() {
     
     setSending(true);
     try {
-      const { error } = await supabase
+      const { data: updRows, error } = await supabase
         .from('declaracoes')
         .update({ 
           status_documentos: 'enviado',
           status: 'documentacao_recebida',
           ultima_atualizacao_status: new Date().toISOString()
         })
-        .eq('id', declaracao.id);
+        .eq('id', declaracao.id)
+        .select('id');
 
       if (error) throw error;
+      if (!updRows || updRows.length === 0) {
+        console.error('[finalize] update afetou 0 linhas (RLS?)', { id: declaracao.id });
+        throw new Error('Não foi possível atualizar o status da declaração.');
+      }
 
       // Notify accountant
-      await supabase.from('notificacoes').insert({
+      const { error: notifErr } = await supabase.from('notificacoes').insert({
         escritorio_id: declaracao.escritorio_id,
         titulo: '📂 Documentos Enviados',
         mensagem: `O cliente ${profile.nome} enviou os documentos para conferência.`,
         link_destino: `/declaracoes/${declaracao.id}`,
       });
+      if (notifErr) console.error('[finalize] notificacao insert error', notifErr);
 
       toast.success('Documentos enviados ao contador com sucesso!');
       setConcluido(true);
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
     } catch (err: unknown) {
-      toast.error('Erro ao enviar documentos');
+      const message = err instanceof Error ? err.message : 'Erro ao enviar documentos';
+      console.error('[finalize] erro', err);
+      toast.error(message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const removeFile = async (docId: string, filePath: string, fileName: string) => {
+    if (!declaracao?.id) {
+      toast.error('Declaração não encontrada.');
+      return;
+    }
+    try {
+
     } finally {
       setSending(false);
     }
