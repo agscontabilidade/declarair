@@ -143,7 +143,17 @@ export default function Clientes() {
         onSavedAndUpload={(ctx) => {
           if (ctx.declaracaoId) setUploadDocs({ declaracaoId: ctx.declaracaoId, nome: ctx.nome });
         }}
+        onSavedAndInvite={(ctx) => {
+          setConviteCtx({
+            clienteId: ctx.clienteId,
+            nome: ctx.nome,
+            email: ctx.email ?? null,
+            telefone: ctx.telefone ?? null,
+          });
+        }}
       />
+
+      <EnviarConviteClienteDialog ctx={conviteCtx} onClose={() => setConviteCtx(null)} />
 
       <DocumentosDeclaracaoModal
         open={!!uploadDocs}
