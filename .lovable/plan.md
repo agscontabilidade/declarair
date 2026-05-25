@@ -1,32 +1,36 @@
-## Diagnóstico
+# Corrigir fluxo "Esqueci a senha" e isolamento entre Login do Contador e Portal do Cliente
 
-1. **Carrega em dark ao atualizar** — `ThemeProvider` inicia com `'system'`, e o `system` resolve para a preferência do SO do cliente. Como 100% dos clientes têm `tema_preferido = 'system'` no banco (default da coluna), quem usa SO em dark vê o portal em dark a cada refresh.
-2. **Logo** — `ClienteLayout` usa sempre `logo-full.png` (versão escura sobre fundo claro). Existe `logo-dark.png` (versão branca, ideal para fundo escuro) que não está sendo usada.
+## Causa raiz
 
-## Correções
+1. `RecuperarSenha.tsx` tem `<Link to="/login">` hardcoded em dois pontos, então o botão "Voltar ao login" sempre cai na Área do Contador, mesmo quando o cliente veio do portal.
+2. `Login.tsx` (Área do Contador) e `ClienteLogin.tsx` (Portal do Cliente) **aceitam qualquer tipo de usuário** no formulário e simplesmente redirecionam para o painel do papel real. Por isso o cliente, ao logar na tela do contador, ainda entra normalmente em `/cliente/dashboard` — parece "login do contador" pela aparência da tela, mas o Supabase está autenticando o próprio cliente.
 
-### 1. Default = light no portal do cliente (sem afetar contador)
+## Mudanças (somente frontend, sem mexer em banco/RLS/edge functions)
 
-Em `src/components/layout/ClienteLayout.tsx`, adicionar um `useEffect` que roda na montagem do portal:
+### 1. `src/pages/cliente/ClienteLogin.tsx`
+- Trocar `to="/recuperar-senha"` por `to="/recuperar-senha?origem=cliente"` no link "Esqueceu sua senha?".
+- No `useEffect` de redirect: se `userType === 'contador'`, **não** redirecionar para `/dashboard`. Em vez disso, fazer `await signOut()` e mostrar um toast "Esta conta é de contador. Use a Área do Contador." Mantém o usuário no `/cliente/login`.
 
-- Se `theme === 'system'` (ou seja, cliente nunca escolheu manualmente), chamar `setTheme('light')`. Isso aplica claro imediatamente e persiste a preferência no banco (`clientes.tema_preferido = 'light'`).
-- Se o cliente já escolheu `dark` ou `light` manualmente pelo toggle, mantém a escolha.
-- Não toca em contador (ThemeContext fica intacto; mudança é só dentro do `ClienteLayout`).
+### 2. `src/pages/Login.tsx` (Área do Contador)
+- Trocar `to="/recuperar-senha"` por `to="/recuperar-senha?origem=contador"`.
+- No `useEffect`: se `userType === 'cliente'`, fazer `signOut()` + toast "Esta conta é de cliente. Use o Portal do Cliente." e manter em `/login`. Admin continua sendo redirecionado para `/admin`.
 
-### 2. Logo branco no dark mode
+### 3. `src/pages/RecuperarSenha.tsx`
+- Ler `useSearchParams()` para pegar `origem` (`cliente` | `contador`, default `contador`).
+- Calcular `backTo = origem === 'cliente' ? '/cliente/login' : '/login'`.
+- Substituir os dois `<Link to="/login">` por `<Link to={backTo}>`.
+- Passar a origem adiante no `redirectTo` do `resetPasswordForEmail`: `${PORTAL_BASE_URL}/redefinir-senha?origem=${origem}` (para o RedefinirSenha já saber para onde mandar depois do reset).
 
-Em `src/components/layout/ClienteLayout.tsx`:
-
-- Importar `logoDark from '@/assets/logo-dark.png'`.
-- Ler `resolved` do `useTheme()`.
-- Renderizar `resolved === 'dark' ? logoDark : logoFull` quando NÃO houver whitelabel (no whitelabel, mantém `esc.logo_url` como hoje).
-
-## Arquivos afetados
-
-- `src/components/layout/ClienteLayout.tsx` — único arquivo.
+### 4. `src/pages/RedefinirSenha.tsx`
+- Após `updateUser`, priorizar `searchParams.get('origem')` para decidir `redirectTo`. Manter o lookup atual na tabela `clientes` apenas como fallback (já existe e funciona, só fica mais resiliente).
 
 ## Fora de escopo
+- Banco, RLS, edge functions, fluxo de admin.
+- Visual/layout das páginas (apenas adicionar toasts já existentes via `use-toast`).
 
-- Contador, admin, landing.
-- ThemeContext global (não mexer).
-- Whitelabel (logo customizado do escritório continua igual).
+## Validação
+- Cliente → `/cliente/login` → "Esqueci senha" → "Voltar ao login" deve voltar para `/cliente/login`.
+- Contador → `/login` → "Esqueci senha" → "Voltar ao login" deve voltar para `/login`.
+- Cliente tentando logar em `/login`: rejeitado com toast, sem entrar.
+- Contador tentando logar em `/cliente/login`: rejeitado com toast, sem entrar.
+- Reset de senha completo: cliente é mandado para `/cliente/login`, contador para `/login`.
