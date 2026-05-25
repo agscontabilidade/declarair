@@ -10,23 +10,29 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    env:
+      # Chaves PÚBLICAS (publishable / anon) — seguras para CI.
+      VITE_SUPABASE_URL: https://bykqurgeptipguqvxwiq.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5a3F1cmdlcHRpcGd1cXZ4d2lxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMzAxMzgsImV4cCI6MjA4OTYwNjEzOH0.imziOQjx7K6tNyn_B3RaqhgfTZVlgN_mmF6znqy1Hbk
+      VITE_SUPABASE_PROJECT_ID: bykqurgeptipguqvxwiq
+
     steps:
     - uses: actions/checkout@v4
     - uses: oven-sh/setup-bun@v2
       with:
-        bun-version: latest
+        bun-version: "1.1.38"
 
     - name: Instalar dependências
       run: bun install
 
-    # - name: Verificar Lint
-    #   run: bun run lint
+    - name: Build de produção
+      run: bun run build
 
     - name: Rodar testes unitários
       run: bun run test
 
     - name: Instalar browsers do Playwright
-      run: bunx playwright install --with-deps
+      run: bunx playwright install --with-deps chromium
 
     - name: Rodar testes de ponta a ponta (E2E)
       run: bun run test:e2e
