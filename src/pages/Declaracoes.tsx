@@ -185,6 +185,7 @@ export default function Declaracoes() {
             arquivo_darf_url, arquivo_darf_nome, darf_validado_em,
             arquivos_outros,
             em_processamento, status_processamento_rfb, declaracao_enviada_em,
+            observacoes_cliente, observacoes_cliente_atualizado_em, observacoes_cliente_lida_em,
             clientes(nome, cpf, email),
             declaracao_notas_internas(conteudo)
           `)
