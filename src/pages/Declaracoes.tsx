@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, Search, Paperclip, Pin, Copy, Check, MessageSquareText } from 'lucide-react';
+import { FileText, Search, Paperclip, Pin, Copy, Check, MessageSquareText, Wallet, Activity, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -97,6 +97,9 @@ export default function Declaracoes() {
 
   const [anoBase, setAnoBase] = useState('2026');
   const [statusFilter, setStatusFilter] = useState('todos');
+  const [resultadoFiltro, setResultadoFiltro] = useState<'todos' | 'restituicao' | 'pagamento' | 'nenhum'>('todos');
+  const [processoFiltro, setProcessoFiltro] = useState<'todos' | StatusProcessamentoRfb>('todos');
+  const [arquivosFiltro, setArquivosFiltro] = useState<'todos' | 'completo' | 'nenhum' | 'so_declaracao' | 'so_recibo'>('todos');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -238,8 +241,24 @@ export default function Declaracoes() {
     );
   }
 
-  const filtered = declaracoes.filter((d: { status: string; clienteCpf: string; clienteNome: string }) => {
+  const filtered = declaracoes.filter((d: DeclaracaoListaItem) => {
     if (statusFilter !== 'todos' && d.status !== statusFilter) return false;
+    if (resultadoFiltro !== 'todos') {
+      const tr = d.tipo_resultado ?? 'nenhum';
+      if (tr !== resultadoFiltro) return false;
+    }
+    if (processoFiltro !== 'todos') {
+      const sp = d.status_processamento_rfb ?? 'aguardando';
+      if (sp !== processoFiltro) return false;
+    }
+    if (arquivosFiltro !== 'todos') {
+      const temDec = !!d.arquivo_declaracao_url;
+      const temRec = !!d.arquivo_recibo_url;
+      if (arquivosFiltro === 'completo' && !(temDec && temRec)) return false;
+      if (arquivosFiltro === 'nenhum' && (temDec || temRec)) return false;
+      if (arquivosFiltro === 'so_declaracao' && !(temDec && !temRec)) return false;
+      if (arquivosFiltro === 'so_recibo' && !(temRec && !temDec)) return false;
+    }
     const term = debouncedSearch.trim().toLowerCase();
     if (term) {
       const digits = term.replace(/\D/g, '');
@@ -249,6 +268,19 @@ export default function Declaracoes() {
     }
     return true;
   });
+
+  const hasActiveFilters =
+    statusFilter !== 'todos' ||
+    resultadoFiltro !== 'todos' ||
+    processoFiltro !== 'todos' ||
+    arquivosFiltro !== 'todos';
+
+  const clearFilters = () => {
+    setStatusFilter('todos');
+    setResultadoFiltro('todos');
+    setProcessoFiltro('todos');
+    setArquivosFiltro('todos');
+  };
 
   function maskCpf(cpf: string) {
     const digits = cpf.replace(/\D/g, '');
@@ -280,10 +312,54 @@ export default function Declaracoes() {
               <SelectItem value="transmitida">Transmitida</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={resultadoFiltro} onValueChange={(v) => setResultadoFiltro(v as typeof resultadoFiltro)}>
+            <SelectTrigger className="w-[180px] gap-2">
+              <Wallet className="h-4 w-4 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos resultados</SelectItem>
+              <SelectItem value="restituicao">Restituição</SelectItem>
+              <SelectItem value="pagamento">A pagar</SelectItem>
+              <SelectItem value="nenhum">Sem imposto</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={processoFiltro} onValueChange={(v) => setProcessoFiltro(v as typeof processoFiltro)}>
+            <SelectTrigger className="w-[190px] gap-2">
+              <Activity className="h-4 w-4 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos processos</SelectItem>
+              <SelectItem value="aguardando">Aguardando</SelectItem>
+              <SelectItem value="processada">Processada</SelectItem>
+              <SelectItem value="pendencias">Pendências</SelectItem>
+              <SelectItem value="malha_fina">Malha fina</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={arquivosFiltro} onValueChange={(v) => setArquivosFiltro(v as typeof arquivosFiltro)}>
+            <SelectTrigger className="w-[210px] gap-2">
+              <Paperclip className="h-4 w-4 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Declaração/Recibo: todos</SelectItem>
+              <SelectItem value="completo">Com declaração e recibo</SelectItem>
+              <SelectItem value="so_declaracao">Apenas declaração</SelectItem>
+              <SelectItem value="so_recibo">Apenas recibo</SelectItem>
+              <SelectItem value="nenhum">Sem arquivos</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar por nome ou CPF..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 text-muted-foreground">
+              <X className="h-3.5 w-3.5" />
+              Limpar
+            </Button>
+          )}
         </div>
 
         <Card className="shadow-sm">

@@ -1,36 +1,34 @@
-## Adicionar filtros de ordenação no Dashboard (/dashboard)
+## Adicionar filtros em /declaracoes
 
-### Contexto
-O dashboard atual já possui filtros de busca, contador, urgência e status. O usuário quer adicionar ordenação por:
-1. **Ordem de cadastro** (mais recente → mais antigo, e vice-versa)
-2. **Ordem alfabética** (A → Z, e Z → A)
+A página `/declaracoes` já tem filtros de **Ano Base** e **Status** (da declaração) + busca. Adicionar 3 novos filtros, correspondendo às colunas da tabela.
 
-### Arquivos a modificar
+### Novos filtros
 
-1. **`src/hooks/useDashboardData.ts`**
-   - Adicionar `created_at` ao tipo `DeclaracaoKanban` e ao mapeamento da query (o campo `created_at` já existe na tabela `declaracoes`).
+| Filtro | Opções | Campo no banco |
+|---|---|---|
+| **Resultado** | Todos / Restituição / A pagar / Sem imposto | `tipo_resultado` (restituicao / pagamento / nenhum) |
+| **Processo (RFB)** | Todos / Aguardando / Processada / Pendências / Malha Fina | `status_processamento_rfb` |
+| **Declaração/Recibo** | Todos / Com arquivos / Sem arquivos / Apenas declaração / Apenas recibo | derivado de `arquivo_declaracao_url` + `arquivo_recibo_url` |
 
-2. **`src/hooks/useDashboardFilters.ts`**
-   - Adicionar `created_at: string` à interface `DeclaracaoFiltravel`.
-   - Adicionar campo `ordenacao` ao estado `DashboardFilters` com os valores possíveis:
-     - `cadastro_recente` — mais recente primeiro
-     - `cadastro_antigo` — mais antigo primeiro
-     - `alfabetica_az` — nome do cliente A → Z
-     - `alfabetica_za` — nome do cliente Z → A
-   - Implementar a lógica de ordenação no `declaracoesFiltradas` (após todos os filtros, antes do retorno).
-   - Exportar setter `setOrdenacao`.
-   - Incluir `ordenacao` no cálculo de `hasActiveFilters`.
-   - Incluir `ordenacao: 'cadastro_recente'` como default no `clearFilters`.
+O filtro de "Status da documentação" mencionado já existe (select **Status**) — mantenho como está.
 
-3. **`src/components/dashboard/DashboardFilters.tsx`**
-   - Adicionar props `ordenacao` e `onOrdenacaoChange`.
-   - Inserir um `<Select>` de ordenação na Row 2 (ao lado dos selects existentes de contador e status).
-   - Adicionar chip de filtro ativo para ordenação, com botão de remoção.
-   - Ícone: `ArrowUpDown` do lucide-react.
+### Arquivo a modificar
 
-4. **`src/pages/Dashboard.tsx`**
-   - Desestruturar `setOrdenacao` e `ordenacao` do hook `useDashboardFilters`.
-   - Passar ambos para o componente `<DashboardFilters>`.
+**`src/pages/Declaracoes.tsx`** (único arquivo):
 
-### Sem alterações no backend
-Toda a ordenação será feita no frontend (client-side), dentro do hook `useMemo`. Nenhuma mudança no Supabase é necessária.
+1. Adicionar 3 novos `useState`:
+   - `resultadoFiltro` (`'todos' | 'restituicao' | 'pagamento' | 'nenhum'`)
+   - `processoFiltro` (`'todos' | 'aguardando' | 'processada' | 'pendencias' | 'malha_fina'`)
+   - `arquivosFiltro` (`'todos' | 'completo' | 'nenhum' | 'so_declaracao' | 'so_recibo'`)
+
+2. Inserir 3 novos `<Select>` na barra de filtros existente (linha 264), com ícones lucide (`Wallet`, `Activity`, `Paperclip`).
+
+3. Estender o `.filter()` (linha 241) com as novas regras client-side:
+   - `tipo_resultado === resultadoFiltro` (tratando `null` para "nenhum" opcional)
+   - `status_processamento_rfb === processoFiltro`
+   - Lógica de `arquivosFiltro` baseada em `!!arquivo_declaracao_url` e `!!arquivo_recibo_url`
+
+4. Adicionar botão "Limpar filtros" (variant ghost) que aparece quando algum filtro está ativo.
+
+### Sem alterações de backend
+Todos os filtros são client-side sobre os dados já trazidos pela query (que já inclui `tipo_resultado`, `status_processamento_rfb`, `arquivo_declaracao_url`, `arquivo_recibo_url`).
