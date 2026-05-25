@@ -1,28 +1,24 @@
-## Objetivo
-Exibir o indicador "Detalhes enviados pelo cliente" também na página `/declaracoes` (lista principal), além dos lugares já existentes (Kanban, Dashboard Lista, ClientesTable, DeclaracaoDetalhe).
+## Problema
 
-## Mudanças
+Em `src/pages/cliente/ClienteDocumentos.tsx`, ao subir o primeiro arquivo o código marca `status_documentos = 'enviado'` (linha 246). A renderização da zona de upload está condicionada a `!docsEnviadosAoContador` (linha 536), então a área de "Arraste e solte / Selecionar Arquivos" some assim que o primeiro documento é salvo, impedindo o cliente de anexar mais.
 
-### 1. `src/pages/Declaracoes.tsx`
-- Incluir no `select` da query `declaracoes-lista`: `observacoes_cliente, observacoes_cliente_atualizado_em, observacoes_cliente_lida_em`.
-- Adicionar os campos na interface `DeclaracaoListaItem`.
-- **Desktop (tabela)**: ao lado do nome do cliente (na mesma linha do nome, antes do CPF), renderizar um ícone `MessageSquareText` âmbar com Tooltip quando `observacoes_cliente` existir.
-  - Se `observacoes_cliente_lida_em == null` → badge âmbar sólido pulsante "Não lida" (mesmo padrão do `DeclaracoesListView`).
-  - Se já lida → ícone âmbar discreto (sem pulse), apenas sinalizando que existe observação.
-  - Tooltip mostra o conteúdo (truncado em ~200 chars) e instrução "Abra a declaração para ler".
-  - `onClick` com `stopPropagation` para não interferir, mas o clique na linha continua navegando para `/declaracoes/:id`.
-- **Mobile (cards)**: mesmo indicador ao lado do nome do cliente no header do card.
+Isso conflita com o próprio texto dos tooltips ("Novos uploads continuam sendo aceitos") e com a expectativa do produto.
 
-### 2. Sem alterações de banco / RLS
-Os campos já existem e já são lidos em outros lugares; apenas estendemos a query desta página.
+## Mudança
 
-### 3. Sem alterações em outros componentes
-`KanbanCard`, `DeclaracoesListView` (dashboard), `ClientesTable` e `SecaoObservacoesCliente` permanecem como estão.
+Arquivo: `src/pages/cliente/ClienteDocumentos.tsx`
 
-## Detalhes técnicos
-- Reaproveitar paleta âmbar já usada (`bg-amber-500 text-white` para não lida, `text-amber-600` para lida).
-- Importar `MessageSquareText` de `lucide-react`.
-- Manter `staleTime: 30000` da query; a marcação como lida feita em `DeclaracaoDetalhe` já invalida `dashboard-declaracoes` — adicionar invalidação de `declaracoes-lista` no `SecaoObservacoesCliente` para refletir imediatamente nesta página também.
+1. **Remover o gate `!docsEnviadosAoContador` da Upload Zone** (linha 536). A zona de upload deve ficar sempre visível enquanto o cliente estiver na página, independentemente de já ter enviado.
 
-## Fora de escopo
-- Notificações novas, alterações de schema, modal próprio na lista (a leitura continua em `/declaracoes/:id`).
+2. **Manter o badge "Enviado ao Contador"** e o botão "Enviar ao Contador" como estão (já tratam o estado corretamente — botão some quando já enviado, badge aparece).
+
+3. **Sem mudanças** em:
+   - Lógica de `handleFiles` (já notifica o contador a cada novo upload).
+   - Banco de dados / RLS / status (já funciona — `status_documentos='enviado'` continua sendo setado em cada upload, e a remoção de todos os arquivos volta para `aguardando_documentos`).
+   - Componente de Observações, modal de relação, lista de anexos.
+
+## Fora do escopo
+
+- Alterar status da declaração ao reabrir uploads.
+- Mudar visual da zona de upload.
+- Mexer no lado contador.

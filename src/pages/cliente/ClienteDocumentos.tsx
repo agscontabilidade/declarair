@@ -532,44 +532,41 @@ export default function ClienteDocumentos() {
 
         </div>
 
-        {/* Upload Zone */}
-        {!docsEnviadosAoContador && (
-          <Card 
-            className={`border-2 border-dashed transition-all duration-200 ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/20'}`}
-            onDragEnter={onDrag}
-            onDragLeave={onDrag}
-            onDragOver={onDrag}
-            onDrop={onDrop}
-          >
-            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-              <Tooltip delayDuration={150}>
-                <TooltipTrigger asChild>
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 cursor-help">
-                    {uploading ? <Loader2 className="h-6 w-6 text-primary animate-spin" /> : <Upload className="h-6 w-6 text-primary" />}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[260px] text-xs">
-                  Aceitamos PDF, imagens (JPG/PNG), DOC e XLS. Limite de 20 MB por arquivo.
-                </TooltipContent>
-              </Tooltip>
-              <h3 className="text-lg font-semibold">Arraste e solte seus documentos aqui</h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-6 max-w-xs">
-                Você pode selecionar vários arquivos de uma vez (PDF, Imagens, DOC, XLS).
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => e.target.files && handleFiles(e.target.files)}
-              />
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                Selecionar Arquivos
-              </Button>
-            </CardContent>
-
-          </Card>
-        )}
+        {/* Upload Zone — sempre disponível, mesmo após primeiro envio */}
+        <Card 
+          className={`border-2 border-dashed transition-all duration-200 ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/20'}`}
+          onDragEnter={onDrag}
+          onDragLeave={onDrag}
+          onDragOver={onDrag}
+          onDrop={onDrop}
+        >
+          <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+            <Tooltip delayDuration={150}>
+              <TooltipTrigger asChild>
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 cursor-help">
+                  {uploading ? <Loader2 className="h-6 w-6 text-primary animate-spin" /> : <Upload className="h-6 w-6 text-primary" />}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[260px] text-xs">
+                Aceitamos PDF, imagens (JPG/PNG), DOC e XLS. Limite de 20 MB por arquivo.
+              </TooltipContent>
+            </Tooltip>
+            <h3 className="text-lg font-semibold">Arraste e solte seus documentos aqui</h3>
+            <p className="text-sm text-muted-foreground mt-1 mb-6 max-w-xs">
+              Você pode anexar quantos arquivos quiser, mesmo após já ter enviado. Seu contador é notificado a cada novo upload.
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => e.target.files && handleFiles(e.target.files)}
+            />
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              Selecionar Arquivos
+            </Button>
+          </CardContent>
+        </Card>
 
         {declaracao && (
           <ObservacoesParaContador
