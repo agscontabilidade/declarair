@@ -23,7 +23,7 @@ export default function Clientes() {
   const {
     clientes, isLoading, isError, error, refetch,
     search, setSearch, page, setPage, totalPages,
-    contadores, createCliente, updateCliente, deleteCliente, clientesComCobranca,
+    contadores, createCliente, updateCliente, deleteCliente, clientesComCobranca, clientesComObservacao,
   } = useClientes();
   const [createOpen, setCreateOpen] = useState(false);
   const [viewCliente, setViewCliente] = useState<ClienteRow | null>(null);
@@ -112,6 +112,7 @@ export default function Clientes() {
               canEdit={podeEditarClientes}
               canDelete={podeExcluirCliente}
               clientesComCobranca={clientesComCobranca}
+              clientesComObservacao={clientesComObservacao}
             />
           </CardContent>
         </Card>

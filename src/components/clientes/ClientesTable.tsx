@@ -1,4 +1,4 @@
-import { Pencil, Trash2, DollarSign, Copy, Check } from 'lucide-react';
+import { Pencil, Trash2, DollarSign, Copy, Check, MessageSquareText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -71,9 +71,10 @@ interface Props {
   canEdit?: boolean;
   canDelete?: boolean;
   clientesComCobranca?: Set<string>;
+  clientesComObservacao?: Set<string>;
 }
 
-export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, canEdit = true, canDelete = true, clientesComCobranca }: Props) {
+export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, canEdit = true, canDelete = true, clientesComCobranca, clientesComObservacao }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-3 p-3">
@@ -131,7 +132,26 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                         <CopyCpfButton cpf={c.cpf} />
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{c.nome}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span>{c.nome}</span>
+                        {clientesComObservacao?.has(c.id) && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge
+                                className="text-[10px] px-1.5 py-0 font-semibold bg-amber-500 text-white hover:bg-amber-600 gap-1 cursor-help"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MessageSquareText className="h-3 w-3" /> Detalhes
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs text-xs">
+                              O cliente deixou observações na declaração. Abra-a para ler.
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="hidden sm:table-cell tabular-nums">{formatTelefone(c.telefone)}</TableCell>
                     <TableCell>
                       {procAtiva ? (
