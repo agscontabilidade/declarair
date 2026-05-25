@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BillingGate } from "@/components/billing/BillingGate";
 import { useBillingStatus } from "@/hooks/useBillingStatus";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { RouteLoadingBar } from "@/components/RouteLoadingBar";
 
 // Eager: landing inicial (rota /) — evita Suspense fallback no primeiro paint público
 import LandingV2 from "./pages/LandingV2";
@@ -112,7 +113,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <ThemeProvider>
-            <Suspense fallback={<FullscreenSpinner />}>
+            <Suspense fallback={<RouteLoadingBar />}>
             <Routes>
               <Route path="/" element={<RootRedirect />} />
               <Route path="/login" element={<Login />} />

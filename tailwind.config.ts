@@ -125,6 +125,10 @@ export default {
           "0%, 100%": { transform: "scale(1)" },
           "50%": { transform: "scale(1.2)" },
         },
+        "route-progress": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(400%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -134,6 +138,7 @@ export default {
         "card-drop": "card-drop 0.35s ease-out",
         "kanban-land": "kanban-land 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
         "pulse-badge": "pulse-badge 2s ease-in-out infinite",
+        "route-progress": "route-progress 1.1s ease-in-out infinite",
       },
     },
   },

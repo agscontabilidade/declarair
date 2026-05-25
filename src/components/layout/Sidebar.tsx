@@ -6,6 +6,7 @@ import { useCobrancasAtrasadas } from '@/hooks/useCobrancasAtrasadas';
 import { formatarPapel } from '@/lib/formatters';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { useUsageStatus } from '@/hooks/useUsageStatus';
+import { prefetchRoute } from '@/lib/routePrefetch';
 import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
 import {
@@ -77,6 +78,9 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === '/dashboard'}
+                      onMouseEnter={() => prefetchRoute(item.url)}
+                      onFocus={() => prefetchRoute(item.url)}
+                      onTouchStart={() => prefetchRoute(item.url)}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-primary/15 hover:text-sidebar-primary hover:translate-x-1 transform transition-all duration-150"
                       activeClassName="bg-sidebar-primary/20 text-sidebar-primary font-medium"
                     >
@@ -102,6 +106,7 @@ export function AppSidebar() {
         {level !== 'normal' && (
           <button
             onClick={() => navigate('/meus-planos')}
+            onMouseEnter={() => prefetchRoute('/meus-planos')}
             className={`flex items-center gap-2 w-full px-3 py-2 mb-2 rounded-lg text-xs font-medium transition-colors ${
               level === 'blocked'
                 ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
@@ -118,6 +123,7 @@ export function AppSidebar() {
         )}
         <button
           onClick={() => navigate('/perfil')}
+          onMouseEnter={() => prefetchRoute('/perfil')}
           className="flex items-center gap-3 px-1 mb-2 w-full rounded-lg hover:bg-sidebar-accent/50 transition-colors py-1"
         >
           <div className="h-8 w-8 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">

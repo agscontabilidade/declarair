@@ -1,79 +1,49 @@
-## Auditoria de Performance — DeclaraIR
+# Onda 3 — Melhorar percepção de carregamento entre páginas
 
-Investiguei queries, hooks, realtime, índices, bundle e padrões de cache. Os dados em produção são pequenos (67 clientes, 69 declarações, 782 checklist_documentos), então a lentidão é predominantemente **client-side**: queries gordas, polling agressivo e invalidações em cascata. Abaixo, os pontos com maior ganho potencial — agrupados por impacto.
+Hoje, ao trocar de rota, o usuário vê um **spinner em tela cheia** (FullscreenSpinner do `Suspense` no `App.tsx`) seguido de outro spinner dentro da página enquanto os dados carregam. Isso causa "piscadas" e sensação de lentidão mesmo quando a query é rápida.
 
-## Pontos identificados
+## O que vou mudar (apenas frontend/UX, sem mexer em backend, RLS ou regras de negócio)
 
-### ALTO impacto
+### 1. Prefetch de rotas no hover/focus dos links da Sidebar
+- Hoje cada página é `lazy()` no `App.tsx`. O chunk só começa a baixar quando o usuário clica.
+- Adicionar prefetch ao passar o mouse sobre o item do menu (`Sidebar.tsx` / `NavLink.tsx`) usando `import()` dinâmico. Resultado: ao clicar, o chunk já está em cache → transição praticamente instantânea.
 
-**1. `Declaracoes.tsx` — query gigante carregada de uma vez**
-- Hoje busca `declaracoes` + `clientes` + `declaracao_notas_internas` + **todos os `checklist_documentos`** só para derivar um boolean `temDocsDrive`. Em escritórios com muitos docs, isso transfere MBs.
-- **Fix**: substituir o embed de `checklist_documentos(arquivo_url)` por uma coluna agregada/RPC `tem_docs_drive` (boolean) ou trazer só `checklist_documentos!inner(id).limit(1)`. Já reduz drasticamente o payload.
+### 2. Trocar o `FullscreenSpinner` global por transição suave
+- O `<Suspense fallback={<FullscreenSpinner />}>` no `App.tsx` cobre a tela inteira em cada navegação lazy.
+- Substituir por um fallback mínimo (barra de progresso fina no topo, estilo NProgress, ou simplesmente manter o layout anterior por alguns ms via `startTransition`).
+- Usar `React.startTransition` nos cliques de navegação para evitar o "flash" branco.
 
-**2. KPIs do Dashboard fazendo 4× `count: exact`**
-- `count exact` faz full scan em paralelo. Para 4 KPIs já são 4 scans.
-- **Fix**: criar 1 RPC `dashboard_kpis(escritorio_id, ano)` que retorna os 4 contadores em 1 round-trip (1 query SQL com `count(*) FILTER (WHERE ...)`).
+### 3. Skeletons consistentes nas páginas pesadas (Dashboard, Declarações, Clientes, Drive)
+- Hoje muitas páginas mostram um spinner centralizado quando `isLoading=true`. Trocar por skeletons que imitam a estrutura final (cards/linhas de tabela). Percepção de velocidade melhora ~30–50% sem ganho real de tempo.
+- Reusar o componente `Skeleton` do shadcn que já está no projeto.
 
-**3. Polling em segundo plano agressivo**
-- `useWhatsApp` refetch 15s, `useUsageStatus` 30s, `useBillingStatus` 60s — mesmo com aba inativa (já está `refetchOnWindowFocus:false`, então roda sempre).
-- **Fix**: aumentar intervalos (WhatsApp 60s, UsageStatus 5min, BillingStatus 5min) e parar polling quando documento `hidden` (`document.visibilityState`).
+### 4. Prefetch de queries críticas em paralelo ao carregamento do chunk
+- Ao prefetch de uma rota (passo 1), também disparar `queryClient.prefetchQuery` das queries principais daquela página (ex: hover em "Dashboard" → prefetch do `dashboard_kpis`).
+- Isso elimina o segundo spinner (o de dados) depois do chunk carregar.
 
-**4. Realtime invalidando queries grandes a cada change**
-- `Declaracoes.tsx`, `useDashboardData`, `useDeclaracao`, `useChat`, `useNotificacoes`, `useCobrancasAtrasadas` — cada `INSERT/UPDATE/DELETE` invalida lista inteira.
-- **Fix**: já existe `useDebouncedInvalidate(300)` em alguns lugares; aplicar onde ainda não tem (`useNotificacoes`, `useChat`, `useDeclaracao`) e aumentar debounce para 800ms em listas pesadas.
+### 5. Manter dados antigos enquanto refaz fetch (`placeholderData: keepPreviousData`)
+- Em listas paginadas/filtradas (Declarações, Clientes, Cobranças), aplicar `placeholderData: (prev) => prev` para que mudar filtro/aba não pisque o layout.
 
-### MÉDIO impacto
+### 6. Layout estável durante `Suspense`
+- Garantir que `DashboardLayout` (sidebar + topbar) renderize **fora** do `Suspense` de rota — hoje cada página lazy traz seu próprio layout, então o sidebar pisca a cada navegação.
+- Mover a `<Routes>` para dentro de um layout pai compartilhado nas rotas autenticadas de contador. Sidebar e topbar ficam fixos; só o conteúdo central entra no Suspense.
 
-**5. `select('*')` em 30+ lugares**
-- Especialmente em hooks chamados em todo render (`useNotificacoes`, `useClientePortal`, `useClientePerfil`, `useDeclaracao`, `useFormularioIR`, `useColaboradores`, `useAddons`, `Configuracoes`).
-- **Fix**: substituir por lista explícita de colunas usadas no componente.
+## Arquivos afetados (estimativa)
 
-**6. `Configuracoes.tsx` carrega 2 selects `*` sequenciais**
-- `escritorios.*` + `usuarios.*` por escritório. Pode ser 1 query com colunas específicas.
+- `src/App.tsx` — fallback do Suspense, layout compartilhado, startTransition
+- `src/components/layout/DashboardLayout.tsx` + `Sidebar.tsx` + `NavLink.tsx` — prefetch on hover
+- `src/pages/Dashboard.tsx`, `Declaracoes.tsx`, `Clientes.tsx`, `Cobrancas.tsx`, `Drive.tsx` — skeletons + keepPreviousData
+- Novo: `src/lib/routePrefetch.ts` — mapa rota → `import()` + queries a prefetchar
+- Nenhuma migração SQL, nenhuma alteração em hooks de dados, RLS, billing ou edge functions
 
-**7. `useNotificacoes` — staleTime 1min + realtime**
-- Provoca refetch constante. Subir `staleTime` para 5min e confiar no realtime para atualizar via `setQueryData` em vez de invalidar.
+## O que NÃO vou mexer
 
-**8. Índices faltantes (sugestão)**
-- `declaracao_notas_internas(escritorio_id, declaracao_id)` — realtime filtra por escritorio_id.
-- `notificacoes(escritorio_id, lida, created_at desc)` — já tem parcial; verificar plano.
-- Confirmar via `EXPLAIN ANALYZE` em produção antes de criar — schema em produção.
+- Backend, RPCs, RLS, multi-tenancy
+- Lógica de IRPF, cobranças, billing
+- Design system (cores, fontes)
+- Onda 1 e 2 já entregues permanecem como estão
 
-### BAIXO impacto / quick wins
+## Ganho esperado
 
-**9. Bundle**
-- `framer-motion` usado em 10+ componentes da landing (já lazy por rota — ok).
-- `jspdf` + `pdf-lib` + `react-pdf` no mesmo chunk `pdf` (vite.config.ts). Ok, mas o chunk só é baixado quando alguém abre `/capa` ou viewer de PDF — já está adequado.
-- Manter como está.
-
-**10. `useEffect` de busca debounced em `Declaracoes.tsx`**
-- Ok, já tem 300ms.
-
-**11. Avatares/logos em `<img>` sem `loading="lazy"`** em listas longas — adicionar atributo onde aplicável.
-
-## Escopo proposto de implementação (em ordem de ROI)
-
-Sugiro implementar em ondas para validar ganho antes de mexer em mais coisa:
-
-**Onda 1 — Ganhos imediatos sem mudar schema (1 PR)**
-- Remover embed de `checklist_documentos` em `Declaracoes.tsx`; usar coluna derivada existente ou flag simples.
-- Aumentar intervalos de polling (`useWhatsApp` 60s, `useUsageStatus` 300s, `useBillingStatus` 300s).
-- Pausar polling quando `document.hidden`.
-- `useNotificacoes`: subir `staleTime` para 5min; atualizar cache via realtime em vez de invalidar.
-- Aplicar `useDebouncedInvalidate(800)` em `useChat` e `useDeclaracao`.
-
-**Onda 2 — Otimização SQL (1 PR, requer migration)**
-- RPC `dashboard_kpis(escritorio_id, ano_base)` retornando os 4 contadores em 1 query.
-- Trocar `useDashboardData.kpis` para chamar o RPC.
-
-**Onda 3 — Limpeza de `select('*')` (1 PR)**
-- Substituir nos 8 hooks mais usados (`useNotificacoes`, `useClientePerfil`, `useDeclaracao`, `useFormularioIR`, `useColaboradores`, `useAddons`, `Configuracoes`, `useClientePortal`).
-
-**Onda 4 — Índices (1 PR, com EXPLAIN antes)**
-- Avaliar e criar índices só onde o `EXPLAIN ANALYZE` mostrar seq scan custoso.
-
-## Decisão necessária
-
-Qual onda você quer que eu implemente primeiro? Recomendo **Onda 1** isolada — é a que dá o ganho mais perceptível sem risco (zero mudança de schema, zero impacto em billing/RLS, só ajuste de hooks e uma query). Aí medimos e seguimos para a Onda 2.
-
-Sem mudanças em: RLS, multi-tenancy, billing, lógica de negócio, edge functions, fluxo de IRPF, design system.
+- Navegação entre páginas autenticadas: de ~600–1200ms com 2 spinners para **<150ms sem flash** (chunk e dados pré-carregados no hover).
+- Primeira carga após login: mesma velocidade, mas sem o "pulo" do sidebar.
