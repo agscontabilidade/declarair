@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,22 +14,31 @@ import { getErrorMessage } from '@/lib/errors';
 
 export default function ClienteLogin() {
   const navigate = useNavigate();
-  const { session, userType, loading } = useAuth();
+  const { session, userType, loading, signOut } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const wrongTypeHandledRef = useRef(false);
 
-  // Redirect when already authenticated
+  // Redirect when already authenticated; reject contador/admin trying to use cliente portal
   useEffect(() => {
-    if (!loading && session && userType) {
-      if (userType === 'cliente') {
-        navigate('/cliente/dashboard', { replace: true });
-      } else if (userType === 'contador') {
-        navigate('/dashboard', { replace: true });
-      }
+    if (loading || !session || !userType) return;
+    if (userType === 'cliente') {
+      navigate('/cliente/dashboard', { replace: true });
+    } else if (!wrongTypeHandledRef.current) {
+      wrongTypeHandledRef.current = true;
+      const label = userType === 'admin' ? 'administrador' : 'contador';
+      const destino = userType === 'admin' ? 'a Área Admin' : 'a Área do Contador';
+      toast({
+        title: 'Conta incompatível',
+        description: `Esta conta é de ${label}. Use ${destino} para entrar.`,
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
+      signOut();
     }
-  }, [loading, session, userType, navigate]);
+  }, [loading, session, userType, navigate, signOut]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -109,7 +119,7 @@ export default function ClienteLogin() {
               <Button type="submit" variant="gradient" className="w-full h-11" disabled={isSubmitting || loading}>
                 {isSubmitting ? 'Entrando...' : 'Entrar'}
               </Button>
-              <Link to="/recuperar-senha" className="block text-center">
+              <Link to="/recuperar-senha?origem=cliente" className="block text-center">
                 <span className="text-sm text-muted-foreground hover:text-primary transition-colors">Esqueceu sua senha?</span>
               </Link>
             </form>
