@@ -340,14 +340,33 @@ export default function ClienteDashboard() {
                   <CheckCircle2 className={`h-10 w-10 mb-3 ${declaracao.status === 'transmitida' ? 'text-success' : 'text-muted-foreground/40'}`} />
                   <p className="font-medium">Resultado Final</p>
                   {declaracao.status === 'transmitida' && declaracao.tipo_resultado ? (
-                    <p className={`text-lg font-bold mt-1 ${declaracao.tipo_resultado === 'restituicao' ? 'text-success' : declaracao.tipo_resultado === 'pagamento' ? 'text-destructive' : 'text-muted-foreground'}`}>
-                      {STATUS_LABELS[declaracao.tipo_resultado]}: {declaracao.valor_resultado ? formatCurrency(Number(declaracao.valor_resultado)) : '—'}
-                    </p>
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <p className={`text-lg font-bold mt-1 cursor-help ${declaracao.tipo_resultado === 'restituicao' ? 'text-success' : declaracao.tipo_resultado === 'pagamento' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {STATUS_LABELS[declaracao.tipo_resultado]}: {declaracao.valor_resultado ? formatCurrency(Number(declaracao.valor_resultado)) : '—'}
+                        </p>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                        {declaracao.tipo_resultado === 'restituicao'
+                          ? 'Valor que a Receita Federal vai te devolver. O pagamento segue o calendário oficial de lotes.'
+                          : declaracao.tipo_resultado === 'pagamento'
+                          ? 'Valor de imposto a pagar à Receita. Pode ser parcelado em até 8 cotas pelo aplicativo Meu Imposto de Renda.'
+                          : 'Sem restituição nem imposto a pagar nesta declaração.'}
+                      </TooltipContent>
+                    </Tooltip>
                   ) : (
-                    <p className="text-sm text-muted-foreground mt-1">Aguardando transmissão</p>
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <p className="text-sm text-muted-foreground mt-1 cursor-help">Aguardando transmissão</p>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                        O resultado (restituição ou imposto a pagar) aparece aqui depois que seu contador transmitir a declaração à Receita.
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </CardContent>
               </Card>
+
             </div>
 
 
@@ -369,12 +388,19 @@ export default function ClienteDashboard() {
                 <div className="px-6 pb-6 md:pb-0 md:pr-8">
                   <Dialog onOpenChange={(open) => !open && setCurrentTutorialStep(0)}>
                     <DialogTrigger asChild>
-                      <Button className="w-full md:w-auto shadow-md bg-warning text-warning-foreground hover:bg-warning/90">
-                        Ver Passo a Passo
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                      </Button>
-
+                      <Tooltip delayDuration={150}>
+                        <TooltipTrigger asChild>
+                          <Button className="w-full md:w-auto shadow-md bg-warning text-warning-foreground hover:bg-warning/90">
+                            Ver Passo a Passo
+                            <ChevronRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[260px] text-xs">
+                          Tutorial completo para cadastrar a procuração no portal e-CAC da Receita Federal.
+                        </TooltipContent>
+                      </Tooltip>
                     </DialogTrigger>
+
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-2xl">
