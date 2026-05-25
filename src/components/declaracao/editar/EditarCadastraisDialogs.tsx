@@ -47,21 +47,21 @@ function ComboboxField({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="p-0 w-[var(--radix-popover-trigger-width)] max-h-[400px] overflow-hidden flex flex-col"
+        className="p-0 w-[var(--radix-popover-trigger-width)] max-h-[400px] overflow-hidden flex flex-col shadow-lg"
         align="start"
-        sideOffset={6}
+        sideOffset={8}
       >
         <Command shouldFilter={true} className="border-0">
-          <CommandInput placeholder={searchPlaceholder} className="h-10" />
-          <CommandList className="max-h-[320px] overflow-y-auto">
-            <CommandEmpty>Nenhum resultado.</CommandEmpty>
-            <CommandGroup>
+          <CommandInput placeholder={searchPlaceholder} className="h-11 border-b border-border" />
+          <CommandList className="max-h-[320px] overflow-y-auto p-1.5 scroll-py-1">
+            <CommandEmpty className="py-6 text-sm text-muted-foreground text-center">Nenhum resultado.</CommandEmpty>
+            <CommandGroup className="p-0">
               {options.map((o) => (
                 <CommandItem
                   key={o.value}
                   value={`${o.value} ${o.label}`}
                   onSelect={() => { onChange(o.value); setOpen(false); }}
-                  className="py-2.5 px-3 cursor-pointer border-b last:border-0 border-muted/20"
+                  className="py-2.5 px-3 cursor-pointer rounded-md mb-0.5 last:mb-0"
                 >
                   <Check className={cn('mr-2 h-4 w-4 mt-0.5 shrink-0', value === o.value ? 'opacity-100 text-primary' : 'opacity-0')} />
                   <span className="leading-tight text-sm">{o.label}</span>
