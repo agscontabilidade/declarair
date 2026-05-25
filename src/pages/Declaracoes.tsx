@@ -191,8 +191,9 @@ export default function Declaracoes() {
           .limit(200),
         supabase
           .from('checklist_documentos')
-          .select('declaracao_id')
-          .eq('escritorio_id', escritorioId)
+          .select('declaracao_id, declaracoes!inner(escritorio_id, ano_base)')
+          .eq('declaracoes.escritorio_id', escritorioId)
+          .eq('declaracoes.ano_base', Number(anoBase))
           .not('arquivo_url', 'is', null),
       ]);
 
