@@ -204,6 +204,24 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                             <DollarSign className="h-4 w-4 text-emerald-600" />
                           </Button>
                         )}
+                        {onConvite && (() => {
+                          const { Icon, tooltip, className } = getConviteState(c);
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  aria-label={tooltip}
+                                  onClick={(e) => { e.stopPropagation(); onConvite(c); }}
+                                >
+                                  <Icon className={`h-4 w-4 ${className}`} />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top"><p>{tooltip}</p></TooltipContent>
+                            </Tooltip>
+                          );
+                        })()}
                         {tel && (
                           <Button size="icon" variant="ghost" asChild aria-label="Abrir WhatsApp">
                             <a
