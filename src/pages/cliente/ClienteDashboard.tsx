@@ -26,7 +26,7 @@ import passo9Img from '@/assets/ecac/passo-9.jpg';
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
-  const { declaracao, checklist, formulario, statusStep, pendentes, isLoading, isError, error, refetch } = useClientePortal();
+  const { declaracao, checklist, formulario, statusStep, pendentes, progressoFormulario, stepTimestamps, isLoading, isError, error, refetch } = useClientePortal();
   // Supabase generated types may not yet expose `status_documentos`; cast through a typed shape.
   type DeclaracaoExtra = { status_documentos?: string | null; status?: string | null };
   const decl = declaracao as (typeof declaracao & DeclaracaoExtra) | null | undefined;
@@ -230,7 +230,7 @@ export default function ClienteDashboard() {
             <Card className="shadow-sm">
               <CardContent className="p-4 sm:p-6">
                 <p className="text-sm text-muted-foreground mb-3 sm:mb-4">Declaração IR {declaracao.ano_base}</p>
-                <StatusStepper currentStep={statusStep} />
+                <StatusStepper currentStep={statusStep} stepTimestamps={stepTimestamps} />
               </CardContent>
             </Card>
 
@@ -252,9 +252,9 @@ export default function ClienteDashboard() {
                     <div className="w-full max-w-[140px] mt-3">
                       <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
                         <span>Status</span>
-                        <span>{formulario?.status_preenchimento === 'concluido' ? '100%' : '50%'}</span>
+                        <span>{formulario?.status_preenchimento === 'concluido' ? '100%' : `${progressoFormulario}%`}</span>
                       </div>
-                      <Progress value={formulario?.status_preenchimento === 'concluido' ? 100 : 50} className="h-1.5" />
+                      <Progress value={formulario?.status_preenchimento === 'concluido' ? 100 : progressoFormulario} className="h-1.5" />
                     </div>
 
                     <Badge className={`mt-3 ${
@@ -326,12 +326,12 @@ export default function ClienteDashboard() {
 
 
             {/* Card de Procuração Eletrônica */}
-            <Card className="shadow-sm border-primary/20 bg-primary/5 overflow-hidden">
+            <Card className="shadow-sm border-warning/30 bg-warning/5 overflow-hidden">
               <div className="md:flex items-center">
                 <div className="p-6 md:p-8 flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="bg-primary/10 p-2 rounded-lg">
-                      <ShieldCheck className="h-5 w-5 text-primary" />
+                    <div className="bg-warning/15 p-2 rounded-lg">
+                      <ShieldCheck className="h-5 w-5 text-warning" />
                     </div>
                     <h3 className="text-lg font-bold">Procuração Eletrônica e-CAC</h3>
                   </div>
