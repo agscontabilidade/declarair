@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 import { Home, ClipboardList, Upload, LogOut } from 'lucide-react';
-import logoIcon from '@/assets/logo-icon.png';
 import logoFull from '@/assets/logo-full.png';
-import logoDark from '@/assets/logo-dark.png';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -23,7 +21,7 @@ const navItems = [
 
 export function ClienteLayout({ children }: { children: React.ReactNode }) {
   const { profile, signOut } = useAuth();
-  const { theme, resolved, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   // Portal do cliente: padrão é tema claro. Se nunca houve escolha explícita
   // (theme === 'system'), forçamos 'light' — sem afetar o ambiente do contador.
@@ -71,7 +69,7 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
           {whitelabelAtivo && logoUrl ? (
             <img src={logoUrl} alt={nomePortal} className="h-10 w-auto rounded-lg object-contain" />
           ) : (
-            <img src={resolved === 'dark' ? logoDark : logoFull} alt="DeclaraIR" className="h-10 w-auto object-contain" />
+            <img src={logoFull} alt="DeclaraIR" className="h-10 w-auto object-contain dark:brightness-0 dark:invert" />
           )}
           {whitelabelAtivo && (
             <span
