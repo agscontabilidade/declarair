@@ -13,6 +13,8 @@ export interface EnviarConviteClienteCtx {
   nome: string;
   email: string | null;
   telefone: string | null;
+  mode?: 'novo' | 'reusar';
+  tokenExistente?: string | null;
 }
 
 interface Props {
@@ -31,6 +33,11 @@ export function EnviarConviteClienteDialog({ ctx, onClose }: Props) {
     }
     let cancelled = false;
     (async () => {
+      // Reusar token existente sem novo update
+      if (ctx.mode === 'reusar' && ctx.tokenExistente) {
+        setLink(`${PORTAL_BASE_URL}/cliente/convite/${ctx.tokenExistente}`);
+        return;
+      }
       setLoading(true);
       try {
         const token = crypto.randomUUID();
@@ -55,6 +62,9 @@ export function EnviarConviteClienteDialog({ ctx, onClose }: Props) {
     })();
     return () => { cancelled = true; };
   }, [ctx, onClose]);
+
+  const isReusar = ctx?.mode === 'reusar';
+  const titulo = isReusar ? 'Reenviar convite de acesso' : 'Enviar convite de acesso';
 
   const mensagem = ctx
     ? `Olá ${ctx.nome}! Acesse seu portal para acompanhar sua declaração de IR e enviar documentos: ${link}`
@@ -89,9 +99,11 @@ export function EnviarConviteClienteDialog({ ctx, onClose }: Props) {
               <Link2 className="h-5 w-5 text-primary" />
             </div>
             <div className="min-w-0">
-              <DialogTitle className="font-display text-lg">Enviar convite de acesso</DialogTitle>
+              <DialogTitle className="font-display text-lg">{titulo}</DialogTitle>
               <DialogDescription className="text-xs">
-                O contribuinte cria a própria senha pelo link e acessa o portal.
+                {isReusar
+                  ? 'Reaproveite o link existente ou compartilhe novamente com o contribuinte.'
+                  : 'O contribuinte cria a própria senha pelo link e acessa o portal.'}
               </DialogDescription>
             </div>
           </div>
@@ -105,7 +117,7 @@ export function EnviarConviteClienteDialog({ ctx, onClose }: Props) {
           <div className="space-y-4">
             <div className="p-3 rounded-lg border bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 space-y-2">
               <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 text-sm font-semibold">
-                <CheckCircle2 className="h-4 w-4" /> Link pronto
+                <CheckCircle2 className="h-4 w-4" /> {isReusar ? 'Link do convite' : 'Link pronto'}
               </div>
               <Input value={link} readOnly className="font-mono text-xs bg-background" />
               <p className="text-[11px] text-muted-foreground">Válido por 7 dias.</p>

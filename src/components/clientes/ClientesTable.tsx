@@ -1,4 +1,4 @@
-import { Pencil, Trash2, DollarSign, Copy, Check, MessageSquareText } from 'lucide-react';
+import { Pencil, Trash2, DollarSign, Copy, Check, MessageSquareText, Send, Link2, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -68,13 +68,35 @@ interface Props {
   onEdit: (cliente: ClienteRow) => void;
   onDelete: (cliente: ClienteRow) => void;
   onCobranca?: (cliente: ClienteRow) => void;
+  onConvite?: (cliente: ClienteRow) => void;
   canEdit?: boolean;
   canDelete?: boolean;
   clientesComCobranca?: Set<string>;
   clientesComObservacao?: Set<string>;
 }
 
-export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, canEdit = true, canDelete = true, clientesComCobranca, clientesComObservacao }: Props) {
+type ConviteState = {
+  Icon: typeof Send;
+  tooltip: string;
+  className: string;
+};
+
+function getConviteState(c: ClienteRow): ConviteState {
+  const hasAuth = !!c.auth_user_id;
+  const tokenValido = !!c.token_convite_expira_em && new Date(c.token_convite_expira_em) > new Date();
+  if (hasAuth) {
+    return { Icon: CheckCircle2, tooltip: 'Portal ativo — reenviar acesso', className: 'text-emerald-600/70' };
+  }
+  if (c.status_onboarding === 'convite_enviado') {
+    if (tokenValido) {
+      return { Icon: Link2, tooltip: 'Convite pendente — reenviar ou copiar link', className: 'text-primary' };
+    }
+    return { Icon: RefreshCw, tooltip: 'Convite expirado — gerar novo', className: 'text-amber-600' };
+  }
+  return { Icon: Send, tooltip: 'Enviar convite de acesso', className: 'text-muted-foreground' };
+}
+
+export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, onConvite, canEdit = true, canDelete = true, clientesComCobranca, clientesComObservacao }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-3 p-3">
