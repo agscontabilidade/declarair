@@ -14,6 +14,8 @@ import { useChat } from '@/hooks/useChat';
 import { QueryError } from '@/components/ui/QueryError';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 import { useState } from 'react';
 import passo1Img from '@/assets/ecac/passo-1.jpg';
 import passo2Img from '@/assets/ecac/passo-2.jpg';
@@ -257,11 +259,21 @@ export default function ClienteDashboard() {
                       <Progress value={formulario?.status_preenchimento === 'concluido' ? 100 : progressoFormulario} className="h-1.5" />
                     </div>
 
-                    <Badge className={`mt-3 ${
-                      formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success hover:bg-success/20' : 'bg-warning/15 text-warning hover:bg-warning/20'
-                    }`}>
-                      {formulario?.status_preenchimento === 'concluido' ? 'Preenchido' : 'Pendente'}
-                    </Badge>
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <Badge className={`mt-3 cursor-help ${
+                          formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success hover:bg-success/20' : 'bg-warning/15 text-warning hover:bg-warning/20'
+                        }`}>
+                          {formulario?.status_preenchimento === 'concluido' ? 'Preenchido' : 'Pendente'}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                        {formulario?.status_preenchimento === 'concluido'
+                          ? 'Você já enviou seus dados cadastrais ao contador.'
+                          : 'Clique no card para preencher seus dados pessoais, endereço, dependentes e chave Pix.'}
+                      </TooltipContent>
+                    </Tooltip>
+
                   </CardContent>
                 </Card>
               </button>
@@ -287,23 +299,37 @@ export default function ClienteDashboard() {
                       <Progress value={decl?.status_documentos === 'enviado' ? 100 : checklist.length > 0 ? 50 : 0} className="h-1.5" />
                     </div>
 
-                    <Badge className={`mt-3 ${
-                      statusStep === 2 && decl?.status === 'documentacao_recebida'
-                        ? 'bg-destructive/15 text-destructive hover:bg-destructive/20'
-                        : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
-                        ? 'bg-success/15 text-success hover:bg-success/20'
-                        : checklist.length > 0
-                        ? 'bg-primary/15 text-primary hover:bg-primary/20'
-                        : 'bg-warning/15 text-warning hover:bg-warning/20'
-                    }`}>
-                      {statusStep === 2 && decl?.status === 'documentacao_recebida'
-                        ? 'Pendente de Reenvio'
-                        : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
-                        ? 'Enviado ao Contador'
-                        : checklist.length > 0
-                        ? 'Pronto para Enviar'
-                        : 'Pendente'}
-                    </Badge>
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <Badge className={`mt-3 cursor-help ${
+                          statusStep === 2 && decl?.status === 'documentacao_recebida'
+                            ? 'bg-destructive/15 text-destructive hover:bg-destructive/20'
+                            : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                            ? 'bg-success/15 text-success hover:bg-success/20'
+                            : checklist.length > 0
+                            ? 'bg-primary/15 text-primary hover:bg-primary/20'
+                            : 'bg-warning/15 text-warning hover:bg-warning/20'
+                        }`}>
+                          {statusStep === 2 && decl?.status === 'documentacao_recebida'
+                            ? 'Pendente de Reenvio'
+                            : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                            ? 'Enviado ao Contador'
+                            : checklist.length > 0
+                            ? 'Pronto para Enviar'
+                            : 'Pendente'}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                        {statusStep === 2 && decl?.status === 'documentacao_recebida'
+                          ? 'Seu contador solicitou novos documentos. Clique no card para enviar.'
+                          : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                          ? 'Seus documentos já foram entregues ao contador para análise.'
+                          : checklist.length > 0
+                          ? 'Você já anexou arquivos. Clique no card para revisar e finalizar o envio.'
+                          : 'Nenhum documento anexado ainda. Clique no card para começar o upload.'}
+                      </TooltipContent>
+                    </Tooltip>
+
                   </CardContent>
                 </Card>
               </button>
