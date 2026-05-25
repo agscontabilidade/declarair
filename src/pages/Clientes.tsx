@@ -26,6 +26,9 @@ export default function Clientes() {
     clientes, isLoading, isError, error, refetch,
     search, setSearch, page, setPage, totalPages,
     contadores, createCliente, updateCliente, deleteCliente, clientesComCobranca, clientesComObservacao,
+    ordenacao, setOrdenacao,
+    filtroProcuracao, setFiltroProcuracao,
+    filtroCobranca, setFiltroCobranca,
   } = useClientes();
   const [createOpen, setCreateOpen] = useState(false);
   const [viewCliente, setViewCliente] = useState<ClienteRow | null>(null);
