@@ -1,49 +1,48 @@
-# Onda 3 — Melhorar percepção de carregamento entre páginas
+## Onda 4 — Pontos adicionais de performance
 
-Hoje, ao trocar de rota, o usuário vê um **spinner em tela cheia** (FullscreenSpinner do `Suspense` no `App.tsx`) seguido de outro spinner dentro da página enquanto os dados carregam. Isso causa "piscadas" e sensação de lentidão mesmo quando a query é rápida.
+Após Ondas 1–3 (React Query stale times, índices, prefetch on hover, loading bar), ainda há ganhos sem tocar em lógica de negócio, RLS ou contratos de API.
 
-## O que vou mudar (apenas frontend/UX, sem mexer em backend, RLS ou regras de negócio)
+### 1. Bundle & build (alto impacto, risco baixo)
+- **`vite.config.ts`**: separar mais vendor chunks (`radix` = ~30 pacotes Radix, `dnd-kit`, `react-hook-form` + `zod`, `date-fns`, `lucide-react`).
+- Ativar `esbuild.drop: ['console','debugger']` apenas em prod (remove ~centenas de `console.log` do bundle).
+- Adicionar `chunkSizeWarningLimit` realista e analisar com `rollup-plugin-visualizer` (gerar relatório uma vez, não comitar).
+- Confirmar que `react-pdf`, `jspdf`, `recharts`, `framer-motion` só entram via `lazy()` nas páginas que usam (auditar imports estáticos remanescentes).
 
-### 1. Prefetch de rotas no hover/focus dos links da Sidebar
-- Hoje cada página é `lazy()` no `App.tsx`. O chunk só começa a baixar quando o usuário clica.
-- Adicionar prefetch ao passar o mouse sobre o item do menu (`Sidebar.tsx` / `NavLink.tsx`) usando `import()` dinâmico. Resultado: ao clicar, o chunk já está em cache → transição praticamente instantânea.
+### 2. Payloads do Supabase (médio impacto)
+Vários hooks usam `select('*')` trazendo colunas grandes (JSONB de `formulario_ir`, `declaracoes.declaracao_extracao`, etc).
+- Trocar `select('*')` por listas explícitas em hooks de listagem (não em detalhe): `useClientes`, `useCobrancas`, `useDeclaracao` (lista), `useChat` (paginação), `useMensagens`.
+- Esses hooks já existem e foram tunados; aqui só reduzimos colunas — zero mudança de comportamento.
 
-### 2. Trocar o `FullscreenSpinner` global por transição suave
-- O `<Suspense fallback={<FullscreenSpinner />}>` no `App.tsx` cobre a tela inteira em cada navegação lazy.
-- Substituir por um fallback mínimo (barra de progresso fina no topo, estilo NProgress, ou simplesmente manter o layout anterior por alguns ms via `startTransition`).
-- Usar `React.startTransition` nos cliques de navegação para evitar o "flash" branco.
+### 3. Re-renders & listas grandes (médio impacto)
+- `ClientesTable`, `CobrancasTable`, `Drive`: aplicar `React.memo` nas rows e `useMemo` nos filtros/derivados. Se >200 linhas, considerar virtualização com `@tanstack/react-virtual` (já comum em projetos shadcn).
+- `AuthContext` e `ThemeContext`: garantir que o `value` seja memoizado (`useMemo`) para não disparar re-render global a cada mount de página.
+- Debounce nos inputs de busca (Clientes, Drive, Cobranças) — 250ms.
 
-### 3. Skeletons consistentes nas páginas pesadas (Dashboard, Declarações, Clientes, Drive)
-- Hoje muitas páginas mostram um spinner centralizado quando `isLoading=true`. Trocar por skeletons que imitam a estrutura final (cards/linhas de tabela). Percepção de velocidade melhora ~30–50% sem ganho real de tempo.
-- Reusar o componente `Skeleton` do shadcn que já está no projeto.
+### 4. Realtime (baixo impacto, evita vazamento)
+- Auditar `useChat`, `useNotificacoes`, kanban: garantir `removeChannel` no cleanup e um único canal por escopo (sem subscribe duplicado em StrictMode).
+- Usar `filter:` no `postgres_changes` para reduzir eventos recebidos (ex.: `escritorio_id=eq.X`).
 
-### 4. Prefetch de queries críticas em paralelo ao carregamento do chunk
-- Ao prefetch de uma rota (passo 1), também disparar `queryClient.prefetchQuery` das queries principais daquela página (ex: hover em "Dashboard" → prefetch do `dashboard_kpis`).
-- Isso elimina o segundo spinner (o de dados) depois do chunk carregar.
+### 5. Assets & fontes (baixo impacto, melhora LCP)
+- `index.html`: `<link rel="preconnect">` para Supabase URL e domínio do Stripe.
+- Fontes Bricolage/DM Sans com `font-display: swap` e `preload` apenas dos pesos usados acima da dobra.
+- Imagens em `public/` e `src/assets/`: converter os maiores PNGs/JPGs para WebP via `vite-imagetools` ou pré-compressão (sem alterar o uso nos componentes).
 
-### 5. Manter dados antigos enquanto refaz fetch (`placeholderData: keepPreviousData`)
-- Em listas paginadas/filtradas (Declarações, Clientes, Cobranças), aplicar `placeholderData: (prev) => prev` para que mudar filtro/aba não pisque o layout.
+### 6. Cache cliente (médio impacto)
+- Habilitar `persistQueryClient` (sessionStorage) com whitelist curta (`['escritorio','permissoes','addons']`) — sobrevive a F5 e elimina o flash de loading inicial.
+- `structuralSharing: true` (já é default no v5, confirmar).
 
-### 6. Layout estável durante `Suspense`
-- Garantir que `DashboardLayout` (sidebar + topbar) renderize **fora** do `Suspense` de rota — hoje cada página lazy traz seu próprio layout, então o sidebar pisca a cada navegação.
-- Mover a `<Routes>` para dentro de um layout pai compartilhado nas rotas autenticadas de contador. Sidebar e topbar ficam fixos; só o conteúdo central entra no Suspense.
+### 7. Banco (baixo–médio, depende do `pg_stat_statements`)
+- Rodar análise de queries lentas (`supabase--db_health` + `analytics_query` em `postgres_logs`) e criar índices pontuais se aparecer N+1 ou seq scan em tabela grande.
+- Sem alterar schema funcional — só `CREATE INDEX CONCURRENTLY` quando justificado.
 
-## Arquivos afetados (estimativa)
+### Fora de escopo (mantém estabilidade)
+- Refatoração de componentes
+- Mudanças em RLS, edge functions ou fluxos de billing/IRPF
+- Troca de bibliotecas (shadcn, Tailwind, React Query)
 
-- `src/App.tsx` — fallback do Suspense, layout compartilhado, startTransition
-- `src/components/layout/DashboardLayout.tsx` + `Sidebar.tsx` + `NavLink.tsx` — prefetch on hover
-- `src/pages/Dashboard.tsx`, `Declaracoes.tsx`, `Clientes.tsx`, `Cobrancas.tsx`, `Drive.tsx` — skeletons + keepPreviousData
-- Novo: `src/lib/routePrefetch.ts` — mapa rota → `import()` + queries a prefetchar
-- Nenhuma migração SQL, nenhuma alteração em hooks de dados, RLS, billing ou edge functions
+### Sugestão de execução
+Pacote A (bundle + payloads): itens 1 e 2 — entrega medível em segundos no TTI/INP, baixo risco.
+Pacote B (UX listas + realtime): itens 3 e 4.
+Pacote C (assets + cache + DB): itens 5–7.
 
-## O que NÃO vou mexer
-
-- Backend, RPCs, RLS, multi-tenancy
-- Lógica de IRPF, cobranças, billing
-- Design system (cores, fontes)
-- Onda 1 e 2 já entregues permanecem como estão
-
-## Ganho esperado
-
-- Navegação entre páginas autenticadas: de ~600–1200ms com 2 spinners para **<150ms sem flash** (chunk e dados pré-carregados no hover).
-- Primeira carga após login: mesma velocidade, mas sem o "pulo" do sidebar.
+Posso começar pelo Pacote A se aprovar, ou rodar uma análise (`db_health` + tamanho de bundle) antes para priorizar com números.
