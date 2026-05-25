@@ -87,15 +87,17 @@ export function useFormularioIR() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Get active declaration (prioriza ano corrente). Só precisamos de id/ano_base/escritorio_id.
+  // Reaproveita o cache de `useClientePortal` (mesma queryKey). Selecionamos o
+  // superset de campos para que ambos os hooks compartilhem o resultado.
   const { data: declaracao } = useQuery({
-    queryKey: ['cliente-declaracao-form', clienteId],
+    queryKey: ['cliente-declaracao-ativa', clienteId],
     queryFn: async () => {
       if (!clienteId) return null;
       const anoAtual = new Date().getFullYear();
+      const SELECT = 'id, cliente_id, escritorio_id, contador_id, ano_base, status, status_documentos, tipo_resultado, valor_resultado, numero_recibo, data_transmissao, forma_tributacao, ultima_atualizacao_status, created_at, version';
       const { data: doAno } = await supabase
         .from('declaracoes')
-        .select('id, ano_base, escritorio_id, cliente_id, status, created_at')
+        .select(SELECT)
         .eq('cliente_id', clienteId)
         .eq('ano_base', anoAtual)
         .order('created_at', { ascending: false })
@@ -104,7 +106,7 @@ export function useFormularioIR() {
       if (doAno) return doAno;
       const { data } = await supabase
         .from('declaracoes')
-        .select('id, ano_base, escritorio_id, cliente_id, status, created_at')
+        .select(SELECT)
         .eq('cliente_id', clienteId)
         .order('ano_base', { ascending: false })
         .order('created_at', { ascending: false })
