@@ -307,7 +307,7 @@ export function useFormularioIR() {
 
       setValidationErrors({});
       queryClient.invalidateQueries({ queryKey: ['formulario-ir'] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-ativa'] });
       return true;
     } catch (err) {
       console.error('Erro ao finalizar:', err);
