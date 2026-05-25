@@ -1,53 +1,111 @@
-## Escopo (somente portal do cliente — UI)
+## Escopo: tooltips no portal do cliente (`/cliente/*`)
 
-Três ajustes pequenos, sem tocar schema, RLS, edge functions ou área do contador.
+Adicionar tooltips informativos onde a UI hoje depende só de ícone/badge ou usa termo técnico do IRPF. **Não** mexer em lógica, dados, rotas ou no design — só envolver elementos existentes com `<Tooltip>`.
+
+`TooltipProvider` já está montado globalmente em `App.tsx` (linha 111). Não precisa reconfigurar.
 
 ---
 
-### 1. Deleção de documentos em `/cliente/documentos`
+### Áreas que vão receber tooltip
 
-**Causa raiz:** o botão da lixeira só aparece quando `!docsEnviadosAoContador`. Como o `handleFiles` (linha ~239) já marca `status_documentos: 'enviado'` automaticamente a cada upload bem-sucedido, logo após o primeiro arquivo o trash some — por isso o cliente "não consegue deletar".
+**1. `ClienteLayout.tsx` (sidebar + topbar)**
+- Itens do menu lateral (quando colapsado em mobile/icon-only).
+- Sino de notificações → "Notificações".
+- Toggle de tema → "Alternar tema claro/escuro".
+- Botão de logout → "Sair da conta".
+- Logo do escritório → nome completo do escritório (quando truncado).
 
-RLS está OK (verifiquei `checklist_documentos` e `storage.objects` para `documentos-clientes` — políticas de DELETE para o cliente existem e cobrem o path `{escritorio_id}/{cliente_id}/...`).
+**2. `ClienteDashboard.tsx`**
+- Os 3 cards de status (Informações Cadastrais, Envio de Documentos, Resultado Final) ganham tooltip nos badges explicando o que significa cada estado (Pendente / Em andamento / Preenchido / Aguardando transmissão / Restituição / Imposto a pagar).
+- Botão "Ver Passo a Passo" do card e-CAC → "Tutorial completo para cadastrar procuração no portal e-CAC da Receita Federal".
+- Ícone `ShieldCheck` do card e-CAC → "Procuração eletrônica permite que seu contador acompanhe sua declaração em tempo real".
 
-**Correção (somente UI, mínima):**
-- Em `src/pages/cliente/ClienteDocumentos.tsx`, remover o gate `{!docsEnviadosAoContador && (...)}` do botão de exclusão (linha ~561). Trash fica sempre visível enquanto a declaração não está `transmitida`.
-- Manter o `AlertDialog` de confirmação e a notificação ao contador exatamente como estão.
-- **Não** mexer no auto-set de `status_documentos='enviado'` no upload (mudança de regra de negócio, fora de escopo).
+**3. `StatusStepper.tsx`**
+- Cada bolinha das 5 etapas vira `TooltipTrigger` com descrição:
+  - Dados Cadastrais → "Preencha suas informações pessoais e fiscais"
+  - Enviar Documentos → "Anexe comprovantes, informes e documentos da Receita"
+  - Documentação Recebida → "Seu contador confirmou o recebimento dos documentos"
+  - Declaração Pronta → "Declaração revisada e pronta para transmissão à Receita"
+  - Transmitida → "Declaração entregue à Receita Federal"
+- Quando houver timestamp, mostrar também no tooltip ("Concluída em dd/MM/yyyy HH:mm").
 
-### 2. Botões laranja nos cards de alerta
+**4. `ClienteDocumentos.tsx`**
+- Botão "Ver lista de documentos" → "Lista completa por categoria fiscal: rendimentos, deduções, bens, etc."
+- Botão "Enviar ao Contador" → "Finaliza o envio. Após isso, novos uploads serão notificados ao seu contador".
+- Badge "Enviado ao Contador" → "Documentos já foram entregues ao seu contador para análise".
+- Ícone lixeira → "Excluir documento" (em vez de só ícone).
+- Zona de upload (ícone Upload) → "Aceitamos PDF, imagens, DOC, XLS até 20MB por arquivo".
+- Contador "X arquivo(s) anexado(s)" → "Total de documentos já enviados nesta declaração".
 
-Hoje os botões dos cards "Procuração Eletrônica e-CAC" (`ClienteDashboard.tsx` ~346) e "Não sabe quais documentos enviar?" (`ClienteDocumentos.tsx` ~457) usam `bg-primary` (verde), competindo com o tom warning do card.
+**5. `ClienteFormulario.tsx` + steps**
+Foco em termos fiscais que o leigo não entende. Adicionar tooltip ao lado do label (ícone `HelpCircle` discreto, `text-muted-foreground hover:text-foreground`):
+- **StepDadosPessoais:** Estado civil ("Situação no último dia do ano-base"), Dependentes ("Pessoas que dependem economicamente — exigem CPF").
+- **StepDependentes:** "Dependentes reduzem o imposto em R$ 189,59/ano cada, mas seus rendimentos também são somados aos seus".
+- **StepRendimentos** (emprego, autônomo, aluguel, outros): "Use o valor bruto anual do informe de rendimentos da fonte pagadora".
+- **StepBens:** "Informe o valor de aquisição, não o valor de mercado atual".
+- **StepDividas:** "Apenas dívidas acima de R$ 5.000 em 31/12 são obrigatórias".
+- **StepDeducoes:**
+  - Saúde → "Sem limite de dedução. Exige nota fiscal/recibo com CPF/CNPJ do prestador".
+  - Educação → "Limite de R$ 3.561,50 por pessoa/ano. Só cursos regulares".
+  - Previdência → "PGBL: limite de 12% da renda tributável. VGBL não deduz".
+- **StepInfoAdicionais:** Chave Pix → "Pix vinculado ao seu CPF para receber restituição automaticamente".
+- **StepPerfilFiscal:** cada uma das 11 perguntas binárias ganha tooltip curto explicando o critério.
+- Botões "Salvar e continuar" / "Voltar" / "Concluir" → tooltips quando desabilitados explicando o porquê ("Preencha os campos obrigatórios antes de continuar").
 
-**Correção:** trocar para o token semântico `warning`:
-```
-className="gap-2 bg-warning text-warning-foreground hover:bg-warning/90 ..."
-```
-Mantém o resto (ícone, tamanho, largura responsiva). Sem hardcode de cor.
+**6. `ChatFlutuante.tsx`**
+- Botão flutuante → "Fale com seu contador".
+- Indicador de mensagens não lidas → "X mensagens não lidas".
 
-### 3. Stepper: "onda" pulsante em vez de `animate-pulse`
+---
 
-Em `src/components/cliente-portal/StatusStepper.tsx`, trocar a bolinha atual de `animate-pulse` (fade do círculo inteiro) por um efeito de **ripple/onda** em volta — usando o `animate-ping` do Tailwind num ring absoluto, mantendo o ícone estático e legível.
+### Padrão técnico
 
-Estrutura para a bolinha atual (mobile e desktop):
+Criar um helper leve para reduzir boilerplate:
+
 ```tsx
-<div className="relative">
-  <span className="absolute inset-0 rounded-full bg-accent/40 animate-ping" />
-  <div className="relative w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center">
-    <Icon className="h-5 w-5" />
-  </div>
-</div>
+// src/components/cliente-portal/InfoTooltip.tsx (novo, ~25 linhas)
+import { HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
+export function InfoTooltip({ children, side = 'top' }: { children: React.ReactNode; side?: 'top'|'right'|'bottom'|'left' }) {
+  return (
+    <Tooltip delayDuration={150}>
+      <TooltipTrigger asChild>
+        <button type="button" className="inline-flex text-muted-foreground hover:text-foreground transition-colors">
+          <HelpCircle className="h-3.5 w-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side={side} className="max-w-[260px] text-xs leading-relaxed">
+        {children}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 ```
-- `animate-ping` já vem no Tailwind (scale + fade infinito) → cria a onda visualmente.
-- O `bg-accent/40` dá a cor da onda; o círculo principal permanece sólido.
-- Aplicar tanto no bloco mobile (linhas ~41-44) quanto no desktop (linhas ~83-89).
+
+Para wrappers em elementos existentes (botões, ícones), usar o `Tooltip` direto importado de `@/components/ui/tooltip` envolvendo o elemento com `TooltipTrigger asChild`.
+
+---
 
 ### Arquivos tocados
-- `src/pages/cliente/ClienteDocumentos.tsx` — remover gate do trash; botão "Ver lista de documentos" em warning.
-- `src/pages/cliente/ClienteDashboard.tsx` — botão "Ver Passo a Passo" em warning.
-- `src/components/cliente-portal/StatusStepper.tsx` — trocar `animate-pulse` por ring `animate-ping`.
+- `src/components/cliente-portal/InfoTooltip.tsx` (novo)
+- `src/components/layout/ClienteLayout.tsx`
+- `src/pages/cliente/ClienteDashboard.tsx`
+- `src/components/cliente-portal/StatusStepper.tsx`
+- `src/pages/cliente/ClienteDocumentos.tsx`
+- `src/pages/cliente/ClienteFormulario.tsx`
+- `src/components/formulario-ir/StepDadosPessoais.tsx`
+- `src/components/formulario-ir/StepDependentes.tsx`
+- `src/components/formulario-ir/StepDocumentos.tsx` (somente se reusado no portal)
+- `src/components/formulario-ir/StepPerfilFiscal.tsx`
+- `src/components/formulario-ir/StepInfoAdicionais.tsx`
+- `src/components/cliente-portal/ChatFlutuante.tsx`
 
 ### Fora de escopo
-- Schema/RLS/triggers.
-- Lógica de `status_documentos` no upload.
-- Rotas/UI do contador.
+- Qualquer mudança em lógica, validação, RLS, schema.
+- Área do contador, admin, landing.
+- Redesign visual dos componentes — só adicionar tooltips.
+- Criar novos textos legais/fiscais inventados: vou usar exatamente as regras já estabelecidas na memória (`IRPF Rules`, `Tax Engine`).
+
+### Pergunta em aberto
+Se preferir, posso restringir a primeira leva apenas a **Dashboard + Documentos + Stepper + Layout** (maior impacto, menos arquivos) e deixar o formulário (que tem muitos campos) numa segunda etapa. Caso contrário, sigo com tudo de uma vez.
