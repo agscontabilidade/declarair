@@ -1,37 +1,46 @@
-## Otimizações de Performance — Alternativas Seguras (Zero Risco)
+## Problema identificado
 
-### Objetivo
-Reduzir requisições desnecessárias ao banco e eliminar flashes de loading em tabelas grandes, sem alterar lógica de negócio, sem virtualização e sem persistir dados sensíveis em storage.
+Na aba **Configurações → Marca & Whitelabel** existe um bug que faz parecer que as configurações "não persistem" ao salvar:
 
-### Contexto Atual
-O `QueryClient` global já possui `refetchOnWindowFocus: false`, `retry: 1` e `staleTime: 60s`. Estamos em temporada IRPF — estabilidade é prioridade absoluta.
+O hook `usePersistedForm` (usado em `WhitelabelTab`) grava em `localStorage` a CADA mudança do form, inclusive no primeiro render com os valores **default** (`#1E3A5F`, `#F8FAFC`, etc.). Quando o `useQuery` finalmente retorna os dados reais do escritório, o `useEffect` verifica `localStorage` — encontra os defaults já gravados — e **não reseeda** com os valores do banco. Resultado: o usuário vê os defaults mesmo tendo salvo cores/textos diferentes, dando a impressão de que nada foi persistido.
 
-### Mudanças Propostas
+Os dados **são** salvos corretamente no banco (`escritorios.cor_primaria`, `cor_fundo_portal`, `nome_portal`, `texto_boas_vindas`, `whitelabel_ativo`, `logo_url`) — o problema é só na hidratação do formulário.
 
-#### 1. `QueryClient` global (`src/App.tsx`)
-- **Aumentar `staleTime` de 60s para 300s (5 min)**  
-  Dados contábeis (clientes, declarações, cobranças) raramente mudam a cada minuto. Isso reduz re-fetches em ~80% nas navegações entre páginas.
-- **Adicionar `retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)`**  
-  Em falhas transitórias de rede, evita spam de requisições em sequência rápida.
+Além disso, hoje não existe forma de voltar ao padrão do sistema sem editar campo por campo.
 
-#### 2. Hooks de lista grande (`useClientes`, `useCobrancas`, `useDeclaracao`, `useChat`, `useMensagens`)
-- **Adicionar `placeholderData: keepPreviousData`** em queries paginadas/filtradas.  
-  Quando o usuário troca página, filtro ou aba, a lista anterior permanece visível enquanto os novos dados carregam — elimina o flash de tela em branco e o spinner. Sem risco de dados corrompidos.
+## Mudanças propostas (apenas frontend, escopo restrito)
 
-#### 3. `useBillingStatus` e hooks de metadados estáticos
-- **Aumentar `staleTime` para 10 min (`600_000`)** em hooks que carregam plano, limites e addons.  
-  Esses dados mudam apenas após ação explícita do usuário (upgrade, compra de add-on).
+Arquivo único: `src/components/configuracoes/WhitelabelTab.tsx`
 
-#### 4. Hook `useDebouncedInvalidate` (já existe)
-- **Verificar se está sendo usado corretamente** em formulários com auto-save ou busca em tempo real para evitar invalidações excessivas.
+1. **Remover o `usePersistedForm`** desta aba e substituir por `useState` simples seedado a partir do `escritorio` retornado pelo `useQuery` (via `useEffect` que dispara quando `escritorio?.id` muda).
+   - Mantém rascunho local enquanto edita, mas sempre reflete o banco após save/reload.
+   - Limpa também a chave antiga `form_persistence_whitelabel_<escritorioId>` do localStorage uma vez na montagem (cleanup de dados velhos para usuários que já visitaram).
 
-### O que NÃO será feito (garantia de zero risco)
-- Nenhuma virtualização de tabela.
-- Nenhuma persistência de cache em `localStorage`/`sessionStorage`.
-- Nenhuma mudança em RLS, auth, ou regras de negócio.
-- Nenhuma remoção de colunas em `select('*')`.
+2. **Corrigir invalidação da query** após salvar/upload de logo: usar `queryKey: ['escritorio-brand', escritorioId]` (hoje está sem o id, funciona por prefixo mas é frágil).
 
-### Resultado Esperado
-- Menos requisições ao backend nas navegações comuns.
-- Experiência mais fluida em tabelas e kanban.
-- Nenhuma mudança visual ou funcional perceptível além da velocidade.
+3. **Adicionar botão "Restaurar padrão do sistema"** ao lado do botão "Salvar":
+   - Abre `AlertDialog` de confirmação ("Isto vai remover suas cores, nome do portal, texto de boas-vindas e desativar o whitelabel. O logo é mantido.").
+   - Ao confirmar, faz `UPDATE escritorios SET cor_primaria=NULL, cor_fundo_portal=NULL, nome_portal=NULL, texto_boas_vindas=NULL, whitelabel_ativo=false WHERE id=escritorioId`.
+   - Reseta o form local para os defaults visuais (`#1E3A5F`, `#F8FAFC`, textos vazios, switch off).
+   - Invalida `['escritorio-brand', escritorioId]`.
+   - Disponível apenas para `isDono`.
+
+4. **Adicionar botão "Remover logo"** (somente quando existe `escritorio.logo_url`):
+   - Confirmação simples.
+   - `UPDATE escritorios SET logo_url=NULL WHERE id=escritorioId`.
+   - Não tenta apagar o arquivo do storage (mantém compatibilidade, sem mexer em RLS/storage).
+   - Apenas para `isDono`.
+
+5. **Preview**: continua refletindo os valores atuais do form (já funciona).
+
+## Fora do escopo (não vou mexer)
+
+- Backend, RLS, schema, migrations.
+- `usePersistedForm` em outros lugares do projeto.
+- Como `ClienteLayout` e `CadastroCliente` consomem o branding (já leem corretamente do banco com fallback para defaults).
+- Bucket `logos-escritorios` e qualquer policy de storage.
+- Lógica de billing / addon de whitelabel.
+
+## Risco
+
+Muito baixo. Mudança isolada em um único componente de UI, mesma tabela e mesmos campos já gravados/lidos hoje, sem alteração de contratos. Não afeta clientes em produção que já têm branding salvo — pelo contrário, eles passarão a ver corretamente o que está salvo.
