@@ -7,14 +7,16 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Escritorio = Tables<'escritorios'>;
 
 const navItems = [
-  { title: 'Início', url: '/cliente/dashboard', icon: Home },
-  { title: 'Dados Cadastrais', url: '/cliente/formulario', icon: ClipboardList },
-  { title: 'Documentos', url: '/cliente/documentos', icon: Upload },
+  { title: 'Início', url: '/cliente/dashboard', icon: Home, tooltip: 'Visão geral do status da sua declaração' },
+  { title: 'Dados Cadastrais', url: '/cliente/formulario', icon: ClipboardList, tooltip: 'Preencha suas informações pessoais e fiscais' },
+  { title: 'Documentos', url: '/cliente/documentos', icon: Upload, tooltip: 'Anexe comprovantes, informes e documentos da Receita' },
 ];
+
 
 export function ClienteLayout({ children }: { children: React.ReactNode }) {
   const { profile, signOut } = useAuth();
@@ -70,26 +72,45 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="flex items-center gap-1">
           {navItems.map((item) => (
-            <NavLink
-              key={item.url}
-              to={item.url}
-              end={item.url === '/cliente/dashboard'}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm"
-              activeClassName="bg-accent/10 text-accent font-medium"
-            >
-              <item.icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{item.title}</span>
-            </NavLink>
+            <Tooltip key={item.url} delayDuration={200}>
+              <TooltipTrigger asChild>
+                <NavLink
+                  to={item.url}
+                  end={item.url === '/cliente/dashboard'}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm"
+                  activeClassName="bg-accent/10 text-accent font-medium"
+                  aria-label={item.title}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{item.title}</span>
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                {item.tooltip}
+              </TooltipContent>
+            </Tooltip>
           ))}
-          <ThemeToggle />
-          <button
-            onClick={signOut}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm ml-2"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Sair</span>
-          </button>
+          <Tooltip delayDuration={200}>
+            <TooltipTrigger asChild>
+              <span><ThemeToggle /></span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Alternar tema claro/escuro</TooltipContent>
+          </Tooltip>
+          <Tooltip delayDuration={200}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={signOut}
+                aria-label="Sair da conta"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm ml-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sair</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Sair da sua conta</TooltipContent>
+          </Tooltip>
         </nav>
+
       </header>
       <main className="flex-1 p-4 sm:p-6 pb-24 sm:pb-6 max-w-5xl mx-auto w-full">
         {children}
