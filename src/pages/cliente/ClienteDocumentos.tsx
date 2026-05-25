@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { lazy, Suspense, useState, useRef } from 'react';
 import { ClienteLayout } from '@/components/layout/ClienteLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,11 @@ import {
   Landmark, FileWarning, Send, FileStack, Trash2, Loader2,
   AlertTriangle, HelpCircle, FileText
 } from 'lucide-react';
-import { RelacaoDocumentosModal } from '@/components/cliente-portal/RelacaoDocumentosModal';
+const RelacaoDocumentosModal = lazy(() =>
+  import('@/components/cliente-portal/RelacaoDocumentosModal').then((m) => ({
+    default: m.RelacaoDocumentosModal,
+  }))
+);
 import {
   AlertDialog,
   AlertDialogAction,
