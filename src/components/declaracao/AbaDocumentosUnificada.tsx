@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Progress } from '@/components/ui/progress';
-import { FileText, Download, Eye, User, Briefcase, Plus } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { FileText, Download, Eye, User, Briefcase, Plus, CheckCircle2 } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
+import { getErrorMessage } from '@/lib/errors';
 
 interface ChecklistItem {
   id: string;
@@ -19,6 +21,7 @@ interface ChecklistItem {
   categoria: string;
   status: string;
   obrigatorio: boolean;
+  lancado: boolean;
 }
 
 interface Props {
@@ -37,6 +40,7 @@ interface Props {
  * (arquivos exclusivos da aba "Análise de Caixa", não vão para o Drive).
  */
 export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }: Props) {
+  const queryClient = useQueryClient();
   const [viewerCurrentId, setViewerCurrentId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
@@ -45,7 +49,7 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
     queryFn: async () => {
       const { data, error } = await supabase
         .from('checklist_documentos')
-        .select('id, nome_documento, arquivo_url, arquivo_nome, data_recebimento, categoria, status, obrigatorio')
+        .select('id, nome_documento, arquivo_url, arquivo_nome, data_recebimento, categoria, status, obrigatorio, lancado')
         .eq('declaracao_id', declaracaoId)
         .order('data_recebimento', { ascending: false });
       if (error) throw error;
@@ -58,9 +62,6 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
     () => items.filter(i => i.arquivo_url && !i.arquivo_url.includes('/_analise_caixa/')),
     [items]
   );
-  const obrigatorios = useMemo(() => items.filter(i => i.obrigatorio), [items]);
-  const recebidos = obrigatorios.filter(i => i.status === 'recebido').length;
-  const progressPct = obrigatorios.length > 0 ? (recebidos / obrigatorios.length) * 100 : 0;
 
   const grupos = useMemo(() => ({
     contador: docs.filter(d => d.categoria === 'contador'),
@@ -72,9 +73,32 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
       id: d.id,
       arquivo_url: d.arquivo_url!,
       arquivo_nome: d.arquivo_nome || d.nome_documento,
+      lancado: d.lancado,
     })),
     [docs]
   );
+
+  const toggleLancado = useMutation({
+    mutationFn: async ({ id, novoValor }: { id: string; novoValor: boolean }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from('checklist_documentos')
+        .update({
+          lancado: novoValor,
+          lancado_em: novoValor ? new Date().toISOString() : null,
+          lancado_por: novoValor ? userData.user?.id ?? null : null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      toast.success(vars.novoValor ? 'Documento marcado como lançado' : 'Marcação removida');
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e, 'Falha ao atualizar status')),
+  });
 
   async function baixar(path: string, id: string) {
     try {
@@ -92,20 +116,55 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
   }
 
   function renderDoc(d: ChecklistItem) {
+    const lancado = d.lancado;
     return (
-      <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 hover:border-primary/40 transition-colors">
+      <div
+        key={d.id}
+        className={cn(
+          'flex items-center justify-between gap-3 rounded-lg border bg-card p-3 transition-colors',
+          lancado
+            ? 'border-success/40 bg-success/5 hover:border-success/60'
+            : 'hover:border-primary/40'
+        )}
+      >
         <button
           type="button"
           onClick={() => setViewerCurrentId(d.id)}
           className="flex items-start gap-3 min-w-0 flex-1 text-left group"
         >
-          <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-            <FileText className="h-4 w-4 text-primary" />
+          <div
+            className={cn(
+              'h-9 w-9 rounded-md flex items-center justify-center shrink-0 transition-colors',
+              lancado ? 'bg-success/15 group-hover:bg-success/25' : 'bg-primary/10 group-hover:bg-primary/20'
+            )}
+          >
+            {lancado ? (
+              <CheckCircle2 className="h-4 w-4 text-success" />
+            ) : (
+              <FileText className="h-4 w-4 text-primary" />
+            )}
           </div>
           <div className="min-w-0">
-            <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-              {d.arquivo_nome || d.nome_documento}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p
+                className={cn(
+                  'font-medium text-sm truncate transition-colors',
+                  lancado ? 'group-hover:text-success' : 'group-hover:text-primary'
+                )}
+              >
+                {d.arquivo_nome || d.nome_documento}
+              </p>
+              {lancado && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>Documento lançado</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
             {d.data_recebimento && (
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 Enviado em {formatDate(d.data_recebimento)}
@@ -189,6 +248,8 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
         currentId={viewerCurrentId}
         onClose={() => setViewerCurrentId(null)}
         onChange={setViewerCurrentId}
+        onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
+        togglingLancadoId={toggleLancado.isPending ? toggleLancado.variables?.id ?? null : null}
       />
     </div>
   );
