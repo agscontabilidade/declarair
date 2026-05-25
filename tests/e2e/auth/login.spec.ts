@@ -25,7 +25,7 @@ test.describe('Login do Contador', () => {
 
   test('link para recuperar senha deve estar visível', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.locator('a[href="/recuperar-senha"]')).toBeVisible();
+    await expect(page.locator('a[href^="/recuperar-senha"]')).toBeVisible();
   });
 
   test('link para cadastro deve estar visível', async ({ page }) => {

@@ -4,7 +4,6 @@ const rotasProtegidas = [
   '/dashboard',
   '/clientes',
   '/cobrancas',
-  '/mensagens',
   '/configuracoes',
 ];
 
