@@ -375,11 +375,19 @@ export default function ClienteDashboard() {
               <div className="md:flex items-center">
                 <div className="p-6 md:p-8 flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="bg-warning/15 p-2 rounded-lg">
-                      <ShieldCheck className="h-5 w-5 text-warning" />
-                    </div>
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <div className="bg-warning/15 p-2 rounded-lg cursor-help">
+                          <ShieldCheck className="h-5 w-5 text-warning" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[280px] text-xs">
+                        A procuração eletrônica permite que seu contador acompanhe sua declaração em tempo real direto no e-CAC e resolva pendências sem te incomodar.
+                      </TooltipContent>
+                    </Tooltip>
                     <h3 className="text-lg font-bold">Procuração Eletrônica e-CAC</h3>
                   </div>
+
                   <p className="text-muted-foreground text-sm max-w-2xl">
                     Cadastre uma procuração eletrônica na Receita Federal através do portal e-CAC usando sua senha <strong>gov.br</strong>. 
                     Isso permite que seu contador acompanhe sua declaração em tempo real e resolva qualquer pendência de forma muito mais ágil.
