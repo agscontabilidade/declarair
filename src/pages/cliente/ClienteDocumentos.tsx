@@ -16,6 +16,7 @@ const RelacaoDocumentosModal = lazy(() =>
     default: m.RelacaoDocumentosModal,
   }))
 );
+import { ObservacoesParaContador } from '@/components/cliente-portal/ObservacoesParaContador';
 import {
   AlertDialog,
   AlertDialogAction,
