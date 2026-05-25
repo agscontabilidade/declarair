@@ -974,6 +974,9 @@ export type Database = {
           mei_extracao: Json | null
           mei_validado_em: string | null
           numero_recibo: string | null
+          observacoes_cliente: string | null
+          observacoes_cliente_atualizado_em: string | null
+          observacoes_cliente_lida_em: string | null
           observacoes_internas: string | null
           recibo_extracao: Json | null
           recibo_validado_em: string | null
@@ -1020,6 +1023,9 @@ export type Database = {
           mei_extracao?: Json | null
           mei_validado_em?: string | null
           numero_recibo?: string | null
+          observacoes_cliente?: string | null
+          observacoes_cliente_atualizado_em?: string | null
+          observacoes_cliente_lida_em?: string | null
           observacoes_internas?: string | null
           recibo_extracao?: Json | null
           recibo_validado_em?: string | null
@@ -1066,6 +1072,9 @@ export type Database = {
           mei_extracao?: Json | null
           mei_validado_em?: string | null
           numero_recibo?: string | null
+          observacoes_cliente?: string | null
+          observacoes_cliente_atualizado_em?: string | null
+          observacoes_cliente_lida_em?: string | null
           observacoes_internas?: string | null
           recibo_extracao?: Json | null
           recibo_validado_em?: string | null
@@ -2820,6 +2829,9 @@ export type Database = {
           mei_extracao: Json | null
           mei_validado_em: string | null
           numero_recibo: string | null
+          observacoes_cliente: string | null
+          observacoes_cliente_atualizado_em: string | null
+          observacoes_cliente_lida_em: string | null
           observacoes_internas: string | null
           recibo_extracao: Json | null
           recibo_validado_em: string | null
