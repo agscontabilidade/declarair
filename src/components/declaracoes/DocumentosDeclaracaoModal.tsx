@@ -65,7 +65,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
       if (!declaracaoId) return [] as DocItem[];
       const { data, error } = await supabase
         .from('checklist_documentos')
-        .select('id, nome_documento, arquivo_url, arquivo_nome, data_recebimento, categoria')
+        .select('id, nome_documento, arquivo_url, arquivo_nome, data_recebimento, categoria, lancado')
         .eq('declaracao_id', declaracaoId)
         .not('arquivo_url', 'is', null)
         .order('data_recebimento', { ascending: false });
@@ -89,6 +89,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
           id: d.id,
           arquivo_url: d.arquivo_url!,
           arquivo_nome: d.arquivo_nome || d.nome_documento,
+          lancado: d.lancado,
         })),
     [docs]
   );
