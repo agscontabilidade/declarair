@@ -44,7 +44,9 @@ export function useUsageStatus(): UsageState {
       };
     },
     enabled: !!profile.escritorioId,
-    refetchInterval: 30000,
+    refetchInterval: (q) => (typeof document !== 'undefined' && document.hidden ? false : 300000),
+    refetchIntervalInBackground: false,
+    staleTime: 120000,
   });
 
   const usadas = data?.usadas ?? 0;

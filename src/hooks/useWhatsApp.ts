@@ -44,7 +44,9 @@ export function useWhatsAppStatus() {
     queryKey: ['whatsapp-status', profile.escritorioId],
     queryFn: () => callWhatsApp('status'),
     enabled: !!profile.escritorioId,
-    refetchInterval: 15000,
+    refetchInterval: (q) => (typeof document !== 'undefined' && document.hidden ? false : 60000),
+    refetchIntervalInBackground: false,
+    staleTime: 30000,
   });
 }
 
