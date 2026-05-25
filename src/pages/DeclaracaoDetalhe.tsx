@@ -16,6 +16,7 @@ import { Send } from 'lucide-react';
 import { SecaoChat } from '@/components/declaracao/SecaoChat';
 import { SecaoTimeline } from '@/components/declaracao/SecaoTimeline';
 import { SecaoAnaliseCaixa } from '@/components/declaracao/SecaoAnaliseCaixa';
+import { SecaoObservacoesCliente } from '@/components/declaracao/SecaoObservacoesCliente';
 import { useDeclaracao } from '@/hooks/useDeclaracao';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -134,6 +135,17 @@ export default function DeclaracaoDetalhe() {
           papel={hook.papel}
           onChangeStatus={handleChangeStatus}
         />
+
+        {decl?.observacoes_cliente && id && escritorioId && (
+          <SecaoObservacoesCliente
+            declaracaoId={id}
+            escritorioId={escritorioId}
+            clienteNome={hook.declaracao?.clientes?.nome}
+            observacao={decl.observacoes_cliente}
+            atualizadoEm={decl.observacoes_cliente_atualizado_em ?? null}
+            lidaEm={decl.observacoes_cliente_lida_em ?? null}
+          />
+        )}
 
         {podeEnviarAoCliente && (
           <div className="flex justify-end">

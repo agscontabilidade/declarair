@@ -571,6 +571,15 @@ export default function ClienteDocumentos() {
           </Card>
         )}
 
+        {declaracao && (
+          <ObservacoesParaContador
+            declaracaoId={declaracao.id}
+            escritorioId={declaracao.escritorio_id}
+            clienteNome={profile.nome}
+            initialValue={(declaracao as { observacoes_cliente?: string | null }).observacoes_cliente ?? null}
+          />
+        )}
+
         {/* Count info */}
         <Card className="shadow-sm">
           <CardContent className="p-5">
