@@ -233,19 +233,33 @@ export default function ClienteDocumentos() {
       if (successCount > 0) {
         toast.success(`${successCount} arquivo(s) carregado(s) com sucesso!`);
 
-        const { error: updErr } = await supabase
+        const { data: updRows, error: updErr } = await supabase
           .from('declaracoes')
           .update({
             status_documentos: 'enviado',
             status: 'documentacao_recebida',
             ultima_atualizacao_status: new Date().toISOString(),
           })
-          .eq('id', declaracaoAtiva.id);
+          .eq('id', declaracaoAtiva.id)
+          .select('id');
 
         if (updErr) {
           console.error('[upload] declaracao update error', updErr);
           toast.error(`Documentos salvos, mas falha ao atualizar status: ${updErr.message}`);
+        } else if (!updRows || updRows.length === 0) {
+          console.error('[upload] declaracao update afetou 0 linhas (RLS?)', { id: declaracaoAtiva.id });
+          toast.error('Documentos salvos, mas o status não pôde ser atualizado. Avise seu contador.');
         }
+
+        // Notifica o contador
+        const { error: notifErr } = await supabase.from('notificacoes').insert({
+          escritorio_id: declaracaoAtiva.escritorio_id,
+          titulo: '📂 Documentos Enviados',
+          mensagem: `O cliente ${profile.nome} enviou documentos.`,
+          link_destino: `/declaracoes/${declaracaoAtiva.id}`,
+        });
+        if (notifErr) console.error('[upload] notificacao insert error', notifErr);
+
 
         // Sincroniza com o painel do contador (drive, checklist, lista de declarações)
         queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
