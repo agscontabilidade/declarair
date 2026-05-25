@@ -136,7 +136,7 @@ export function useClientePortal() {
   })();
 
   const stepTimestamps: (string | null)[] = [
-    formulario?.status_preenchimento === 'concluido' ? (formulario.updated_at || null) : null,
+    formulario?.status_preenchimento === 'concluido' ? ((formulario as { ultima_atualizacao?: string | null }).ultima_atualizacao || null) : null,
     firstDocRecebido,
     lastActivityFor('documentacao_recebida'),
     lastActivityFor('declaracao_pronta'),
