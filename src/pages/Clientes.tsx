@@ -109,16 +109,25 @@ export default function Clientes() {
               onEdit={(c) => setEditCliente(c)}
               onDelete={handleDelete}
               onCobranca={(c) => setCobrancaCliente(c)}
-              onConvite={(c) => {
-                const tokenValido = !!c.token_convite_expira_em && new Date(c.token_convite_expira_em) > new Date();
-                const podeReusar = c.status_onboarding === 'convite_enviado' && tokenValido && !!c.token_convite;
+              onConvite={async (c) => {
+                let tokenExistente: string | null = null;
+                let podeReusar = false;
+                if (c.status_onboarding === 'convite_enviado') {
+                  const { data } = await supabase.rpc('get_cliente_invite_token', { _cliente_id: c.id });
+                  const row = Array.isArray(data) ? data[0] : null;
+                  const tokenValido = !!row?.token_convite_expira_em && new Date(row.token_convite_expira_em) > new Date();
+                  if (tokenValido && row?.token_convite) {
+                    podeReusar = true;
+                    tokenExistente = row.token_convite as string;
+                  }
+                }
                 setConviteCtx({
                   clienteId: c.id,
                   nome: c.nome,
                   email: c.email ?? null,
                   telefone: c.telefone ?? null,
                   mode: podeReusar ? 'reusar' : 'novo',
-                  tokenExistente: podeReusar ? c.token_convite : null,
+                  tokenExistente,
                 });
               }}
               canEdit={podeEditarClientes}
