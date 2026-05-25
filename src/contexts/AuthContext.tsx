@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { setUserContext, clearUserContext, logError } from '@/lib/sentry';
@@ -205,16 +205,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [clearInvalidSession, loadProfile, resetAuthState]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     clearUserContext();
     await supabase.auth.signOut();
-  };
+  }, []);
 
-  return (
-    <AuthContext.Provider value={{ session, user, userType, profile, loading, signOut }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ session, user, userType, profile, loading, signOut }),
+    [session, user, userType, profile, loading, signOut],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
