@@ -13,6 +13,7 @@ import { DocumentosDeclaracaoModal } from '@/components/declaracoes/DocumentosDe
 import { EnviarConviteClienteDialog, type EnviarConviteClienteCtx } from '@/components/clientes/EnviarConviteClienteDialog';
 import { useCobrancas } from '@/hooks/useCobrancas';
 import { QueryError } from '@/components/ui/QueryError';
+import { ClientesFilters } from '@/components/clientes/ClientesFilters';
 import type { ClienteWithContador } from '@/types/domain';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
