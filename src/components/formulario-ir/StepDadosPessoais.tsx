@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { RACAS_CORES, ESTADOS_CIVIS, NATUREZAS_OCUPACAO, OCUPACOES_PRINCIPAIS } from '@/lib/constants-ir';
+import { InfoTooltip } from '@/components/cliente-portal/InfoTooltip';
+
 
 const PARENTESCOS = ['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Companheiro(a)', 'Pai/Mãe', 'Avô/Avó', 'Outro'];
 
@@ -129,7 +131,12 @@ export function StepDadosPessoais({ data, onChange, clientCPF }: Props) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Estado Civil</Label>
+            <Label className="flex items-center gap-1.5">
+              Estado Civil
+              <InfoTooltip>
+                Sua situação no último dia do ano-base (31/12). Casado e união estável têm tratamento similar na declaração.
+              </InfoTooltip>
+            </Label>
             <Select value={data.estado_civil} onValueChange={(v) => onChange('estado_civil', v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -137,6 +144,7 @@ export function StepDadosPessoais({ data, onChange, clientCPF }: Props) {
               </SelectContent>
             </Select>
           </div>
+
         </div>
 
         <div className="flex items-center space-x-2 p-4 rounded-xl border bg-muted/20">
@@ -274,8 +282,14 @@ export function StepDadosPessoais({ data, onChange, clientCPF }: Props) {
               if (!checked) onChange('dependentes', []);
             }}
           />
-          <Label htmlFor="possui-dependentes" className="cursor-pointer font-semibold">Possui dependentes?</Label>
+          <Label htmlFor="possui-dependentes" className="cursor-pointer font-semibold flex items-center gap-1.5">
+            Possui dependentes?
+            <InfoTooltip>
+              Dependentes reduzem R$ 189,59/ano de imposto cada, mas os rendimentos deles passam a ser somados aos seus. CPF é obrigatório.
+            </InfoTooltip>
+          </Label>
         </div>
+
 
         {showDeps && (
           <div className="space-y-6 animate-in zoom-in-95 duration-300">
@@ -337,8 +351,14 @@ export function StepDadosPessoais({ data, onChange, clientCPF }: Props) {
               if (!checked) onChange('alimentandos', []);
             }}
           />
-          <Label htmlFor="paga-pensao" className="cursor-pointer font-semibold">Paga pensão alimentícia?</Label>
+          <Label htmlFor="paga-pensao" className="cursor-pointer font-semibold flex items-center gap-1.5">
+            Paga pensão alimentícia?
+            <InfoTooltip>
+              Só deduz integralmente se for pensão judicial (decisão homologada ou escritura pública). Pensões informais não são dedutíveis.
+            </InfoTooltip>
+          </Label>
         </div>
+
 
         {showAlimentandos && (
           <div className="space-y-6 animate-in zoom-in-95 duration-300">
@@ -393,11 +413,17 @@ export function StepDadosPessoais({ data, onChange, clientCPF }: Props) {
             <div className="flex-1 space-y-1">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Usar meu CPF como chave PIX</p>
+                  <p className="text-sm font-medium flex items-center gap-1.5">
+                    Usar meu CPF como chave PIX
+                    <InfoTooltip>
+                      A Receita Federal só dá prioridade na fila de restituição quando a chave Pix é o seu CPF. Outras chaves (e-mail, celular, aleatória) não valem para esse fim.
+                    </InfoTooltip>
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Chave: {data.chave_pix_cliente ? clientCPF : 'Não selecionada'}
                   </p>
                 </div>
+
                 <Switch 
                   id="pix-cpf-toggle"
                   checked={!!data.chave_pix_cliente}
