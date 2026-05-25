@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ClipboardList, ChevronLeft, ChevronRight, CheckCircle2, Save } from 'lucide-react';
 import { useFormularioIR } from '@/hooks/useFormularioIR';
 import { StepDadosPessoais } from '@/components/formulario-ir/StepDadosPessoais';
@@ -14,6 +15,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
+
 
 interface StepDef {
   key: string;
@@ -160,14 +162,22 @@ export default function ClienteFormulario() {
         </Card>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
-          <Button
-            onClick={handleFinalizar}
-            disabled={saving}
-            className="w-full sm:w-auto bg-success hover:bg-success/90 active:scale-[0.98]"
-          >
-            <CheckCircle2 className="h-4 w-4 mr-2" /> Salvar e Finalizar
-          </Button>
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleFinalizar}
+                disabled={saving}
+                className="w-full sm:w-auto bg-success hover:bg-success/90 active:scale-[0.98]"
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" /> Salvar e Finalizar
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[280px] text-xs">
+              Envia suas informações cadastrais ao contador. Você ainda poderá editar os campos depois, mas o contador será notificado.
+            </TooltipContent>
+          </Tooltip>
         </div>
+
       </div>
     </ClienteLayout>
   );
