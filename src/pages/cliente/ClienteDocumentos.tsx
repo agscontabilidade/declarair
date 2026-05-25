@@ -383,8 +383,16 @@ export default function ClienteDocumentos() {
       toast.success('Arquivo removido');
       queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
-    } catch (err) {
-      toast.error('Erro ao remover arquivo');
+      queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracao.id] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracao.id] });
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracao.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracoes'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracao.id] });
+    } catch (err: any) {
+      console.error('[removeFile] error', err);
+      toast.error(err?.message ? `Erro ao remover: ${err.message}` : 'Erro ao remover arquivo');
     }
   };
 
