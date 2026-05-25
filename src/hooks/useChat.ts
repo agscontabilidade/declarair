@@ -15,13 +15,16 @@ export function useChat(declaracaoId: string | undefined, escritorioId: string |
     queryKey: ['chat-messages', declaracaoId],
     queryFn: async () => {
       if (!declaracaoId) return [];
+      // Limita ao histórico recente (200 últimas) para evitar payload grande.
       const { data, error } = await supabase
         .from('mensagens_chat')
         .select('*')
         .eq('declaracao_id', declaracaoId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .limit(200);
       if (error) throw error;
-      return (data || []) as MensagemChat[];
+      // Devolve em ordem ascendente para preservar contrato com a UI.
+      return ((data || []) as MensagemChat[]).slice().reverse();
     },
     enabled: !!declaracaoId,
   });
