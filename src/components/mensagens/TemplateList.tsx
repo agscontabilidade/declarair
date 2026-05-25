@@ -51,13 +51,13 @@ export function TemplateList({ templates, isLoading, onEdit, onDelete, onToggle,
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Switch checked={t.ativo} onCheckedChange={(v) => onToggle(t.id, v)} />
-              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onTest(t)} title="Testar">
+              <Button size="icon" variant="iconInfo" className="h-8 w-8" onClick={() => onTest(t)} title="Testar">
                 <MessageSquare className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(t)} title="Editar">
+              <Button size="icon" variant="iconAction" className="h-8 w-8" onClick={() => onEdit(t)} title="Editar">
                 <Edit className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(t.id)} title="Excluir">
+              <Button size="icon" variant="iconDestructive" className="h-8 w-8" onClick={() => onDelete(t.id)} title="Excluir">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
