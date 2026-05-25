@@ -371,7 +371,7 @@ export function EnviarDeclaracaoEmailModal({
                   IRPF {anoBase}
                 </Badge>
                 {valorFmt && (
-                  <Badge className="rounded-full font-normal bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 border-emerald-500/20">
+                  <Badge variant="success" className="rounded-full font-normal">
                     Valor: {valorFmt}
                   </Badge>
                 )}

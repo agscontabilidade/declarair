@@ -228,7 +228,7 @@ export function WhitelabelTab({ escritorioId, isDono }: Props) {
               {escritorio?.logo_url && isDono && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm" disabled={removingLogo} className="text-destructive hover:text-destructive">
+                    <Button variant="ghost" size="sm" disabled={removingLogo} className="text-destructive hover-action-neg">
                       <Trash2 className="h-4 w-4 mr-1" /> {removingLogo ? 'Removendo...' : 'Remover logo'}
                     </Button>
                   </AlertDialogTrigger>

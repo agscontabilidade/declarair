@@ -613,11 +613,11 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
                       </TableCell>
                       <TableCell>
                         {parsed.veredito === 'transmitir' ? (
-                          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 text-[10px] gap-1">
+                          <Badge variant="success" className="text-[10px] gap-1">
                             <CheckCircle2 className="h-3 w-3" /> Transmitir
                           </Badge>
                         ) : parsed.veredito === 'ajustar' ? (
-                          <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 text-[10px] gap-1">
+                          <Badge variant="warning" className="text-[10px] gap-1">
                             <AlertCircle className="h-3 w-3" /> Ajustar
                           </Badge>
                         ) : parsed.veredito === 'nao_transmitir' ? (
