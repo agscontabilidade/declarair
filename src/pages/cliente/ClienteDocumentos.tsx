@@ -337,13 +337,6 @@ export default function ClienteDocumentos() {
     }
     try {
 
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const removeFile = async (docId: string, filePath: string, fileName: string) => {
-    try {
       const { error: storageError } = await supabase.storage
         .from('documentos-clientes')
         .remove([filePath]);
