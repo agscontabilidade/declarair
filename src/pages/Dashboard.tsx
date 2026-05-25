@@ -42,6 +42,7 @@ export default function Dashboard() {
     setContadorId,
     setUrgencia,
     setStatus,
+    setOrdenacao,
     clearFilters,
     declaracoesFiltradas,
     stats,
@@ -208,6 +209,7 @@ export default function Dashboard() {
           onContadorChange={setContadorId}
           onUrgenciaChange={setUrgencia}
           onStatusChange={setStatus}
+          onOrdenacaoChange={setOrdenacao}
           onClear={clearFilters}
           stats={stats}
           hasActiveFilters={hasActiveFilters}

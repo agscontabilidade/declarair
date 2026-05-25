@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Search, X, Filter, AlertCircle, Clock, CheckCircle } from 'lucide-react';
-import type { DashboardFilters as Filters } from '@/hooks/useDashboardFilters';
+import { Search, X, Filter, AlertCircle, Clock, CheckCircle, ArrowUpDown } from 'lucide-react';
+import type { DashboardFilters as Filters, OrdenacaoDashboard } from '@/hooks/useDashboardFilters';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface DashboardFiltersProps {
@@ -22,10 +22,18 @@ interface DashboardFiltersProps {
   onContadorChange: (contadorId: string | null) => void;
   onUrgenciaChange: (urgencia: Filters['urgencia']) => void;
   onStatusChange: (status: string | null) => void;
+  onOrdenacaoChange: (ordenacao: OrdenacaoDashboard) => void;
   onClear: () => void;
   stats: { total: number; urgentes: number; atencao: number };
   hasActiveFilters: boolean;
 }
+
+const ORDENACAO_LABELS: Record<OrdenacaoDashboard, string> = {
+  cadastro_recente: 'Mais recentes',
+  cadastro_antigo: 'Mais antigos',
+  alfabetica_az: 'Nome (A → Z)',
+  alfabetica_za: 'Nome (Z → A)',
+};
 
 export function DashboardFilters({
   filters,
@@ -33,6 +41,7 @@ export function DashboardFilters({
   onContadorChange,
   onUrgenciaChange,
   onStatusChange,
+  onOrdenacaoChange,
   onClear,
   stats,
   hasActiveFilters,
@@ -197,6 +206,24 @@ export function DashboardFilters({
           </SelectContent>
         </Select>
 
+        <Select
+          value={filters.ordenacao}
+          onValueChange={(v) => onOrdenacaoChange(v as OrdenacaoDashboard)}
+        >
+          <SelectTrigger className="w-[200px]">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+              <SelectValue />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="cadastro_recente">Mais recentes</SelectItem>
+            <SelectItem value="cadastro_antigo">Mais antigos</SelectItem>
+            <SelectItem value="alfabetica_az">Nome (A → Z)</SelectItem>
+            <SelectItem value="alfabetica_za">Nome (Z → A)</SelectItem>
+          </SelectContent>
+        </Select>
+
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={onClear} className="gap-1.5 text-muted-foreground">
             <X className="h-4 w-4" />
@@ -230,6 +257,12 @@ export function DashboardFilters({
             <Badge variant="secondary" className="gap-1">
               Status: {filters.status.replace(/_/g, ' ')}
               <X className="h-3 w-3 cursor-pointer" onClick={() => onStatusChange(null)} />
+            </Badge>
+          )}
+          {filters.ordenacao !== 'cadastro_recente' && (
+            <Badge variant="secondary" className="gap-1">
+              Ordenação: {ORDENACAO_LABELS[filters.ordenacao]}
+              <X className="h-3 w-3 cursor-pointer" onClick={() => onOrdenacaoChange('cadastro_recente')} />
             </Badge>
           )}
         </div>
