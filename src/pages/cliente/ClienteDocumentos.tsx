@@ -483,21 +483,36 @@ export default function ClienteDocumentos() {
             <p className="text-sm text-muted-foreground mt-1">Gerencie e envie seus documentos para o contador</p>
           </div>
           {recebidos.length > 0 && !docsEnviadosAoContador && (
-            <Button
-              onClick={handleFinalize}
-              disabled={sending}
-              className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"
-            >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Enviar ao Contador
-            </Button>
+            <Tooltip delayDuration={150}>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleFinalize}
+                  disabled={sending}
+                  className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"
+                >
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  Enviar ao Contador
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                Finaliza o envio e notifica seu contador. Você ainda pode anexar novos documentos depois, mas o contador será avisado de cada novo upload.
+              </TooltipContent>
+            </Tooltip>
           )}
           {docsEnviadosAoContador && (
-            <Badge className="bg-success/15 text-success py-1.5 px-3 border-success/30 self-start sm:self-auto">
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Enviado ao Contador
-            </Badge>
+            <Tooltip delayDuration={150}>
+              <TooltipTrigger asChild>
+                <Badge className="bg-success/15 text-success py-1.5 px-3 border-success/30 self-start sm:self-auto cursor-help">
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Enviado ao Contador
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                Seus documentos já foram entregues para análise. Novos uploads continuam sendo aceitos e o contador será notificado.
+              </TooltipContent>
+            </Tooltip>
           )}
+
         </div>
 
         {/* Upload Zone */}
