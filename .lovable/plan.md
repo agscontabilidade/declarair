@@ -1,67 +1,107 @@
 ## Diagnóstico
 
-Auditei 296 ocorrências de `hover:` em 119 arquivos. Os problemas se repetem em 4 padrões:
+O erro vem da trigger `restrict_cliente_declaracao_update` criada hoje pela migration `20260525164812` em `public.declaracoes`. Ela bloqueia o cliente de alterar campos sensíveis (`arquivo_declaracao_url`, `arquivo_recibo_url`, etc.), mas tem dois bypasses que **não estão funcionando** para o fluxo de anexar do contador:
 
-1. **Ícone colorido + `variant="ghost"`** → o ícone é `text-emerald-600`/`text-destructive`/`text-amber-600` e o ghost aplica `hover:bg-accent` (verde). Resultado: ícone verde em fundo verde, ícone vermelho em fundo verde, etc. — sem contraste. Acontece em `ClientesTable` ($, WhatsApp, copiar CPF), `KanbanCard`, `DeclaracoesListView`, `DocumentosDeclaracaoModal`, `AnexarDeclaracaoButton`, `EnviarDeclaracaoEmailModal`, `ConfirmarDocumentoManualDialog`, `SecaoAnaliseCaixa`, `SecaoObservacoesCliente`.
-2. **Badges com hover só de opacidade** (`hover:bg-primary/80`, `hover:bg-emerald-100`, `hover:bg-amber-600`) → mesma matiz, mais escura, sem mudança real de estado. Em `badge.tsx`, `ClientesTable`, `KanbanCard`, `IntegracoesTab`, `WhatsAppConfigTab`.
-3. **Hovers hardcoded** (`hover:bg-emerald-50/100/700`, `hover:text-emerald-700/800`, `hover:bg-orange-50`, `hover:bg-amber-600`) espalhados por feature — não respeitam tema dark e ignoram tokens. ~40 ocorrências.
-4. **Combinações conflitantes**: link `text-primary` (verde) recebendo `hover:underline` sobre fundo verde-claro (`bg-emerald-50`), botão `bg-emerald-600` recebendo `hover:bg-emerald-700` (mesma matiz), etc.
-
-## Estratégia: 3 fases
-
-Vou tratar em camadas, do mais geral (primitivos) ao específico (features). Cada fase fica autocontida.
-
-### Fase 1 — Sistema de hover semântico (`src/index.css` + `src/components/ui/`)
-
-Definir 4 tokens utilitários reutilizáveis em `@layer components` que dão contraste por **mudança de superfície + foreground**, não opacidade:
-
-```css
-.hover-action      → hover:bg-muted hover:text-foreground          /* ação neutra (editar, ver) */
-.hover-action-pos  → hover:bg-emerald-50 hover:text-emerald-700    /* ação positiva ($, salvar) — dark: bg-emerald-950/30 text-emerald-300 */
-.hover-action-warn → hover:bg-amber-50 hover:text-amber-700        /* alerta (pendente, atenção) */
-.hover-action-neg  → hover:bg-destructive/10 hover:text-destructive /* destrutiva (excluir) */
-.hover-action-info → hover:bg-blue-50 hover:text-blue-700          /* informativa (WhatsApp, link) */
+```sql
+IF current_setting('request.jwt.claim.role', true) = 'service_role' THEN
+  RETURN NEW;
+END IF;
+IF public.get_user_escritorio_id() IS NOT NULL THEN
+  RETURN NEW;
+END IF;
+-- senão: bloqueia
 ```
 
-Cada um vira `@apply` no CSS para ficar consistente em light/dark.
+**O que está quebrado:**
 
-**Primitivos:**
-- `button.tsx`: adicionar variantes `iconAction`, `iconDestructive`, `iconPositive`, `iconWarning`, `iconInfo` (extensões do `ghost` size `icon`). Mantém `ghost` puro para texto sem semântica.
-- `badge.tsx`: trocar `hover:bg-*/80` por hover que aumenta saturação **e** muda foreground; adicionar variantes `success`, `warning`, `info` para acabar com a sopa de `bg-emerald-100 text-emerald-800 hover:bg-emerald-200` espalhada.
+1. **Anexar do contador (botão "Anexar declaração" em `/declaracoes`)** chama a edge function `processar-pdf-declaracao`, que faz o `update` em `declaracoes` usando o **service role**. Em PostgREST/Supabase atual, o GUC legado `request.jwt.claim.role` **não é mais populado** — só existe `request.jwt.claims` (JSON, plural). Resultado: a primeira condição devolve NULL ≠ `'service_role'`, **falha**. Em seguida `auth.uid()` é NULL para service role, então `get_user_escritorio_id()` retorna NULL, **falha de novo**. A trigger conclui que é cliente e dispara a exception "Cliente nao pode alterar campos sensiveis da declaracao".
 
-### Fase 2 — Sweep dos componentes de tabela/lista (alta visibilidade)
+2. Mesmo contador autenticado direto via PostgREST cai no segundo bypass corretamente (porque `get_user_escritorio_id()` retorna o escritório dele), então updates de campos não-sensíveis seguem funcionando — o problema é específico do caminho service-role.
 
-Aplicar as novas variantes em:
-- `src/components/clientes/ClientesTable.tsx` — botões $ (positive), WhatsApp (info), Editar (neutral), Excluir (destructive), copiar CPF (positive), badges "Gerada"/"Ativa" (success), "Detalhes" (warning).
-- `src/components/dashboard/KanbanCard.tsx` e `KanbanColumn.tsx` — badges de status, ícone "ver detalhe".
-- `src/components/dashboard/DeclaracoesListView.tsx` — colunas de ação.
-- `src/components/cobrancas/CobrancasTable.tsx` — pagar (positive), excluir (destructive).
-- `src/components/mensagens/TemplateList.tsx` — editar/duplicar/excluir.
+## Correção (1 migration)
 
-### Fase 3 — Modais, configurações e portal do cliente
+Substituir a função `public.restrict_cliente_declaracao_update()` para detectar service role de forma robusta, usando o helper oficial `auth.role()` e como fallback o JSON `request.jwt.claims`:
 
-- `DocumentosDeclaracaoModal`, `AnexarDeclaracaoButton`, `EnviarDeclaracaoEmailModal`, `ConfirmarDocumentoManualDialog` — botões de ação com cor semântica certa.
-- `SecaoAnaliseCaixa`, `SecaoObservacoesCliente`, `DeclaracaoDetalhe` — hovers de toggle/expand.
-- `configuracoes/IntegracoesTab`, `WhatsAppConfigTab`, `WhitelabelTab` — chips/badges de status (conectado/desconectado/pendente).
-- `cliente/ClienteDashboard`, `ClienteDocumentos` — cards de upload e cards de status.
-- `BillingBanner`, `ClienteViewModal` — botões de upgrade/fechar.
-- `layout/Sidebar`, `layout/AdminLayout` — links de navegação (sidebar é dark, hover precisa ser `bg-white/10` + `text-white`, já está OK em parte, padronizar).
+```sql
+CREATE OR REPLACE FUNCTION public.restrict_cliente_declaracao_update()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'pg_temp'
+AS $$
+DECLARE
+  v_role text;
+BEGIN
+  -- 1) service_role (edge functions com SERVICE_ROLE_KEY) passa direto
+  BEGIN
+    v_role := auth.role();
+  EXCEPTION WHEN OTHERS THEN
+    v_role := NULL;
+  END;
 
-### Regras gerais aplicadas em todas as fases
+  IF v_role = 'service_role' THEN
+    RETURN NEW;
+  END IF;
 
-- **Nunca** hover que é só `bg-{cor}/80` da mesma matiz do estado base.
-- **Nunca** ícone colorido (`text-emerald-600`, `text-destructive`) dentro de `variant="ghost"` sem variant semântica — o ghost vira fundo verde e quebra o contraste.
-- **Sempre** combinar mudança de **superfície** com mudança de **foreground** em pelo menos 1 nível de luminosidade.
-- Remover hardcodes `emerald-XXX`/`amber-XXX`/`orange-XXX` quando houver token equivalente — exceto onde a marca realmente exige (logo, CTA principal).
-- Manter `active:scale-[0.97]` que já existe nos buttons (não mexer).
+  -- Fallback: lê do JWT claims (formato atual do PostgREST)
+  IF current_setting('request.jwt.claims', true) IS NOT NULL
+     AND (current_setting('request.jwt.claims', true)::jsonb ->> 'role') = 'service_role'
+  THEN
+    RETURN NEW;
+  END IF;
 
-## Fora de escopo
+  -- 2) contador / colaborador (linha em public.usuarios) passa direto
+  IF public.get_user_escritorio_id() IS NOT NULL THEN
+    RETURN NEW;
+  END IF;
 
-- Lógica, roteamento, dados, RLS, schema.
-- Reformular paleta global (`--primary`, etc.) — só hovers.
-- Mexer em componentes shadcn que não têm hover problemático (Select, Dialog, Tabs).
-- Animações (`transition-*`, `scale`, `translate`) — só cores de hover.
+  -- 3) admin global também passa
+  IF public.has_role(auth.uid(), 'admin'::public.app_role) THEN
+    RETURN NEW;
+  END IF;
 
-## Entrega
+  -- 4) restante = cliente: aplica restrições originais (campos + status)
+  IF NEW.cliente_id IS DISTINCT FROM OLD.cliente_id
+     OR NEW.escritorio_id IS DISTINCT FROM OLD.escritorio_id
+     OR NEW.contador_id IS DISTINCT FROM OLD.contador_id
+     OR NEW.ano_base IS DISTINCT FROM OLD.ano_base
+     OR NEW.tipo_resultado IS DISTINCT FROM OLD.tipo_resultado
+     OR NEW.valor_resultado IS DISTINCT FROM OLD.valor_resultado
+     OR NEW.numero_recibo IS DISTINCT FROM OLD.numero_recibo
+     OR NEW.data_transmissao IS DISTINCT FROM OLD.data_transmissao
+     OR NEW.forma_tributacao IS DISTINCT FROM OLD.forma_tributacao
+     OR NEW.observacoes_internas IS DISTINCT FROM OLD.observacoes_internas
+     OR NEW.arquivo_declaracao_url IS DISTINCT FROM OLD.arquivo_declaracao_url
+     OR NEW.arquivo_recibo_url    IS DISTINCT FROM OLD.arquivo_recibo_url
+     OR NEW.arquivo_mei_url       IS DISTINCT FROM OLD.arquivo_mei_url
+     OR NEW.arquivo_darf_url      IS DISTINCT FROM OLD.arquivo_darf_url
+     OR NEW.arquivo_analise_caixa_url IS DISTINCT FROM OLD.arquivo_analise_caixa_url
+  THEN
+    RAISE EXCEPTION 'Cliente nao pode alterar campos sensiveis da declaracao';
+  END IF;
 
-Vou rodar as 3 fases em sequência **na próxima execução** (uma fase = um conjunto de edits). Posso parar para você revisar entre fases, ou seguir direto até o fim — me diga ao aprovar se quer revisar fase 1 antes de seguir.
+  IF NEW.status IS DISTINCT FROM OLD.status
+     AND NEW.status NOT IN ('aguardando_documentos', 'documentacao_recebida')
+  THEN
+    RAISE EXCEPTION 'Cliente nao pode definir status %', NEW.status;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+```
+
+A trigger continua a mesma (`BEFORE UPDATE`), só a função muda.
+
+## Por que isso resolve
+
+- `auth.role()` é o helper oficial do Supabase para extrair o `role` do JWT atual e devolve `'service_role'` quando a edge function usa a SERVICE_ROLE_KEY. Mesmo que num ambiente futuro `auth.role()` falhe, o fallback lendo `request.jwt.claims::jsonb->>'role'` cobre.
+- Contador continua passando pelo bypass de `get_user_escritorio_id()` (igual antes — não muda nada para quem já funcionava).
+- Admin global ganha bypass explícito (consistente com as policies que já permitem `has_role(...,'admin')`).
+- Restrições contra cliente continuam idênticas (mesmos campos, mesma whitelist de status).
+
+## Escopo
+
+- 1 migration SQL, só substituindo a função.
+- Zero alteração em código de aplicação, edge functions ou RLS policies.
+- Sem mudança de schema.
