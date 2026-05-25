@@ -205,16 +205,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [clearInvalidSession, loadProfile, resetAuthState]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     clearUserContext();
     await supabase.auth.signOut();
-  };
+  }, []);
 
-  return (
-    <AuthContext.Provider value={{ session, user, userType, profile, loading, signOut }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ session, user, userType, profile, loading, signOut }),
+    [session, user, userType, profile, loading, signOut],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
