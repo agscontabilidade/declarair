@@ -23,6 +23,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 import { useClientePortal } from '@/hooks/useClientePortal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -454,13 +456,21 @@ export default function ClienteDocumentos() {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => setRelacaoModalOpen(true)}
-              className="gap-2 bg-warning text-warning-foreground hover:bg-warning/90 shrink-0 w-full sm:w-auto"
-            >
-              <FileText className="h-4 w-4" />
-              Ver lista de documentos
-            </Button>
+            <Tooltip delayDuration={150}>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => setRelacaoModalOpen(true)}
+                  className="gap-2 bg-warning text-warning-foreground hover:bg-warning/90 shrink-0 w-full sm:w-auto"
+                >
+                  <FileText className="h-4 w-4" />
+                  Ver lista de documentos
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[260px] text-xs">
+                Lista completa por categoria fiscal: rendimentos, deduções de saúde e educação, bens, dívidas e mais.
+              </TooltipContent>
+            </Tooltip>
+
 
           </CardContent>
         </Card>
@@ -473,21 +483,36 @@ export default function ClienteDocumentos() {
             <p className="text-sm text-muted-foreground mt-1">Gerencie e envie seus documentos para o contador</p>
           </div>
           {recebidos.length > 0 && !docsEnviadosAoContador && (
-            <Button
-              onClick={handleFinalize}
-              disabled={sending}
-              className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"
-            >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Enviar ao Contador
-            </Button>
+            <Tooltip delayDuration={150}>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleFinalize}
+                  disabled={sending}
+                  className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"
+                >
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  Enviar ao Contador
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                Finaliza o envio e notifica seu contador. Você ainda pode anexar novos documentos depois, mas o contador será avisado de cada novo upload.
+              </TooltipContent>
+            </Tooltip>
           )}
           {docsEnviadosAoContador && (
-            <Badge className="bg-success/15 text-success py-1.5 px-3 border-success/30 self-start sm:self-auto">
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Enviado ao Contador
-            </Badge>
+            <Tooltip delayDuration={150}>
+              <TooltipTrigger asChild>
+                <Badge className="bg-success/15 text-success py-1.5 px-3 border-success/30 self-start sm:self-auto cursor-help">
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Enviado ao Contador
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                Seus documentos já foram entregues para análise. Novos uploads continuam sendo aceitos e o contador será notificado.
+              </TooltipContent>
+            </Tooltip>
           )}
+
         </div>
 
         {/* Upload Zone */}
@@ -500,9 +525,16 @@ export default function ClienteDocumentos() {
             onDrop={onDrop}
           >
             <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                {uploading ? <Loader2 className="h-6 w-6 text-primary animate-spin" /> : <Upload className="h-6 w-6 text-primary" />}
-              </div>
+              <Tooltip delayDuration={150}>
+                <TooltipTrigger asChild>
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 cursor-help">
+                    {uploading ? <Loader2 className="h-6 w-6 text-primary animate-spin" /> : <Upload className="h-6 w-6 text-primary" />}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[260px] text-xs">
+                  Aceitamos PDF, imagens (JPG/PNG), DOC e XLS. Limite de 20 MB por arquivo.
+                </TooltipContent>
+              </Tooltip>
               <h3 className="text-lg font-semibold">Arraste e solte seus documentos aqui</h3>
               <p className="text-sm text-muted-foreground mt-1 mb-6 max-w-xs">
                 Você pode selecionar vários arquivos de uma vez (PDF, Imagens, DOC, XLS).
@@ -518,6 +550,7 @@ export default function ClienteDocumentos() {
                 Selecionar Arquivos
               </Button>
             </CardContent>
+
           </Card>
         )}
 
@@ -561,17 +594,24 @@ export default function ClienteDocumentos() {
                       </div>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive transition-colors hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <Tooltip delayDuration={150}>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                aria-label="Excluir documento"
+                                className="text-destructive transition-colors hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-xs">Excluir documento</TooltipContent>
+                          </Tooltip>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+
                               <AlertTriangle className="h-5 w-5" />
                               Confirmar Exclusão
                             </AlertDialogTitle>

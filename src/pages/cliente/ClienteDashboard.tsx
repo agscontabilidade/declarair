@@ -14,6 +14,8 @@ import { useChat } from '@/hooks/useChat';
 import { QueryError } from '@/components/ui/QueryError';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 import { useState } from 'react';
 import passo1Img from '@/assets/ecac/passo-1.jpg';
 import passo2Img from '@/assets/ecac/passo-2.jpg';
@@ -257,11 +259,21 @@ export default function ClienteDashboard() {
                       <Progress value={formulario?.status_preenchimento === 'concluido' ? 100 : progressoFormulario} className="h-1.5" />
                     </div>
 
-                    <Badge className={`mt-3 ${
-                      formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success hover:bg-success/20' : 'bg-warning/15 text-warning hover:bg-warning/20'
-                    }`}>
-                      {formulario?.status_preenchimento === 'concluido' ? 'Preenchido' : 'Pendente'}
-                    </Badge>
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <Badge className={`mt-3 cursor-help ${
+                          formulario?.status_preenchimento === 'concluido' ? 'bg-success/15 text-success hover:bg-success/20' : 'bg-warning/15 text-warning hover:bg-warning/20'
+                        }`}>
+                          {formulario?.status_preenchimento === 'concluido' ? 'Preenchido' : 'Pendente'}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                        {formulario?.status_preenchimento === 'concluido'
+                          ? 'Você já enviou seus dados cadastrais ao contador.'
+                          : 'Clique no card para preencher seus dados pessoais, endereço, dependentes e chave Pix.'}
+                      </TooltipContent>
+                    </Tooltip>
+
                   </CardContent>
                 </Card>
               </button>
@@ -287,23 +299,37 @@ export default function ClienteDashboard() {
                       <Progress value={decl?.status_documentos === 'enviado' ? 100 : checklist.length > 0 ? 50 : 0} className="h-1.5" />
                     </div>
 
-                    <Badge className={`mt-3 ${
-                      statusStep === 2 && decl?.status === 'documentacao_recebida'
-                        ? 'bg-destructive/15 text-destructive hover:bg-destructive/20'
-                        : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
-                        ? 'bg-success/15 text-success hover:bg-success/20'
-                        : checklist.length > 0
-                        ? 'bg-primary/15 text-primary hover:bg-primary/20'
-                        : 'bg-warning/15 text-warning hover:bg-warning/20'
-                    }`}>
-                      {statusStep === 2 && decl?.status === 'documentacao_recebida'
-                        ? 'Pendente de Reenvio'
-                        : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
-                        ? 'Enviado ao Contador'
-                        : checklist.length > 0
-                        ? 'Pronto para Enviar'
-                        : 'Pendente'}
-                    </Badge>
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <Badge className={`mt-3 cursor-help ${
+                          statusStep === 2 && decl?.status === 'documentacao_recebida'
+                            ? 'bg-destructive/15 text-destructive hover:bg-destructive/20'
+                            : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                            ? 'bg-success/15 text-success hover:bg-success/20'
+                            : checklist.length > 0
+                            ? 'bg-primary/15 text-primary hover:bg-primary/20'
+                            : 'bg-warning/15 text-warning hover:bg-warning/20'
+                        }`}>
+                          {statusStep === 2 && decl?.status === 'documentacao_recebida'
+                            ? 'Pendente de Reenvio'
+                            : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                            ? 'Enviado ao Contador'
+                            : checklist.length > 0
+                            ? 'Pronto para Enviar'
+                            : 'Pendente'}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                        {statusStep === 2 && decl?.status === 'documentacao_recebida'
+                          ? 'Seu contador solicitou novos documentos. Clique no card para enviar.'
+                          : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                          ? 'Seus documentos já foram entregues ao contador para análise.'
+                          : checklist.length > 0
+                          ? 'Você já anexou arquivos. Clique no card para revisar e finalizar o envio.'
+                          : 'Nenhum documento anexado ainda. Clique no card para começar o upload.'}
+                      </TooltipContent>
+                    </Tooltip>
+
                   </CardContent>
                 </Card>
               </button>
@@ -314,14 +340,33 @@ export default function ClienteDashboard() {
                   <CheckCircle2 className={`h-10 w-10 mb-3 ${declaracao.status === 'transmitida' ? 'text-success' : 'text-muted-foreground/40'}`} />
                   <p className="font-medium">Resultado Final</p>
                   {declaracao.status === 'transmitida' && declaracao.tipo_resultado ? (
-                    <p className={`text-lg font-bold mt-1 ${declaracao.tipo_resultado === 'restituicao' ? 'text-success' : declaracao.tipo_resultado === 'pagamento' ? 'text-destructive' : 'text-muted-foreground'}`}>
-                      {STATUS_LABELS[declaracao.tipo_resultado]}: {declaracao.valor_resultado ? formatCurrency(Number(declaracao.valor_resultado)) : '—'}
-                    </p>
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <p className={`text-lg font-bold mt-1 cursor-help ${declaracao.tipo_resultado === 'restituicao' ? 'text-success' : declaracao.tipo_resultado === 'pagamento' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {STATUS_LABELS[declaracao.tipo_resultado]}: {declaracao.valor_resultado ? formatCurrency(Number(declaracao.valor_resultado)) : '—'}
+                        </p>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                        {declaracao.tipo_resultado === 'restituicao'
+                          ? 'Valor que a Receita Federal vai te devolver. O pagamento segue o calendário oficial de lotes.'
+                          : declaracao.tipo_resultado === 'pagamento'
+                          ? 'Valor de imposto a pagar à Receita. Pode ser parcelado em até 8 cotas pelo aplicativo Meu Imposto de Renda.'
+                          : 'Sem restituição nem imposto a pagar nesta declaração.'}
+                      </TooltipContent>
+                    </Tooltip>
                   ) : (
-                    <p className="text-sm text-muted-foreground mt-1">Aguardando transmissão</p>
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <p className="text-sm text-muted-foreground mt-1 cursor-help">Aguardando transmissão</p>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                        O resultado (restituição ou imposto a pagar) aparece aqui depois que seu contador transmitir a declaração à Receita.
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </CardContent>
               </Card>
+
             </div>
 
 
@@ -330,11 +375,19 @@ export default function ClienteDashboard() {
               <div className="md:flex items-center">
                 <div className="p-6 md:p-8 flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="bg-warning/15 p-2 rounded-lg">
-                      <ShieldCheck className="h-5 w-5 text-warning" />
-                    </div>
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <div className="bg-warning/15 p-2 rounded-lg cursor-help">
+                          <ShieldCheck className="h-5 w-5 text-warning" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[280px] text-xs">
+                        A procuração eletrônica permite que seu contador acompanhe sua declaração em tempo real direto no e-CAC e resolva pendências sem te incomodar.
+                      </TooltipContent>
+                    </Tooltip>
                     <h3 className="text-lg font-bold">Procuração Eletrônica e-CAC</h3>
                   </div>
+
                   <p className="text-muted-foreground text-sm max-w-2xl">
                     Cadastre uma procuração eletrônica na Receita Federal através do portal e-CAC usando sua senha <strong>gov.br</strong>. 
                     Isso permite que seu contador acompanhe sua declaração em tempo real e resolva qualquer pendência de forma muito mais ágil.
@@ -343,12 +396,16 @@ export default function ClienteDashboard() {
                 <div className="px-6 pb-6 md:pb-0 md:pr-8">
                   <Dialog onOpenChange={(open) => !open && setCurrentTutorialStep(0)}>
                     <DialogTrigger asChild>
-                      <Button className="w-full md:w-auto shadow-md bg-warning text-warning-foreground hover:bg-warning/90">
+                      <Button
+                        className="w-full md:w-auto shadow-md bg-warning text-warning-foreground hover:bg-warning/90"
+                        title="Tutorial completo para cadastrar a procuração no portal e-CAC da Receita Federal"
+                      >
                         Ver Passo a Passo
                         <ChevronRight className="h-4 w-4 ml-2" />
                       </Button>
-
                     </DialogTrigger>
+
+
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-2xl">

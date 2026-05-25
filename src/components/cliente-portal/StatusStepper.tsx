@@ -1,11 +1,37 @@
 import { Check, ClipboardList, Upload, FileText, FileCheck, Send } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const STEPS = [
-  { label: 'Dados Cadastrais', shortLabel: 'Dados', icon: ClipboardList },
-  { label: 'Enviar Documentos', shortLabel: 'Docs', icon: Upload },
-  { label: 'Documentação Recebida', shortLabel: 'Recebida', icon: FileText },
-  { label: 'Declaração Pronta', shortLabel: 'Pronta', icon: FileCheck },
-  { label: 'Transmitida', shortLabel: 'Enviada', icon: Send },
+  {
+    label: 'Dados Cadastrais',
+    shortLabel: 'Dados',
+    icon: ClipboardList,
+    description: 'Preencha suas informações pessoais, endereço, dependentes e dados fiscais.',
+  },
+  {
+    label: 'Enviar Documentos',
+    shortLabel: 'Docs',
+    icon: Upload,
+    description: 'Anexe informes de rendimentos, comprovantes de despesas e documentos da Receita.',
+  },
+  {
+    label: 'Documentação Recebida',
+    shortLabel: 'Recebida',
+    icon: FileText,
+    description: 'Seu contador confirmou o recebimento dos documentos e iniciou a análise.',
+  },
+  {
+    label: 'Declaração Pronta',
+    shortLabel: 'Pronta',
+    icon: FileCheck,
+    description: 'Declaração revisada e pronta para transmissão à Receita Federal.',
+  },
+  {
+    label: 'Transmitida',
+    shortLabel: 'Enviada',
+    icon: Send,
+    description: 'Declaração entregue à Receita Federal. Aguarde o processamento da restituição ou guia.',
+  },
 ];
 
 interface StatusStepperProps {
@@ -24,25 +50,47 @@ function formatStamp(iso?: string | null) {
   }
 }
 
+function formatStampFull(iso?: string | null) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
+
 export function StatusStepper({ currentStep, stepTimestamps = [] }: StatusStepperProps) {
   const safeStep = Math.min(Math.max(currentStep, 1), STEPS.length);
   const currentMeta = STEPS[safeStep - 1];
   const CurrentIcon = currentMeta.icon;
   const progressPct = (safeStep / STEPS.length) * 100;
   const currentStamp = formatStamp(stepTimestamps[safeStep - 1]);
+  const currentStampFull = formatStampFull(stepTimestamps[safeStep - 1]);
 
   return (
     <>
       {/* Mobile: compact view (current step + progress bar) */}
       <div className="sm:hidden">
         <div className="flex items-center gap-3 mb-3">
-          <div className="relative shrink-0">
-            <span className="absolute inset-0 rounded-full bg-accent/40 animate-ping" />
-            <div className="relative w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center">
-              <CurrentIcon className="h-5 w-5" />
-            </div>
-          </div>
-
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <div className="relative shrink-0 cursor-help">
+                <span className="absolute inset-0 rounded-full bg-accent/40 animate-ping" />
+                <div className="relative w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center">
+                  <CurrentIcon className="h-5 w-5" />
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[260px] text-xs leading-relaxed">
+              <p className="font-semibold mb-1">{currentMeta.label}</p>
+              <p>{currentMeta.description}</p>
+              {currentStampFull && (
+                <p className="text-[10px] text-muted-foreground mt-1.5">Em andamento desde {currentStampFull}</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
           <div className="min-w-0 flex-1">
             <p className="text-xs text-muted-foreground">
               Etapa {safeStep} de {STEPS.length}
@@ -79,23 +127,36 @@ export function StatusStepper({ currentStep, stepTimestamps = [] }: StatusSteppe
           const isCurrent = stepNum === safeStep;
           const Icon = step.icon;
           const stamp = formatStamp(stepTimestamps[i]);
+          const stampFull = formatStampFull(stepTimestamps[i]);
 
           return (
             <div key={i} className="flex items-start flex-1 last:flex-initial">
               <div className="flex flex-col items-center">
-                <div className="relative">
-                  {isCurrent && (
-                    <span className="absolute inset-0 rounded-full bg-accent/40 animate-ping" />
-                  )}
-                  <div className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                    isCompleted ? 'bg-emerald-500 text-white' :
-                    isCurrent ? 'bg-accent text-white' :
-                    'bg-muted text-muted-foreground'
-                  }`}>
-                    {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
-                  </div>
-                </div>
-
+                <Tooltip delayDuration={150}>
+                  <TooltipTrigger asChild>
+                    <div className="relative cursor-help">
+                      {isCurrent && (
+                        <span className="absolute inset-0 rounded-full bg-accent/40 animate-ping" />
+                      )}
+                      <div className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                        isCompleted ? 'bg-emerald-500 text-white' :
+                        isCurrent ? 'bg-accent text-white' :
+                        'bg-muted text-muted-foreground'
+                      }`}>
+                        {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[260px] text-xs leading-relaxed">
+                    <p className="font-semibold mb-1">{step.label}</p>
+                    <p>{step.description}</p>
+                    {stampFull && (
+                      <p className="text-[10px] text-muted-foreground mt-1.5">
+                        {isCompleted ? 'Concluída em ' : 'Em andamento desde '}{stampFull}
+                      </p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
                 <span className={`text-xs mt-1.5 text-center max-w-[90px] leading-tight ${
                   isCurrent ? 'font-medium text-foreground' : 'text-muted-foreground'
                 }`}>
