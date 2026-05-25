@@ -377,6 +377,8 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
         currentId={viewerCurrentId}
         onClose={() => setViewerCurrentId(null)}
         onChange={setViewerCurrentId}
+        onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
+        togglingLancadoId={toggleLancado.isPending ? toggleLancado.variables?.id ?? null : null}
       />
     </>
   );
