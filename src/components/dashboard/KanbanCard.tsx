@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, MessageSquareText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { STATUS_LABELS, formatDate } from '@/lib/formatters';
@@ -105,11 +105,28 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
         )}
       </div>
 
-      {item.contador && (
-        <div className="flex items-center gap-2 mt-2.5">
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">
-            {item.contador.nome.split(' ')[0]}
-          </Badge>
+      {(item.contador || (item.observacoes_cliente && !item.observacoes_cliente_lida_em)) && (
+        <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+          {item.contador && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">
+              {item.contador.nome.split(' ')[0]}
+            </Badge>
+          )}
+          {item.observacoes_cliente && !item.observacoes_cliente_lida_em && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  className="text-[10px] px-1.5 py-0 font-semibold bg-amber-500 text-white hover:bg-amber-600 gap-1 cursor-help"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MessageSquareText className="h-3 w-3" /> Detalhes
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                O cliente deixou observações para você. Abra a declaração para ler.
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
       )}
     </div>

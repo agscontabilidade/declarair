@@ -21,7 +21,7 @@ export function useDeclaracao(declaracaoId: string | undefined) {
     'arquivo_analise_caixa_url, arquivo_analise_caixa_uploaded_at, declaracao_enviada_em, ' +
     'arquivo_mei_url, arquivo_mei_nome, arquivo_mei_uploaded_at, mei_validado_em, ' +
     'arquivo_darf_url, arquivo_darf_nome, arquivo_darf_uploaded_at, darf_validado_em, ' +
-    'arquivos_outros';
+    'arquivos_outros, observacoes_cliente, observacoes_cliente_atualizado_em, observacoes_cliente_lida_em';
 
 
   const declaracao = useQuery({

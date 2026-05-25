@@ -16,6 +16,7 @@ const RelacaoDocumentosModal = lazy(() =>
     default: m.RelacaoDocumentosModal,
   }))
 );
+import { ObservacoesParaContador } from '@/components/cliente-portal/ObservacoesParaContador';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -568,6 +569,15 @@ export default function ClienteDocumentos() {
             </CardContent>
 
           </Card>
+        )}
+
+        {declaracao && (
+          <ObservacoesParaContador
+            declaracaoId={declaracao.id}
+            escritorioId={declaracao.escritorio_id}
+            clienteNome={profile.nome}
+            initialValue={(declaracao as { observacoes_cliente?: string | null }).observacoes_cliente ?? null}
+          />
         )}
 
         {/* Count info */}
