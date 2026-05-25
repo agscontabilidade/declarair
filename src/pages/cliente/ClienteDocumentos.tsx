@@ -456,11 +456,12 @@ export default function ClienteDocumentos() {
             </div>
             <Button
               onClick={() => setRelacaoModalOpen(true)}
-              className="gap-2 bg-primary hover:bg-primary/90 shrink-0 w-full sm:w-auto"
+              className="gap-2 bg-warning text-warning-foreground hover:bg-warning/90 shrink-0 w-full sm:w-auto"
             >
               <FileText className="h-4 w-4" />
               Ver lista de documentos
             </Button>
+
           </CardContent>
         </Card>
 
@@ -558,40 +559,39 @@ export default function ClienteDocumentos() {
                           Enviado em {new Date(doc.data_recebimento).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
-                      {!docsEnviadosAoContador && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="text-destructive transition-colors hover:bg-destructive/10"
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive transition-colors hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                              <AlertTriangle className="h-5 w-5" />
+                              Confirmar Exclusão
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Você tem certeza que deseja excluir o documento <strong>{doc.arquivo_nome}</strong>? 
+                              Esta ação não pode ser desfeita e seu contador será notificado.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => removeFile(doc.id, doc.arquivo_url, doc.arquivo_nome)}
+                              className="bg-destructive hover:bg-destructive/90"
                             >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-                                <AlertTriangle className="h-5 w-5" />
-                                Confirmar Exclusão
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Você tem certeza que deseja excluir o documento <strong>{doc.arquivo_nome}</strong>? 
-                                Esta ação não pode ser desfeita e seu contador será notificado.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => removeFile(doc.id, doc.arquivo_url, doc.arquivo_nome)}
-                                className="bg-destructive hover:bg-destructive/90"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
                     </div>
                   ))}
                 </div>
