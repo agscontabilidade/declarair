@@ -18,9 +18,13 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  esbuild: mode === "production"
+    ? { drop: ["console", "debugger"] }
+    : undefined,
   build: {
     target: "es2020",
     cssCodeSplit: true,
+    chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -31,6 +35,10 @@ export default defineConfig(({ mode }) => ({
           "charts": ["recharts"],
           "pdf": ["react-pdf", "jspdf", "pdf-lib"],
           "stripe": ["@stripe/stripe-js", "@stripe/react-stripe-js"],
+          "dnd": ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
+          "forms": ["react-hook-form", "@hookform/resolvers", "zod"],
+          "dates": ["date-fns"],
+          "icons": ["lucide-react"],
         },
       },
     },
