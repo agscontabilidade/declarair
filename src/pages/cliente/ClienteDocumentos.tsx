@@ -383,8 +383,16 @@ export default function ClienteDocumentos() {
       toast.success('Arquivo removido');
       queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
-    } catch (err) {
-      toast.error('Erro ao remover arquivo');
+      queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracao.id] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracao.id] });
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracao.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracoes'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracao.id] });
+    } catch (err: any) {
+      console.error('[removeFile] error', err);
+      toast.error(err?.message ? `Erro ao remover: ${err.message}` : 'Erro ao remover arquivo');
     }
   };
 
@@ -593,9 +601,9 @@ export default function ClienteDocumentos() {
                         </p>
                       </div>
                       <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Tooltip delayDuration={150}>
-                            <TooltipTrigger asChild>
+                        <Tooltip delayDuration={150}>
+                          <TooltipTrigger asChild>
+                            <AlertDialogTrigger asChild>
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
@@ -604,10 +612,10 @@ export default function ClienteDocumentos() {
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left" className="text-xs">Excluir documento</TooltipContent>
-                          </Tooltip>
-                        </AlertDialogTrigger>
+                            </AlertDialogTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="text-xs">Excluir documento</TooltipContent>
+                        </Tooltip>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
