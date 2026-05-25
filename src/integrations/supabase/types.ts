@@ -2754,6 +2754,13 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_cliente_invite_token: {
+        Args: { _cliente_id: string }
+        Returns: {
+          token_convite: string
+          token_convite_expira_em: string
+        }[]
+      }
       get_clientes_for_user: {
         Args: never
         Returns: {
