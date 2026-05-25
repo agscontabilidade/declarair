@@ -593,9 +593,9 @@ export default function ClienteDocumentos() {
                         </p>
                       </div>
                       <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Tooltip delayDuration={150}>
-                            <TooltipTrigger asChild>
+                        <Tooltip delayDuration={150}>
+                          <TooltipTrigger asChild>
+                            <AlertDialogTrigger asChild>
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
@@ -604,10 +604,10 @@ export default function ClienteDocumentos() {
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left" className="text-xs">Excluir documento</TooltipContent>
-                          </Tooltip>
-                        </AlertDialogTrigger>
+                            </AlertDialogTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="text-xs">Excluir documento</TooltipContent>
+                        </Tooltip>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
