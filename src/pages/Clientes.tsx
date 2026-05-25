@@ -32,7 +32,7 @@ export default function Clientes() {
   const [uploadDocs, setUploadDocs] = useState<{ declaracaoId: string; nome: string } | null>(null);
   const [conviteCtx, setConviteCtx] = useState<EnviarConviteClienteCtx | null>(null);
   const { criar: criarCobranca } = useCobrancas('todos');
-  const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente, isDono } = usePermissoes();
+  const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente } = usePermissoes();
   const { toast } = useToast();
 
   if (!podeVerClientes) {
@@ -109,6 +109,18 @@ export default function Clientes() {
               onEdit={(c) => setEditCliente(c)}
               onDelete={handleDelete}
               onCobranca={(c) => setCobrancaCliente(c)}
+              onConvite={(c) => {
+                const tokenValido = !!c.token_convite_expira_em && new Date(c.token_convite_expira_em) > new Date();
+                const podeReusar = c.status_onboarding === 'convite_enviado' && tokenValido && !!c.token_convite;
+                setConviteCtx({
+                  clienteId: c.id,
+                  nome: c.nome,
+                  email: c.email ?? null,
+                  telefone: c.telefone ?? null,
+                  mode: podeReusar ? 'reusar' : 'novo',
+                  tokenExistente: podeReusar ? c.token_convite : null,
+                });
+              }}
               canEdit={podeEditarClientes}
               canDelete={podeExcluirCliente}
               clientesComCobranca={clientesComCobranca}
