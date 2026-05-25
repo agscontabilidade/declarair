@@ -108,22 +108,28 @@ export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, o
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
                   {podeEditarCobrancas && (
-                    <Button size="icon" variant="ghost" className={cn("h-8 w-8", c.status === 'pago' ? "text-amber-600" : "text-emerald-600")} onClick={() => onMarcarPago(c.id)} title={c.status === 'pago' ? "Estornar (voltar para pendente)" : "Marcar como pago"}>
+                    <Button
+                      size="icon"
+                      variant={c.status === 'pago' ? 'iconWarning' : 'iconPositive'}
+                      className="h-8 w-8"
+                      onClick={() => onMarcarPago(c.id)}
+                      title={c.status === 'pago' ? "Estornar (voltar para pendente)" : "Marcar como pago"}
+                    >
                       {c.status === 'pago' ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                     </Button>
                   )}
                   {c.status !== 'cancelado' && podeEditarCobrancas && (
                     <>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEditar(c)} title="Editar">
+                      <Button size="icon" variant="iconAction" className="h-8 w-8" onClick={() => onEditar(c)} title="Editar">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-amber-600" onClick={() => onCancelar(c.id)} title="Cancelar">
+                      <Button size="icon" variant="iconWarning" className="h-8 w-8" onClick={() => onCancelar(c.id)} title="Cancelar">
                         <X className="h-4 w-4" />
                       </Button>
                     </>
                   )}
                   {c.status === 'cancelado' && podeExcluirCobranca && (
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onExcluir(c.id)} title="Excluir">
+                    <Button size="icon" variant="iconDestructive" className="h-8 w-8" onClick={() => onExcluir(c.id)} title="Excluir">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}

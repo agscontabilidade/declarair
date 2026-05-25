@@ -222,7 +222,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
                 }
               }}
               title="Remover"
-              className="text-destructive hover:text-destructive"
+              className="text-destructive hover-action-neg"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>

@@ -69,7 +69,8 @@ export function DeclaracoesListView({ items, isLoading }: { items: DeclaracaoKan
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Badge
-                            className="text-[10px] px-1.5 py-0 font-semibold bg-amber-500 text-white hover:bg-amber-600 gap-1 cursor-help"
+                            variant="warning"
+                            className="text-[10px] px-1.5 py-0 gap-1 cursor-help"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MessageSquareText className="h-3 w-3" /> Detalhes
@@ -95,7 +96,7 @@ export function DeclaracoesListView({ items, isLoading }: { items: DeclaracaoKan
                   {formatDate(item.ultima_atualizacao_status)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/declaracoes/${item.id}`); }}>
+                  <Button size="icon" variant="iconAction" aria-label="Ver declaração" onClick={(e) => { e.stopPropagation(); navigate(`/declaracoes/${item.id}`); }}>
                     <Eye className="h-4 w-4" />
                   </Button>
                 </TableCell>

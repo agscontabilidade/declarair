@@ -46,12 +46,12 @@ function CopyCpfButton({ cpf }: { cpf: string }) {
         <Button
           type="button"
           size="icon"
-          variant="ghost"
-          className="h-5 w-5 text-muted-foreground hover:text-emerald-600 hover:outline hover:outline-1 hover:outline-emerald-500 hover:bg-transparent"
+          variant="iconPositive"
+          className="h-5 w-5"
           aria-label="Copiar CPF (sem pontos)"
           onClick={handleCopy}
         >
-          {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">
@@ -85,13 +85,13 @@ function getConviteState(c: ClienteRow): ConviteState {
   const hasAuth = !!c.auth_user_id;
   const tokenValido = !!c.token_convite_expira_em && new Date(c.token_convite_expira_em) > new Date();
   if (hasAuth) {
-    return { Icon: CheckCircle2, tooltip: 'Portal ativo — reenviar acesso', className: 'text-emerald-600/70' };
+    return { Icon: CheckCircle2, tooltip: 'Portal ativo — reenviar acesso', className: 'text-emerald-600 dark:text-emerald-400' };
   }
   if (c.status_onboarding === 'convite_enviado') {
     if (tokenValido) {
-      return { Icon: Link2, tooltip: 'Convite pendente — reenviar ou copiar link', className: 'text-primary' };
+      return { Icon: Link2, tooltip: 'Convite pendente — reenviar ou copiar link', className: 'text-sky-600 dark:text-sky-400' };
     }
-    return { Icon: RefreshCw, tooltip: 'Convite expirado — gerar novo', className: 'text-amber-600' };
+    return { Icon: RefreshCw, tooltip: 'Convite expirado — gerar novo', className: 'text-amber-600 dark:text-amber-400' };
   }
   return { Icon: Send, tooltip: 'Enviar convite de acesso', className: 'text-muted-foreground' };
 }
@@ -161,7 +161,8 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Badge
-                                className="text-[10px] px-1.5 py-0 font-semibold bg-amber-500 text-white hover:bg-amber-600 gap-1 cursor-help"
+                                variant="warning"
+                                className="text-[10px] px-1.5 py-0 gap-1 cursor-help"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MessageSquareText className="h-3 w-3" /> Detalhes
@@ -177,7 +178,7 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                     <TableCell className="hidden sm:table-cell tabular-nums">{formatTelefone(c.telefone)}</TableCell>
                     <TableCell>
                       {procAtiva ? (
-                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Ativa</Badge>
+                        <Badge variant="success">Ativa</Badge>
                       ) : (
                         <Badge variant="secondary">Pendente</Badge>
                       )}
@@ -185,7 +186,7 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {clientesComCobranca?.has(c.id) ? (
                         <Link to={`/cobrancas?cliente=${c.id}`} title="Ver cobranças deste cliente">
-                          <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 cursor-pointer">Gerada</Badge>
+                          <Badge variant="success" className="cursor-pointer">Gerada</Badge>
                         </Link>
                       ) : (
                         <Badge variant="secondary">Não gerada</Badge>
@@ -196,12 +197,12 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                         {onCobranca && (
                           <Button
                             size="icon"
-                            variant="ghost"
+                            variant="iconPositive"
                             aria-label="Nova cobrança"
                             title="Criar cobrança"
                             onClick={(e) => { e.stopPropagation(); onCobranca(c); }}
                           >
-                            <DollarSign className="h-4 w-4 text-emerald-600" />
+                            <DollarSign className="h-4 w-4" />
                           </Button>
                         )}
                         {onConvite && (() => {
@@ -211,7 +212,7 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                               <TooltipTrigger asChild>
                                 <Button
                                   size="icon"
-                                  variant="ghost"
+                                  variant="iconAction"
                                   aria-label={tooltip}
                                   onClick={(e) => { e.stopPropagation(); onConvite(c); }}
                                 >
@@ -223,21 +224,21 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                           );
                         })()}
                         {tel && (
-                          <Button size="icon" variant="ghost" asChild aria-label="Abrir WhatsApp">
+                          <Button size="icon" variant="iconInfo" asChild aria-label="Abrir WhatsApp">
                             <a
                               href={`https://wa.me/55${tel}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <WhatsAppIcon className="h-4 w-4 text-emerald-600" />
+                              <WhatsAppIcon className="h-4 w-4" />
                             </a>
                           </Button>
                         )}
                         {canEdit && (
                           <Button
                             size="icon"
-                            variant="ghost"
+                            variant="iconAction"
                             aria-label="Editar cliente"
                             onClick={(e) => { e.stopPropagation(); onEdit(c); }}
                           >
@@ -249,11 +250,11 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                             <AlertDialogTrigger asChild>
                               <Button
                                 size="icon"
-                                variant="ghost"
+                                variant="iconDestructive"
                                 aria-label="Excluir cliente"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent onClick={(e) => e.stopPropagation()}>

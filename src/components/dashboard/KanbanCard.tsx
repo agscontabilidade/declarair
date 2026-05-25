@@ -116,7 +116,8 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Badge
-                  className="text-[10px] px-1.5 py-0 font-semibold bg-amber-500 text-white hover:bg-amber-600 gap-1 cursor-help"
+                  variant="warning"
+                  className="text-[10px] px-1.5 py-0 gap-1 cursor-help"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MessageSquareText className="h-3 w-3" /> Detalhes

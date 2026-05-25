@@ -114,6 +114,34 @@
   }
 }
 
+/* ═══ Hover semantic system ═══
+ * Hovers que contrastam: mudam superfície E foreground.
+ * Usar em qualquer botão ícone ou elemento clicável com semântica de ação.
+ * Cada token funciona em light e dark theme.
+ */
+@layer components {
+  /* Ação neutra (editar, ver, navegar) */
+  .hover-action {
+    @apply transition-colors hover:bg-muted hover:text-foreground;
+  }
+  /* Ação positiva (cobrança, salvar, confirmar, copiar) */
+  .hover-action-pos {
+    @apply transition-colors hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300;
+  }
+  /* Alerta / pendência */
+  .hover-action-warn {
+    @apply transition-colors hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/40 dark:hover:text-amber-300;
+  }
+  /* Destrutiva (excluir, remover) */
+  .hover-action-neg {
+    @apply transition-colors hover:bg-destructive/10 hover:text-destructive;
+  }
+  /* Informativa (WhatsApp, link externo, ajuda) */
+  .hover-action-info {
+    @apply transition-colors hover:bg-sky-50 hover:text-sky-700 dark:hover:bg-sky-950/40 dark:hover:text-sky-300;
+  }
+}
+
 .font-display {
   font-family: 'Poppins', sans-serif;
 }
