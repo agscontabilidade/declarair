@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAnoBaseAtual } from '@/lib/constants';
+import { calcularProgressoFormulario } from '@/lib/cliente-portal-progress';
 
 export function useClientePortal() {
   const { profile } = useAuth();
@@ -69,6 +70,22 @@ export function useClientePortal() {
     enabled: !!declaracao?.id,
   });
 
+  const { data: atividades = [] } = useQuery({
+    queryKey: ['cliente-atividades', declaracao?.id],
+    queryFn: async () => {
+      if (!declaracao?.id) return [];
+      const { data, error } = await supabase
+        .from('declaracao_atividades')
+        .select('tipo, descricao, created_at')
+        .eq('declaracao_id', declaracao.id)
+        .eq('tipo', 'status_change')
+        .order('created_at', { ascending: true });
+      if (error) return [];
+      return data || [];
+    },
+    enabled: !!declaracao?.id,
+  });
+
   const statusStep = (() => {
     if (!declaracao) return 0;
     
@@ -99,8 +116,37 @@ export function useClientePortal() {
 
   const pendentes = checklist.filter((c: { status: string }) => c.status === 'pendente');
 
+  const progressoFormulario = calcularProgressoFormulario(formulario);
+
+  // Timestamps por etapa (1-5)
+  const lastActivityFor = (statusName: string): string | null => {
+    const matches = atividades.filter((a: { descricao: string | null }) =>
+      (a.descricao || '').includes(`para ${statusName}`)
+    );
+    if (matches.length === 0) return null;
+    return matches[matches.length - 1].created_at;
+  };
+
+  const firstDocRecebido = (() => {
+    const recebidos = checklist
+      .filter((c: { status: string; data_recebimento?: string | null }) => c.status === 'recebido' && c.data_recebimento)
+      .map((c: { data_recebimento: string }) => c.data_recebimento)
+      .sort();
+    return recebidos[0] || null;
+  })();
+
+  const stepTimestamps: (string | null)[] = [
+    formulario?.status_preenchimento === 'concluido' ? (formulario.updated_at || null) : null,
+    firstDocRecebido,
+    lastActivityFor('documentacao_recebida'),
+    lastActivityFor('declaracao_pronta'),
+    declaracao?.data_transmissao || null,
+  ];
+
   return {
     declaracao, checklist, formulario, statusStep, pendentes,
+    progressoFormulario,
+    stepTimestamps,
     isLoading: loadingDeclaracao || loadingChecklist || loadingFormulario,
     isError: errorDeclaracao,
     error: declError,
