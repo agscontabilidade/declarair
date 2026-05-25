@@ -1,46 +1,66 @@
-## Problema identificado
+## Diagnóstico
 
-Na aba **Configurações → Marca & Whitelabel** existe um bug que faz parecer que as configurações "não persistem" ao salvar:
+Auditei o fluxo do portal do cliente em `/cliente/documentos` (`src/pages/cliente/ClienteDocumentos.tsx`, `useClientePortal.ts`) cruzando com as políticas RLS no banco. O toast vermelho da tela enviada — **"Não foi possível preparar sua declaração. Contate seu contador."** — vem da linha 110 do `ClienteDocumentos.tsx`, que dispara quando o `INSERT` em `declaracoes` falha.
 
-O hook `usePersistedForm` (usado em `WhitelabelTab`) grava em `localStorage` a CADA mudança do form, inclusive no primeiro render com os valores **default** (`#1E3A5F`, `#F8FAFC`, etc.). Quando o `useQuery` finalmente retorna os dados reais do escritório, o `useEffect` verifica `localStorage` — encontra os defaults já gravados — e **não reseeda** com os valores do banco. Resultado: o usuário vê os defaults mesmo tendo salvo cores/textos diferentes, dando a impressão de que nada foi persistido.
+Encontrei **três bloqueios reais de RLS no lado do cliente** e alguns pontos secundários.
 
-Os dados **são** salvos corretamente no banco (`escritorios.cor_primaria`, `cor_fundo_portal`, `nome_portal`, `texto_boas_vindas`, `whitelabel_ativo`, `logo_url`) — o problema é só na hidratação do formulário.
+### 1. Cliente não consegue criar declaração (CRÍTICO — causa do erro na tela)
 
-Além disso, hoje não existe forma de voltar ao padrão do sistema sem editar campo por campo.
+Política `Inserir declaracoes no escritorio` só permite quando `escritorio_id = get_user_escritorio_id()`. Essa função busca em `public.usuarios` — clientes não estão lá, então retorna `NULL` e o `INSERT` é bloqueado. Não existe política equivalente para o cliente.
 
-## Mudanças propostas (apenas frontend, escopo restrito)
+Quando o cliente entra em `/cliente/documentos` antes do contador ter criado a declaração do ano corrente (ou se só existe declaração de ano anterior), o código tenta auto-criar e leva o erro. É exatamente o caso desse cliente.
 
-Arquivo único: `src/components/configuracoes/WhitelabelTab.tsx`
+### 2. Cliente não consegue atualizar status da própria declaração (CRÍTICO — silencioso)
 
-1. **Remover o `usePersistedForm`** desta aba e substituir por `useState` simples seedado a partir do `escritorio` retornado pelo `useQuery` (via `useEffect` que dispara quando `escritorio?.id` muda).
-   - Mantém rascunho local enquanto edita, mas sempre reflete o banco após save/reload.
-   - Limpa também a chave antiga `form_persistence_whitelabel_<escritorioId>` do localStorage uma vez na montagem (cleanup de dados velhos para usuários que já visitaram).
+Política `Atualizar declaracoes do escritorio` exige `escritorio_id = get_user_escritorio_id()`. Os `UPDATE` em `ClienteDocumentos.tsx` (linhas 224 e 270) que mudam `status` para `documentacao_recebida` e `status_documentos` para `enviado` rodam, mas o RLS filtra silenciosamente: zero linhas afetadas, sem erro. Resultado: contador nunca vê "documentos enviados", kanban não move, sininho não toca.
 
-2. **Corrigir invalidação da query** após salvar/upload de logo: usar `queryKey: ['escritorio-brand', escritorioId]` (hoje está sem o id, funciona por prefixo mas é frágil).
+### 3. Cliente não consegue inserir notificação para o contador (CRÍTICO — silencioso)
 
-3. **Adicionar botão "Restaurar padrão do sistema"** ao lado do botão "Salvar":
-   - Abre `AlertDialog` de confirmação ("Isto vai remover suas cores, nome do portal, texto de boas-vindas e desativar o whitelabel. O logo é mantido.").
-   - Ao confirmar, faz `UPDATE escritorios SET cor_primaria=NULL, cor_fundo_portal=NULL, nome_portal=NULL, texto_boas_vindas=NULL, whitelabel_ativo=false WHERE id=escritorioId`.
-   - Reseta o form local para os defaults visuais (`#1E3A5F`, `#F8FAFC`, textos vazios, switch off).
-   - Invalida `['escritorio-brand', escritorioId]`.
-   - Disponível apenas para `isDono`.
+Política `Usuarios inserem notificacoes no escritorio` exige escritório do usuário. Os `INSERT` em `notificacoes` (linhas 282 e 316) feitos pelo cliente são bloqueados. Erro é ignorado (`await` sem checagem). Contador nunca recebe notificação de envio nem de remoção de documento.
 
-4. **Adicionar botão "Remover logo"** (somente quando existe `escritorio.logo_url`):
-   - Confirmação simples.
-   - `UPDATE escritorios SET logo_url=NULL WHERE id=escritorioId`.
-   - Não tenta apagar o arquivo do storage (mantém compatibilidade, sem mexer em RLS/storage).
-   - Apenas para `isDono`.
+### 4. Pontos secundários (não bloqueiam, mas vale corrigir junto)
 
-5. **Preview**: continua refletindo os valores atuais do form (já funciona).
+- **Trigger `enforce_declaracao_limit`**: se o escritório atingiu o limite do plano, qualquer tentativa do cliente criar declaração levanta exceção. Hoje cai no toast genérico; deveria ter mensagem mais clara. (Confirmar se é o caso desse cliente — checar limite vs uso no escritório dele.)
+- **Categoria `documento_enviado`** (linha 204) não existe em `CATEGORIA_META` nem em `LEGACY_MAP`. Não bloqueia, mas o documento pode renderizar sem ícone/label correto.
+- **`removeFile`** (linha 299) usa `declaracao?.id` em `.eq` sem checar — se `declaracao` for `null`, o filtro vira `is null` e pode afetar outras linhas que o RLS deixe passar. Risco baixo, mas vale guardar.
 
-## Fora do escopo (não vou mexer)
+---
 
-- Backend, RLS, schema, migrations.
-- `usePersistedForm` em outros lugares do projeto.
-- Como `ClienteLayout` e `CadastroCliente` consomem o branding (já leem corretamente do banco com fallback para defaults).
-- Bucket `logos-escritorios` e qualquer policy de storage.
-- Lógica de billing / addon de whitelabel.
+## Plano de correção (escopo estrito)
+
+### A. Migração SQL — políticas RLS faltantes para o cliente
+
+1. **`declaracoes` INSERT para cliente**: nova policy `Cliente pode criar sua declaracao` permitindo `cliente_id = get_user_cliente_id()`.
+2. **`declaracoes` UPDATE para cliente**: nova policy `Cliente pode atualizar sua declaracao` (USING e WITH CHECK = `cliente_id = get_user_cliente_id()`).  
+   Restringir colunas via trigger BEFORE UPDATE: cliente só pode alterar `status`, `status_documentos`, `ultima_atualizacao_status` (preserva `valor_resultado`, `numero_recibo`, `contador_id`, `escritorio_id` etc.).
+3. **`notificacoes` INSERT para cliente**: nova policy `Cliente pode notificar seu escritorio` permitindo inserir quando `escritorio_id` for o escritório do cliente logado (via subquery em `clientes` por `get_user_cliente_id()`).
+
+### B. Mensagem de erro do limite de declarações
+
+Ajustar `enforce_declaracao_limit` para retornar mensagem mais explícita ("Limite do plano do escritório atingido — peça ao contador para liberar mais uma declaração."), e tratar essa mensagem em `ClienteDocumentos.tsx` para mostrar toast amigável.
+
+### C. Ajustes mínimos no `ClienteDocumentos.tsx`
+
+- Após cada `update`/`insert` que afeta o contador, ler o retorno (`.select()`) e logar erro se zero linhas — para não falhar silenciosamente nunca mais.
+- Guardar `removeFile` contra `declaracao` nulo.
+- Registrar a categoria `documento_enviado` em `CATEGORIA_META` (label "Documento Enviado", ícone `FileText`) para render consistente.
+
+### D. Verificação pós-fix
+
+1. Rodar como o cliente afetado (ou simular): abrir `/cliente/documentos`, anexar PDF de teste, confirmar:
+   - Declaração criada para o ano corrente.
+   - `status` muda para `documentacao_recebida`.
+   - Notificação aparece para o contador.
+2. Conferir limite atual do escritório do cliente (`SELECT limite_declaracoes, declaracoes_utilizadas FROM escritorios WHERE id=...`) para descartar bloqueio por plano.
+
+---
+
+## Fora de escopo
+
+- Não vou mexer em billing, formulário IR, kanban, layout, autenticação, storage policies (bucket `documentos-clientes` já funciona — uploads sobem mesmo quando o resto falha).
+- Não vou refatorar o hook ou os caches do React Query.
+- Sem schema novo além das policies + 1 trigger de coluna restritiva.
 
 ## Risco
 
-Muito baixo. Mudança isolada em um único componente de UI, mesma tabela e mesmos campos já gravados/lidos hoje, sem alteração de contratos. Não afeta clientes em produção que já têm branding salvo — pelo contrário, eles passarão a ver corretamente o que está salvo.
+Baixo. As policies adicionam acesso onde hoje não existe (não removem nem afrouxam regras do contador). O trigger de colunas protege contra cliente alterar campos sensíveis. Todas as mudanças são aditivas e reversíveis.
