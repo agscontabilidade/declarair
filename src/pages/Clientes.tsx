@@ -95,13 +95,23 @@ export default function Clientes() {
           </div>
         </div>
 
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome ou CPF..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9"
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-full sm:max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou CPF..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <ClientesFilters
+            ordenacao={ordenacao}
+            onOrdenacaoChange={setOrdenacao}
+            filtroProcuracao={filtroProcuracao}
+            onFiltroProcuracaoChange={setFiltroProcuracao}
+            filtroCobranca={filtroCobranca}
+            onFiltroCobrancaChange={setFiltroCobranca}
           />
         </div>
 
