@@ -388,18 +388,15 @@ export default function ClienteDashboard() {
                 <div className="px-6 pb-6 md:pb-0 md:pr-8">
                   <Dialog onOpenChange={(open) => !open && setCurrentTutorialStep(0)}>
                     <DialogTrigger asChild>
-                      <Tooltip delayDuration={150}>
-                        <TooltipTrigger asChild>
-                          <Button className="w-full md:w-auto shadow-md bg-warning text-warning-foreground hover:bg-warning/90">
-                            Ver Passo a Passo
-                            <ChevronRight className="h-4 w-4 ml-2" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-[260px] text-xs">
-                          Tutorial completo para cadastrar a procuração no portal e-CAC da Receita Federal.
-                        </TooltipContent>
-                      </Tooltip>
+                      <Button
+                        className="w-full md:w-auto shadow-md bg-warning text-warning-foreground hover:bg-warning/90"
+                        title="Tutorial completo para cadastrar a procuração no portal e-CAC da Receita Federal"
+                      >
+                        Ver Passo a Passo
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Button>
                     </DialogTrigger>
+
 
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
