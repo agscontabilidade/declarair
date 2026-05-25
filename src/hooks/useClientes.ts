@@ -7,6 +7,10 @@ import type { ClienteWithContador } from '@/types/domain';
 
 const PAGE_SIZE = 20;
 
+export type OrdenacaoClientes = 'alfabetica_az' | 'alfabetica_za' | 'cadastro_recente' | 'cadastro_antigo';
+export type FiltroProcuracao = 'todas' | 'ativa' | 'pendente';
+export type FiltroCobranca = 'todas' | 'gerada' | 'nao_gerada';
+
 export function useClientes() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
@@ -15,37 +19,18 @@ export function useClientes() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(0);
+  const [ordenacao, setOrdenacaoState] = useState<OrdenacaoClientes>('alfabetica_az');
+  const [filtroProcuracao, setFiltroProcuracaoState] = useState<FiltroProcuracao>('todas');
+  const [filtroCobranca, setFiltroCobrancaState] = useState<FiltroCobranca>('todas');
+
+  const setOrdenacao = (v: OrdenacaoClientes) => { setOrdenacaoState(v); setPage(0); };
+  const setFiltroProcuracao = (v: FiltroProcuracao) => { setFiltroProcuracaoState(v); setPage(0); };
+  const setFiltroCobranca = (v: FiltroCobranca) => { setFiltroCobrancaState(v); setPage(0); };
 
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedSearch(search); setPage(0); }, 400);
     return () => clearTimeout(t);
   }, [search]);
-
-  const query = useQuery({
-    queryKey: ['clientes', escritorioId, debouncedSearch, page],
-    queryFn: async () => {
-      if (!escritorioId) return { data: [] as ClienteWithContador[], total: 0 };
-      let q = supabase
-        .from('clientes')
-        .select('id, escritorio_id, contador_responsavel_id, nome, cpf, email, telefone, data_nascimento, status_onboarding, created_at, auth_user_id, conta_azul_id, procuracao_ecac, procuracao_ecac_validade, usuarios!clientes_contador_responsavel_id_fkey(nome)', { count: 'exact' })
-        .eq('escritorio_id', escritorioId)
-        .order('nome');
-
-      if (debouncedSearch) {
-        q = q.or(`nome.ilike.%${debouncedSearch}%,cpf.ilike.%${debouncedSearch}%`);
-      }
-
-      const from = page * PAGE_SIZE;
-      q = q.range(from, from + PAGE_SIZE - 1);
-
-      const { data, count, error } = await q;
-      if (error) throw error;
-      return { data: ((data as unknown) as ClienteWithContador[]) || [], total: count ?? 0 };
-    },
-    enabled: !!escritorioId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    placeholderData: keepPreviousData,
-  });
 
   const cobrancasPorCliente = useQuery({
     queryKey: ['cobrancas-por-cliente', escritorioId],
@@ -60,6 +45,63 @@ export function useClientes() {
     },
     enabled: !!escritorioId,
     staleTime: 1000 * 60 * 2,
+  });
+
+  const cobrancasSet = cobrancasPorCliente.data;
+  const cobrancasReady = cobrancasPorCliente.isSuccess;
+
+  const query = useQuery({
+    queryKey: [
+      'clientes', escritorioId, debouncedSearch, page,
+      ordenacao, filtroProcuracao, filtroCobranca,
+      filtroCobranca !== 'todas' ? Array.from(cobrancasSet ?? []).sort().join(',') : null,
+    ],
+    queryFn: async () => {
+      if (!escritorioId) return { data: [] as ClienteWithContador[], total: 0 };
+
+      let q = supabase
+        .from('clientes')
+        .select('id, escritorio_id, contador_responsavel_id, nome, cpf, email, telefone, data_nascimento, status_onboarding, created_at, auth_user_id, conta_azul_id, procuracao_ecac, procuracao_ecac_validade, usuarios!clientes_contador_responsavel_id_fkey(nome)', { count: 'exact' })
+        .eq('escritorio_id', escritorioId);
+
+      // Ordenação
+      switch (ordenacao) {
+        case 'alfabetica_az': q = q.order('nome', { ascending: true }); break;
+        case 'alfabetica_za': q = q.order('nome', { ascending: false }); break;
+        case 'cadastro_recente': q = q.order('created_at', { ascending: false }); break;
+        case 'cadastro_antigo': q = q.order('created_at', { ascending: true }); break;
+      }
+
+      // Filtro procuração e-CAC
+      if (filtroProcuracao === 'ativa') q = q.eq('procuracao_ecac', true);
+      else if (filtroProcuracao === 'pendente') q = q.eq('procuracao_ecac', false);
+
+      // Filtro cobrança (depende do set carregado)
+      if (filtroCobranca === 'gerada') {
+        const ids = Array.from(cobrancasSet ?? []);
+        if (ids.length === 0) return { data: [], total: 0 };
+        q = q.in('id', ids);
+      } else if (filtroCobranca === 'nao_gerada') {
+        const ids = Array.from(cobrancasSet ?? []);
+        if (ids.length > 0) {
+          q = q.not('id', 'in', `(${ids.join(',')})`);
+        }
+      }
+
+      if (debouncedSearch) {
+        q = q.or(`nome.ilike.%${debouncedSearch}%,cpf.ilike.%${debouncedSearch}%`);
+      }
+
+      const from = page * PAGE_SIZE;
+      q = q.range(from, from + PAGE_SIZE - 1);
+
+      const { data, count, error } = await q;
+      if (error) throw error;
+      return { data: ((data as unknown) as ClienteWithContador[]) || [], total: count ?? 0 };
+    },
+    enabled: !!escritorioId && (filtroCobranca === 'todas' || cobrancasReady),
+    staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
   });
 
   const clientesComObservacao = useQuery({
@@ -91,7 +133,7 @@ export function useClientes() {
       return data || [];
     },
     enabled: !!escritorioId,
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 10,
   });
 
   const createCliente = useMutation({
@@ -104,7 +146,6 @@ export function useClientes() {
         .single();
       if (error) throw error;
 
-      // Auto-create declaration for current year
       const anoBase = new Date().getFullYear();
       const { data: newDecl } = await supabase
         .from('declaracoes')
@@ -165,6 +206,9 @@ export function useClientes() {
     search, setSearch,
     page, setPage,
     totalPages,
+    ordenacao, setOrdenacao,
+    filtroProcuracao, setFiltroProcuracao,
+    filtroCobranca, setFiltroCobranca,
     contadores: contadores.data ?? [],
     clientesComCobranca: cobrancasPorCliente.data ?? new Set<string>(),
     clientesComObservacao: clientesComObservacao.data ?? new Set<string>(),
