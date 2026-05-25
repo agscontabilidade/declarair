@@ -123,7 +123,7 @@ export default function Login() {
               <Button type="submit" variant="gradient" className="w-full h-11" disabled={isSubmitting || loading}>
                 {isSubmitting ? 'Entrando...' : 'Entrar'}
               </Button>
-              <Link to="/recuperar-senha" className="block text-center">
+              <Link to="/recuperar-senha?origem=contador" className="block text-center">
                 <span className="text-sm text-muted-foreground hover:text-primary transition-colors">Esqueceu sua senha?</span>
               </Link>
               <div className="text-center pt-2 border-t">

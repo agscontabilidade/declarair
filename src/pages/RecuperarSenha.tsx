@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { PORTAL_BASE_URL } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,9 @@ import logoIcon from '@/assets/logo-icon.png';
 import { getErrorMessage } from '@/lib/errors';
 
 export default function RecuperarSenha() {
+  const [searchParams] = useSearchParams();
+  const origem = searchParams.get('origem') === 'cliente' ? 'cliente' : 'contador';
+  const backTo = origem === 'cliente' ? '/cliente/login' : '/login';
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [enviado, setEnviado] = useState(false);
@@ -21,7 +24,7 @@ export default function RecuperarSenha() {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${PORTAL_BASE_URL}/redefinir-senha`,
+        redirectTo: `${PORTAL_BASE_URL}/redefinir-senha?origem=${origem}`,
       });
       if (error) throw error;
       setEnviado(true);
