@@ -13,6 +13,7 @@ import { DocumentosDeclaracaoModal } from '@/components/declaracoes/DocumentosDe
 import { EnviarConviteClienteDialog, type EnviarConviteClienteCtx } from '@/components/clientes/EnviarConviteClienteDialog';
 import { useCobrancas } from '@/hooks/useCobrancas';
 import { QueryError } from '@/components/ui/QueryError';
+import { ClientesFilters } from '@/components/clientes/ClientesFilters';
 import type { ClienteWithContador } from '@/types/domain';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -25,6 +26,9 @@ export default function Clientes() {
     clientes, isLoading, isError, error, refetch,
     search, setSearch, page, setPage, totalPages,
     contadores, createCliente, updateCliente, deleteCliente, clientesComCobranca, clientesComObservacao,
+    ordenacao, setOrdenacao,
+    filtroProcuracao, setFiltroProcuracao,
+    filtroCobranca, setFiltroCobranca,
   } = useClientes();
   const [createOpen, setCreateOpen] = useState(false);
   const [viewCliente, setViewCliente] = useState<ClienteRow | null>(null);
@@ -91,13 +95,23 @@ export default function Clientes() {
           </div>
         </div>
 
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome ou CPF..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9"
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-full sm:max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou CPF..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <ClientesFilters
+            ordenacao={ordenacao}
+            onOrdenacaoChange={setOrdenacao}
+            filtroProcuracao={filtroProcuracao}
+            onFiltroProcuracaoChange={setFiltroProcuracao}
+            filtroCobranca={filtroCobranca}
+            onFiltroCobrancaChange={setFiltroCobranca}
           />
         </div>
 
