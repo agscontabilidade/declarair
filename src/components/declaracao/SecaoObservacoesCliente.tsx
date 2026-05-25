@@ -43,6 +43,7 @@ export function SecaoObservacoesCliente({
       setLocalLida(agora);
       queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-declaracoes'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista', escritorioId] });
       queryClient.invalidateQueries({ queryKey: ['clientes', escritorioId] });
       queryClient.invalidateQueries({ queryKey: ['clientes-com-observacao', escritorioId] });
     } catch (err) {
