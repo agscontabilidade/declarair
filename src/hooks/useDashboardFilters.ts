@@ -1,10 +1,13 @@
 import { useState, useMemo, useCallback } from 'react';
 
+export type OrdenacaoDashboard = 'cadastro_recente' | 'cadastro_antigo' | 'alfabetica_az' | 'alfabetica_za';
+
 export interface DashboardFilters {
   search: string;
   contadorId: string | null;
   urgencia: 'todas' | 'urgente' | 'atencao' | 'normal';
   status: string | null;
+  ordenacao: OrdenacaoDashboard;
 }
 
 export function calcularUrgencia(dataAtualizacao: string, status?: string): 'urgente' | 'atencao' | 'normal' {
@@ -23,9 +26,12 @@ interface DeclaracaoFiltravel {
   status: string;
   ultima_atualizacao_status: string;
   contador_id: string | null;
+  created_at: string;
   clientes: { nome: string; cpf: string } | null;
   contador: { nome: string } | null;
 }
+
+const DEFAULT_ORDENACAO: OrdenacaoDashboard = 'cadastro_recente';
 
 export function useDashboardFilters<T extends DeclaracaoFiltravel>(declaracoes: T[]) {
   const [filters, setFilters] = useState<DashboardFilters>({
@@ -33,6 +39,7 @@ export function useDashboardFilters<T extends DeclaracaoFiltravel>(declaracoes: 
     contadorId: null,
     urgencia: 'todas',
     status: null,
+    ordenacao: DEFAULT_ORDENACAO,
   });
 
   const declaracoesFiltradas = useMemo(() => {
@@ -63,7 +70,28 @@ export function useDashboardFilters<T extends DeclaracaoFiltravel>(declaracoes: 
       resultado = resultado.filter(dec => dec.status === filters.status);
     }
 
-    return resultado;
+    // Ordenação (não muta o array original)
+    const ordenado = [...resultado];
+    switch (filters.ordenacao) {
+      case 'cadastro_recente':
+        ordenado.sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+        break;
+      case 'cadastro_antigo':
+        ordenado.sort((a, b) => (a.created_at ?? '').localeCompare(b.created_at ?? ''));
+        break;
+      case 'alfabetica_az':
+        ordenado.sort((a, b) =>
+          (a.clientes?.nome ?? '').localeCompare(b.clientes?.nome ?? '', 'pt-BR', { sensitivity: 'base' })
+        );
+        break;
+      case 'alfabetica_za':
+        ordenado.sort((a, b) =>
+          (b.clientes?.nome ?? '').localeCompare(a.clientes?.nome ?? '', 'pt-BR', { sensitivity: 'base' })
+        );
+        break;
+    }
+
+    return ordenado;
   }, [declaracoes, filters]);
 
   const stats = useMemo(() => {
@@ -81,9 +109,16 @@ export function useDashboardFilters<T extends DeclaracaoFiltravel>(declaracoes: 
   const setContadorId = useCallback((contadorId: string | null) => setFilters(p => ({ ...p, contadorId })), []);
   const setUrgencia = useCallback((urgencia: DashboardFilters['urgencia']) => setFilters(p => ({ ...p, urgencia })), []);
   const setStatus = useCallback((status: string | null) => setFilters(p => ({ ...p, status })), []);
-  const clearFilters = useCallback(() => setFilters({ search: '', contadorId: null, urgencia: 'todas', status: null }), []);
+  const setOrdenacao = useCallback((ordenacao: OrdenacaoDashboard) => setFilters(p => ({ ...p, ordenacao })), []);
+  const clearFilters = useCallback(() => setFilters({ search: '', contadorId: null, urgencia: 'todas', status: null, ordenacao: DEFAULT_ORDENACAO }), []);
 
-  const hasActiveFilters = !!(filters.search || filters.contadorId || filters.urgencia !== 'todas' || filters.status);
+  const hasActiveFilters = !!(
+    filters.search ||
+    filters.contadorId ||
+    filters.urgencia !== 'todas' ||
+    filters.status ||
+    filters.ordenacao !== DEFAULT_ORDENACAO
+  );
 
   return {
     filters,
@@ -91,6 +126,7 @@ export function useDashboardFilters<T extends DeclaracaoFiltravel>(declaracoes: 
     setContadorId,
     setUrgencia,
     setStatus,
+    setOrdenacao,
     clearFilters,
     declaracoesFiltradas,
     stats,

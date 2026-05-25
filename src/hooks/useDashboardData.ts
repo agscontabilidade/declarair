@@ -20,6 +20,7 @@ export interface DeclaracaoKanban {
   observacoes_cliente: string | null;
   observacoes_cliente_atualizado_em: string | null;
   observacoes_cliente_lida_em: string | null;
+  created_at: string;
 }
 
 
@@ -37,6 +38,7 @@ interface DeclaracaoRow {
   observacoes_cliente: string | null;
   observacoes_cliente_atualizado_em: string | null;
   observacoes_cliente_lida_em: string | null;
+  created_at: string;
   clientes: { nome: string; cpf: string } | null;
   usuarios: { nome: string } | null;
 }
@@ -75,7 +77,7 @@ export function useDashboardData(anoBase: number) {
 
       const { data, error } = await supabase
         .from('declaracoes')
-        .select('id, status, ano_base, ultima_atualizacao_status, contador_id, version, recibo_validado_em, arquivo_recibo_url, numero_recibo, data_transmissao, observacoes_cliente, observacoes_cliente_atualizado_em, observacoes_cliente_lida_em, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome)')
+        .select('id, status, ano_base, ultima_atualizacao_status, contador_id, version, recibo_validado_em, arquivo_recibo_url, numero_recibo, data_transmissao, observacoes_cliente, observacoes_cliente_atualizado_em, observacoes_cliente_lida_em, created_at, clientes(nome, cpf), usuarios!declaracoes_contador_id_fkey(nome)')
         .eq('escritorio_id', escritorioId)
         .eq('ano_base', anoBase);
 
@@ -99,6 +101,7 @@ export function useDashboardData(anoBase: number) {
           observacoes_cliente: row.observacoes_cliente,
           observacoes_cliente_atualizado_em: row.observacoes_cliente_atualizado_em,
           observacoes_cliente_lida_em: row.observacoes_cliente_lida_em,
+          created_at: row.created_at,
         };
       });
     },
