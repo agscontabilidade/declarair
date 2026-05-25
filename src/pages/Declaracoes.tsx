@@ -166,40 +166,54 @@ export default function Declaracoes() {
     queryKey: ['declaracoes-lista', escritorioId, anoBase],
     queryFn: async () => {
       if (!escritorioId) return [];
-      const { data, error } = await supabase
-        .from('declaracoes')
-        .select(`
-          id, status, ano_base, ultima_atualizacao_status,
-          tipo_resultado, valor_resultado,
-          arquivo_declaracao_url, arquivo_declaracao_nome,
-          arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em,
-          arquivo_mei_url, arquivo_mei_nome, mei_validado_em,
-          arquivo_darf_url, arquivo_darf_nome, darf_validado_em,
-          arquivos_outros,
 
-          em_processamento, status_processamento_rfb, declaracao_enviada_em,
-          clientes(nome, cpf, email),
-          declaracao_notas_internas(conteudo),
-          checklist_documentos(arquivo_url)
+      // Duas queries paralelas e enxutas em vez de uma com embed gordo:
+      // 1) declarações + cliente + notas (campos usados na lista)
+      // 2) ids de declarações que possuem ao menos 1 arquivo no Drive (apenas para o badge)
+      const [listaRes, docsRes] = await Promise.all([
+        supabase
+          .from('declaracoes')
+          .select(`
+            id, status, ano_base, ultima_atualizacao_status,
+            tipo_resultado, valor_resultado,
+            arquivo_declaracao_url, arquivo_declaracao_nome,
+            arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em,
+            arquivo_mei_url, arquivo_mei_nome, mei_validado_em,
+            arquivo_darf_url, arquivo_darf_nome, darf_validado_em,
+            arquivos_outros,
+            em_processamento, status_processamento_rfb, declaracao_enviada_em,
+            clientes(nome, cpf, email),
+            declaracao_notas_internas(conteudo)
+          `)
+          .eq('escritorio_id', escritorioId)
+          .eq('ano_base', Number(anoBase))
+          .order('ultima_atualizacao_status', { ascending: false })
+          .limit(200),
+        supabase
+          .from('checklist_documentos')
+          .select('declaracao_id, declaracoes!inner(escritorio_id, ano_base)')
+          .eq('declaracoes.escritorio_id', escritorioId)
+          .eq('declaracoes.ano_base', Number(anoBase))
+          .not('arquivo_url', 'is', null),
+      ]);
 
-        `)
-        .eq('escritorio_id', escritorioId)
-        .eq('ano_base', Number(anoBase))
-        .order('ultima_atualizacao_status', { ascending: false })
-        .limit(200); // Add a sensible limit to prevent huge data loads
-      
-      if (error) throw error;
+      if (listaRes.error) throw listaRes.error;
 
-      return (data || []).map((d: any) => ({
+      const docsSet = new Set<string>(
+        (docsRes.data || [])
+          .map((r: { declaracao_id: string | null }) => r.declaracao_id)
+          .filter((id): id is string => !!id)
+      );
+
+      return (listaRes.data || []).map((d: any) => ({
         ...d,
         status_processamento_rfb: d.status_processamento_rfb as StatusProcessamentoRfb,
         clienteNome: d.clientes?.nome || '—',
         clienteCpf: d.clientes?.cpf || '',
         clienteEmail: d.clientes?.email || '',
         observacoes: (Array.isArray(d.declaracao_notas_internas) ? d.declaracao_notas_internas[0]?.conteudo : d.declaracao_notas_internas?.conteudo) || '',
-        temDocsDrive: Array.isArray(d.checklist_documentos) && d.checklist_documentos.some((c: any) => !!c?.arquivo_url),
+        temDocsDrive: docsSet.has(d.id),
       }));
-
     },
     enabled: !!escritorioId,
     staleTime: 30000, // Cache for 30 seconds

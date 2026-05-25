@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
-import { useDebouncedInvalidate } from '@/hooks/useDebouncedInvalidate';
+// debounced invalidate removido — cache é atualizado direto pelo realtime
 import type { Tables } from '@/integrations/supabase/types';
 
 type Notificacao = Tables<'notificacoes'>;
@@ -10,7 +10,6 @@ type Notificacao = Tables<'notificacoes'>;
 export function useNotificacoes() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
-  const debouncedInvalidate = useDebouncedInvalidate(300);
   const escritorioId = profile.escritorioId;
 
   const query = useQuery({
@@ -19,15 +18,15 @@ export function useNotificacoes() {
       if (!escritorioId) return [];
       const { data, error } = await supabase
         .from('notificacoes')
-        .select('*')
+        .select('id, escritorio_id, titulo, mensagem, link_destino, lida, created_at')
         .eq('escritorio_id', escritorioId)
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data || []) as Notificacao[];
+      return (data || []) as unknown as Notificacao[];
     },
     enabled: !!escritorioId,
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60 * 5, // 5 minutes — realtime keeps cache fresh on INSERT
   });
 
   useEffect(() => {
@@ -39,12 +38,17 @@ export function useNotificacoes() {
         schema: 'public',
         table: 'notificacoes',
         filter: `escritorio_id=eq.${escritorioId}`,
-      }, () => {
-        debouncedInvalidate(['notificacoes']);
+      }, (payload) => {
+        // Atualiza o cache diretamente em vez de invalidar (evita refetch)
+        queryClient.setQueryData<Notificacao[]>(['notificacoes', escritorioId], (old = []) => {
+          const novo = payload.new as Notificacao;
+          if (old.some((n) => n.id === novo.id)) return old;
+          return [novo, ...old].slice(0, 20);
+        });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [escritorioId, debouncedInvalidate]);
+  }, [escritorioId, queryClient]);
 
   const naoLidas = (query.data || []).filter((n) => !n.lida).length;
 

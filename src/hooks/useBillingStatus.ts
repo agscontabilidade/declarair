@@ -114,7 +114,9 @@ export function useBillingStatus(): BillingState {
       };
     },
     enabled: !!profile.escritorioId,
-    refetchInterval: 60000,
+    refetchInterval: (q) => (typeof document !== 'undefined' && document.hidden ? false : 300000),
+    refetchIntervalInBackground: false,
+    staleTime: 120000,
   });
 
   const plano = data?.plano || 'gratuito';
