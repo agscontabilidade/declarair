@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { validateCPF, maskCPF } from '@/lib/formatters';
 import { getErrorMessage } from '@/lib/errors';
-import { User, IdCard, Mail, Phone, Calendar, UserPlus, Upload, Loader2, ShieldCheck } from 'lucide-react';
+import { User, IdCard, Mail, Phone, Calendar, UserPlus, Upload, Loader2, ShieldCheck, Send } from 'lucide-react';
 
 interface ClienteEditavel {
   id?: string;
