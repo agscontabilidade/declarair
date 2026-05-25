@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -225,12 +225,38 @@ Deno.serve(async (req) => {
     }
 
     const supabase = await getSupabaseAdmin();
+
+    // Validate JWT and resolve caller's office
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: 'Token inválido' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const callerUserId = claimsData.claims.sub as string;
+
     const body = await req.json();
     const { acao, escritorio_id, cliente_id, code, redirect_uri } = body;
 
     if (!escritorio_id) {
       return new Response(JSON.stringify({ error: 'escritorio_id obrigatório' }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Authorize: caller must belong to the target office AND be 'dono'
+    const { data: usuario, error: usuarioError } = await supabase
+      .from('usuarios')
+      .select('escritorio_id, papel')
+      .eq('id', callerUserId)
+      .single();
+
+    if (usuarioError || !usuario || usuario.escritorio_id !== escritorio_id || usuario.papel !== 'dono') {
+      return new Response(JSON.stringify({ error: 'Acesso negado' }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
