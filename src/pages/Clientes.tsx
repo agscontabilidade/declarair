@@ -11,6 +11,7 @@ import { ClienteModal } from '@/components/clientes/ClienteModal';
 import { ClienteViewModal } from '@/components/clientes/ClienteViewModal';
 import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
 import { DocumentosDeclaracaoModal } from '@/components/declaracoes/DocumentosDeclaracaoModal';
+import { EnviarConviteClienteDialog, type EnviarConviteClienteCtx } from '@/components/clientes/EnviarConviteClienteDialog';
 import { useCobrancas } from '@/hooks/useCobrancas';
 import { QueryError } from '@/components/ui/QueryError';
 import type { ClienteWithContador } from '@/types/domain';
@@ -30,6 +31,7 @@ export default function Clientes() {
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
   const [cobrancaCliente, setCobrancaCliente] = useState<ClienteRow | null>(null);
   const [uploadDocs, setUploadDocs] = useState<{ declaracaoId: string; nome: string } | null>(null);
+  const [conviteCtx, setConviteCtx] = useState<EnviarConviteClienteCtx | null>(null);
   const { criar: criarCobranca } = useCobrancas('todos');
   const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente, isDono } = usePermissoes();
   const { toast } = useToast();
@@ -141,7 +143,17 @@ export default function Clientes() {
         onSavedAndUpload={(ctx) => {
           if (ctx.declaracaoId) setUploadDocs({ declaracaoId: ctx.declaracaoId, nome: ctx.nome });
         }}
+        onSavedAndInvite={(ctx) => {
+          setConviteCtx({
+            clienteId: ctx.clienteId,
+            nome: ctx.nome,
+            email: ctx.email ?? null,
+            telefone: ctx.telefone ?? null,
+          });
+        }}
       />
+
+      <EnviarConviteClienteDialog ctx={conviteCtx} onClose={() => setConviteCtx(null)} />
 
       <DocumentosDeclaracaoModal
         open={!!uploadDocs}

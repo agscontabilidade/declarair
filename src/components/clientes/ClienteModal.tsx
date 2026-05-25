@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { validateCPF, maskCPF } from '@/lib/formatters';
 import { getErrorMessage } from '@/lib/errors';
-import { User, IdCard, Mail, Phone, Calendar, UserPlus, Upload, Loader2, ShieldCheck } from 'lucide-react';
+import { User, IdCard, Mail, Phone, Calendar, UserPlus, Upload, Loader2, ShieldCheck, Send } from 'lucide-react';
 
 interface ClienteEditavel {
   id?: string;
@@ -26,6 +26,8 @@ export interface SavedClienteResult {
   clienteId: string;
   declaracaoId: string | null;
   nome: string;
+  email?: string | null;
+  telefone?: string | null;
 }
 
 interface Props {
@@ -36,6 +38,7 @@ interface Props {
   mode?: 'create' | 'edit';
   cliente?: ClienteEditavel | null;
   onSavedAndUpload?: (ctx: SavedClienteResult) => void;
+  onSavedAndInvite?: (ctx: SavedClienteResult) => void;
 }
 
 function maskTelefone(value: string) {
@@ -48,9 +51,10 @@ function maskTelefone(value: string) {
 const EMPTY = {
   nome: '', cpf: '', email: '', telefone: '', data_nascimento: '',
   contador_responsavel_id: '', procuracao_ecac: false, procuracao_ecac_validade: '',
+  enviar_convite: true,
 };
 
-export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente, onSavedAndUpload }: Props) {
+export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente, onSavedAndUpload, onSavedAndInvite }: Props) {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState<null | 'save' | 'save-upload'>(null);
   const [form, setForm] = useState(EMPTY);
@@ -73,6 +77,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
           contador_responsavel_id: cliente.contador_responsavel_id ?? '',
           procuracao_ecac: !!cliente.procuracao_ecac,
           procuracao_ecac_validade: cliente.procuracao_ecac_validade ?? '',
+          enviar_convite: false,
         });
       } else {
         setForm(EMPTY);
@@ -89,10 +94,20 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
       toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' });
       return null;
     }
+    const emailClean = form.email.trim() || null;
+    const telClean = form.telefone.replace(/\D/g, '') || null;
+    if (!isEdit && form.enviar_convite && !emailClean && !telClean) {
+      toast({
+        title: 'Informe email ou WhatsApp',
+        description: 'Para enviar o convite de acesso, é preciso ter ao menos um contato.',
+        variant: 'destructive',
+      });
+      return null;
+    }
     const base = {
       nome: form.nome.trim(),
-      email: form.email || null,
-      telefone: form.telefone.replace(/\D/g, '') || null,
+      email: emailClean,
+      telefone: telClean,
       data_nascimento: form.data_nascimento || null,
       contador_responsavel_id: form.contador_responsavel_id || null,
       procuracao_ecac: form.procuracao_ecac,
@@ -102,13 +117,13 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
     };
     if (isEdit) {
       await onSave({ id: cliente!.id, ...base });
-      return { clienteId: cliente!.id ?? '', declaracaoId: null, nome: base.nome };
+      return { clienteId: cliente!.id ?? '', declaracaoId: null, nome: base.nome, email: emailClean, telefone: telClean };
     }
     const result = await onSave({ ...base, cpf: cpfDigits });
     if (result && typeof result === 'object' && 'clienteId' in result) {
-      return { clienteId: result.clienteId, declaracaoId: result.declaracaoId, nome: base.nome };
+      return { clienteId: result.clienteId, declaracaoId: result.declaracaoId, nome: base.nome, email: emailClean, telefone: telClean };
     }
-    return { clienteId: '', declaracaoId: null, nome: base.nome };
+    return { clienteId: '', declaracaoId: null, nome: base.nome, email: emailClean, telefone: telClean };
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,9 +132,11 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
     try {
       const r = await doSave();
       if (!r) return;
+      const wantInvite = !isEdit && form.enviar_convite && !!r.clienteId;
       toast({ title: isEdit ? 'Cliente atualizado!' : 'Cliente criado com sucesso!' });
       clearForm();
       onOpenChange(false);
+      if (wantInvite) onSavedAndInvite?.(r);
     } catch (err: unknown) {
       toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
@@ -304,6 +321,31 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
               </div>
             )}
           </div>
+
+          {/* Enviar convite de acesso */}
+          {!isEdit && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <Send aria-hidden className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <Label htmlFor="enviar-convite" className="cursor-pointer">Enviar convite de acesso ao portal</Label>
+                    <p className="text-xs text-muted-foreground">
+                      O contribuinte recebe um link para criar a própria senha e acompanhar o IR.
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="enviar-convite"
+                  checked={form.enviar_convite}
+                  onCheckedChange={(v) => setForm(f => ({ ...f, enviar_convite: v }))}
+                />
+              </div>
+              {form.enviar_convite && !form.email.trim() && !form.telefone.replace(/\D/g, '') && (
+                <p className="text-xs text-destructive">Informe email ou WhatsApp para enviar o convite.</p>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 pt-2 border-t">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>
