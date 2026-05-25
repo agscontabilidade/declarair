@@ -525,9 +525,16 @@ export default function ClienteDocumentos() {
             onDrop={onDrop}
           >
             <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                {uploading ? <Loader2 className="h-6 w-6 text-primary animate-spin" /> : <Upload className="h-6 w-6 text-primary" />}
-              </div>
+              <Tooltip delayDuration={150}>
+                <TooltipTrigger asChild>
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 cursor-help">
+                    {uploading ? <Loader2 className="h-6 w-6 text-primary animate-spin" /> : <Upload className="h-6 w-6 text-primary" />}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[260px] text-xs">
+                  Aceitamos PDF, imagens (JPG/PNG), DOC e XLS. Limite de 20 MB por arquivo.
+                </TooltipContent>
+              </Tooltip>
               <h3 className="text-lg font-semibold">Arraste e solte seus documentos aqui</h3>
               <p className="text-sm text-muted-foreground mt-1 mb-6 max-w-xs">
                 Você pode selecionar vários arquivos de uma vez (PDF, Imagens, DOC, XLS).
@@ -543,6 +550,7 @@ export default function ClienteDocumentos() {
                 Selecionar Arquivos
               </Button>
             </CardContent>
+
           </Card>
         )}
 
@@ -586,17 +594,24 @@ export default function ClienteDocumentos() {
                       </div>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive transition-colors hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <Tooltip delayDuration={150}>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                aria-label="Excluir documento"
+                                className="text-destructive transition-colors hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-xs">Excluir documento</TooltipContent>
+                          </Tooltip>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+
                               <AlertTriangle className="h-5 w-5" />
                               Confirmar Exclusão
                             </AlertDialogTitle>
