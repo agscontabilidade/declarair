@@ -107,12 +107,18 @@ export default function ClienteDocumentos() {
         .single();
       if (novaErr || !nova) {
         console.error('[upload] falha ao criar declaracao inicial', novaErr);
-        toast.error('Não foi possível preparar sua declaração. Contate seu contador.');
+        const msg = novaErr?.message || '';
+        if (msg.includes('LIMITE_PLANO_ATINGIDO')) {
+          toast.error('O escritório atingiu o limite de declarações do plano. Peça ao seu contador para liberar mais uma.');
+        } else {
+          toast.error('Não foi possível preparar sua declaração. Contate seu contador.');
+        }
         return;
       }
       declaracaoInicial = nova as typeof declaracaoInicial;
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
     }
+
 
     const MAX_BYTES = 20 * 1024 * 1024; // 20MB
     const oversize = list.filter((f) => f.size > MAX_BYTES);
@@ -161,12 +167,18 @@ export default function ClienteDocumentos() {
           .single();
         if (novaErr || !nova) {
           console.error('[upload] falha ao criar declaracao do ano corrente', novaErr);
-          toast.error('Não foi possível preparar a declaração do ano corrente. Contate seu contador.');
+          const msg = novaErr?.message || '';
+          if (msg.includes('LIMITE_PLANO_ATINGIDO')) {
+            toast.error('O escritório atingiu o limite de declarações do plano. Peça ao seu contador para liberar mais uma.');
+          } else {
+            toast.error('Não foi possível preparar a declaração do ano corrente. Contate seu contador.');
+          }
           setUploading(false);
           return;
         }
         declaracaoAtiva = { ...declaracaoAtiva, ...nova } as typeof declaracaoAtiva;
       }
+
       // Atualiza caches do portal para refletir a nova declaração
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-form'] });
@@ -221,19 +233,33 @@ export default function ClienteDocumentos() {
       if (successCount > 0) {
         toast.success(`${successCount} arquivo(s) carregado(s) com sucesso!`);
 
-        const { error: updErr } = await supabase
+        const { data: updRows, error: updErr } = await supabase
           .from('declaracoes')
           .update({
             status_documentos: 'enviado',
             status: 'documentacao_recebida',
             ultima_atualizacao_status: new Date().toISOString(),
           })
-          .eq('id', declaracaoAtiva.id);
+          .eq('id', declaracaoAtiva.id)
+          .select('id');
 
         if (updErr) {
           console.error('[upload] declaracao update error', updErr);
           toast.error(`Documentos salvos, mas falha ao atualizar status: ${updErr.message}`);
+        } else if (!updRows || updRows.length === 0) {
+          console.error('[upload] declaracao update afetou 0 linhas (RLS?)', { id: declaracaoAtiva.id });
+          toast.error('Documentos salvos, mas o status não pôde ser atualizado. Avise seu contador.');
         }
+
+        // Notifica o contador
+        const { error: notifErr } = await supabase.from('notificacoes').insert({
+          escritorio_id: declaracaoAtiva.escritorio_id,
+          titulo: '📂 Documentos Enviados',
+          mensagem: `O cliente ${profile.nome} enviou documentos.`,
+          link_destino: `/declaracoes/${declaracaoAtiva.id}`,
+        });
+        if (notifErr) console.error('[upload] notificacao insert error', notifErr);
+
 
         // Sincroniza com o painel do contador (drive, checklist, lista de declarações)
         queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
@@ -267,37 +293,50 @@ export default function ClienteDocumentos() {
     
     setSending(true);
     try {
-      const { error } = await supabase
+      const { data: updRows, error } = await supabase
         .from('declaracoes')
         .update({ 
           status_documentos: 'enviado',
           status: 'documentacao_recebida',
           ultima_atualizacao_status: new Date().toISOString()
         })
-        .eq('id', declaracao.id);
+        .eq('id', declaracao.id)
+        .select('id');
 
       if (error) throw error;
+      if (!updRows || updRows.length === 0) {
+        console.error('[finalize] update afetou 0 linhas (RLS?)', { id: declaracao.id });
+        throw new Error('Não foi possível atualizar o status da declaração.');
+      }
 
       // Notify accountant
-      await supabase.from('notificacoes').insert({
+      const { error: notifErr } = await supabase.from('notificacoes').insert({
         escritorio_id: declaracao.escritorio_id,
         titulo: '📂 Documentos Enviados',
         mensagem: `O cliente ${profile.nome} enviou os documentos para conferência.`,
         link_destino: `/declaracoes/${declaracao.id}`,
       });
+      if (notifErr) console.error('[finalize] notificacao insert error', notifErr);
 
       toast.success('Documentos enviados ao contador com sucesso!');
       setConcluido(true);
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
     } catch (err: unknown) {
-      toast.error('Erro ao enviar documentos');
+      const message = err instanceof Error ? err.message : 'Erro ao enviar documentos';
+      console.error('[finalize] erro', err);
+      toast.error(message);
     } finally {
       setSending(false);
     }
   };
 
   const removeFile = async (docId: string, filePath: string, fileName: string) => {
+    if (!declaracao?.id) {
+      toast.error('Declaração não encontrada.');
+      return;
+    }
     try {
+
       const { error: storageError } = await supabase.storage
         .from('documentos-clientes')
         .remove([filePath]);
@@ -312,20 +351,19 @@ export default function ClienteDocumentos() {
       if (dbError) throw dbError;
 
       // Notify accountant
-      if (declaracao) {
-        await supabase.from('notificacoes').insert({
-          escritorio_id: declaracao.escritorio_id,
-          titulo: '🗑️ Documento Removido',
-          mensagem: `O cliente ${profile.nome} removeu o documento "${fileName}" às ${new Date().toLocaleTimeString('pt-BR')}.`,
-          link_destino: `/clientes/${declaracao.cliente_id}`,
-        });
-      }
+      const { error: notifErr } = await supabase.from('notificacoes').insert({
+        escritorio_id: declaracao.escritorio_id,
+        titulo: '🗑️ Documento Removido',
+        mensagem: `O cliente ${profile.nome} removeu o documento "${fileName}" às ${new Date().toLocaleTimeString('pt-BR')}.`,
+        link_destino: `/clientes/${declaracao.cliente_id}`,
+      });
+      if (notifErr) console.error('[remove] notificacao insert error', notifErr);
 
       // Se após a remoção não houver mais documentos, volta o status para aguardando
       const { data: rest } = await supabase
         .from('checklist_documentos')
         .select('id')
-        .eq('declaracao_id', declaracao?.id)
+        .eq('declaracao_id', declaracao.id)
         .eq('status', 'recebido');
 
       if (!rest || rest.length === 0) {
@@ -335,8 +373,9 @@ export default function ClienteDocumentos() {
             status: 'aguardando_documentos',
             status_documentos: 'pendente' 
           })
-          .eq('id', declaracao?.id);
+          .eq('id', declaracao.id);
       }
+
 
 
       toast.success('Arquivo removido');
