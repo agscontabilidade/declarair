@@ -18,6 +18,7 @@ import { usePermissoes } from '@/hooks/usePermissoes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/errors';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Clientes() {
   const {
