@@ -88,7 +88,7 @@ export default function RecuperarSenha() {
                 <p className="text-sm text-muted-foreground">
                   Se este email estiver cadastrado, você receberá um link para redefinir sua senha.
                 </p>
-                <Link to="/login">
+                <Link to={backTo}>
                   <Button variant="outline" className="w-full mt-2 h-11">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Voltar ao login
@@ -111,7 +111,7 @@ export default function RecuperarSenha() {
                 <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
                   {loading ? 'Enviando...' : 'Enviar link de recuperação'}
                 </Button>
-                <Link to="/login" className="block text-center">
+                <Link to={backTo} className="block text-center">
                   <span className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     <ArrowLeft className="h-3 w-3 inline mr-1" />
                     Voltar ao login

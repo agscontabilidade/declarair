@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ import { getErrorMessage } from '@/lib/errors';
 
 export default function RedefinirSenha() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const origemParam = searchParams.get('origem');
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,9 +59,9 @@ export default function RedefinirSenha() {
       const { error } = await supabase.auth.updateUser({ password: novaSenha });
       if (error) throw error;
 
-      // Determine redirect before signing out
-      let redirectTo = '/login';
-      if (user) {
+      // Determine redirect: query param takes priority, fallback to clientes lookup
+      let redirectTo = origemParam === 'cliente' ? '/cliente/login' : origemParam === 'contador' ? '/login' : '/login';
+      if (!origemParam && user) {
         const { data: cliente } = await supabase
           .from('clientes')
           .select('id')
