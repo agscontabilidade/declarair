@@ -81,7 +81,6 @@ export default function Clientes() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="font-display text-2xl font-bold text-foreground">Clientes</h1>
           <div className="flex gap-2">
-            {isDono && <GerarLinkConvite />}
             {podeCriarClientes && (
               <Button className="gap-2" onClick={() => setCreateOpen(true)}>
                 <Plus className="h-4 w-4" />
