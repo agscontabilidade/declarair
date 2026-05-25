@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
       .from('convites_cliente')
       .select('id, escritorio_id, nome_sugerido, cpf_sugerido, email_sugerido, mensagem_personalizada, expira_em')
       .eq('token', token)
+      .eq('usado', false)
       .gt('expira_em', new Date().toISOString())
       .single();
 

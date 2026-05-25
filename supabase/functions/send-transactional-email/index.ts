@@ -39,9 +39,10 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth note: verify_jwt = true in config.toml ensures Supabase's gateway validates
+// the caller's JWT. In addition, we explicitly authorize the caller below so that
+// only office staff (dono/colaborador) or the service_role can trigger sends —
+// client-portal users must NOT be allowed to send arbitrary system emails.
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -61,6 +62,42 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
+  }
+
+  // Authorization check: only service_role or office staff (dono/colaborador)
+  // may trigger transactional emails.
+  const authHeader = req.headers.get('Authorization') || ''
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+  const isServiceRole = bearer && bearer === supabaseServiceKey
+
+  if (!isServiceRole) {
+    if (!bearer) {
+      return new Response(JSON.stringify({ error: 'Não autorizado' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const authClient = createClient(supabaseUrl, supabaseServiceKey)
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(bearer)
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: 'Token inválido' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const callerUserId = claimsData.claims.sub as string
+    const { data: usuario } = await authClient
+      .from('usuarios')
+      .select('papel, ativo')
+      .eq('id', callerUserId)
+      .maybeSingle()
+
+    if (!usuario || !usuario.ativo || !['dono', 'colaborador'].includes(String(usuario.papel))) {
+      return new Response(JSON.stringify({ error: 'Acesso negado' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
   }
 
   // Parse request body
