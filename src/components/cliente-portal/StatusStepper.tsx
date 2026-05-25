@@ -36,9 +36,13 @@ export function StatusStepper({ currentStep, stepTimestamps = [] }: StatusSteppe
       {/* Mobile: compact view (current step + progress bar) */}
       <div className="sm:hidden">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center shrink-0 animate-pulse">
-            <CurrentIcon className="h-5 w-5" />
+          <div className="relative shrink-0">
+            <span className="absolute inset-0 rounded-full bg-accent/40 animate-ping" />
+            <div className="relative w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center">
+              <CurrentIcon className="h-5 w-5" />
+            </div>
           </div>
+
           <div className="min-w-0 flex-1">
             <p className="text-xs text-muted-foreground">
               Etapa {safeStep} de {STEPS.length}
@@ -79,13 +83,19 @@ export function StatusStepper({ currentStep, stepTimestamps = [] }: StatusSteppe
           return (
             <div key={i} className="flex items-start flex-1 last:flex-initial">
               <div className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                  isCompleted ? 'bg-emerald-500 text-white' :
-                  isCurrent ? 'bg-accent text-white animate-pulse' :
-                  'bg-muted text-muted-foreground'
-                }`}>
-                  {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                <div className="relative">
+                  {isCurrent && (
+                    <span className="absolute inset-0 rounded-full bg-accent/40 animate-ping" />
+                  )}
+                  <div className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                    isCompleted ? 'bg-emerald-500 text-white' :
+                    isCurrent ? 'bg-accent text-white' :
+                    'bg-muted text-muted-foreground'
+                  }`}>
+                    {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                  </div>
                 </div>
+
                 <span className={`text-xs mt-1.5 text-center max-w-[90px] leading-tight ${
                   isCurrent ? 'font-medium text-foreground' : 'text-muted-foreground'
                 }`}>

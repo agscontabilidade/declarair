@@ -343,10 +343,11 @@ export default function ClienteDashboard() {
                 <div className="px-6 pb-6 md:pb-0 md:pr-8">
                   <Dialog onOpenChange={(open) => !open && setCurrentTutorialStep(0)}>
                     <DialogTrigger asChild>
-                      <Button className="w-full md:w-auto shadow-md">
+                      <Button className="w-full md:w-auto shadow-md bg-warning text-warning-foreground hover:bg-warning/90">
                         Ver Passo a Passo
                         <ChevronRight className="h-4 w-4 ml-2" />
                       </Button>
+
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
