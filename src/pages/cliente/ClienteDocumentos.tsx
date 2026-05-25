@@ -167,12 +167,18 @@ export default function ClienteDocumentos() {
           .single();
         if (novaErr || !nova) {
           console.error('[upload] falha ao criar declaracao do ano corrente', novaErr);
-          toast.error('Não foi possível preparar a declaração do ano corrente. Contate seu contador.');
+          const msg = novaErr?.message || '';
+          if (msg.includes('LIMITE_PLANO_ATINGIDO')) {
+            toast.error('O escritório atingiu o limite de declarações do plano. Peça ao seu contador para liberar mais uma.');
+          } else {
+            toast.error('Não foi possível preparar a declaração do ano corrente. Contate seu contador.');
+          }
           setUploading(false);
           return;
         }
         declaracaoAtiva = { ...declaracaoAtiva, ...nova } as typeof declaracaoAtiva;
       }
+
       // Atualiza caches do portal para refletir a nova declaração
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
       queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-form'] });
