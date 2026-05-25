@@ -45,18 +45,17 @@ export function useDashboardData(anoBase: number) {
     queryFn: async () => {
       if (!escritorioId) return { totalClientes: 0, emAndamento: 0, docPendente: 0, transmitidas: 0 };
 
-      const [clientes, emAndamento, docPendente, transmitidas] = await Promise.all([
-        supabase.from('clientes').select('id', { count: 'exact', head: true }).eq('escritorio_id', escritorioId),
-        supabase.from('declaracoes').select('id', { count: 'exact', head: true }).eq('escritorio_id', escritorioId).eq('ano_base', anoBase).neq('status', 'transmitida'),
-        supabase.from('declaracoes').select('id', { count: 'exact', head: true }).eq('escritorio_id', escritorioId).eq('ano_base', anoBase).eq('status', 'aguardando_documentos'),
-        supabase.from('declaracoes').select('id', { count: 'exact', head: true }).eq('escritorio_id', escritorioId).eq('ano_base', anoBase).eq('status', 'transmitida'),
-      ]);
-
+      const { data, error } = await supabase.rpc('dashboard_kpis', {
+        p_escritorio_id: escritorioId,
+        p_ano_base: anoBase,
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
       return {
-        totalClientes: clientes.count ?? 0,
-        emAndamento: emAndamento.count ?? 0,
-        docPendente: docPendente.count ?? 0,
-        transmitidas: transmitidas.count ?? 0,
+        totalClientes: row?.total_clientes ?? 0,
+        emAndamento: row?.em_andamento ?? 0,
+        docPendente: row?.doc_pendente ?? 0,
+        transmitidas: row?.transmitidas ?? 0,
       };
     },
     enabled: !!escritorioId,

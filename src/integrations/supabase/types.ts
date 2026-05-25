@@ -2728,6 +2728,15 @@ export type Database = {
         Args: { escritorio_uuid: string }
         Returns: number
       }
+      dashboard_kpis: {
+        Args: { p_ano_base: number; p_escritorio_id: string }
+        Returns: {
+          doc_pendente: number
+          em_andamento: number
+          total_clientes: number
+          transmitidas: number
+        }[]
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
