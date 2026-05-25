@@ -26,6 +26,8 @@ export interface SavedClienteResult {
   clienteId: string;
   declaracaoId: string | null;
   nome: string;
+  email?: string | null;
+  telefone?: string | null;
 }
 
 interface Props {
@@ -36,6 +38,7 @@ interface Props {
   mode?: 'create' | 'edit';
   cliente?: ClienteEditavel | null;
   onSavedAndUpload?: (ctx: SavedClienteResult) => void;
+  onSavedAndInvite?: (ctx: SavedClienteResult) => void;
 }
 
 function maskTelefone(value: string) {
@@ -48,6 +51,7 @@ function maskTelefone(value: string) {
 const EMPTY = {
   nome: '', cpf: '', email: '', telefone: '', data_nascimento: '',
   contador_responsavel_id: '', procuracao_ecac: false, procuracao_ecac_validade: '',
+  enviar_convite: true,
 };
 
 export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente, onSavedAndUpload }: Props) {
