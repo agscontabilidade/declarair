@@ -1,12 +1,14 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Download, Eye, User, Briefcase, Upload, Loader2, Trash2 } from 'lucide-react';
+import { FileText, Download, Eye, User, Briefcase, Upload, Loader2, Trash2, CheckCircle2 } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { useRef, useState, useMemo } from 'react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
 import { getErrorMessage } from '@/lib/errors';
 
@@ -24,6 +26,7 @@ interface DocItem {
   arquivo_nome: string | null;
   data_recebimento: string | null;
   categoria: string;
+  lancado: boolean;
 }
 
 interface DeclaracaoCtx {
