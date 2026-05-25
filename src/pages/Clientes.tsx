@@ -4,7 +4,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
-import GerarLinkConvite from '@/components/clientes/GerarLinkConvite';
 import { useClientes } from '@/hooks/useClientes';
 import { ClientesTable, type ClienteRow } from '@/components/clientes/ClientesTable';
 import { ClienteModal } from '@/components/clientes/ClienteModal';
@@ -33,7 +32,7 @@ export default function Clientes() {
   const [uploadDocs, setUploadDocs] = useState<{ declaracaoId: string; nome: string } | null>(null);
   const [conviteCtx, setConviteCtx] = useState<EnviarConviteClienteCtx | null>(null);
   const { criar: criarCobranca } = useCobrancas('todos');
-  const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente, isDono } = usePermissoes();
+  const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente } = usePermissoes();
   const { toast } = useToast();
 
   if (!podeVerClientes) {
@@ -82,7 +81,6 @@ export default function Clientes() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="font-display text-2xl font-bold text-foreground">Clientes</h1>
           <div className="flex gap-2">
-            {isDono && <GerarLinkConvite />}
             {podeCriarClientes && (
               <Button className="gap-2" onClick={() => setCreateOpen(true)}>
                 <Plus className="h-4 w-4" />
@@ -111,6 +109,18 @@ export default function Clientes() {
               onEdit={(c) => setEditCliente(c)}
               onDelete={handleDelete}
               onCobranca={(c) => setCobrancaCliente(c)}
+              onConvite={(c) => {
+                const tokenValido = !!c.token_convite_expira_em && new Date(c.token_convite_expira_em) > new Date();
+                const podeReusar = c.status_onboarding === 'convite_enviado' && tokenValido && !!c.token_convite;
+                setConviteCtx({
+                  clienteId: c.id,
+                  nome: c.nome,
+                  email: c.email ?? null,
+                  telefone: c.telefone ?? null,
+                  mode: podeReusar ? 'reusar' : 'novo',
+                  tokenExistente: podeReusar ? c.token_convite : null,
+                });
+              }}
               canEdit={podeEditarClientes}
               canDelete={podeExcluirCliente}
               clientesComCobranca={clientesComCobranca}
