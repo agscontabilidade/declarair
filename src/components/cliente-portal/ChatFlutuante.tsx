@@ -1,9 +1,12 @@
-import { useState } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { lazy, Suspense, useState } from 'react';
+import { MessageCircle, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { SecaoChat } from '@/components/declaracao/SecaoChat';
+
+const SecaoChat = lazy(() =>
+  import('@/components/declaracao/SecaoChat').then((m) => ({ default: m.SecaoChat }))
+);
 
 interface Props {
   declaracaoId: string;
@@ -45,17 +48,24 @@ export function ChatFlutuante({ declaracaoId, escritorioId, clienteId, unreadCou
         )}
       </div>
 
-      {/* Chat panel */}
+      {/* Chat panel — só monta (e baixa o chunk) ao abrir */}
       {open && (
         <div className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] animate-in slide-in-from-bottom-4 duration-200">
-          <SecaoChat
-            declaracaoId={declaracaoId}
-            escritorioId={escritorioId}
-            clienteId={clienteId}
-          />
+          <Suspense
+            fallback={
+              <div className="bg-card border rounded-lg shadow-lg p-6 flex items-center justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            }
+          >
+            <SecaoChat
+              declaracaoId={declaracaoId}
+              escritorioId={escritorioId}
+              clienteId={clienteId}
+            />
+          </Suspense>
         </div>
       )}
     </>
   );
 }
-
