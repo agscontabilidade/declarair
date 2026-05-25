@@ -487,7 +487,11 @@ export default function ClienteDocumentos() {
           </CardContent>
         </Card>
 
-        <RelacaoDocumentosModal open={relacaoModalOpen} onOpenChange={setRelacaoModalOpen} />
+        {relacaoModalOpen && (
+          <Suspense fallback={null}>
+            <RelacaoDocumentosModal open={relacaoModalOpen} onOpenChange={setRelacaoModalOpen} />
+          </Suspense>
+        )}
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
