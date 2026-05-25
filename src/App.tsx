@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BillingGate } from "@/components/billing/BillingGate";
 import { useBillingStatus } from "@/hooks/useBillingStatus";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { RouteLoadingBar } from "@/components/RouteLoadingBar";
 
 // Eager: landing inicial (rota /) — evita Suspense fallback no primeiro paint público
 import LandingV2 from "./pages/LandingV2";
