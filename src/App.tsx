@@ -113,7 +113,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <ThemeProvider>
-            <Suspense fallback={<FullscreenSpinner />}>
+            <Suspense fallback={<RouteLoadingBar />}>
             <Routes>
               <Route path="/" element={<RootRedirect />} />
               <Route path="/login" element={<Login />} />
