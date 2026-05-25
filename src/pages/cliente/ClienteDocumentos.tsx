@@ -351,20 +351,19 @@ export default function ClienteDocumentos() {
       if (dbError) throw dbError;
 
       // Notify accountant
-      if (declaracao) {
-        await supabase.from('notificacoes').insert({
-          escritorio_id: declaracao.escritorio_id,
-          titulo: '🗑️ Documento Removido',
-          mensagem: `O cliente ${profile.nome} removeu o documento "${fileName}" às ${new Date().toLocaleTimeString('pt-BR')}.`,
-          link_destino: `/clientes/${declaracao.cliente_id}`,
-        });
-      }
+      const { error: notifErr } = await supabase.from('notificacoes').insert({
+        escritorio_id: declaracao.escritorio_id,
+        titulo: '🗑️ Documento Removido',
+        mensagem: `O cliente ${profile.nome} removeu o documento "${fileName}" às ${new Date().toLocaleTimeString('pt-BR')}.`,
+        link_destino: `/clientes/${declaracao.cliente_id}`,
+      });
+      if (notifErr) console.error('[remove] notificacao insert error', notifErr);
 
       // Se após a remoção não houver mais documentos, volta o status para aguardando
       const { data: rest } = await supabase
         .from('checklist_documentos')
         .select('id')
-        .eq('declaracao_id', declaracao?.id)
+        .eq('declaracao_id', declaracao.id)
         .eq('status', 'recebido');
 
       if (!rest || rest.length === 0) {
@@ -374,8 +373,9 @@ export default function ClienteDocumentos() {
             status: 'aguardando_documentos',
             status_documentos: 'pendente' 
           })
-          .eq('id', declaracao?.id);
+          .eq('id', declaracao.id);
       }
+
 
 
       toast.success('Arquivo removido');
