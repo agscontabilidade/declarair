@@ -3,9 +3,11 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Download, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Image as ImageIcon, FileSpreadsheet, File as FileIcon } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Download, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Image as ImageIcon, FileSpreadsheet, File as FileIcon, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { getFileType, getFileExtension, getMimeFromName } from '@/lib/file-types';
 import { PdfViewer } from './viewers/PdfViewer';
 import { ImageViewer } from './viewers/ImageViewer';
@@ -17,6 +19,7 @@ export interface ViewerFile {
   id: string;
   arquivo_url: string;
   arquivo_nome: string;
+  lancado?: boolean;
 }
 
 interface Props {
@@ -24,6 +27,8 @@ interface Props {
   currentId: string | null;
   onClose: () => void;
   onChange: (id: string) => void;
+  onToggleLancado?: (id: string, novoValor: boolean) => void;
+  togglingLancadoId?: string | null;
 }
 
 function iconForType(type: ReturnType<typeof getFileType>) {
@@ -33,7 +38,7 @@ function iconForType(type: ReturnType<typeof getFileType>) {
   return FileIcon;
 }
 
-export function FileViewerModal({ files, currentId, onClose, onChange }: Props) {
+export function FileViewerModal({ files, currentId, onClose, onChange, onToggleLancado, togglingLancadoId }: Props) {
   // signedUrl: original URL (used by Office Online viewer + download/open buttons)
   // inlineUrl: blob: URL with forced MIME — used by PDF/image/text viewers so the
   // browser ALWAYS renders inline (storage may serve some files as octet-stream
@@ -47,6 +52,8 @@ export function FileViewerModal({ files, currentId, onClose, onChange }: Props) 
   const fileType = getFileType(current?.arquivo_nome);
   const ext = getFileExtension(current?.arquivo_nome).toUpperCase();
   const Icon = iconForType(fileType);
+  const isLancado = !!current?.lancado;
+  const isToggling = !!current && togglingLancadoId === current.id;
 
   useEffect(() => {
     if (!current) { setSignedUrl(null); setInlineUrl(null); return; }
@@ -117,7 +124,7 @@ export function FileViewerModal({ files, currentId, onClose, onChange }: Props) 
 
   return (
     <Dialog open={!!currentId} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0">
+      <DialogContent className="max-w-none w-screen h-screen p-0 flex flex-col gap-0 rounded-none border-0 sm:rounded-none">
         <DialogTitle className="sr-only">{current?.arquivo_nome ?? 'Visualizador'}</DialogTitle>
 
         {/* Header */}
@@ -126,8 +133,42 @@ export function FileViewerModal({ files, currentId, onClose, onChange }: Props) 
             <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
             <span className="font-medium text-foreground truncate">{current?.arquivo_nome}</span>
             {ext && <Badge variant="secondary" className="text-[10px] uppercase">{ext}</Badge>}
+            {isLancado && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/20 gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Lançado
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>Documento já lançado no sistema</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            {onToggleLancado && current && (
+              <Button
+                size="sm"
+                variant={isLancado ? 'outline' : 'default'}
+                className={cn(
+                  'mr-1',
+                  isLancado
+                    ? 'border-success/40 text-success hover:bg-success/10'
+                    : 'bg-success text-success-foreground hover:bg-success/90'
+                )}
+                onClick={() => onToggleLancado(current.id, !isLancado)}
+                disabled={isToggling}
+                title={isLancado ? 'Desmarcar como lançado' : 'Marcar como lançado'}
+              >
+                {isToggling ? (
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                )}
+                {isLancado ? 'Lançado' : 'Marcar como lançado'}
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={goPrev} disabled={currentIndex <= 0} title="Anterior (←)">
               <ChevronLeft className="h-4 w-4" />
             </Button>

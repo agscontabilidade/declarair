@@ -1,12 +1,14 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Download, Eye, User, Briefcase, Upload, Loader2, Trash2 } from 'lucide-react';
+import { FileText, Download, Eye, User, Briefcase, Upload, Loader2, Trash2, CheckCircle2 } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { useRef, useState, useMemo } from 'react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
 import { getErrorMessage } from '@/lib/errors';
 
@@ -24,6 +26,7 @@ interface DocItem {
   arquivo_nome: string | null;
   data_recebimento: string | null;
   categoria: string;
+  lancado: boolean;
 }
 
 interface DeclaracaoCtx {
@@ -62,7 +65,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
       if (!declaracaoId) return [] as DocItem[];
       const { data, error } = await supabase
         .from('checklist_documentos')
-        .select('id, nome_documento, arquivo_url, arquivo_nome, data_recebimento, categoria')
+        .select('id, nome_documento, arquivo_url, arquivo_nome, data_recebimento, categoria, lancado')
         .eq('declaracao_id', declaracaoId)
         .not('arquivo_url', 'is', null)
         .order('data_recebimento', { ascending: false });
@@ -86,6 +89,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
           id: d.id,
           arquivo_url: d.arquivo_url!,
           arquivo_nome: d.arquivo_nome || d.nome_documento,
+          lancado: d.lancado,
         })),
     [docs]
   );
@@ -150,6 +154,28 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
     onError: (e) => toast.error(getErrorMessage(e, 'Falha ao remover')),
   });
 
+  const toggleLancado = useMutation({
+    mutationFn: async ({ id, novoValor }: { id: string; novoValor: boolean }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from('checklist_documentos')
+        .update({
+          lancado: novoValor,
+          lancado_em: novoValor ? new Date().toISOString() : null,
+          lancado_por: novoValor ? userData.user?.id ?? null : null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      toast.success(vars.novoValor ? 'Documento marcado como lançado' : 'Marcação removida');
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e, 'Falha ao atualizar status')),
+  });
+
   async function baixarArquivo(path: string, id: string) {
     try {
       setDownloadingId(id);
@@ -172,20 +198,55 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
   }
 
   function renderDoc(d: DocItem, removable = false) {
+    const lancado = d.lancado;
     return (
-      <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 hover:border-primary/40 transition-colors">
+      <div
+        key={d.id}
+        className={cn(
+          'flex items-center justify-between gap-3 rounded-lg border bg-card p-3 transition-colors',
+          lancado
+            ? 'border-success/40 bg-success/5 hover:border-success/60'
+            : 'hover:border-primary/40'
+        )}
+      >
         <button
           type="button"
           onClick={() => d.arquivo_url && setViewerCurrentId(d.id)}
           className="flex items-start gap-3 min-w-0 flex-1 text-left group"
         >
-          <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-            <FileText className="h-4 w-4 text-primary" />
+          <div
+            className={cn(
+              'h-9 w-9 rounded-md flex items-center justify-center shrink-0 transition-colors',
+              lancado ? 'bg-success/15 group-hover:bg-success/25' : 'bg-primary/10 group-hover:bg-primary/20'
+            )}
+          >
+            {lancado ? (
+              <CheckCircle2 className="h-4 w-4 text-success" />
+            ) : (
+              <FileText className="h-4 w-4 text-primary" />
+            )}
           </div>
           <div className="min-w-0">
-            <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-              {d.arquivo_nome || d.nome_documento}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p
+                className={cn(
+                  'font-medium text-sm truncate transition-colors',
+                  lancado ? 'group-hover:text-success' : 'group-hover:text-primary'
+                )}
+              >
+                {d.arquivo_nome || d.nome_documento}
+              </p>
+              {lancado && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>Documento lançado</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
             {d.data_recebimento && (
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 Enviado em {formatDate(d.data_recebimento)}
@@ -231,6 +292,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
       </div>
     );
   }
+
 
   return (
     <>
@@ -315,6 +377,8 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
         currentId={viewerCurrentId}
         onClose={() => setViewerCurrentId(null)}
         onChange={setViewerCurrentId}
+        onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
+        togglingLancadoId={toggleLancado.isPending ? toggleLancado.variables?.id ?? null : null}
       />
     </>
   );

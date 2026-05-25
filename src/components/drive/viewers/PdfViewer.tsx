@@ -49,9 +49,10 @@ export function PdfViewer({ url, nome }: Props) {
             <Page
               pageNumber={pageNumber}
               scale={scale}
-              renderTextLayer={false}
+              renderTextLayer={true}
               renderAnnotationLayer={false}
               loading={<Skeleton className="w-[600px] h-[800px]" />}
+              className="select-text"
             />
           </Document>
         )}

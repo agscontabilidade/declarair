@@ -320,6 +320,9 @@ export type Database = {
           data_recebimento: string | null
           declaracao_id: string
           id: string
+          lancado: boolean
+          lancado_em: string | null
+          lancado_por: string | null
           nome_documento: string
           obrigatorio: boolean
           status: string
@@ -332,6 +335,9 @@ export type Database = {
           data_recebimento?: string | null
           declaracao_id: string
           id?: string
+          lancado?: boolean
+          lancado_em?: string | null
+          lancado_por?: string | null
           nome_documento: string
           obrigatorio?: boolean
           status?: string
@@ -344,6 +350,9 @@ export type Database = {
           data_recebimento?: string | null
           declaracao_id?: string
           id?: string
+          lancado?: boolean
+          lancado_em?: string | null
+          lancado_por?: string | null
           nome_documento?: string
           obrigatorio?: boolean
           status?: string
