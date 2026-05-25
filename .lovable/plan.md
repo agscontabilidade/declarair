@@ -1,48 +1,37 @@
-## Onda 4 — Pontos adicionais de performance
+## Otimizações de Performance — Alternativas Seguras (Zero Risco)
 
-Após Ondas 1–3 (React Query stale times, índices, prefetch on hover, loading bar), ainda há ganhos sem tocar em lógica de negócio, RLS ou contratos de API.
+### Objetivo
+Reduzir requisições desnecessárias ao banco e eliminar flashes de loading em tabelas grandes, sem alterar lógica de negócio, sem virtualização e sem persistir dados sensíveis em storage.
 
-### 1. Bundle & build (alto impacto, risco baixo)
-- **`vite.config.ts`**: separar mais vendor chunks (`radix` = ~30 pacotes Radix, `dnd-kit`, `react-hook-form` + `zod`, `date-fns`, `lucide-react`).
-- Ativar `esbuild.drop: ['console','debugger']` apenas em prod (remove ~centenas de `console.log` do bundle).
-- Adicionar `chunkSizeWarningLimit` realista e analisar com `rollup-plugin-visualizer` (gerar relatório uma vez, não comitar).
-- Confirmar que `react-pdf`, `jspdf`, `recharts`, `framer-motion` só entram via `lazy()` nas páginas que usam (auditar imports estáticos remanescentes).
+### Contexto Atual
+O `QueryClient` global já possui `refetchOnWindowFocus: false`, `retry: 1` e `staleTime: 60s`. Estamos em temporada IRPF — estabilidade é prioridade absoluta.
 
-### 2. Payloads do Supabase (médio impacto)
-Vários hooks usam `select('*')` trazendo colunas grandes (JSONB de `formulario_ir`, `declaracoes.declaracao_extracao`, etc).
-- Trocar `select('*')` por listas explícitas em hooks de listagem (não em detalhe): `useClientes`, `useCobrancas`, `useDeclaracao` (lista), `useChat` (paginação), `useMensagens`.
-- Esses hooks já existem e foram tunados; aqui só reduzimos colunas — zero mudança de comportamento.
+### Mudanças Propostas
 
-### 3. Re-renders & listas grandes (médio impacto)
-- `ClientesTable`, `CobrancasTable`, `Drive`: aplicar `React.memo` nas rows e `useMemo` nos filtros/derivados. Se >200 linhas, considerar virtualização com `@tanstack/react-virtual` (já comum em projetos shadcn).
-- `AuthContext` e `ThemeContext`: garantir que o `value` seja memoizado (`useMemo`) para não disparar re-render global a cada mount de página.
-- Debounce nos inputs de busca (Clientes, Drive, Cobranças) — 250ms.
+#### 1. `QueryClient` global (`src/App.tsx`)
+- **Aumentar `staleTime` de 60s para 300s (5 min)**  
+  Dados contábeis (clientes, declarações, cobranças) raramente mudam a cada minuto. Isso reduz re-fetches em ~80% nas navegações entre páginas.
+- **Adicionar `retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)`**  
+  Em falhas transitórias de rede, evita spam de requisições em sequência rápida.
 
-### 4. Realtime (baixo impacto, evita vazamento)
-- Auditar `useChat`, `useNotificacoes`, kanban: garantir `removeChannel` no cleanup e um único canal por escopo (sem subscribe duplicado em StrictMode).
-- Usar `filter:` no `postgres_changes` para reduzir eventos recebidos (ex.: `escritorio_id=eq.X`).
+#### 2. Hooks de lista grande (`useClientes`, `useCobrancas`, `useDeclaracao`, `useChat`, `useMensagens`)
+- **Adicionar `placeholderData: keepPreviousData`** em queries paginadas/filtradas.  
+  Quando o usuário troca página, filtro ou aba, a lista anterior permanece visível enquanto os novos dados carregam — elimina o flash de tela em branco e o spinner. Sem risco de dados corrompidos.
 
-### 5. Assets & fontes (baixo impacto, melhora LCP)
-- `index.html`: `<link rel="preconnect">` para Supabase URL e domínio do Stripe.
-- Fontes Bricolage/DM Sans com `font-display: swap` e `preload` apenas dos pesos usados acima da dobra.
-- Imagens em `public/` e `src/assets/`: converter os maiores PNGs/JPGs para WebP via `vite-imagetools` ou pré-compressão (sem alterar o uso nos componentes).
+#### 3. `useBillingStatus` e hooks de metadados estáticos
+- **Aumentar `staleTime` para 10 min (`600_000`)** em hooks que carregam plano, limites e addons.  
+  Esses dados mudam apenas após ação explícita do usuário (upgrade, compra de add-on).
 
-### 6. Cache cliente (médio impacto)
-- Habilitar `persistQueryClient` (sessionStorage) com whitelist curta (`['escritorio','permissoes','addons']`) — sobrevive a F5 e elimina o flash de loading inicial.
-- `structuralSharing: true` (já é default no v5, confirmar).
+#### 4. Hook `useDebouncedInvalidate` (já existe)
+- **Verificar se está sendo usado corretamente** em formulários com auto-save ou busca em tempo real para evitar invalidações excessivas.
 
-### 7. Banco (baixo–médio, depende do `pg_stat_statements`)
-- Rodar análise de queries lentas (`supabase--db_health` + `analytics_query` em `postgres_logs`) e criar índices pontuais se aparecer N+1 ou seq scan em tabela grande.
-- Sem alterar schema funcional — só `CREATE INDEX CONCURRENTLY` quando justificado.
+### O que NÃO será feito (garantia de zero risco)
+- Nenhuma virtualização de tabela.
+- Nenhuma persistência de cache em `localStorage`/`sessionStorage`.
+- Nenhuma mudança em RLS, auth, ou regras de negócio.
+- Nenhuma remoção de colunas em `select('*')`.
 
-### Fora de escopo (mantém estabilidade)
-- Refatoração de componentes
-- Mudanças em RLS, edge functions ou fluxos de billing/IRPF
-- Troca de bibliotecas (shadcn, Tailwind, React Query)
-
-### Sugestão de execução
-Pacote A (bundle + payloads): itens 1 e 2 — entrega medível em segundos no TTI/INP, baixo risco.
-Pacote B (UX listas + realtime): itens 3 e 4.
-Pacote C (assets + cache + DB): itens 5–7.
-
-Posso começar pelo Pacote A se aprovar, ou rodar uma análise (`db_health` + tamanho de bundle) antes para priorizar com números.
+### Resultado Esperado
+- Menos requisições ao backend nas navegações comuns.
+- Experiência mais fluida em tabelas e kanban.
+- Nenhuma mudança visual ou funcional perceptível além da velocidade.

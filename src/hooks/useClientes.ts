@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
@@ -44,6 +44,7 @@ export function useClientes() {
     },
     enabled: !!escritorioId,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    placeholderData: keepPreviousData,
   });
 
   const cobrancasPorCliente = useQuery({

@@ -35,6 +35,7 @@ export function useAddons() {
       if (error) throw error;
       return data as Addon[];
     },
+    staleTime: 1000 * 60 * 30, // 30 min — catálogo muda raramente
   });
 
   const myAddonsQuery = useQuery({
@@ -48,6 +49,7 @@ export function useAddons() {
       return data as (EscritorioAddon & { addons: Addon })[];
     },
     enabled: !!profile.escritorioId,
+    staleTime: 1000 * 60 * 10, // 10 min
   });
 
   return { catalog: catalogQuery.data || [], myAddons: myAddonsQuery.data || [], isLoading: catalogQuery.isLoading || myAddonsQuery.isLoading };

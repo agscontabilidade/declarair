@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -48,6 +48,7 @@ export function useCobrancas(statusFilter?: string, periodoInicio?: string, peri
       return (data || []) as CobrancaComCliente[];
     },
     enabled: !!escritorioId,
+    placeholderData: keepPreviousData,
   });
 
   const kpis = {
