@@ -12,9 +12,9 @@ import { triggerStatusAutomation, createInAppNotification } from './kanbanAutoma
 
 const columns = [
   { status: 'aguardando_documentos', title: 'Aguardando Documentação', color: 'bg-warning/10' },
-  { status: 'documentacao_recebida', title: 'Documentação Recebida', color: 'bg-accent/10' },
-  { status: 'declaracao_pronta', title: 'Declaração Pronta', color: 'bg-success/10' },
-  { status: 'transmitida', title: 'Transmitidas', color: 'bg-muted' },
+  { status: 'documentacao_recebida', title: 'Documentação Recebida', color: 'bg-sky-100 dark:bg-sky-950/40' },
+  { status: 'declaracao_pronta', title: 'Declaração Pronta', color: 'bg-muted' },
+  { status: 'transmitida', title: 'Transmitidas', color: 'bg-success/10' },
 ];
 
 export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKanban[]; isLoading: boolean; anoBase: number }) {
