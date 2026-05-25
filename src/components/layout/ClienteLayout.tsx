@@ -21,7 +21,7 @@ const navItems = [
 
 export function ClienteLayout({ children }: { children: React.ReactNode }) {
   const { profile, signOut } = useAuth();
-  const { theme, resolved, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   // Portal do cliente: padrão é tema claro. Se nunca houve escolha explícita
   // (theme === 'system'), forçamos 'light' — sem afetar o ambiente do contador.
