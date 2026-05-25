@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { lazy, Suspense, useState, useRef } from 'react';
 import { ClienteLayout } from '@/components/layout/ClienteLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,11 @@ import {
   Landmark, FileWarning, Send, FileStack, Trash2, Loader2,
   AlertTriangle, HelpCircle, FileText
 } from 'lucide-react';
-import { RelacaoDocumentosModal } from '@/components/cliente-portal/RelacaoDocumentosModal';
+const RelacaoDocumentosModal = lazy(() =>
+  import('@/components/cliente-portal/RelacaoDocumentosModal').then((m) => ({
+    default: m.RelacaoDocumentosModal,
+  }))
+);
 import {
   AlertDialog,
   AlertDialogAction,
@@ -118,7 +122,7 @@ export default function ClienteDocumentos() {
         return;
       }
       declaracaoInicial = nova as typeof declaracaoInicial;
-      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-ativa'] });
     }
 
 
@@ -182,8 +186,8 @@ export default function ClienteDocumentos() {
       }
 
       // Atualiza caches do portal para refletir a nova declaração
-      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-form'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-ativa'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-ativa'] });
     }
 
     try {
@@ -265,7 +269,7 @@ export default function ClienteDocumentos() {
 
         // Sincroniza com o painel do contador (drive, checklist, lista de declarações)
         queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
-        queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
+        queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-ativa'] });
         queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
         queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs'] });
         queryClient.invalidateQueries({ queryKey: ['declaracao-checklist'] });
@@ -322,7 +326,7 @@ export default function ClienteDocumentos() {
 
       toast.success('Documentos enviados ao contador com sucesso!');
       setConcluido(true);
-      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-ativa'] });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro ao enviar documentos';
       console.error('[finalize] erro', err);
@@ -382,7 +386,7 @@ export default function ClienteDocumentos() {
 
       toast.success('Arquivo removido');
       queryClient.invalidateQueries({ queryKey: ['cliente-checklist'] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-declaracao-ativa'] });
       queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
       queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracao.id] });
       queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracao.id] });
@@ -483,7 +487,11 @@ export default function ClienteDocumentos() {
           </CardContent>
         </Card>
 
-        <RelacaoDocumentosModal open={relacaoModalOpen} onOpenChange={setRelacaoModalOpen} />
+        {relacaoModalOpen && (
+          <Suspense fallback={null}>
+            <RelacaoDocumentosModal open={relacaoModalOpen} onOpenChange={setRelacaoModalOpen} />
+          </Suspense>
+        )}
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
