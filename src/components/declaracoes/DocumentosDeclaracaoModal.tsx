@@ -154,6 +154,28 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
     onError: (e) => toast.error(getErrorMessage(e, 'Falha ao remover')),
   });
 
+  const toggleLancado = useMutation({
+    mutationFn: async ({ id, novoValor }: { id: string; novoValor: boolean }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from('checklist_documentos')
+        .update({
+          lancado: novoValor,
+          lancado_em: novoValor ? new Date().toISOString() : null,
+          lancado_por: novoValor ? userData.user?.id ?? null : null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      toast.success(vars.novoValor ? 'Documento marcado como lançado' : 'Marcação removida');
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e, 'Falha ao atualizar status')),
+  });
+
   async function baixarArquivo(path: string, id: string) {
     try {
       setDownloadingId(id);
