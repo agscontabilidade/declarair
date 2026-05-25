@@ -69,7 +69,7 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
           {whitelabelAtivo && logoUrl ? (
             <img src={logoUrl} alt={nomePortal} className="h-10 w-auto rounded-lg object-contain" />
           ) : (
-            <img src={resolved === 'dark' ? logoDark : logoFull} alt="DeclaraIR" className="h-10 w-auto object-contain" />
+            <img src={logoFull} alt="DeclaraIR" className="h-10 w-auto object-contain dark:brightness-0 dark:invert" />
           )}
           {whitelabelAtivo && (
             <span
