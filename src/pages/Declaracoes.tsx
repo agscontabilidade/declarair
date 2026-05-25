@@ -241,8 +241,24 @@ export default function Declaracoes() {
     );
   }
 
-  const filtered = declaracoes.filter((d: { status: string; clienteCpf: string; clienteNome: string }) => {
+  const filtered = declaracoes.filter((d: DeclaracaoListaItem) => {
     if (statusFilter !== 'todos' && d.status !== statusFilter) return false;
+    if (resultadoFiltro !== 'todos') {
+      const tr = d.tipo_resultado ?? 'nenhum';
+      if (tr !== resultadoFiltro) return false;
+    }
+    if (processoFiltro !== 'todos') {
+      const sp = d.status_processamento_rfb ?? 'aguardando';
+      if (sp !== processoFiltro) return false;
+    }
+    if (arquivosFiltro !== 'todos') {
+      const temDec = !!d.arquivo_declaracao_url;
+      const temRec = !!d.arquivo_recibo_url;
+      if (arquivosFiltro === 'completo' && !(temDec && temRec)) return false;
+      if (arquivosFiltro === 'nenhum' && (temDec || temRec)) return false;
+      if (arquivosFiltro === 'so_declaracao' && !(temDec && !temRec)) return false;
+      if (arquivosFiltro === 'so_recibo' && !(temRec && !temDec)) return false;
+    }
     const term = debouncedSearch.trim().toLowerCase();
     if (term) {
       const digits = term.replace(/\D/g, '');
@@ -252,6 +268,19 @@ export default function Declaracoes() {
     }
     return true;
   });
+
+  const hasActiveFilters =
+    statusFilter !== 'todos' ||
+    resultadoFiltro !== 'todos' ||
+    processoFiltro !== 'todos' ||
+    arquivosFiltro !== 'todos';
+
+  const clearFilters = () => {
+    setStatusFilter('todos');
+    setResultadoFiltro('todos');
+    setProcessoFiltro('todos');
+    setArquivosFiltro('todos');
+  };
 
   function maskCpf(cpf: string) {
     const digits = cpf.replace(/\D/g, '');
