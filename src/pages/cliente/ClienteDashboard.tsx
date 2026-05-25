@@ -1,5 +1,6 @@
+import { lazy, Suspense } from 'react';
 import { ClienteLayout } from '@/components/layout/ClienteLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
@@ -7,33 +8,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useClientePortal } from '@/hooks/useClientePortal';
 import { StatusStepper } from '@/components/cliente-portal/StatusStepper';
 import { ChatFlutuante } from '@/components/cliente-portal/ChatFlutuante';
-import { FileText, ClipboardList, Upload, AlertCircle, CheckCircle2, ShieldCheck, ExternalLink, ChevronRight, ChevronLeft } from 'lucide-react';
+import { FileText, ClipboardList, Upload, CheckCircle2, ShieldCheck, ChevronRight } from 'lucide-react';
 import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '@/hooks/useChat';
 import { QueryError } from '@/components/ui/QueryError';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-import { useState } from 'react';
-import passo1Img from '@/assets/ecac/passo-1.jpg';
-import passo2Img from '@/assets/ecac/passo-2.jpg';
-import passo3Img from '@/assets/ecac/passo-3.jpg';
-import passo4Img from '@/assets/ecac/passo-4.jpg';
-import passo5Img from '@/assets/ecac/passo-5.jpg';
-import passo7Img from '@/assets/ecac/passo-7.jpg';
-import passo8Img from '@/assets/ecac/passo-8.jpg';
-import passo9Img from '@/assets/ecac/passo-9.jpg';
+const EcacTutorialDialog = lazy(() => import('@/components/cliente-portal/EcacTutorialDialog'));
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
-  const { declaracao, checklist, formulario, statusStep, pendentes, progressoFormulario, stepTimestamps, isLoading, isError, error, refetch } = useClientePortal();
+  const { declaracao, checklist, formulario, statusStep, progressoFormulario, stepTimestamps, isLoading, isError, error, refetch } = useClientePortal({ includeTimestamps: true });
   // Supabase generated types may not yet expose `status_documentos`; cast through a typed shape.
   type DeclaracaoExtra = { status_documentos?: string | null; status?: string | null };
   const decl = declaracao as (typeof declaracao & DeclaracaoExtra) | null | undefined;
   const navigate = useNavigate();
-  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
 
   const tutorialSteps = [
     {
