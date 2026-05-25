@@ -159,6 +159,9 @@ export default function Declaracoes() {
     clienteEmail: string;
     observacoes: string;
     temDocsDrive: boolean;
+    observacoes_cliente: string | null;
+    observacoes_cliente_atualizado_em: string | null;
+    observacoes_cliente_lida_em: string | null;
 
   }
 
