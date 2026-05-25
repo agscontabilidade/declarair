@@ -94,10 +94,20 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
       toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' });
       return null;
     }
+    const emailClean = form.email.trim() || null;
+    const telClean = form.telefone.replace(/\D/g, '') || null;
+    if (!isEdit && form.enviar_convite && !emailClean && !telClean) {
+      toast({
+        title: 'Informe email ou WhatsApp',
+        description: 'Para enviar o convite de acesso, é preciso ter ao menos um contato.',
+        variant: 'destructive',
+      });
+      return null;
+    }
     const base = {
       nome: form.nome.trim(),
-      email: form.email || null,
-      telefone: form.telefone.replace(/\D/g, '') || null,
+      email: emailClean,
+      telefone: telClean,
       data_nascimento: form.data_nascimento || null,
       contador_responsavel_id: form.contador_responsavel_id || null,
       procuracao_ecac: form.procuracao_ecac,
@@ -107,13 +117,13 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
     };
     if (isEdit) {
       await onSave({ id: cliente!.id, ...base });
-      return { clienteId: cliente!.id ?? '', declaracaoId: null, nome: base.nome };
+      return { clienteId: cliente!.id ?? '', declaracaoId: null, nome: base.nome, email: emailClean, telefone: telClean };
     }
     const result = await onSave({ ...base, cpf: cpfDigits });
     if (result && typeof result === 'object' && 'clienteId' in result) {
-      return { clienteId: result.clienteId, declaracaoId: result.declaracaoId, nome: base.nome };
+      return { clienteId: result.clienteId, declaracaoId: result.declaracaoId, nome: base.nome, email: emailClean, telefone: telClean };
     }
-    return { clienteId: '', declaracaoId: null, nome: base.nome };
+    return { clienteId: '', declaracaoId: null, nome: base.nome, email: emailClean, telefone: telClean };
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,9 +132,11 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
     try {
       const r = await doSave();
       if (!r) return;
+      const wantInvite = !isEdit && form.enviar_convite && !!r.clienteId;
       toast({ title: isEdit ? 'Cliente atualizado!' : 'Cliente criado com sucesso!' });
       clearForm();
       onOpenChange(false);
+      if (wantInvite) onSavedAndInvite?.(r);
     } catch (err: unknown) {
       toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
