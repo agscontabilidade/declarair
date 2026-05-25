@@ -12,11 +12,17 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.97]",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-[0.97]",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground active:scale-[0.97]",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-[0.97]",
-        ghost: "hover:bg-accent hover:text-accent-foreground active:scale-[0.97]",
+        outline: "border border-input bg-background hover:bg-muted hover:text-foreground active:scale-[0.97]",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-muted active:scale-[0.97]",
+        ghost: "hover-action active:scale-[0.97]",
         link: "text-primary underline-offset-4 hover:underline",
         gradient: "gradient-brand text-white hover:opacity-90 active:scale-[0.97] shadow-lg shadow-[hsl(var(--gradient-from))/0.25]",
+        /* Icon-button semantic variants — usar com size="icon" */
+        iconAction: "hover-action active:scale-[0.97]",
+        iconPositive: "text-emerald-600 dark:text-emerald-400 hover-action-pos active:scale-[0.97]",
+        iconWarning: "text-amber-600 dark:text-amber-400 hover-action-warn active:scale-[0.97]",
+        iconDestructive: "text-destructive hover-action-neg active:scale-[0.97]",
+        iconInfo: "text-sky-600 dark:text-sky-400 hover-action-info active:scale-[0.97]",
       },
       size: {
         default: "h-10 px-4 py-2",
