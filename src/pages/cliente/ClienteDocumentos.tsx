@@ -31,12 +31,15 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useClientePortal } from '@/hooks/useClientePortal';
+import { useClienteUploadBloqueio } from '@/hooks/useNovosCadastrosBloqueio';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { CategoriaRF } from '@/lib/checklistPorPerfil';
 import { CATEGORIAS_RF } from '@/lib/checklistPorPerfil';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShieldAlert } from 'lucide-react';
 
 const CATEGORIA_META: Record<CategoriaRF, { label: string; icon: React.ElementType; color: string }> = {
   documentos_pessoais: { label: 'Documentos Pessoais', icon: User, color: 'text-primary' },
@@ -65,6 +68,7 @@ export default function ClienteDocumentos() {
   const { declaracao, checklist, isLoading } = useClientePortal();
   const { profile } = useAuth();
   const queryClient = useQueryClient();
+  const { bloqueado: uploadBloqueado, mensagem: uploadBloqueioMsg } = useClienteUploadBloqueio();
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [concluido, setConcluido] = useState(false);
@@ -73,6 +77,10 @@ export default function ClienteDocumentos() {
   const [dragActive, setDragActive] = useState(false);
 
   const handleFiles = async (files: FileList | File[]) => {
+    if (uploadBloqueado) {
+      toast.error(uploadBloqueioMsg);
+      return;
+    }
     const list = Array.from(files);
     console.log('[upload] start', {
       count: list.length,
