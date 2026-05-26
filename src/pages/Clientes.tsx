@@ -41,6 +41,7 @@ export default function Clientes() {
   const [conviteCtx, setConviteCtx] = useState<EnviarConviteClienteCtx | null>(null);
   const { criar: criarCobranca } = useCobrancas();
   const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente } = usePermissoes();
+  const { bloqueado: cadastrosBloqueados, mensagem: bloqueioMsg } = useNovosCadastrosBloqueio();
   const { toast } = useToast();
 
   if (!podeVerClientes) {
