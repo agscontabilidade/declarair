@@ -150,6 +150,7 @@ export function useClientePortal(options: Options = {}) {
   return {
     declaracao,
     checklist,
+    arquivosReais,
     formulario,
     statusStep,
     pendentes,
