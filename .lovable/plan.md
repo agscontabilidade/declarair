@@ -1,32 +1,46 @@
-## Objetivo
+## Diagnóstico
 
-Restaurar o botão "Gerar Link de Convite" na página de Clientes, gerando um link estável que não expira e pode ser reutilizado.
+O link "Link Inválido" aparece porque o cliente Supabase está usando **PKCE como flow padrão** (v2.99.x). No PKCE, o `resetPasswordForEmail` armazena um `code_verifier` no localStorage do navegador que pediu o reset, e o link de recuperação chega como `?code=xxx`. O `exchangeCodeForSession` automático **só funciona se o usuário clicar no link no mesmo navegador/dispositivo** onde solicitou.
 
-## Observação sobre "sem token"
+Cenário real do cliente do contador:
+- Solicita reset no celular → recebe email → abre no desktop (ou no app de email, que pré-fetch o link no Gmail/Outlook, consumindo o code) → desktop não tem o `code_verifier` → erro `invalid request: both auth code and code verifier should be non-empty` → cai no fallback "Link Inválido".
 
-O link precisa obrigatoriamente carregar um identificador na URL para que o sistema saiba para qual escritório direcionar o cadastro (ex.: `/cadastro-cliente/abc123...`). Vou manter esse identificador opaco (gerado uma vez e reutilizável), mas **sem qualquer expiração** e **sem marcar como "usado"** — funciona como um link público permanente do escritório. Se preferir uma URL ainda mais curta/limpa (ex.: `/c/<slug-do-escritorio>`), me avise que ajusto.
+Confirmação no código:
+- `src/integrations/supabase/client.ts` não define `flowType` → default PKCE.
+- `RedefinirSenha.tsx` só escuta o evento `PASSWORD_RECOVERY` ou hash `type=recovery` — nunca trata `?code=` falhando.
+- Não há `exchangeCodeForSession` em lugar nenhum.
 
-## Mudanças
+Não posso editar `src/integrations/supabase/client.ts` (arquivo auto-gerado).
 
-### 1. `src/pages/Clientes.tsx`
-- Importar `GerarLinkConvite` e renderizar o botão ao lado de "Novo Cliente" (visível só para quem tem `podeCriarClientes`, igual ao botão atual).
+## Solução
 
-### 2. `src/components/clientes/GerarLinkConvite.tsx`
-- Remover o aviso "O link expira em 30 dias" no painel de sucesso.
-- Manter os demais textos (reutilizável, copiar, WhatsApp, e-mail).
+Criar um **cliente auxiliar Supabase em flow `implicit`** dedicado ao fluxo de recuperação de senha. No flow implicit, o link de recuperação não depende de `code_verifier`, funcionando cross-device (Supabase verifica o token server-side e redireciona com `#access_token=...&type=recovery` no hash).
 
-### 3. Edge function `supabase/functions/validate-invite-token/index.ts`
-- Remover o filtro `.gt('expira_em', ...)` ao buscar o convite. Token válido = token existe.
+### Mudanças
 
-### 4. Edge function `supabase/functions/register-from-invite/index.ts`
-- Remover o filtro `.gt('expira_em', ...)`.
-- Não marcar o convite como `usado=true` após o cadastro (mantém reutilizável para outros contribuintes).
+1. **`src/lib/supabase-auth-recovery.ts`** (novo)
+   - Instanciar um segundo `createClient` apontando para a mesma URL/anon key, com:
+     - `flowType: 'implicit'`
+     - `storageKey: 'sb-declarair-recovery'` (isola da sessão principal para não derrubar o usuário logado)
+     - `persistSession: false`, `autoRefreshToken: false`, `detectSessionInUrl: true`
 
-### 5. Migração SQL (`convites_cliente`)
-- `ALTER COLUMN expira_em DROP NOT NULL` (se aplicável) e `DROP DEFAULT`.
-- `UPDATE convites_cliente SET expira_em = NULL, usado = false, usado_em = NULL, usado_por_cliente_id = NULL` para destravar os links antigos que já tinham expirado ou foram marcados como usados.
+2. **`src/pages/RecuperarSenha.tsx`**
+   - Trocar `supabase.auth.resetPasswordForEmail` pelo client de recovery, mantendo `redirectTo` apontando para `/redefinir-senha?origem=...`.
 
-## Fora de escopo
-- Não mexer no fluxo de convite direto (criar cliente + enviar e-mail/WhatsApp imediato) que continua funcionando como está.
-- Não alterar RLS nem outras tabelas.
-- Sem mudanças no portal do cliente (`CadastroCliente.tsx`) — ele já consome o token via edge function.
+3. **`src/pages/RedefinirSenha.tsx`**
+   - Usar o client de recovery para detectar a sessão de recuperação (hash `#access_token` + `type=recovery`) e chamar `updateUser({ password })`.
+   - Manter o listener `onAuthStateChange('PASSWORD_RECOVERY')` no client de recovery.
+   - Após sucesso, fazer `signOut()` apenas no client de recovery (não derruba sessão principal de outros usuários).
+   - Aumentar o timeout de "checking" e mostrar a mensagem de erro real do Supabase quando vier (`?error=...` ou `#error=...` no URL) em vez de só "Link Inválido".
+   - Manter a lógica de redirect por `origem` (cliente vs contador).
+
+### Não muda
+- Template de email `recovery.tsx` (continua usando `confirmationUrl`).
+- `auth-email-hook` (continua repassando `payload.data.url`).
+- Fluxo de invite de cliente, login, e cliente principal Supabase.
+
+## Riscos / validações
+
+- Verificar no preview o fluxo completo: solicitar reset como cliente → abrir link em aba anônima (simulando outro dispositivo) → trocar senha → login em `/cliente/login`.
+- Garantir que `storageKey` separado não conflita com o client principal nem com o `localStorage` do AuthContext.
+- Confirmar que nenhum outro lugar do código chama `resetPasswordForEmail` ou depende do hash de recovery no client principal.
