@@ -188,7 +188,8 @@ export function useMensagens(options: UseMensagensOptions = {}) {
   });
 
   return {
-    templates, loadingTemplates, mensagens, loadingMensagens,
+    templates, loadingTemplates,
+    mensagens, mensagensTotal, loadingMensagens,
     criarTemplate, editarTemplate, toggleTemplate, deletarTemplate, enviarMensagem,
   };
 }
