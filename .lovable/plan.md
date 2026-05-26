@@ -1,46 +1,36 @@
-## Problema
+## Plano para corrigir documentos/checklist em todos os clientes
 
-Na tela de criação de conta via convite direto (`/cliente/convite/:token` → `register-from-direct-invite`), o erro:
+### Problema confirmado
+- O card do portal do cliente está contando todos os registros de `checklist_documentos`, inclusive itens pendentes sem arquivo.
+- A aba Documentos no lado contador em `/clientes/...` ainda mostra uma checklist de documentos pessoais, mesmo quando não há arquivos anexados.
+- No banco, existem registros antigos sem arquivo espalhados por clientes/contadores: encontrei 196 itens de checklist sem arquivo, incluindo o cliente Gelson Santos com 5 itens e 0 arquivos reais.
 
-> `duplicate key value violates unique constraint "idx_clientes_auth_user"`
+### O que vou ajustar
+1. **Portal do cliente: dashboard**
+   - Trocar a contagem do card “Envio de Documentos” para contar somente arquivos reais: `status = recebido` e `arquivo_url` preenchido.
+   - O status “Pronto para Enviar” só aparecerá quando houver arquivo anexado de verdade.
+   - O stepper de documentos também deixará de avançar por checklist pendente sem arquivo.
 
-acontece porque o email do convite (`contato@agscont.com.br`) já existe no Supabase Auth — é o próprio dono do escritório (e/ou já está vinculado a outro registro em `clientes`). A função reaproveita esse `auth_user_id` via `listUsers()` e tenta gravá-lo em `clientes.auth_user_id`, violando o índice único.
+2. **Portal do cliente: documentos**
+   - Manter apenas o fluxo livre de upload e a lista “Arquivos Anexados”.
+   - Garantir que a lista use somente arquivos reais, ignorando qualquer item antigo sem `arquivo_url`.
 
-## Causa
+3. **Lado contador: `/clientes/:id` > Documentos**
+   - Remover a UI de checklist por categorias e itens pendentes.
+   - Substituir por uma visão simples de arquivos reais anexados para a declaração ativa.
+   - Quando não houver arquivo real, mostrar vazio corretamente, sem “Documentos Pessoais” nem botão de upload por item.
+   - Remover ações que recriam checklist manual nessa tela.
 
-A edge function `register-from-direct-invite` não valida:
-1. Se o `userId` reaproveitado já pertence a um `usuarios` (contador/dono) — staff não pode virar cliente.
-2. Se o `userId` já está vinculado a um **outro** registro em `clientes` (cliente em outro escritório, por exemplo).
+4. **Dados existentes no banco**
+   - Criar uma migração para apagar, em todos os escritórios/clientes/contadores, os itens antigos de `checklist_documentos` que não têm arquivo real (`arquivo_url` vazio/nulo ou status pendente).
+   - Não apagar arquivos anexados, documentos enviados pelo cliente, documentos do contador, recibos, declarações, DARFs, MEI ou análises.
+   - Ajustar status de declarações que ficaram como “documentação recebida/enviado” sem nenhum arquivo real, voltando para pendente/aguardando documentos.
 
-Quando qualquer dessas condições é verdadeira, o `UPDATE clientes SET auth_user_id = …` quebra com violação do índice único e o usuário vê a mensagem técnica.
+5. **Prevenir retorno do erro**
+   - Remover/neutralizar os pontos de criação manual de checklist no fluxo de cliente/contador.
+   - Deixar `checklist_documentos` sendo usado apenas como índice de arquivos anexados, não como checklist pendente.
 
-## Solução (escopo estrito)
-
-Editar APENAS `supabase/functions/register-from-direct-invite/index.ts`. Sem migração, sem mudar fluxos de login/recuperação/cadastro de contador/cliente normal.
-
-Antes do `UPDATE` final em `clientes`:
-
-1. Verificar se `userId` já existe em `public.usuarios`:
-   - Se sim → erro amigável: *"Este email já está em uso por um usuário do escritório. Use outro email para o cadastro do cliente ou peça ao responsável para alterar o email do convite."*
-2. Verificar se já existe outra linha em `clientes` com esse `auth_user_id` diferente do `cliente.id` atual:
-   - Se sim → erro amigável: *"Este email já está vinculado a outro cliente. Solicite ao seu contador um novo convite com um email diferente."*
-3. Só então executar o `UPDATE`.
-
-Adicionalmente, na ramificação onde criamos um auth user novo e o email já existe (`listUsers` encontra), aplicar as MESMAS duas verificações antes de reaproveitar — para falhar cedo, sem alterar a senha do dono.
-
-## Garantias de não-quebra
-
-- Nenhuma alteração no schema, RLS, triggers, RPCs ou outros edge functions.
-- Convites normais (email novo) continuam funcionando idênticos.
-- Recuperação de senha, login do cliente, cadastro via `register-from-invite` (fluxo de token público) não são tocados.
-- Apenas adicionamos guardas antes do `UPDATE` que já estava falhando — comportamento de sucesso permanece igual.
-
-## Arquivos
-
-- `supabase/functions/register-from-direct-invite/index.ts` (somente)
-
-## Fora de escopo
-
-- Migrações de banco
-- `register-from-invite`, `validate-invite-token`, `RecuperarSenha`, `RedefinirSenha`, `AuthContext`
-- Qualquer mudança de UI além da mensagem de erro retornada pela função (que já é exibida pelo toast existente)
+### Validação
+- Conferir via consulta que não restem itens pendentes/sem arquivo em `checklist_documentos`.
+- Conferir o caso do Gelson Santos: o card deve mostrar 0 documentos e status pendente enquanto não houver upload real.
+- Conferir `/clientes/...` no contador: não deve aparecer lista de checklist quando não houver arquivos.

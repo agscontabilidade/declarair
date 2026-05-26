@@ -95,14 +95,22 @@ export function useClientePortal(options: Options = {}) {
     enabled: !!declaracao?.id && includeTimestamps,
   });
 
+  // Conta apenas arquivos reais (status=recebido + arquivo_url preenchido)
+  const arquivosReais = useMemo(
+    () => checklist.filter((c: { status: string; arquivo_url?: string | null }) =>
+      c.status === 'recebido' && !!c.arquivo_url
+    ),
+    [checklist]
+  );
+
   const statusStep = useMemo(() => {
     if (!declaracao) return 0;
     if (declaracao.status === 'transmitida') return 5;
     if (declaracao.status === 'declaracao_pronta') return 4;
     if (declaracao.status === 'documentacao_recebida') return 3;
-    if (formulario?.status_preenchimento === 'concluido' || checklist.length > 0) return 2;
+    if (formulario?.status_preenchimento === 'concluido' || arquivosReais.length > 0) return 2;
     return 1;
-  }, [declaracao, checklist, formulario]);
+  }, [declaracao, arquivosReais, formulario]);
 
   const pendentes = useMemo(
     () => checklist.filter((c: { status: string }) => c.status === 'pendente'),
@@ -142,6 +150,7 @@ export function useClientePortal(options: Options = {}) {
   return {
     declaracao,
     checklist,
+    arquivosReais,
     formulario,
     statusStep,
     pendentes,
