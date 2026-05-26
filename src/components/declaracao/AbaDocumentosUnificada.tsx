@@ -100,6 +100,75 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
     onError: (e) => toast.error(getErrorMessage(e, 'Falha ao atualizar status')),
   });
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const uploadContador = useMutation({
+    mutationFn: async (files: File[]) => {
+      // Busca contexto da declaração (escritorio + cliente) para montar o path
+      const { data: decl, error: declErr } = await supabase
+        .from('declaracoes')
+        .select('id, escritorio_id, cliente_id')
+        .eq('id', declaracaoId)
+        .single();
+      if (declErr || !decl) throw declErr || new Error('Declaração não encontrada');
+
+      for (const file of files) {
+        // 1) cria a linha primeiro para obter o id
+        const nomeSemExt = file.name.replace(/\.[^/.]+$/, '');
+        const { data: inserted, error: insertErr } = await supabase
+          .from('checklist_documentos')
+          .insert({
+            declaracao_id: decl.id,
+            categoria: 'contador',
+            nome_documento: nomeSemExt,
+            obrigatorio: false,
+            status: 'recebido',
+            arquivo_nome: file.name,
+            data_recebimento: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
+        if (insertErr || !inserted) throw insertErr || new Error('Falha ao registrar documento');
+
+        // 2) upload no storage
+        const path = `${decl.escritorio_id}/${decl.cliente_id}/${inserted.id}/${file.name}`;
+        const { error: upErr } = await supabase.storage
+          .from('documentos-clientes')
+          .upload(path, file, { upsert: true });
+        if (upErr) {
+          // rollback da linha caso o upload falhe
+          await supabase.from('checklist_documentos').delete().eq('id', inserted.id);
+          throw upErr;
+        }
+
+        // 3) preenche arquivo_url
+        const { error: updErr } = await supabase
+          .from('checklist_documentos')
+          .update({ arquivo_url: path })
+          .eq('id', inserted.id);
+        if (updErr) throw updErr;
+      }
+    },
+    onSuccess: (_, files) => {
+      toast.success(
+        files.length === 1
+          ? 'Documento anexado com sucesso'
+          : `${files.length} documentos anexados com sucesso`
+      );
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e, 'Falha ao anexar documento')),
+  });
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) uploadContador.mutate(files);
+    // limpa o input para permitir reenvio do mesmo arquivo
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
   async function baixar(path: string, id: string) {
     try {
       setDownloadingId(id);
