@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
       throw new Error('Token e senha são obrigatórios');
     }
 
-    if (senha.length < 6) {
+    if (typeof senha !== 'string' || senha.length < 6) {
       throw new Error('A senha deve ter no mínimo 6 caracteres');
     }
 
@@ -44,28 +44,72 @@ Deno.serve(async (req) => {
       throw new Error('Cliente não possui email cadastrado');
     }
 
+    // 2. Resolve auth user: reuse existing if valid, otherwise create
+    let userId: string | null = null;
+
     if (cliente.auth_user_id) {
-      throw new Error('Este cliente já possui uma conta');
+      // Check if auth user still exists
+      const { data: existing } = await supabaseAdmin.auth.admin.getUserById(cliente.auth_user_id);
+      if (existing?.user && existing.user.email?.toLowerCase() === cliente.email.toLowerCase()) {
+        // Recover inconsistent state: update password on existing user
+        const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
+          existing.user.id,
+          { password: senha, email_confirm: true }
+        );
+        if (updErr) {
+          console.error('[register-from-direct-invite] updateUserById error:', updErr);
+          throw new Error('Erro ao atualizar senha: ' + updErr.message);
+        }
+        userId = existing.user.id;
+      } else {
+        // Auth user missing or email mismatch — clear stale link and recreate
+        await supabaseAdmin
+          .from('clientes')
+          .update({ auth_user_id: null })
+          .eq('id', cliente.id);
+      }
     }
 
-    // 2. Create auth user with email auto-confirmed
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: cliente.email,
-      password: senha,
-      email_confirm: true,
-      user_metadata: { nome: cliente.nome, tipo: 'cliente' },
-    });
+    if (!userId) {
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: cliente.email,
+        password: senha,
+        email_confirm: true,
+        user_metadata: { nome: cliente.nome, tipo: 'cliente' },
+      });
 
-    if (authError || !authData.user) {
-      console.error('[register-from-direct-invite] Auth error:', authError);
-      throw new Error('Erro ao criar conta: ' + (authError?.message || 'desconhecido'));
+      if (authError || !authData.user) {
+        console.error('[register-from-direct-invite] Auth error:', authError);
+        const msg = authError?.message || '';
+        // If auth user already exists in Auth but wasn't linked, try to find and link it
+        if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('registered')) {
+          const { data: list } = await supabaseAdmin.auth.admin.listUsers();
+          const found = list?.users?.find(
+            (u) => u.email?.toLowerCase() === cliente.email.toLowerCase()
+          );
+          if (found) {
+            const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
+              found.id,
+              { password: senha, email_confirm: true }
+            );
+            if (updErr) throw new Error('Erro ao atualizar senha: ' + updErr.message);
+            userId = found.id;
+          } else {
+            throw new Error('Este email já está em uso por outra conta.');
+          }
+        } else {
+          throw new Error('Erro ao criar conta: ' + (msg || 'desconhecido'));
+        }
+      } else {
+        userId = authData.user.id;
+      }
     }
 
-    // 3. Link auth user to client and clear token
+    // 3. Link auth user to client and finalize onboarding (idempotent)
     const { error: updateError } = await supabaseAdmin
       .from('clientes')
       .update({
-        auth_user_id: authData.user.id,
+        auth_user_id: userId,
         token_convite: null,
         token_convite_expira_em: null,
         status_onboarding: 'concluido',
@@ -73,39 +117,57 @@ Deno.serve(async (req) => {
       .eq('id', cliente.id);
 
     if (updateError) {
-      // Rollback
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       console.error('[register-from-direct-invite] Update error:', updateError);
       throw new Error('Erro ao vincular conta: ' + updateError.message);
     }
 
-    // 4. Create declaration for current year
+    // 4. Ensure declaracao for current year (idempotent)
     const anoAtual = new Date().getFullYear();
-    const { data: newDecl } = await supabaseAdmin
+    const { data: existingDecl } = await supabaseAdmin
       .from('declaracoes')
-      .insert({
-        escritorio_id: cliente.escritorio_id,
-        cliente_id: cliente.id,
-        ano_base: anoAtual,
-        status: 'aguardando_documentos',
-      })
       .select('id')
-      .single();
+      .eq('cliente_id', cliente.id)
+      .eq('ano_base', anoAtual)
+      .maybeSingle();
 
-    // 5. Create base checklist
-    if (newDecl) {
-      const baseChecklist = [
-        { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
-        { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true },
-        { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true },
-        { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false },
-        { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false },
-      ].map(item => ({ ...item, declaracao_id: newDecl.id }));
+    let declId = existingDecl?.id as string | undefined;
 
-      await supabaseAdmin.from('checklist_documentos').insert(baseChecklist);
+    if (!declId) {
+      const { data: newDecl, error: declErr } = await supabaseAdmin
+        .from('declaracoes')
+        .insert({
+          escritorio_id: cliente.escritorio_id,
+          cliente_id: cliente.id,
+          ano_base: anoAtual,
+          status: 'aguardando_documentos',
+        })
+        .select('id')
+        .single();
+      if (declErr) console.error('[register-from-direct-invite] decl insert error:', declErr);
+      declId = newDecl?.id;
     }
 
-    // 6. Notify office
+    // 5. Ensure base checklist (only if declaracao has none yet)
+    if (declId) {
+      const { count } = await supabaseAdmin
+        .from('checklist_documentos')
+        .select('id', { count: 'exact', head: true })
+        .eq('declaracao_id', declId);
+
+      if (!count || count === 0) {
+        const baseChecklist = [
+          { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
+          { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true },
+          { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true },
+          { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false },
+          { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false },
+        ].map((item) => ({ ...item, declaracao_id: declId }));
+
+        await supabaseAdmin.from('checklist_documentos').insert(baseChecklist);
+      }
+    }
+
+    // 6. Notify office (best-effort)
     await supabaseAdmin
       .from('notificacoes')
       .insert({
