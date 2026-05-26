@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, Loader2, XCircle, Ban } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { validateCPF } from '@/lib/formatters';
 import { getErrorMessage } from '@/lib/errors';
+import { useNovosCadastrosBloqueio } from '@/hooks/useNovosCadastrosBloqueio';
 
 interface ConviteData {
   id: string;
