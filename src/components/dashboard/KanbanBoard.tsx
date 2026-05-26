@@ -141,6 +141,7 @@ export function KanbanBoard({ items, isLoading, anoBase }: { items: DeclaracaoKa
               status={col.status}
               color={col.color}
               items={grouped[col.status] || []}
+              isAnyDragging={!!activeItem}
             />
           ))}
         </div>

@@ -36,9 +36,10 @@ const STATUS_TOOLTIPS: Record<string, string> = {
 interface Props {
   item: DeclaracaoKanban;
   isOverlay?: boolean;
+  isAnyDragging?: boolean;
 }
 
-export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
+export const KanbanCard = memo(function KanbanCard({ item, isOverlay, isAnyDragging }: Props) {
   const navigate = useNavigate();
   const nome = item.clientes?.nome ?? 'Cliente';
   const cpf = item.clientes?.cpf ?? '';
@@ -58,13 +59,20 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
   });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: isOverlay
+      ? `${CSS.Transform.toString(transform) ?? ''} translateZ(0)`.trim()
+      : CSS.Transform.toString(transform),
     opacity: isDragging ? 0.35 : 1,
     transition: isDragging ? undefined : 'transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease',
+    willChange: 'transform' as const,
+    backfaceVisibility: 'hidden' as const,
+    WebkitFontSmoothing: 'antialiased' as const,
   };
 
   const statusLabel = STATUS_LABELS[item.status] || item.status;
   const statusTooltip = STATUS_TOOLTIPS[item.status] || '';
+
+  const suppressHover = !!isAnyDragging && !isOverlay;
 
   const cardContent = (
     <div
@@ -78,7 +86,7 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
       className={`
         group bg-card rounded-xl p-3.5 shadow-sm border border-border/40
         cursor-grab active:cursor-grabbing
-        hover:shadow-lg hover:border-accent/30 hover:-translate-y-0.5
+        ${suppressHover ? '' : 'hover:shadow-lg hover:border-accent/30 hover:-translate-y-0.5'}
         ${isOverlay ? 'shadow-2xl rotate-2 scale-105 ring-2 ring-accent/30' : ''}
       `}
     >
@@ -87,7 +95,7 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
           {getInitials(nome)}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm truncate group-hover:text-accent transition-colors duration-200">{nome}</p>
+          <p className={`font-semibold text-sm truncate transition-colors duration-200 ${suppressHover ? '' : 'group-hover:text-accent'}`}>{nome}</p>
           <p className="text-xs text-muted-foreground tabular-nums mt-0.5">{maskCpf(cpf)}</p>
         </div>
         {stale && (
