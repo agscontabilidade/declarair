@@ -87,11 +87,16 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
 
   const isEdit = mode === 'edit';
   const cpfDigits = form.cpf.replace(/\D/g, '');
-  const cpfValid = isEdit ? true : validateCPF(form.cpf);
+  // CPF é opcional. Só valida se o usuário começou a digitar algo.
+  const cpfValid = cpfDigits.length === 0 ? true : validateCPF(form.cpf);
 
   async function doSave(): Promise<SavedClienteResult | null> {
-    if (!form.nome.trim() || !cpfValid) {
-      toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' });
+    if (!form.nome.trim()) {
+      toast({ title: 'Informe o nome do cliente', variant: 'destructive' });
+      return null;
+    }
+    if (!cpfValid) {
+      toast({ title: 'CPF inválido', description: 'Corrija o CPF ou deixe em branco.', variant: 'destructive' });
       return null;
     }
     const emailClean = form.email.trim() || null;
@@ -119,7 +124,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
       await onSave({ id: cliente!.id, ...base });
       return { clienteId: cliente!.id ?? '', declaracaoId: null, nome: base.nome, email: emailClean, telefone: telClean };
     }
-    const result = await onSave({ ...base, cpf: cpfDigits });
+    const result = await onSave({ ...base, cpf: cpfDigits || null });
     if (result && typeof result === 'object' && 'clienteId' in result) {
       return { clienteId: result.clienteId, declaracaoId: result.declaracaoId, nome: base.nome, email: emailClean, telefone: telClean };
     }
@@ -206,7 +211,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
 
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <Label htmlFor="cpf">CPF {!isEdit && <span className="text-destructive">*</span>}</Label>
+                <Label htmlFor="cpf">CPF <span className="text-xs font-normal text-muted-foreground">(opcional)</span></Label>
                 <div className="relative">
                   <IdCard aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input

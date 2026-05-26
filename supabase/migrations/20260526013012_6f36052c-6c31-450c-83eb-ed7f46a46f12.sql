@@ -1,0 +1,1 @@
+ALTER TABLE public.clientes ALTER COLUMN cpf DROP NOT NULL;

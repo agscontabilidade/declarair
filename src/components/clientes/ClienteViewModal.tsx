@@ -26,7 +26,7 @@ import { WhatsAppIcon } from './WhatsAppIcon';
 interface Cliente {
   id: string;
   nome: string;
-  cpf: string;
+  cpf: string | null;
   email?: string | null;
   telefone?: string | null;
   data_nascimento?: string | null;
@@ -200,7 +200,7 @@ export function ClienteViewModal({ open, onOpenChange, cliente, onEdit }: Props)
                 id="view-cpf"
                 label="CPF"
                 icon={IdCard}
-                value={formatCPF(cliente.cpf)}
+                value={cliente.cpf ? formatCPF(cliente.cpf) : ''}
                 mono
               />
               <ReadField
