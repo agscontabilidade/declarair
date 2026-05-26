@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseRecovery } from '@/lib/supabase-auth-recovery';
+import type { Session } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +20,7 @@ export default function RedefinirSenha() {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [recovery, setRecovery] = useState(false);
+  const [recoverySession, setRecoverySession] = useState<Session | null>(null);
   const [checking, setChecking] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -40,25 +42,22 @@ export default function RedefinirSenha() {
       return;
     }
 
+    const acceptSession = (session: Session | null) => {
+      if (!session) return;
+      setRecoverySession(session);
+      setRecovery(true);
+      setChecking(false);
+    };
+
     const { data: { subscription } } = supabaseRecovery.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-        setRecovery(true);
-        setChecking(false);
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        acceptSession(session);
       }
     });
 
-    // Fallback: hash com type=recovery (implicit flow)
-    if (hash.includes('type=recovery') || hash.includes('access_token=')) {
-      setRecovery(true);
-      setChecking(false);
-    }
-
-    // Verifica sessão já existente no client de recovery
+    // Verifica sessão já existente no client de recovery (link já consumido)
     supabaseRecovery.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        setRecovery(true);
-        setChecking(false);
-      }
+      if (data.session) acceptSession(data.session);
     });
 
     const timeout = setTimeout(() => setChecking(false), 4000);
@@ -81,6 +80,23 @@ export default function RedefinirSenha() {
     }
     setLoading(true);
     try {
+      // Garante sessão de recuperação ativa antes do updateUser
+      let session = recoverySession;
+      if (!session) {
+        const { data } = await supabaseRecovery.auth.getSession();
+        session = data.session;
+      }
+      if (!session) {
+        toast({
+          title: 'Sessão de recuperação expirada',
+          description: 'Solicite um novo link de recuperação para continuar.',
+          variant: 'destructive',
+        });
+        setRecovery(false);
+        setErrorMsg('A sessão de recuperação expirou. Solicite um novo link.');
+        return;
+      }
+
       const { data: { user } } = await supabaseRecovery.auth.getUser();
       const { error } = await supabaseRecovery.auth.updateUser({ password: novaSenha });
       if (error) throw error;
