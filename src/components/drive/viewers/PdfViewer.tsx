@@ -22,7 +22,7 @@ interface Props {
 export function PdfViewer({ url, nome, onStreamError }: Props) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.2);
+  const [scale, setScale] = useState<number>(1.8);
   const [error, setError] = useState<string | null>(null);
   const fallbackTriedRef = useRef(false);
 
