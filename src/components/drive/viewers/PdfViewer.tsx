@@ -22,7 +22,7 @@ interface Props {
 export function PdfViewer({ url, nome, onStreamError }: Props) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.2);
+  const [scale, setScale] = useState<number>(1.8);
   const [error, setError] = useState<string | null>(null);
   const fallbackTriedRef = useRef(false);
 
@@ -146,7 +146,7 @@ export function PdfViewer({ url, nome, onStreamError }: Props) {
             size="icon"
             variant="ghost"
             className="h-8 w-8"
-            onClick={() => setScale(1.2)}
+            onClick={() => setScale(1.8)}
             title="Redefinir zoom"
           >
             <RotateCcw className="h-4 w-4" />
