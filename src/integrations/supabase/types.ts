@@ -2906,6 +2906,7 @@ export type Database = {
           whitelabel_ativo: boolean
         }[]
       }
+      get_novos_cadastros_bloqueio: { Args: never; Returns: Json }
       get_user_cliente_escritorio_id: { Args: never; Returns: string }
       get_user_cliente_id: { Args: never; Returns: string }
       get_user_escritorio_id: { Args: never; Returns: string }

@@ -26,6 +26,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    // NOTA: a trava `novos_cadastros_bloqueio` NÃO se aplica aqui — este endpoint
+    // apenas vincula um auth.user a um cliente já criado pelo contador antes do prazo.
+    // Bloquear aqui impediria clientes existentes de criar a senha e acessar o portal.
+
     // 1. Validate token - find client with this invite token
     const { data: clientes, error: clienteError } = await supabaseAdmin
       .from('clientes')
