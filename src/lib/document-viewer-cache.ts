@@ -26,9 +26,9 @@ function isFresh(entry: Entry | undefined): entry is Entry {
 }
 
 export async function getSignedUrlCached(path: string): Promise<string | null> {
-  const existing = cache.get(path);
-  if (isFresh(existing)) return existing.signedUrl;
-  if (existing?.signedPromise) return existing.signedPromise;
+  const current = cache.get(path);
+  if (current && isFresh(current)) return current.signedUrl;
+  if (current?.signedPromise) return current.signedPromise;
 
   const promise = (async () => {
     const { data, error } = await supabase.storage
@@ -49,7 +49,7 @@ export async function getSignedUrlCached(path: string): Promise<string | null> {
     return data.signedUrl;
   })();
 
-  const seed: Entry = existing ?? { signedUrl: '', signedAt: 0 };
+  const seed: Entry = current ?? { signedUrl: '', signedAt: 0 };
   seed.signedPromise = promise;
   cache.set(path, seed);
   return promise;
@@ -93,7 +93,7 @@ export async function getBlobUrlCached(
 
 /** Faz prefetch leve apenas do signed URL (sem baixar o arquivo). */
 export function prefetchSignedUrl(path: string): void {
-  const existing = cache.get(path);
-  if (isFresh(existing) || existing?.signedPromise) return;
+  const current = cache.get(path);
+  if ((current && isFresh(current)) || current?.signedPromise) return;
   void getSignedUrlCached(path);
 }
