@@ -224,6 +224,13 @@ export default function Cobrancas() {
               onExcluir={(id) => setConfirmAction({ type: 'excluir', id })}
               interAtivo={interAtivo || false}
             />
+            <PaginationControls
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+            />
           </CardContent>
         </Card>
           </>
