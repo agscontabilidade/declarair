@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { FileText, Download, Eye, User, Briefcase, Plus, CheckCircle2 } from 'lucide-react';
+import { FileText, Download, Eye, User, Briefcase, Plus, CheckCircle2, Upload, Loader2 } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -99,6 +99,75 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
     },
     onError: (e) => toast.error(getErrorMessage(e, 'Falha ao atualizar status')),
   });
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const uploadContador = useMutation({
+    mutationFn: async (files: File[]) => {
+      // Busca contexto da declaração (escritorio + cliente) para montar o path
+      const { data: decl, error: declErr } = await supabase
+        .from('declaracoes')
+        .select('id, escritorio_id, cliente_id')
+        .eq('id', declaracaoId)
+        .single();
+      if (declErr || !decl) throw declErr || new Error('Declaração não encontrada');
+
+      for (const file of files) {
+        // 1) cria a linha primeiro para obter o id
+        const nomeSemExt = file.name.replace(/\.[^/.]+$/, '');
+        const { data: inserted, error: insertErr } = await supabase
+          .from('checklist_documentos')
+          .insert({
+            declaracao_id: decl.id,
+            categoria: 'contador',
+            nome_documento: nomeSemExt,
+            obrigatorio: false,
+            status: 'recebido',
+            arquivo_nome: file.name,
+            data_recebimento: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
+        if (insertErr || !inserted) throw insertErr || new Error('Falha ao registrar documento');
+
+        // 2) upload no storage
+        const path = `${decl.escritorio_id}/${decl.cliente_id}/${inserted.id}/${file.name}`;
+        const { error: upErr } = await supabase.storage
+          .from('documentos-clientes')
+          .upload(path, file, { upsert: true });
+        if (upErr) {
+          // rollback da linha caso o upload falhe
+          await supabase.from('checklist_documentos').delete().eq('id', inserted.id);
+          throw upErr;
+        }
+
+        // 3) preenche arquivo_url
+        const { error: updErr } = await supabase
+          .from('checklist_documentos')
+          .update({ arquivo_url: path })
+          .eq('id', inserted.id);
+        if (updErr) throw updErr;
+      }
+    },
+    onSuccess: (_, files) => {
+      toast.success(
+        files.length === 1
+          ? 'Documento anexado com sucesso'
+          : `${files.length} documentos anexados com sucesso`
+      );
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e, 'Falha ao anexar documento')),
+  });
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) uploadContador.mutate(files);
+    // limpa o input para permitir reenvio do mesmo arquivo
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
 
   async function baixar(path: string, id: string) {
     try {
@@ -198,13 +267,34 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
     <div className="space-y-4">
 
       <Card>
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base">Documentos da declaração</CardTitle>
-          {onAddItem && (
-            <Button size="sm" variant="outline" onClick={onAddItem}>
-              <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar item
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadContador.isPending}
+            >
+              {uploadContador.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Anexar documento
             </Button>
-          )}
+            {onAddItem && (
+              <Button size="sm" variant="outline" onClick={onAddItem}>
+                <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar item
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {docs.length === 0 ? (
