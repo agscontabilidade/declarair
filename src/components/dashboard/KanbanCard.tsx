@@ -72,6 +72,8 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay, isAnyDragg
   const statusLabel = STATUS_LABELS[item.status] || item.status;
   const statusTooltip = STATUS_TOOLTIPS[item.status] || '';
 
+  const suppressHover = !!isAnyDragging && !isOverlay;
+
   const cardContent = (
     <div
       ref={setNodeRef}
@@ -84,7 +86,7 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay, isAnyDragg
       className={`
         group bg-card rounded-xl p-3.5 shadow-sm border border-border/40
         cursor-grab active:cursor-grabbing
-        hover:shadow-lg hover:border-accent/30 hover:-translate-y-0.5
+        ${suppressHover ? '' : 'hover:shadow-lg hover:border-accent/30 hover:-translate-y-0.5'}
         ${isOverlay ? 'shadow-2xl rotate-2 scale-105 ring-2 ring-accent/30' : ''}
       `}
     >
@@ -93,7 +95,7 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay, isAnyDragg
           {getInitials(nome)}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm truncate group-hover:text-accent transition-colors duration-200">{nome}</p>
+          <p className={`font-semibold text-sm truncate transition-colors duration-200 ${suppressHover ? '' : 'group-hover:text-accent'}`}>{nome}</p>
           <p className="text-xs text-muted-foreground tabular-nums mt-0.5">{maskCpf(cpf)}</p>
         </div>
         {stale && (
