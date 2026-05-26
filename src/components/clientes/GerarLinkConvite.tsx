@@ -199,9 +199,9 @@ export default function GerarLinkConvite({ disabled = false, disabledReason }: G
   }, [open, carregarDadosEscritorio]);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (disabled && v) return; setOpen(v); if (!v) resetForm(); }}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2" disabled={disabled}>
           <Link2 className="h-4 w-4" />
           Gerar Link de Convite
         </Button>
