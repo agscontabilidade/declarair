@@ -40,6 +40,7 @@ export default function CadastroCliente() {
   const [escritorio, setEscritorio] = useState<EscritorioData | null>(null);
   const [invalido, setInvalido] = useState(false);
   const [erros, setErros] = useState<Record<string, string>>({});
+  const { bloqueado: cadastrosBloqueados, mensagem: bloqueioMsg } = useNovosCadastrosBloqueio();
 
   const [form, setForm] = useState({
     nome: '',
