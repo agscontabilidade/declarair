@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,13 +12,39 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-interface Props { url: string; nome: string }
+interface Props {
+  url: string;
+  nome: string;
+  /** Called when streaming render fails — parent can switch to a blob URL fallback. */
+  onStreamError?: () => void;
+}
 
-export function PdfViewer({ url, nome }: Props) {
+export function PdfViewer({ url, nome, onStreamError }: Props) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.2);
   const [error, setError] = useState<string | null>(null);
+  const fallbackTriedRef = useRef(false);
+
+  // Reset fallback flag when the URL changes (new file).
+  useEffect(() => {
+    fallbackTriedRef.current = false;
+    setError(null);
+  }, [url]);
+
+  // Stable options object — recreating it forces pdf.js to reload the document.
+  const documentOptions = useMemo(
+    () => ({
+      // pdf.js will use Range requests when the server supports them, giving
+      // first-page render before the full file is downloaded.
+      disableStream: false,
+      disableAutoFetch: false,
+    }),
+    [],
+  );
+
+  // Memoize the file source so <Document> doesn't reload on unrelated re-renders.
+  const fileSource = useMemo(() => ({ url }), [url]);
 
   const onLoadSuccess = useCallback(({ numPages: n }: { numPages: number }) => {
     setNumPages(n);
@@ -28,8 +54,14 @@ export function PdfViewer({ url, nome }: Props) {
 
   const onLoadError = useCallback((err: Error) => {
     console.error('[PdfViewer] load error', err);
+    // Try the blob fallback once (handles servers without Range support).
+    if (!fallbackTriedRef.current && onStreamError) {
+      fallbackTriedRef.current = true;
+      onStreamError();
+      return;
+    }
     setError('Não foi possível renderizar este PDF. Use "Abrir em nova aba" no topo do modal.');
-  }, []);
+  }, [onStreamError]);
 
   return (
     <div className="w-full h-full flex flex-col bg-muted rounded-md overflow-hidden">
@@ -40,7 +72,8 @@ export function PdfViewer({ url, nome }: Props) {
           </div>
         ) : (
           <Document
-            file={url}
+            file={fileSource}
+            options={documentOptions}
             onLoadSuccess={onLoadSuccess}
             onLoadError={onLoadError}
             loading={<Skeleton className="w-[600px] h-[800px]" />}
