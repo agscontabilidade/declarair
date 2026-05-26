@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,17 +25,34 @@ interface Props {
 export function EnviarConviteClienteDialog({ ctx, onClose }: Props) {
   const [link, setLink] = useState('');
   const [loading, setLoading] = useState(false);
+  // Guarda qual clienteId já foi processado para evitar re-gerar token a cada render do parent
+  const processedRef = useRef<string | null>(null);
+  // onClose pode mudar de identidade a cada render do parent; usar ref evita re-runs do effect
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
+  const clienteId = ctx?.clienteId ?? null;
+  const mode = ctx?.mode ?? 'novo';
+  const tokenExistente = ctx?.tokenExistente ?? null;
 
   useEffect(() => {
-    if (!ctx) {
+    if (!clienteId) {
       setLink('');
+      processedRef.current = null;
       return;
     }
+
+    // Mesmo clienteId já processado → não re-gerar
+    const key = `${clienteId}:${mode}:${tokenExistente ?? ''}`;
+    if (processedRef.current === key) return;
+    processedRef.current = key;
+
     let cancelled = false;
+
     (async () => {
       // Reusar token existente sem novo update
-      if (ctx.mode === 'reusar' && ctx.tokenExistente) {
-        setLink(`${PORTAL_BASE_URL}/cliente/convite/${ctx.tokenExistente}`);
+      if (mode === 'reusar' && tokenExistente) {
+        setLink(`${PORTAL_BASE_URL}/cliente/convite/${tokenExistente}`);
         return;
       }
       setLoading(true);
@@ -43,27 +60,34 @@ export function EnviarConviteClienteDialog({ ctx, onClose }: Props) {
         const token = crypto.randomUUID();
         const expira = new Date();
         expira.setDate(expira.getDate() + 7);
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('clientes')
           .update({
             token_convite: token,
             token_convite_expira_em: expira.toISOString(),
             status_onboarding: 'convite_enviado',
           })
-          .eq('id', ctx.clienteId);
+          .eq('id', clienteId)
+          .select('token_convite')
+          .single();
         if (error) throw error;
-        if (!cancelled) setLink(`${PORTAL_BASE_URL}/cliente/convite/${token}`);
+        if (!data?.token_convite) {
+          throw new Error('Não foi possível gerar o convite. Verifique se você tem permissão para este contribuinte.');
+        }
+        // Usa o token retornado pelo banco como fonte da verdade — elimina divergência
+        if (!cancelled) setLink(`${PORTAL_BASE_URL}/cliente/convite/${data.token_convite}`);
       } catch (err: unknown) {
         toast({ title: 'Erro ao gerar convite', description: getErrorMessage(err), variant: 'destructive' });
-        if (!cancelled) onClose();
+        if (!cancelled) onCloseRef.current();
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
-  }, [ctx, onClose]);
 
-  const isReusar = ctx?.mode === 'reusar';
+    return () => { cancelled = true; };
+  }, [clienteId, mode, tokenExistente]);
+
+  const isReusar = mode === 'reusar';
   const titulo = isReusar ? 'Reenviar convite de acesso' : 'Enviar convite de acesso';
 
   const mensagem = ctx
@@ -124,13 +148,13 @@ export function EnviarConviteClienteDialog({ ctx, onClose }: Props) {
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              <Button variant="outline" onClick={copiar} className="gap-2">
+              <Button variant="outline" onClick={copiar} className="gap-2" disabled={!link}>
                 <Copy className="h-4 w-4" /> Copiar
               </Button>
-              <Button variant="outline" onClick={abrirWhatsApp} className="gap-2">
+              <Button variant="outline" onClick={abrirWhatsApp} className="gap-2" disabled={!link}>
                 <MessageCircle className="h-4 w-4" /> WhatsApp
               </Button>
-              <Button variant="outline" onClick={abrirEmail} disabled={!ctx?.email} className="gap-2">
+              <Button variant="outline" onClick={abrirEmail} disabled={!ctx?.email || !link} className="gap-2">
                 <Mail className="h-4 w-4" /> Email
               </Button>
             </div>
