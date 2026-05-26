@@ -116,6 +116,10 @@ export default function GerarLinkConvite({ disabled = false, disabledReason }: G
   };
 
   const handleGerar = async () => {
+    if (disabled) {
+      toast({ title: 'Cadastros encerrados', description: disabledReason, variant: 'destructive' });
+      return;
+    }
     if (!profile?.escritorioId) return;
     if (formData.cpf_sugerido && !validateCPF(formData.cpf_sugerido)) {
       toast({ title: 'CPF inválido', variant: 'destructive' });
