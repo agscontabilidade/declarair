@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { FileText, Download, Eye, User, Briefcase, Plus, CheckCircle2 } from 'lucide-react';
+import { FileText, Download, Eye, User, Briefcase, Plus, CheckCircle2, Upload, Loader2 } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';

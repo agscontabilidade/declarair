@@ -1,36 +1,43 @@
-## Plano para corrigir documentos/checklist em todos os clientes
+# Reativar upload de documentos pelo contador
 
-### Problema confirmado
-- O card do portal do cliente está contando todos os registros de `checklist_documentos`, inclusive itens pendentes sem arquivo.
-- A aba Documentos no lado contador em `/clientes/...` ainda mostra uma checklist de documentos pessoais, mesmo quando não há arquivos anexados.
-- No banco, existem registros antigos sem arquivo espalhados por clientes/contadores: encontrei 196 itens de checklist sem arquivo, incluindo o cliente Gelson Santos com 5 itens e 0 arquivos reais.
+## Problema
+Na refatoração anterior, a aba **Documentos** em `/declaracoes/:id` (e em `/clientes/:id` > Documentos) passou a usar `AbaDocumentosUnificada`, que só **lista** arquivos. O botão que permitia ao contador anexar documentos sumiu. Os contadores precisam voltar a conseguir subir arquivos por ali (ex.: comprovantes, PDFs gerados, etc.).
 
-### O que vou ajustar
-1. **Portal do cliente: dashboard**
-   - Trocar a contagem do card “Envio de Documentos” para contar somente arquivos reais: `status = recebido` e `arquivo_url` preenchido.
-   - O status “Pronto para Enviar” só aparecerá quando houver arquivo anexado de verdade.
-   - O stepper de documentos também deixará de avançar por checklist pendente sem arquivo.
+## Escopo (estrito)
+Alterar **apenas** `src/components/declaracao/AbaDocumentosUnificada.tsx` para adicionar um botão de upload do lado do contador. Nada mais é tocado:
+- Não mexer no portal do cliente
+- Não mexer no hook `useClientePortal`
+- Não mexer no `ClientePerfil` nem no `DeclaracaoDetalhe` além do que já está
+- Não mexer em RLS, storage policies, ou no schema
+- Não recriar checklist/pendências
 
-2. **Portal do cliente: documentos**
-   - Manter apenas o fluxo livre de upload e a lista “Arquivos Anexados”.
-   - Garantir que a lista use somente arquivos reais, ignorando qualquer item antigo sem `arquivo_url`.
+## Mudança
 
-3. **Lado contador: `/clientes/:id` > Documentos**
-   - Remover a UI de checklist por categorias e itens pendentes.
-   - Substituir por uma visão simples de arquivos reais anexados para a declaração ativa.
-   - Quando não houver arquivo real, mostrar vazio corretamente, sem “Documentos Pessoais” nem botão de upload por item.
-   - Remover ações que recriam checklist manual nessa tela.
+No header do card `Documentos da declaração`, adicionar botão **"Anexar documento"** (ícone Upload). Comportamento:
 
-4. **Dados existentes no banco**
-   - Criar uma migração para apagar, em todos os escritórios/clientes/contadores, os itens antigos de `checklist_documentos` que não têm arquivo real (`arquivo_url` vazio/nulo ou status pendente).
-   - Não apagar arquivos anexados, documentos enviados pelo cliente, documentos do contador, recibos, declarações, DARFs, MEI ou análises.
-   - Ajustar status de declarações que ficaram como “documentação recebida/enviado” sem nenhum arquivo real, voltando para pendente/aguardando documentos.
+1. Abre um `<input type="file" multiple>` invisível (mesmo padrão já usado em outros uploads do app).
+2. Para cada arquivo selecionado:
+   - `INSERT` em `checklist_documentos` com:
+     - `declaracao_id` = prop atual
+     - `categoria = 'contador'`
+     - `nome_documento` = nome do arquivo (sem extensão)
+     - `obrigatorio = false`
+     - `status = 'recebido'`
+     - `arquivo_nome` = nome do arquivo
+     - `data_recebimento = now()`
+   - Upload no bucket `documentos-clientes` no path `{escritorio_id}/{cliente_id}/{novoId}/{file.name}` (mesmo padrão do `useDeclaracao.uploadDoc`).
+   - `UPDATE` na linha recém-criada com `arquivo_url = path`.
+3. Mostrar toast de sucesso/erro e invalidar as queries:
+   - `['declaracao-aba-docs', declaracaoId]`
+   - `['documentos-declaracao', declaracaoId]`
+   - `['declaracao-checklist', declaracaoId]`
+4. Para obter `escritorio_id` e `cliente_id`, fazer um pequeno `SELECT` em `declaracoes` (id, escritorio_id, cliente_id) na hora do upload — evita acoplar com `useDeclaracao` e mantém o componente reutilizável tanto em `DeclaracaoDetalhe` quanto em `ClientePerfil`.
 
-5. **Prevenir retorno do erro**
-   - Remover/neutralizar os pontos de criação manual de checklist no fluxo de cliente/contador.
-   - Deixar `checklist_documentos` sendo usado apenas como índice de arquivos anexados, não como checklist pendente.
+## Garantias de não-regressão
+- O botão **"Adicionar item"** (que depende da prop opcional `onAddItem`) **continua existindo** exatamente como está — só adicionamos o novo botão ao lado.
+- A listagem, agrupamento (cliente/contador), visualizador e download permanecem intactos.
+- Arquivos enviados pelo contador aparecem automaticamente no grupo "Anexados pelo contador" porque a categoria é `'contador'`.
+- Nenhuma mudança em portal do cliente, contagem de arquivos reais ou status da declaração.
 
-### Validação
-- Conferir via consulta que não restem itens pendentes/sem arquivo em `checklist_documentos`.
-- Conferir o caso do Gelson Santos: o card deve mostrar 0 documentos e status pendente enquanto não houver upload real.
-- Conferir `/clientes/...` no contador: não deve aparecer lista de checklist quando não houver arquivos.
+## Arquivos afetados
+- `src/components/declaracao/AbaDocumentosUnificada.tsx` (único arquivo modificado)
