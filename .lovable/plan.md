@@ -1,36 +1,32 @@
 ## Objetivo
-Eliminar qualquer regra que trate documentos como checklist obrigatório/pendente. Documentos devem ser arquivos livres, enviados pelo cliente ou pelo contador, sem gerar “Pendente de Reenvio” por itens antigos de checklist.
 
-## Plano de implementação
-1. **Parar criação automática de checklist padrão**
-   - Remover a criação dos itens obrigatórios em:
-     - cadastro por convite direto do cliente;
-     - cadastro por convite antigo;
-     - criação de declaração pelo Dashboard;
-     - criação de declaração dentro do perfil do cliente.
-   - A declaração continua sendo criada normalmente, mas sem itens pré-obrigatórios.
+Restaurar o botão "Gerar Link de Convite" na página de Clientes, gerando um link estável que não expira e pode ser reutilizado.
 
-2. **Corrigir status do portal do cliente**
-   - Ajustar `useClientePortal` para não calcular pendência por `checklist_documentos.obrigatorio`.
-   - O status “Pendente de Reenvio” deixará de depender de checklist pendente.
-   - Se houver `status_documentos = 'enviado'` ou documentos anexados, o card ficará como enviado/pronto, nunca como pendente por checklist antigo.
+## Observação sobre "sem token"
 
-3. **Ajustar Dashboard do cliente**
-   - Reordenar a regra do badge de documentos para priorizar “Enviado ao Contador”.
-   - Remover a condição visual que mostra “Pendente de Reenvio” baseada em `statusStep === 2`.
+O link precisa obrigatoriamente carregar um identificador na URL para que o sistema saiba para qual escritório direcionar o cadastro (ex.: `/cadastro-cliente/abc123...`). Vou manter esse identificador opaco (gerado uma vez e reutilizável), mas **sem qualquer expiração** e **sem marcar como "usado"** — funciona como um link público permanente do escritório. Se preferir uma URL ainda mais curta/limpa (ex.: `/c/<slug-do-escritorio>`), me avise que ajusto.
 
-4. **Manter upload livre para cliente e contador**
-   - Preservar os uploads já existentes, que salvam arquivos como registros não obrigatórios.
-   - Garantir que o contador continue podendo anexar documentos livremente pelo modal de documentos.
-   - Evitar qualquer fluxo que peça associação do arquivo a item pendente.
+## Mudanças
 
-5. **Neutralizar legado sem apagar documentos**
-   - Adicionar uma migração para marcar itens antigos de `checklist_documentos` como não obrigatórios quando não tiverem arquivo anexado, evitando que dados antigos causem pendência.
-   - Remover/desativar lógica de banco que reverte declaração para “aguardando_documentos” quando arquivos são removidos, para não voltar a aparecer como pendente por ausência de checklist.
-   - Não apagar arquivos já enviados.
+### 1. `src/pages/Clientes.tsx`
+- Importar `GerarLinkConvite` e renderizar o botão ao lado de "Novo Cliente" (visível só para quem tem `podeCriarClientes`, igual ao botão atual).
 
-6. **Verificação do fluxo**
-   - Conferir no código que não existe mais criação de checklist obrigatório.
-   - Verificar que upload do cliente muda status para `documentacao_recebida`/`enviado`.
-   - Verificar que upload/visualização do contador permanece funcional.
-   - Rodar uma checagem direcionada nas referências a `obrigatorio`, `Pendente de Reenvio` e `checklistPadrao` para garantir que o fluxo crítico foi removido.
+### 2. `src/components/clientes/GerarLinkConvite.tsx`
+- Remover o aviso "O link expira em 30 dias" no painel de sucesso.
+- Manter os demais textos (reutilizável, copiar, WhatsApp, e-mail).
+
+### 3. Edge function `supabase/functions/validate-invite-token/index.ts`
+- Remover o filtro `.gt('expira_em', ...)` ao buscar o convite. Token válido = token existe.
+
+### 4. Edge function `supabase/functions/register-from-invite/index.ts`
+- Remover o filtro `.gt('expira_em', ...)`.
+- Não marcar o convite como `usado=true` após o cadastro (mantém reutilizável para outros contribuintes).
+
+### 5. Migração SQL (`convites_cliente`)
+- `ALTER COLUMN expira_em DROP NOT NULL` (se aplicável) e `DROP DEFAULT`.
+- `UPDATE convites_cliente SET expira_em = NULL, usado = false, usado_em = NULL, usado_por_cliente_id = NULL` para destravar os links antigos que já tinham expirado ou foram marcados como usados.
+
+## Fora de escopo
+- Não mexer no fluxo de convite direto (criar cliente + enviar e-mail/WhatsApp imediato) que continua funcionando como está.
+- Não alterar RLS nem outras tabelas.
+- Sem mudanças no portal do cliente (`CadastroCliente.tsx`) — ele já consome o token via edge function.

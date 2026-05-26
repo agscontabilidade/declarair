@@ -24,11 +24,9 @@ Deno.serve(async (req) => {
 
     const { data: convite, error } = await supabaseAdmin
       .from('convites_cliente')
-      .select('id, escritorio_id, nome_sugerido, cpf_sugerido, email_sugerido, mensagem_personalizada, expira_em')
+      .select('id, escritorio_id, nome_sugerido, cpf_sugerido, email_sugerido, mensagem_personalizada')
       .eq('token', token)
-      .eq('usado', false)
-      .gt('expira_em', new Date().toISOString())
-      .single();
+      .maybeSingle();
 
     if (error || !convite) {
       return new Response(

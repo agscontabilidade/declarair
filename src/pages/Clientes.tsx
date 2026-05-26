@@ -11,6 +11,7 @@ import { ClienteViewModal } from '@/components/clientes/ClienteViewModal';
 import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
 import { DocumentosDeclaracaoModal } from '@/components/declaracoes/DocumentosDeclaracaoModal';
 import { EnviarConviteClienteDialog, type EnviarConviteClienteCtx } from '@/components/clientes/EnviarConviteClienteDialog';
+import GerarLinkConvite from '@/components/clientes/GerarLinkConvite';
 import { useCobrancas } from '@/hooks/useCobrancas';
 import { QueryError } from '@/components/ui/QueryError';
 import { ClientesFilters } from '@/components/clientes/ClientesFilters';
@@ -87,10 +88,13 @@ export default function Clientes() {
           <h1 className="font-display text-2xl font-bold text-foreground">Clientes</h1>
           <div className="flex gap-2">
             {podeCriarClientes && (
-              <Button className="gap-2" onClick={() => setCreateOpen(true)}>
-                <Plus className="h-4 w-4" />
-                Novo Cliente
-              </Button>
+              <>
+                <GerarLinkConvite />
+                <Button className="gap-2" onClick={() => setCreateOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Novo Cliente
+                </Button>
+              </>
             )}
           </div>
         </div>

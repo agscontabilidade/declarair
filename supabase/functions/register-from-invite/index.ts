@@ -22,17 +22,15 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // 1. Validate invite (must be unused and not expired)
+    // 1. Validate invite (link permanente e reutilizável — basta existir)
     const { data: convite, error: conviteError } = await supabaseAdmin
       .from('convites_cliente')
       .select('*')
       .eq('token', token)
-      .eq('usado', false)
-      .gt('expira_em', new Date().toISOString())
-      .single();
+      .maybeSingle();
 
     if (conviteError || !convite) {
-      throw new Error('Link de convite inválido, já utilizado ou expirado');
+      throw new Error('Link de convite inválido');
     }
 
     // 2. Check if CPF already exists in this office
@@ -98,15 +96,7 @@ Deno.serve(async (req) => {
 
     // 5b. Checklist obrigatório removido — documentos são livres.
 
-    // 6. Mark invite as used
-    await supabaseAdmin
-      .from('convites_cliente')
-      .update({
-        usado: true,
-        usado_em: new Date().toISOString(),
-        usado_por_cliente_id: cliente.id,
-      })
-      .eq('id', convite.id);
+    // 6. Link permanece reutilizável — não marcamos como usado.
 
     // 7. Notify the office
     await supabaseAdmin
