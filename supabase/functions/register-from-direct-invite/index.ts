@@ -88,6 +88,25 @@ Deno.serve(async (req) => {
             (u) => u.email?.toLowerCase() === cliente.email.toLowerCase()
           );
           if (found) {
+            // Guard: do not hijack a staff account
+            const { data: staffRow } = await supabaseAdmin
+              .from('usuarios')
+              .select('id')
+              .eq('id', found.id)
+              .maybeSingle();
+            if (staffRow) {
+              throw new Error('Este email já está em uso por um usuário do escritório. Use outro email para o cadastro do cliente ou peça ao responsável para alterar o email do convite.');
+            }
+            // Guard: do not break unique index by linking to an auth user already tied to another cliente
+            const { data: otherCliente } = await supabaseAdmin
+              .from('clientes')
+              .select('id')
+              .eq('auth_user_id', found.id)
+              .neq('id', cliente.id)
+              .maybeSingle();
+            if (otherCliente) {
+              throw new Error('Este email já está vinculado a outro cliente. Solicite ao seu contador um novo convite com um email diferente.');
+            }
             const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
               found.id,
               { password: senha, email_confirm: true }
@@ -104,6 +123,29 @@ Deno.serve(async (req) => {
         userId = authData.user.id;
       }
     }
+
+    // Final safety: ensure userId is not already linked to another cliente row,
+    // and not a staff account — prevents idx_clientes_auth_user violation.
+    if (userId) {
+      const { data: staffRow } = await supabaseAdmin
+        .from('usuarios')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+      if (staffRow) {
+        throw new Error('Este email já está em uso por um usuário do escritório. Use outro email para o cadastro do cliente ou peça ao responsável para alterar o email do convite.');
+      }
+      const { data: otherCliente } = await supabaseAdmin
+        .from('clientes')
+        .select('id')
+        .eq('auth_user_id', userId)
+        .neq('id', cliente.id)
+        .maybeSingle();
+      if (otherCliente) {
+        throw new Error('Este email já está vinculado a outro cliente. Solicite ao seu contador um novo convite com um email diferente.');
+      }
+    }
+
 
     // 3. Link auth user to client and finalize onboarding (idempotent)
     const { error: updateError } = await supabaseAdmin
