@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseRecovery } from '@/lib/supabase-auth-recovery';
 import { PORTAL_BASE_URL } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,7 @@ export default function RecuperarSenha() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabaseRecovery.auth.resetPasswordForEmail(email, {
         redirectTo: `${PORTAL_BASE_URL}/redefinir-senha?origem=${origem}`,
       });
       if (error) throw error;

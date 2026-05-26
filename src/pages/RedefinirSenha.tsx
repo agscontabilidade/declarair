@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseRecovery } from '@/lib/supabase-auth-recovery';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,22 +21,47 @@ export default function RedefinirSenha() {
   const [recovery, setRecovery] = useState(false);
   const [checking, setChecking] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setRecovery(true);
-      }
+    // Detecta erro vindo do Supabase no hash/query (ex: otp_expired, access_denied)
+    const hash = window.location.hash;
+    const search = window.location.search;
+    const hashParams = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+    const queryParams = new URLSearchParams(search);
+    const errorParam =
+      hashParams.get('error_description') ||
+      hashParams.get('error') ||
+      queryParams.get('error_description') ||
+      queryParams.get('error');
+    if (errorParam) {
+      setErrorMsg(decodeURIComponent(errorParam.replace(/\+/g, ' ')));
       setChecking(false);
+      return;
+    }
+
+    const { data: { subscription } } = supabaseRecovery.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        setRecovery(true);
+        setChecking(false);
+      }
     });
 
-    const hash = window.location.hash;
-    if (hash.includes('type=recovery')) {
+    // Fallback: hash com type=recovery (implicit flow)
+    if (hash.includes('type=recovery') || hash.includes('access_token=')) {
       setRecovery(true);
       setChecking(false);
     }
 
-    const timeout = setTimeout(() => setChecking(false), 3000);
+    // Verifica sessão já existente no client de recovery
+    supabaseRecovery.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setRecovery(true);
+        setChecking(false);
+      }
+    });
+
+    const timeout = setTimeout(() => setChecking(false), 4000);
 
     return () => {
       subscription.unsubscribe();
@@ -55,8 +81,8 @@ export default function RedefinirSenha() {
     }
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.auth.updateUser({ password: novaSenha });
+      const { data: { user } } = await supabaseRecovery.auth.getUser();
+      const { error } = await supabaseRecovery.auth.updateUser({ password: novaSenha });
       if (error) throw error;
 
       // Determine redirect: query param takes priority, fallback to clientes lookup
@@ -72,7 +98,7 @@ export default function RedefinirSenha() {
         }
       }
 
-      await supabase.auth.signOut();
+      await supabaseRecovery.auth.signOut();
       toast({ title: 'Senha redefinida com sucesso!' });
       navigate(redirectTo);
     } catch (err: unknown) {
@@ -81,6 +107,7 @@ export default function RedefinirSenha() {
       setLoading(false);
     }
   }
+
 
   if (checking) {
     return (
@@ -175,9 +202,9 @@ export default function RedefinirSenha() {
                   <AlertTriangle className="h-6 w-6 text-destructive" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  O link de recuperação expirou ou já foi utilizado. Solicite um novo link.
+                  {errorMsg || 'O link de recuperação expirou ou já foi utilizado. Solicite um novo link.'}
                 </p>
-                <Link to="/recuperar-senha">
+                <Link to={`/recuperar-senha${origemParam ? `?origem=${origemParam}` : ''}`}>
                   <Button variant="outline" className="w-full h-11">Solicitar novo link</Button>
                 </Link>
               </div>
