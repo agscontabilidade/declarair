@@ -1,63 +1,53 @@
-# Trava de novos cadastros de clientes (deadline IRPF)
-
 ## Objetivo
-A partir de **26/05/2026 19:00 (horário de Brasília)**, **bloquear a criação de novos clientes** em toda a plataforma. Clientes que já existem continuam usando o sistema 100% normal (upload de documentos, formulário, chat, etc.).
 
-## Escopo do bloqueio
-Os 3 caminhos que criam um cliente novo são fechados:
-1. **Botão "Novo cliente"** em `/clientes` (modal `ClienteModal`) — disabled + tooltip explicativo.
-2. **Geração de link de convite** (`GerarLinkConvite`) — disabled + aviso.
-3. **Auto-cadastro via link público** (`/cliente/convite/:token` e edge functions `register-from-invite` e `register-from-direct-invite`) — retorna erro amigável "Período de cadastros encerrado em 26/05 às 19:00. Fale com seu contador."
+Reverter o bloqueio que está afetando contadores e trocar por um bloqueio **somente no portal do cliente** para envio de documentos novos. Contador continua podendo cadastrar clientes e fazer upload normalmente.
 
-Tudo o mais (login de cliente existente, upload, formulário IR, criação de declarações, envio de email, etc.) **continua funcionando normalmente**.
+## O que está errado hoje
 
-## Defesa em camadas (à prova de erro)
+Na rodada anterior, criamos:
+- Config `novos_cadastros_bloqueio` em `system_configs`
+- Trigger `trg_enforce_novos_cadastros_bloqueio` em `public.clientes` (BEFORE INSERT) → **isso bloqueia o contador de cadastrar clientes novos**
+- Bloqueio nas Edge Functions `register-from-invite`
+- UI: botões "Novo cliente" e "Gerar link de convite" desabilitados na tela do contador
+- Tela "Cadastros encerrados" no `/cliente/convite/:token`
 
-### Camada 1 — Banco (trigger BEFORE INSERT em `clientes`)
-Trigger lê `system_configs.key='novos_cadastros_bloqueio'`. Se `enabled=true` e `now() >= deadline`, levanta exceção `NOVOS_CADASTROS_BLOQUEADOS: <mensagem>`. Garante que **nenhum caminho** (incluindo edge functions com service role) crie cliente depois do prazo.
+Tudo isso vai sair.
 
-Service role **não** é bypassado de propósito — queremos que até as edge functions respeitem a trava. (Se no futuro precisar emergência, admin desliga via `system_configs`.)
+## Mudanças
 
-### Camada 2 — Edge functions
-`register-from-invite` e `register-from-direct-invite` consultam o flag antes de qualquer ação e retornam HTTP 403 com mensagem amigável. Evita criar usuário em `auth.users` desnecessariamente.
+### 1. Banco (migration)
+- `DROP TRIGGER trg_enforce_novos_cadastros_bloqueio ON public.clientes` e `DROP FUNCTION enforce_novos_cadastros_bloqueio()`
+- Renomear/substituir a chave em `system_configs` para `cliente_upload_bloqueado` com `{ enabled: true, deadline: "2026-05-26T19:00:00-03:00", mensagem: "..." }`. Manter `get_novos_cadastros_bloqueio()` apontando para a nova chave (rename interno) ou criar `get_cliente_upload_bloqueio()` e descontinuar a antiga.
+- Nova função `enforce_cliente_upload_bloqueio()` + trigger BEFORE INSERT em `public.checklist_documentos` que só bloqueia quando:
+  - `auth.uid()` corresponde a um registro em `public.clientes` (ou seja, `is_cliente() = true`)
+  - **NÃO** bloqueia quando o INSERT vem de `usuarios` (contador) ou de `service_role`.
+  - Bloqueia apenas se `enabled = true` e `now() >= deadline`.
 
-### Camada 3 — Frontend
-- Hook `useNovosCadastrosBloqueio()` lê o config (cache 60s).
-- `Clientes.tsx` (botão Novo Cliente): disabled + tooltip "Cadastros encerrados em 26/05 19:00".
-- `GerarLinkConvite.tsx`: bloqueado com a mesma mensagem.
-- `ConviteCliente.tsx` (página pública do convite): se o flag estiver ativo, mostra tela "Período de cadastro encerrado" em vez do formulário.
-- **Banner global** no topo (apenas para contador/dono) avisando o prazo, baseado em `global_alert` ou no próprio flag.
+### 2. Edge Functions
+- `register-from-invite/index.ts`: remover o check de bloqueio (volta ao comportamento original).
+- `register-from-direct-invite/index.ts`: já não tinha bloqueio, sem mudanças.
 
-## Configuração (via `system_configs`)
-Nova chave:
-```
-key: 'novos_cadastros_bloqueio'
-value: {
-  "enabled": true,
-  "deadline": "2026-05-26T19:00:00-03:00",
-  "mensagem": "O cadastro de novos clientes está encerrado desde 26/05/2026 às 19h00 (horário de Brasília), respeitando o prazo final do IRPF. Clientes já cadastrados continuam com acesso normal."
-}
-category: 'system'
-```
-Admin (contato@agscont.com.br) pode alterar/desligar pelo backoffice se precisar (RLS atual de `system_configs` já restringe a admin).
+### 3. Frontend — Contador (reverter)
+- `src/pages/Clientes.tsx`: remover banner, tooltip e `disabled` dos botões "Novo cliente" e "Gerar link".
+- `src/components/clientes/GerarLinkConvite.tsx`: remover `disabled` e aviso.
+- `src/pages/cliente/CadastroCliente.tsx`: remover tela "Cadastros encerrados" (esse fluxo é cadastro inicial do cliente via link — pode continuar funcionando; o bloqueio agora é só no upload).
+- `src/hooks/useNovosCadastrosBloqueio.ts`: renomear para `useClienteUploadBloqueio.ts` (mesma estrutura, lê a nova chave).
 
-## Arquivos afetados
-- **Migration**: cria a config + trigger `enforce_novos_cadastros_bloqueio()` em `public.clientes`.
-- **Edge functions**: `register-from-invite/index.ts` e `register-from-direct-invite/index.ts` — checagem inicial do flag.
-- **Frontend**:
-  - `src/hooks/useNovosCadastrosBloqueio.ts` (novo).
-  - `src/pages/Clientes.tsx` — disable botão + tooltip.
-  - `src/components/clientes/ClienteModal.tsx` — fail-safe (não abre se bloqueado).
-  - `src/components/clientes/GerarLinkConvite.tsx` — disable + aviso.
-  - `src/pages/cliente/ConviteCliente.tsx` — tela de prazo encerrado.
-  - Banner no `AppLayout` (ou onde já existe banner de `global_alert`).
+### 4. Frontend — Portal do Cliente (novo bloqueio)
+- `src/pages/cliente/ClienteDocumentos.tsx`:
+  - Consumir `useClienteUploadBloqueio()`.
+  - Banner amarelo no topo: "Período de envio de documentos encerrado em 26/05/2026 às 19:00. Entre em contato com seu contador."
+  - Desabilitar input de arquivo / botão de upload (mostrar tooltip).
+  - Guard no `handleUpload` retornando toast de erro caso o flag esteja ativo (defesa em profundidade, além do trigger no banco).
+- `src/pages/cliente/ClienteDashboard.tsx`: banner equivalente (somente aviso, sem alterar lógica).
 
-## Fora de escopo (confirmado pelo seu próprio pedido)
-- Upload de documentos por clientes existentes — **NÃO mexer**.
-- Formulário IR, declarações, chat, cobranças — **NÃO mexer**.
-- Convites de colaboradores (contadores do time) — **NÃO afetado**.
+### 5. Fora de escopo (não muda)
+- Cadastro de clientes pelo contador
+- Cadastro do cliente via link de convite (`/cliente/convite/:token`) — continua liberado para finalizar conta
+- Uploads feitos pelo contador em `AbaDocumentosUnificada`, declarações, IR, chat, cobranças
+- Convites de colaborador
 
-## Confirme antes de eu implementar
-1. **Fuso/horário** — confirmo `2026-05-26 19:00 America/Sao_Paulo` (UTC-3). OK?
-2. **Mensagem padrão** acima está boa ou quer ajustar o texto?
-3. **Início ativado já**? Posso deixar `enabled=true` com a deadline acima, então o bloqueio só começa às 19:00 automaticamente. (Recomendado.)
+## Perguntas
+
+1. Mantemos a deadline `2026-05-26 19:00 BRT` ou já ligamos agora (sem checar horário)?
+2. Texto do aviso: "Período de envio de documentos encerrado. O prazo final da Receita está próximo — entre em contato com seu contador para qualquer pendência." — ok ou ajusta?
