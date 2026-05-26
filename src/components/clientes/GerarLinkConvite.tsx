@@ -32,12 +32,7 @@ import { maskCPF, validateCPF } from '@/lib/formatters';
 import { getErrorMessage } from '@/lib/errors';
 import { PORTAL_BASE_URL } from '@/lib/constants';
 
-interface GerarLinkConviteProps {
-  disabled?: boolean;
-  disabledReason?: string;
-}
-
-export default function GerarLinkConvite({ disabled = false, disabledReason }: GerarLinkConviteProps) {
+export default function GerarLinkConvite() {
   const { profile, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -116,10 +111,6 @@ export default function GerarLinkConvite({ disabled = false, disabledReason }: G
   };
 
   const handleGerar = async () => {
-    if (disabled) {
-      toast({ title: 'Cadastros encerrados', description: disabledReason, variant: 'destructive' });
-      return;
-    }
     if (!profile?.escritorioId) return;
     if (formData.cpf_sugerido && !validateCPF(formData.cpf_sugerido)) {
       toast({ title: 'CPF inválido', variant: 'destructive' });
@@ -199,9 +190,9 @@ export default function GerarLinkConvite({ disabled = false, disabledReason }: G
   }, [open, carregarDadosEscritorio]);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (disabled && v) return; setOpen(v); if (!v) resetForm(); }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2" disabled={disabled}>
+        <Button variant="outline" className="gap-2">
           <Link2 className="h-4 w-4" />
           Gerar Link de Convite
         </Button>

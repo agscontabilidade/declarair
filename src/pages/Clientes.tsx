@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
+// (bloqueio de cadastros revertido — contador volta a poder criar clientes normalmente)
 import { useClientes } from '@/hooks/useClientes';
 import { ClientesTable, type ClienteRow } from '@/components/clientes/ClientesTable';
 import { ClienteModal } from '@/components/clientes/ClienteModal';
@@ -17,9 +18,7 @@ import { QueryError } from '@/components/ui/QueryError';
 import { ClientesFilters } from '@/components/clientes/ClientesFilters';
 import type { ClienteWithContador } from '@/types/domain';
 import { usePermissoes } from '@/hooks/usePermissoes';
-import { useNovosCadastrosBloqueio } from '@/hooks/useNovosCadastrosBloqueio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/errors';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,7 +40,6 @@ export default function Clientes() {
   const [conviteCtx, setConviteCtx] = useState<EnviarConviteClienteCtx | null>(null);
   const { criar: criarCobranca } = useCobrancas();
   const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente } = usePermissoes();
-  const { bloqueado: cadastrosBloqueados, mensagem: bloqueioMsg } = useNovosCadastrosBloqueio();
   const { toast } = useToast();
 
   if (!podeVerClientes) {
@@ -91,46 +89,16 @@ export default function Clientes() {
           <h1 className="font-display text-2xl font-bold text-foreground">Clientes</h1>
           <div className="flex gap-2">
             {podeCriarClientes && (
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className={cadastrosBloqueados ? 'cursor-not-allowed' : ''}>
-                      <GerarLinkConvite disabled={cadastrosBloqueados} disabledReason={bloqueioMsg} />
-                    </span>
-                  </TooltipTrigger>
-                  {cadastrosBloqueados && (
-                    <TooltipContent className="max-w-xs">{bloqueioMsg}</TooltipContent>
-                  )}
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className={cadastrosBloqueados ? 'cursor-not-allowed' : ''}>
-                      <Button
-                        className="gap-2"
-                        onClick={() => !cadastrosBloqueados && setCreateOpen(true)}
-                        disabled={cadastrosBloqueados}
-                      >
-                        <Plus className="h-4 w-4" />
-                        Novo Cliente
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  {cadastrosBloqueados && (
-                    <TooltipContent className="max-w-xs">{bloqueioMsg}</TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              <>
+                <GerarLinkConvite />
+                <Button className="gap-2" onClick={() => setCreateOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Novo Cliente
+                </Button>
+              </>
             )}
           </div>
         </div>
-
-        {cadastrosBloqueados && podeCriarClientes && (
-          <Alert className="border-warning/50 bg-warning/10">
-            <ShieldAlert className="h-4 w-4 text-warning" />
-            <AlertTitle className="text-foreground">Cadastros de novos clientes encerrados</AlertTitle>
-            <AlertDescription className="text-muted-foreground">{bloqueioMsg}</AlertDescription>
-          </Alert>
-        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative w-full sm:max-w-sm">
