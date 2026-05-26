@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseRecovery } from '@/lib/supabase-auth-recovery';
 import { PORTAL_BASE_URL } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
