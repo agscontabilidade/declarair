@@ -18,8 +18,8 @@ export const supabaseRecovery = createClient<Database>(
       storage: localStorage,
       storageKey: 'sb-declarair-recovery',
       flowType: 'implicit',
-      persistSession: false,
-      autoRefreshToken: false,
+      persistSession: true,
+      autoRefreshToken: true,
       detectSessionInUrl: true,
     },
   }
