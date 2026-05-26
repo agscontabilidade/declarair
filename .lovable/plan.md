@@ -1,38 +1,52 @@
-## Problema
+## Causa raiz
 
-Ao arrastar um card no Kanban do `/dashboard`, aparecem listras verticais coloridas atravessando toda a coluna (vide screenshot). Não é deformação de layout — é **smearing de texto**: o navegador não está recompondo corretamente os pixels conforme o card arrastado e os cards abaixo dele se animam ao mesmo tempo.
+O dialog `EnviarConviteClienteDialog` re-executa o `useEffect` várias vezes porque a prop `onClose` é uma arrow function nova a cada render do `<Clientes>`. Cada execução gera um UUID novo e roda um `UPDATE` em `clientes`. Quando as promises terminam fora de ordem, o `link` exibido no modal aponta para um UUID que **não é** o que ficou no banco — daí o "Convite Inválido" ao abrir.
 
-## Causas
+Confirmado no banco: o token reportado pelo usuário não existe em `clientes.token_convite`.
 
-1. **Sem promoção de camada GPU no overlay** — `DragOverlay` renderiza um `KanbanCard` com `rotate-2 scale-105`, mas sem `will-change: transform` nem `translateZ(0)`. O texto antialiased rasterizado fica sendo "arrastado" sem ser limpo a cada frame.
-2. **Cards de baixo reagem ao hover durante o drag** — conforme o overlay passa por cima, cada card abaixo dispara `group-hover:text-accent`, `hover:-translate-y-0.5`, `hover:shadow-lg`, `hover:border-accent/30`. Isso somado ao smearing produz as faixas coloridas.
-3. **Cor do nome troca via `transition-colors`** dentro de `group-hover` enquanto o frame ainda está sendo composto.
+## Mudanças (escopo estrito)
 
-## Mudanças (somente apresentação, escopo estrito)
+### 1. `src/components/clientes/EnviarConviteClienteDialog.tsx` — corrigir race
+- Remover `onClose` das dependências do `useEffect`.
+- Disparar a geração **uma única vez por `ctx.clienteId`** (depender só de `ctx?.clienteId` e `ctx?.mode`).
+- Guardar o `clienteId` processado em um `useRef` para garantir idempotência mesmo se o ctx mudar de identidade sem mudar o id.
+- Manter o flag `cancelled` para evitar `setLink` após desmontagem.
+- Após `update`, fazer `.select('token_convite').single()` e usar **o token retornado pelo banco** para montar o link (fonte da verdade — elimina qualquer chance de divergência).
+- Se o `update` afetar 0 linhas (RLS), exibir toast claro de erro e fechar.
 
-### `src/components/dashboard/KanbanCard.tsx`
+### 2. `src/pages/cliente/ConviteCliente.tsx` — landing informativa
+Hoje a tela de inválido só tem título + uma linha. Vou:
+- Substituir a RPC genérica por uma nova RPC `validar_token_convite_cliente(_token uuid)` que retorna:
+  - `status` ∈ `'valido' | 'expirado' | 'concluido' | 'inexistente'`
+  - dados do cliente (nome, email, escritorio_id, nome do escritório) quando aplicável
+- Renderizar mensagens específicas:
+  - **expirado** → "Este convite expirou. Peça ao seu contador para gerar um novo link." + botão "Falar com suporte" (WhatsApp Gelson).
+  - **concluido** → "Você já criou sua conta. Acesse pelo login do portal." + botão "Ir para login do contribuinte" (`/cliente/login`).
+  - **inexistente** → "Link inválido. Verifique se copiou corretamente, ou peça ao seu contador para gerar um novo." + botão suporte.
+- Manter o layout split-screen existente; só preencher o lado direito com mais contexto (ícone de estado, descrição, CTA, link de suporte). O lado esquerdo (branding) já está OK conforme screenshot.
 
-- Adicionar à `style` do card:
-  - `willChange: 'transform'`
-  - `backfaceVisibility: 'hidden' as const`
-  - `WebkitFontSmoothing: 'antialiased'`
-- Quando `isOverlay` for true, garantir `transform: translateZ(0)` para forçar layer própria.
-- Receber um novo prop opcional `isAnyDragging?: boolean` e, quando true, **desativar todos os estados de hover** do card de fundo: remover `hover:shadow-lg`, `hover:border-accent/30`, `hover:-translate-y-0.5` e o `group-hover:text-accent` no nome. Isso é puramente visual: o card continua sendo um droppable normal.
-- Manter `transition` igual quando não está arrastando.
+### 3. Migration — nova RPC
+Criar `public.validar_token_convite_cliente(_token uuid) RETURNS TABLE(status text, cliente_id uuid, nome text, email text, escritorio_id uuid, escritorio_nome text)` com `SECURITY DEFINER`, `STABLE`, `search_path = public, pg_temp`.
 
-### `src/components/dashboard/KanbanColumn.tsx`
+Lógica:
+- Busca em `clientes` por `token_convite = _token`.
+- Se 0 linhas → `status='inexistente'`.
+- Se `status_onboarding = 'concluido'` → `status='concluido'`.
+- Se `token_convite_expira_em IS NULL OR <= now()` → `status='expirado'`.
+- Senão → `status='valido'` com dados + nome do escritório (JOIN em `escritorios`).
 
-- Aceitar prop `isAnyDragging?: boolean` e repassar para cada `<KanbanCard>`.
-
-### `src/components/dashboard/KanbanBoard.tsx`
-
-- Passar `isAnyDragging={!!activeItem}` para cada `<KanbanColumn>`.
-- Sem alterações em lógica, queries, automação ou regras de transmissão.
+Mantém a RPC antiga `buscar_cliente_por_token` intacta (usada em outros lugares possivelmente).
 
 ## Fora do escopo
 
-- `kanbanAutomations.ts`, `useDashboardData`, `DeclaracoesListView`, regras de versionamento/transmissão, filtros, KPIs, paginação.
+- `GerarLinkConvite.tsx` (gera link com path diferente `/cadastro-cliente/...` em outra tabela `convites_cliente` — não é o caso desta tela).
+- `register-from-direct-invite` edge function — continua igual.
+- Fluxo de criação de conta (form de senha) já funciona quando o token é válido.
+- Mudanças visuais no lado branding do split-screen.
 
 ## Verificação
 
-Após implementar: arrastar um card de "Aguardando Documentação" para outra coluna no preview e confirmar que (a) não há listras de texto, (b) os cards de baixo permanecem estáticos durante o drag, (c) o overlay continua com `rotate-2 scale-105` e sombra.
+1. Após o build: abrir `/clientes`, clicar em "Enviar convite" em um cliente sem conta, copiar o link, abrir em aba anônima → deve mostrar form de criação de senha.
+2. Forçar `status_onboarding='concluido'` num cliente de teste e abrir o link antigo → deve mostrar mensagem "Você já criou sua conta" com botão de login.
+3. Forçar `token_convite_expira_em` no passado → deve mostrar "expirou" com CTA de suporte.
+4. Abrir URL com UUID aleatório → deve mostrar "Link inválido".

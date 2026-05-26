@@ -2966,6 +2966,17 @@ export type Database = {
         Returns: undefined
       }
       user_tem_permissao: { Args: { permissao_nome: string }; Returns: boolean }
+      validar_token_convite_cliente: {
+        Args: { _token: string }
+        Returns: {
+          cliente_id: string
+          email: string
+          escritorio_id: string
+          escritorio_nome: string
+          nome: string
+          status: string
+        }[]
+      }
     }
     Enums: {
       app_role: "dono" | "colaborador" | "admin"
