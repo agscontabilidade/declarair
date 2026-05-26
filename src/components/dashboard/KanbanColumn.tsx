@@ -30,15 +30,15 @@ export function KanbanColumn({ title, status, color, items }: Props) {
     <div
       ref={setNodeRef}
       className={`
-        flex flex-col min-h-[300px] rounded-xl overflow-hidden
-        transition-all duration-300 ease-out
-        ${isOver ? 'ring-2 ring-accent/40 shadow-lg shadow-accent/10 scale-[1.01]' : 'shadow-sm'}
+        flex flex-col min-h-[300px] rounded-xl
+        transition-shadow duration-200 ease-out
+        ${isOver ? 'ring-2 ring-accent/40 shadow-lg shadow-accent/10' : 'shadow-sm'}
       `}
     >
       {/* Header */}
       <div
         className={`
-          px-4 py-3 transition-colors duration-300
+          px-4 py-3 rounded-t-xl transition-colors duration-200
           ${isOver ? 'bg-accent/15' : color}
         `}
       >
@@ -63,9 +63,9 @@ export function KanbanColumn({ title, status, color, items }: Props) {
           <span
             className={`
               text-xs font-bold tabular-nums rounded-full px-2.5 py-0.5
-              transition-all duration-300
+              transition-colors duration-200
               ${isOver
-                ? 'bg-accent/20 text-accent scale-110'
+                ? 'bg-accent/20 text-accent'
                 : 'bg-card/70 text-muted-foreground'
               }
             `}
@@ -78,21 +78,23 @@ export function KanbanColumn({ title, status, color, items }: Props) {
       {/* Body */}
       <div
         className={`
-          flex-1 p-2.5 space-y-2.5 transition-all duration-300 ease-out
+          flex-1 p-2.5 space-y-2.5 rounded-b-xl
+          transition-colors duration-200 ease-out
+          border-2
           ${isOver
-            ? 'bg-accent/5 border-2 border-dashed border-accent/25'
-            : 'bg-muted/20 border-2 border-transparent'
+            ? 'bg-accent/5 border-dashed border-accent/25'
+            : 'bg-muted/20 border-transparent'
           }
         `}
       >
         {items.length === 0 ? (
           <div className={`
             flex flex-col items-center justify-center py-10 gap-2
-            transition-all duration-300
-            ${isOver ? 'opacity-100 scale-105' : 'opacity-40'}
+            transition-opacity duration-200
+            ${isOver ? 'opacity-100' : 'opacity-40'}
           `}>
-            <Inbox className={`h-8 w-8 transition-colors duration-300 ${isOver ? 'text-accent' : 'text-muted-foreground/40'}`} />
-            <p className={`text-xs font-medium transition-colors duration-300 ${isOver ? 'text-accent' : 'text-muted-foreground/40'}`}>
+            <Inbox className={`h-8 w-8 transition-colors duration-200 ${isOver ? 'text-accent' : 'text-muted-foreground/40'}`} />
+            <p className={`text-xs font-medium transition-colors duration-200 ${isOver ? 'text-accent' : 'text-muted-foreground/40'}`}>
               {isOver ? 'Solte aqui' : 'Nenhuma declaração'}
             </p>
           </div>
@@ -108,3 +110,4 @@ export function KanbanColumn({ title, status, color, items }: Props) {
     </div>
   );
 }
+

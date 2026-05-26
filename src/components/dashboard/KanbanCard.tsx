@@ -133,14 +133,9 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
     </div>
   );
 
-  // While dragging or in overlay, skip tooltip wrapper to avoid layout/positioning conflicts
-  if (isOverlay || isDragging) {
-    return cardContent;
-  }
-
   return (
     <TooltipProvider delayDuration={400}>
-      <Tooltip>
+      <Tooltip open={isOverlay || isDragging ? false : undefined}>
         <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
         <TooltipContent side="right" align="start" className="max-w-xs text-xs leading-relaxed">
           <div className="space-y-1">
