@@ -200,7 +200,7 @@ export function ClienteViewModal({ open, onOpenChange, cliente, onEdit }: Props)
                 id="view-cpf"
                 label="CPF"
                 icon={IdCard}
-                value={formatCPF(cliente.cpf)}
+                value={cliente.cpf ? formatCPF(cliente.cpf) : ''}
                 mono
               />
               <ReadField
