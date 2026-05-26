@@ -137,16 +137,16 @@ export default function ClientePerfil() {
           </TabsContent>
 
           <TabsContent value="documentos">
-            <AbaDocumentos
-              checklist={declHook.checklist}
-              isLoading={declHook.checklistLoading}
-              declaracaoId={activeDeclaracao?.id}
-              onUpload={handleUpload}
-              uploading={declHook.uploadDoc.isPending}
-              onAddItem={handleAddDocItem}
-              hasDeclaracao={!!activeDeclaracao}
-              onCreateDeclaracao={() => setDeclaracaoModalOpen(true)}
-            />
+            {activeDeclaracao ? (
+              <AbaDocumentosUnificada
+                declaracaoId={activeDeclaracao.id}
+                clienteNome={cliente?.nome}
+              />
+            ) : (
+              <div className="rounded-lg border bg-card p-10 text-center text-sm text-muted-foreground">
+                Nenhuma declaração ativa para este cliente. Crie uma declaração para visualizar os documentos.
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="cobrancas">
