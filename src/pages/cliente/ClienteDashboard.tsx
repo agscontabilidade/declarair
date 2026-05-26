@@ -20,7 +20,7 @@ const EcacTutorialDialog = lazy(() => import('@/components/cliente-portal/EcacTu
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
-  const { declaracao, checklist, formulario, statusStep, progressoFormulario, stepTimestamps, isLoading, isError, error, refetch } = useClientePortal({ includeTimestamps: true });
+  const { declaracao, arquivosReais, formulario, statusStep, progressoFormulario, stepTimestamps, isLoading, isError, error, refetch } = useClientePortal({ includeTimestamps: true });
   // Supabase generated types may not yet expose `status_documentos`; cast through a typed shape.
   type DeclaracaoExtra = { status_documentos?: string | null; status?: string | null };
   const decl = declaracao as (typeof declaracao & DeclaracaoExtra) | null | undefined;
