@@ -67,8 +67,21 @@ export default function ConviteCliente() {
         body: { token, senha },
       });
 
-      if (error) throw new Error(error.message || 'Erro ao criar conta');
+      // Edge function returned non-2xx: try to surface the server's specific message first
       if (data?.error) throw new Error(data.error);
+      if (error) {
+        // FunctionsHttpError exposes the original Response via `context`
+        const ctx = (error as { context?: Response }).context;
+        if (ctx && typeof ctx.json === 'function') {
+          try {
+            const body = await ctx.json();
+            if (body?.error) throw new Error(body.error);
+          } catch (parseErr) {
+            if (parseErr instanceof Error && parseErr.message) throw parseErr;
+          }
+        }
+        throw new Error(error.message || 'Erro ao criar conta');
+      }
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: resultado.email,
