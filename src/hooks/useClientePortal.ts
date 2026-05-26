@@ -97,10 +97,8 @@ export function useClientePortal(options: Options = {}) {
 
   const statusStep = useMemo(() => {
     if (!declaracao) return 0;
-    const hasPendencia = checklist.some((doc: { status: string; obrigatorio: boolean }) => doc.status === 'pendente' && doc.obrigatorio);
     if (declaracao.status === 'transmitida') return 5;
     if (declaracao.status === 'declaracao_pronta') return 4;
-    if (hasPendencia && declaracao.status === 'documentacao_recebida') return 2;
     if (declaracao.status === 'documentacao_recebida') return 3;
     if (formulario?.status_preenchimento === 'concluido' || checklist.length > 0) return 2;
     return 1;

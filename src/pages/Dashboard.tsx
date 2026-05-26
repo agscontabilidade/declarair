@@ -25,13 +25,7 @@ import { formatarPreco, PRECOS } from '@/lib/constants/planos';
 const currentYear = new Date().getFullYear();
 const years = [currentYear, currentYear - 1, currentYear - 2];
 
-const checklistPadrao = [
-  { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
-  { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true },
-  { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true },
-  { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false },
-  { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false },
-];
+// Checklist obrigatório removido — documentos são livres.
 
 export default function Dashboard() {
   const [anoBase, setAnoBase] = useState(currentYear);
@@ -112,20 +106,6 @@ export default function Dashboard() {
       if (declErr) throw declErr;
 
       createdDeclId = newDecl.id;
-
-      const items = checklistPadrao.map((item) => ({
-        ...item,
-        declaracao_id: newDecl.id,
-      }));
-
-      const { error: checkErr } = await supabase
-        .from('checklist_documentos')
-        .insert(items);
-
-      if (checkErr) {
-        await supabase.from('declaracoes').delete().eq('id', newDecl.id);
-        throw checkErr;
-      }
 
       toast({ title: 'Declaração criada com sucesso!' });
       setShowModal(false);

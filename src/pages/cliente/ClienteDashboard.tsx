@@ -152,17 +152,13 @@ export default function ClienteDashboard() {
                     <Tooltip delayDuration={150}>
                       <TooltipTrigger asChild>
                         <Badge className={`mt-3 cursor-help ${
-                          statusStep === 2 && decl?.status === 'documentacao_recebida'
-                            ? 'bg-destructive/15 text-destructive hover:bg-destructive/20'
-                            : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                          decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
                             ? 'bg-success/15 text-success hover:bg-success/20'
                             : checklist.length > 0
                             ? 'bg-primary/15 text-primary hover:bg-primary/20'
                             : 'bg-warning/15 text-warning hover:bg-warning/20'
                         }`}>
-                          {statusStep === 2 && decl?.status === 'documentacao_recebida'
-                            ? 'Pendente de Reenvio'
-                            : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                          {decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
                             ? 'Enviado ao Contador'
                             : checklist.length > 0
                             ? 'Pronto para Enviar'
@@ -170,9 +166,7 @@ export default function ClienteDashboard() {
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="max-w-[260px] text-xs">
-                        {statusStep === 2 && decl?.status === 'documentacao_recebida'
-                          ? 'Seu contador solicitou novos documentos. Clique no card para enviar.'
-                          : decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
+                        {decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
                           ? 'Seus documentos já foram entregues ao contador para análise.'
                           : checklist.length > 0
                           ? 'Você já anexou arquivos. Clique no card para revisar e finalizar o envio.'

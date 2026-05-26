@@ -217,20 +217,7 @@ export function useClientePerfil(clienteId: string | undefined) {
         .select()
         .single();
       if (declError) throw declError;
-
-      const checklistItems = [
-        { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
-        { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true },
-        { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true },
-        { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false },
-        { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false },
-      ].map(item => ({ ...item, declaracao_id: decl.id }));
-
-      const { error: checkError } = await supabase
-        .from('checklist_documentos')
-        .insert(checklistItems);
-      if (checkError) throw checkError;
-
+      // Checklist obrigatório removido — documentos são livres.
       return decl;
     },
     onSuccess: () => {

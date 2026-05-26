@@ -147,25 +147,7 @@ Deno.serve(async (req) => {
       declId = newDecl?.id;
     }
 
-    // 5. Ensure base checklist (only if declaracao has none yet)
-    if (declId) {
-      const { count } = await supabaseAdmin
-        .from('checklist_documentos')
-        .select('id', { count: 'exact', head: true })
-        .eq('declaracao_id', declId);
-
-      if (!count || count === 0) {
-        const baseChecklist = [
-          { nome_documento: 'Documento de Identidade (RG/CNH)', categoria: 'documentos_pessoais', obrigatorio: true },
-          { nome_documento: 'CPF do Titular', categoria: 'documentos_pessoais', obrigatorio: true },
-          { nome_documento: 'Comprovante de Endereço Atualizado', categoria: 'documentos_pessoais', obrigatorio: true },
-          { nome_documento: 'Título de Eleitor (opcional)', categoria: 'documentos_pessoais', obrigatorio: false },
-          { nome_documento: 'Última Declaração Entregue (Recibo)', categoria: 'documentos_pessoais', obrigatorio: false },
-        ].map((item) => ({ ...item, declaracao_id: declId }));
-
-        await supabaseAdmin.from('checklist_documentos').insert(baseChecklist);
-      }
-    }
+    // 5. Checklist obrigatório removido — documentos são livres.
 
     // 6. Notify office (best-effort)
     await supabaseAdmin

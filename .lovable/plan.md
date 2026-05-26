@@ -1,31 +1,36 @@
 ## Objetivo
-Tornar o **CPF opcional** no cadastro de novo cliente, para que o contador possa criar e enviar o convite apenas com nome + email/WhatsApp. O CPF poderá ser preenchido depois pelo cliente (no portal) ou pelo contador (via editar).
+Eliminar qualquer regra que trate documentos como checklist obrigatório/pendente. Documentos devem ser arquivos livres, enviados pelo cliente ou pelo contador, sem gerar “Pendente de Reenvio” por itens antigos de checklist.
 
-## Mudanças
+## Plano de implementação
+1. **Parar criação automática de checklist padrão**
+   - Remover a criação dos itens obrigatórios em:
+     - cadastro por convite direto do cliente;
+     - cadastro por convite antigo;
+     - criação de declaração pelo Dashboard;
+     - criação de declaração dentro do perfil do cliente.
+   - A declaração continua sendo criada normalmente, mas sem itens pré-obrigatórios.
 
-### 1. Banco — migration
-- `ALTER TABLE public.clientes ALTER COLUMN cpf DROP NOT NULL;`
-- Sem mexer em mais nada (não há UNIQUE em `cpf`, não há trigger).
+2. **Corrigir status do portal do cliente**
+   - Ajustar `useClientePortal` para não calcular pendência por `checklist_documentos.obrigatorio`.
+   - O status “Pendente de Reenvio” deixará de depender de checklist pendente.
+   - Se houver `status_documentos = 'enviado'` ou documentos anexados, o card ficará como enviado/pronto, nunca como pendente por checklist antigo.
 
-### 2. `src/components/clientes/ClienteModal.tsx`
-- Remover o asterisco de obrigatório do label do CPF (modo create).
-- Validação: aceitar CPF vazio; se preenchido, ainda validar com `validateCPF` e mostrar erro "CPF inválido" só nesse caso.
-- No `doSave`: enviar `cpf: cpfDigits || null` em vez de exigir CPF.
-- Manter a regra de “Informe email ou WhatsApp” quando o switch de convite está ligado — esse continua sendo o gate real.
+3. **Ajustar Dashboard do cliente**
+   - Reordenar a regra do badge de documentos para priorizar “Enviado ao Contador”.
+   - Remover a condição visual que mostra “Pendente de Reenvio” baseada em `statusStep === 2`.
 
-### 3. `src/components/clientes/ClientesTable.tsx`
-- `CopyCpfButton` e `formatCPF(c.cpf)`: tratar `null/''` exibindo um placeholder discreto (`—`) e ocultando o botão de copiar quando não houver CPF.
+4. **Manter upload livre para cliente e contador**
+   - Preservar os uploads já existentes, que salvam arquivos como registros não obrigatórios.
+   - Garantir que o contador continue podendo anexar documentos livremente pelo modal de documentos.
+   - Evitar qualquer fluxo que peça associação do arquivo a item pendente.
 
-### 4. `src/components/clientes/ClienteViewModal.tsx`
-- Aceitar `cpf` opcional na tipagem e renderizar vazio quando não houver.
+5. **Neutralizar legado sem apagar documentos**
+   - Adicionar uma migração para marcar itens antigos de `checklist_documentos` como não obrigatórios quando não tiverem arquivo anexado, evitando que dados antigos causem pendência.
+   - Remover/desativar lógica de banco que reverte declaração para “aguardando_documentos” quando arquivos são removidos, para não voltar a aparecer como pendente por ausência de checklist.
+   - Não apagar arquivos já enviados.
 
-### Não alterar
-- `EnviarConviteClienteDialog`, edge functions de convite, RPCs de validação — nada deles depende de CPF.
-- Busca por CPF na listagem (`ilike`) continua funcionando (null simplesmente não casa).
-- Portal do cliente / formulário IR continuam pedindo CPF lá, quando for a hora.
-
-## Validação
-- Criar cliente só com nome + email → salva e envia convite normalmente.
-- Criar cliente com CPF inválido → bloqueia com “CPF inválido”.
-- Criar cliente com CPF válido → continua funcionando como hoje.
-- Listagem mostra `—` no lugar do CPF quando vazio.
+6. **Verificação do fluxo**
+   - Conferir no código que não existe mais criação de checklist obrigatório.
+   - Verificar que upload do cliente muda status para `documentacao_recebida`/`enviado`.
+   - Verificar que upload/visualização do contador permanece funcional.
+   - Rodar uma checagem direcionada nas referências a `obrigatorio`, `Pendente de Reenvio` e `checklistPadrao` para garantir que o fluxo crítico foi removido.
