@@ -31,12 +31,15 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useClientePortal } from '@/hooks/useClientePortal';
+import { useClienteUploadBloqueio } from '@/hooks/useNovosCadastrosBloqueio';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { CategoriaRF } from '@/lib/checklistPorPerfil';
 import { CATEGORIAS_RF } from '@/lib/checklistPorPerfil';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShieldAlert } from 'lucide-react';
 
 const CATEGORIA_META: Record<CategoriaRF, { label: string; icon: React.ElementType; color: string }> = {
   documentos_pessoais: { label: 'Documentos Pessoais', icon: User, color: 'text-primary' },
@@ -65,6 +68,7 @@ export default function ClienteDocumentos() {
   const { declaracao, checklist, isLoading } = useClientePortal();
   const { profile } = useAuth();
   const queryClient = useQueryClient();
+  const { bloqueado: uploadBloqueado, mensagem: uploadBloqueioMsg } = useClienteUploadBloqueio();
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [concluido, setConcluido] = useState(false);
@@ -73,6 +77,10 @@ export default function ClienteDocumentos() {
   const [dragActive, setDragActive] = useState(false);
 
   const handleFiles = async (files: FileList | File[]) => {
+    if (uploadBloqueado) {
+      toast.error(uploadBloqueioMsg);
+      return;
+    }
     const list = Array.from(files);
     console.log('[upload] start', {
       count: list.length,
@@ -532,13 +540,27 @@ export default function ClienteDocumentos() {
 
         </div>
 
-        {/* Upload Zone — sempre disponível, mesmo após primeiro envio */}
-        <Card 
-          className={`border-2 border-dashed transition-all duration-200 ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/20'}`}
-          onDragEnter={onDrag}
-          onDragLeave={onDrag}
-          onDragOver={onDrag}
-          onDrop={onDrop}
+        {uploadBloqueado && (
+          <Alert className="border-warning/50 bg-warning/10">
+            <ShieldAlert className="h-4 w-4 text-warning" />
+            <AlertTitle className="text-foreground">Envio de novos documentos encerrado</AlertTitle>
+            <AlertDescription className="text-muted-foreground">{uploadBloqueioMsg}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Upload Zone — desabilitado se uploadBloqueado=true */}
+        <Card
+          className={`border-2 border-dashed transition-all duration-200 ${
+            uploadBloqueado
+              ? 'border-muted-foreground/10 bg-muted/30 opacity-60'
+              : dragActive
+                ? 'border-primary bg-primary/5'
+                : 'border-muted-foreground/20'
+          }`}
+          onDragEnter={uploadBloqueado ? undefined : onDrag}
+          onDragLeave={uploadBloqueado ? undefined : onDrag}
+          onDragOver={uploadBloqueado ? undefined : onDrag}
+          onDrop={uploadBloqueado ? undefined : onDrop}
         >
           <CardContent className="flex flex-col items-center justify-center py-10 text-center">
             <Tooltip delayDuration={150}>
@@ -548,12 +570,18 @@ export default function ClienteDocumentos() {
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-[260px] text-xs">
-                Aceitamos PDF, imagens (JPG/PNG), DOC e XLS. Limite de 20 MB por arquivo.
+                {uploadBloqueado
+                  ? 'O envio de novos documentos foi encerrado. Fale com seu contador.'
+                  : 'Aceitamos PDF, imagens (JPG/PNG), DOC e XLS. Limite de 20 MB por arquivo.'}
               </TooltipContent>
             </Tooltip>
-            <h3 className="text-lg font-semibold">Arraste e solte seus documentos aqui</h3>
+            <h3 className="text-lg font-semibold">
+              {uploadBloqueado ? 'Envio de documentos indisponível' : 'Arraste e solte seus documentos aqui'}
+            </h3>
             <p className="text-sm text-muted-foreground mt-1 mb-6 max-w-xs">
-              Você pode anexar quantos arquivos quiser, mesmo após já ter enviado. Seu contador é notificado a cada novo upload.
+              {uploadBloqueado
+                ? 'O prazo para anexar novos documentos foi encerrado. Entre em contato com seu contador.'
+                : 'Você pode anexar quantos arquivos quiser, mesmo após já ter enviado. Seu contador é notificado a cada novo upload.'}
             </p>
             <input
               ref={fileInputRef}
@@ -562,7 +590,11 @@ export default function ClienteDocumentos() {
               className="hidden"
               onChange={(e) => e.target.files && handleFiles(e.target.files)}
             />
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading || uploadBloqueado}
+            >
               Selecionar Arquivos
             </Button>
           </CardContent>

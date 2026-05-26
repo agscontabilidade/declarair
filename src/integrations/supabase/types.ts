@@ -2770,6 +2770,7 @@ export type Database = {
           token_convite_expira_em: string
         }[]
       }
+      get_cliente_upload_bloqueio: { Args: never; Returns: Json }
       get_clientes_for_user: {
         Args: never
         Returns: {

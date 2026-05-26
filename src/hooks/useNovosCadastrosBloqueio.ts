@@ -1,7 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface NovosCadastrosBloqueio {
+/**
+ * Bloqueio de envio de novos documentos pelo portal do CLIENTE.
+ * Não afeta contador/colaborador nem service_role.
+ * A chave `cliente_upload_bloqueado` em system_configs controla tudo.
+ */
+export interface ClienteUploadBloqueio {
   enabled: boolean;
   deadline: string | null;
   mensagem: string;
@@ -10,14 +15,14 @@ export interface NovosCadastrosBloqueio {
 }
 
 const FALLBACK_MSG =
-  'O cadastro de novos clientes está encerrado. Clientes já cadastrados continuam com acesso normal à plataforma.';
+  'O envio de novos documentos pelo portal foi encerrado. Entre em contato com seu contador para tratar qualquer pendência.';
 
-export function useNovosCadastrosBloqueio() {
+export function useClienteUploadBloqueio() {
   const query = useQuery({
-    queryKey: ['novos-cadastros-bloqueio'],
+    queryKey: ['cliente-upload-bloqueio'],
     staleTime: 60_000,
     refetchOnWindowFocus: false,
-    queryFn: async (): Promise<NovosCadastrosBloqueio> => {
+    queryFn: async (): Promise<ClienteUploadBloqueio> => {
       const { data, error } = await supabase.rpc('get_novos_cadastros_bloqueio');
       if (error) {
         return { enabled: false, deadline: null, mensagem: FALLBACK_MSG, bloqueado: false };
@@ -41,3 +46,6 @@ export function useNovosCadastrosBloqueio() {
     isLoading: query.isLoading,
   };
 }
+
+/** @deprecated mantido para compatibilidade — use useClienteUploadBloqueio */
+export const useNovosCadastrosBloqueio = useClienteUploadBloqueio;
