@@ -91,16 +91,46 @@ export default function Clientes() {
           <h1 className="font-display text-2xl font-bold text-foreground">Clientes</h1>
           <div className="flex gap-2">
             {podeCriarClientes && (
-              <>
-                <GerarLinkConvite />
-                <Button className="gap-2" onClick={() => setCreateOpen(true)}>
-                  <Plus className="h-4 w-4" />
-                  Novo Cliente
-                </Button>
-              </>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={cadastrosBloqueados ? 'cursor-not-allowed' : ''}>
+                      <GerarLinkConvite disabled={cadastrosBloqueados} disabledReason={bloqueioMsg} />
+                    </span>
+                  </TooltipTrigger>
+                  {cadastrosBloqueados && (
+                    <TooltipContent className="max-w-xs">{bloqueioMsg}</TooltipContent>
+                  )}
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={cadastrosBloqueados ? 'cursor-not-allowed' : ''}>
+                      <Button
+                        className="gap-2"
+                        onClick={() => !cadastrosBloqueados && setCreateOpen(true)}
+                        disabled={cadastrosBloqueados}
+                      >
+                        <Plus className="h-4 w-4" />
+                        Novo Cliente
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {cadastrosBloqueados && (
+                    <TooltipContent className="max-w-xs">{bloqueioMsg}</TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         </div>
+
+        {cadastrosBloqueados && podeCriarClientes && (
+          <Alert className="border-warning/50 bg-warning/10">
+            <ShieldAlert className="h-4 w-4 text-warning" />
+            <AlertTitle className="text-foreground">Cadastros de novos clientes encerrados</AlertTitle>
+            <AlertDescription className="text-muted-foreground">{bloqueioMsg}</AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative w-full sm:max-w-sm">
