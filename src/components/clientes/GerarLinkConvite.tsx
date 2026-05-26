@@ -371,7 +371,7 @@ export default function GerarLinkConvite() {
             </section>
 
             <div className="text-[11px] text-muted-foreground space-y-0.5 pt-1 border-t pt-3">
-              <p>• O link expira em 30 dias</p>
+              <p>• Link permanente — não expira</p>
               <p>• Pode ser usado por múltiplos contribuintes (reutilizável)</p>
             </div>
           </div>
