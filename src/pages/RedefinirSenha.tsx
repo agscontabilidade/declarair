@@ -202,8 +202,20 @@ export default function RedefinirSenha() {
                   <AlertTriangle className="h-6 w-6 text-destructive" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  O link de recuperação expirou ou já foi utilizado. Solicite um novo link.
+                  {errorMsg || 'O link de recuperação expirou ou já foi utilizado. Solicite um novo link.'}
                 </p>
+                <Link to={`/recuperar-senha${origemParam ? `?origem=${origemParam}` : ''}`}>
+                  <Button variant="outline" className="w-full h-11">Solicitar novo link</Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
                 <Link to="/recuperar-senha">
                   <Button variant="outline" className="w-full h-11">Solicitar novo link</Button>
                 </Link>
