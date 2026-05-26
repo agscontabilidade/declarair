@@ -60,22 +60,16 @@ export function EnviarConviteClienteDialog({ ctx, onClose }: Props) {
         const token = crypto.randomUUID();
         const expira = new Date();
         expira.setDate(expira.getDate() + 7);
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('clientes')
           .update({
             token_convite: token,
             token_convite_expira_em: expira.toISOString(),
             status_onboarding: 'convite_enviado',
           })
-          .eq('id', clienteId)
-          .select('token_convite')
-          .single();
+          .eq('id', clienteId);
         if (error) throw error;
-        if (!data?.token_convite) {
-          throw new Error('Não foi possível gerar o convite. Verifique se você tem permissão para este contribuinte.');
-        }
-        // Usa o token retornado pelo banco como fonte da verdade — elimina divergência
-        if (!cancelled) setLink(`${PORTAL_BASE_URL}/cliente/convite/${data.token_convite}`);
+        if (!cancelled) setLink(`${PORTAL_BASE_URL}/cliente/convite/${token}`);
       } catch (err: unknown) {
         toast({ title: 'Erro ao gerar convite', description: getErrorMessage(err), variant: 'destructive' });
         if (!cancelled) onCloseRef.current();
