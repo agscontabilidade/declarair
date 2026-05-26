@@ -58,9 +58,9 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay, isAnyDragg
     disabled: !!isOverlay,
   });
 
-  // Com DragOverlay, o card original NÃO deve seguir o cursor.
-  // Aplicamos transform apenas no overlay. No card real durante o arraste,
-  // escondemos mantendo o espaço (placeholder) — evita rastros/borrão na coluna.
+  // Com DragOverlay, o card original NÃO deve seguir o cursor (era o transform
+  // que causava o rastro vertical). Mantemos o card no lugar como "fantasma":
+  // opacidade baixa + leve escala, com transição suave para preservar fluidez.
   const style: React.CSSProperties = isOverlay
     ? {
         transform: `${CSS.Transform.toString(transform) ?? ''} translateZ(0)`.trim(),
@@ -69,10 +69,14 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay, isAnyDragg
       }
     : isDragging
     ? {
-        visibility: 'hidden',
-        transition: 'none',
+        opacity: 0.35,
+        transform: 'scale(0.98)',
+        transition: 'opacity 180ms ease, transform 180ms ease',
+        pointerEvents: 'none',
       }
-    : {};
+    : {
+        transition: 'opacity 200ms ease, transform 200ms ease',
+      };
 
   const statusLabel = STATUS_LABELS[item.status] || item.status;
   const statusTooltip = STATUS_TOOLTIPS[item.status] || '';
