@@ -215,15 +215,3 @@ export default function RedefinirSenha() {
     </div>
   );
 }
-
-                <Link to="/recuperar-senha">
-                  <Button variant="outline" className="w-full h-11">Solicitar novo link</Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
