@@ -189,6 +189,28 @@ export default function CadastroCliente() {
     );
   }
 
+  if (cadastrosBloqueados) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-warning/10 flex items-center justify-center mb-4">
+              <Ban className="h-8 w-8 text-warning" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Cadastros encerrados</h2>
+            <p className="text-muted-foreground mb-6 leading-relaxed">{bloqueioMsg}</p>
+            <p className="text-xs text-muted-foreground mb-6">
+              Se você já tem conta no portal, faça login normalmente.
+            </p>
+            <Button variant="outline" onClick={() => navigate('/cliente/login')}>
+              Já tenho conta — Fazer Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const primaryColor = escritorio?.cor_primaria || 'hsl(var(--primary))';
 
   return (
