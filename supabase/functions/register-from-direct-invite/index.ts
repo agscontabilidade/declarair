@@ -26,6 +26,18 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    // Trava global: bloqueio de novos cadastros (prazo IRPF)
+    const { data: bloqueioCfg } = await supabaseAdmin.rpc('get_novos_cadastros_bloqueio');
+    if (bloqueioCfg && typeof bloqueioCfg === 'object') {
+      const cfg = bloqueioCfg as { enabled?: boolean; deadline?: string; mensagem?: string };
+      if (cfg.enabled && cfg.deadline && new Date(cfg.deadline).getTime() <= Date.now()) {
+        return new Response(
+          JSON.stringify({ error: cfg.mensagem || 'Cadastro de novos clientes encerrado.' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // 1. Validate token - find client with this invite token
     const { data: clientes, error: clienteError } = await supabaseAdmin
       .from('clientes')
