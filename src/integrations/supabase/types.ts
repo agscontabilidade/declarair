@@ -438,7 +438,7 @@ export type Database = {
           auth_user_id: string | null
           conta_azul_id: string | null
           contador_responsavel_id: string | null
-          cpf: string
+          cpf: string | null
           created_at: string
           data_nascimento: string | null
           email: string | null
@@ -457,7 +457,7 @@ export type Database = {
           auth_user_id?: string | null
           conta_azul_id?: string | null
           contador_responsavel_id?: string | null
-          cpf: string
+          cpf?: string | null
           created_at?: string
           data_nascimento?: string | null
           email?: string | null
@@ -476,7 +476,7 @@ export type Database = {
           auth_user_id?: string | null
           conta_azul_id?: string | null
           contador_responsavel_id?: string | null
-          cpf?: string
+          cpf?: string | null
           created_at?: string
           data_nascimento?: string | null
           email?: string | null
@@ -2776,7 +2776,7 @@ export type Database = {
           auth_user_id: string | null
           conta_azul_id: string | null
           contador_responsavel_id: string | null
-          cpf: string
+          cpf: string | null
           created_at: string
           data_nascimento: string | null
           email: string | null
