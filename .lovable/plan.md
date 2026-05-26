@@ -1,58 +1,60 @@
-## Diagnóstico da lentidão atual
+## Diagnóstico
 
-Em `src/components/drive/FileViewerModal.tsx` o fluxo de abertura é:
+O visualizador já passou a usar signed URL direto, cache em memória e prefetch de vizinhos, mas ainda há gargalos importantes:
 
-1. `createSignedUrl` (1 round-trip ao Storage)
-2. `fetch(signedUrl)` baixando o **arquivo inteiro** em `ArrayBuffer`
-3. Cria `Blob` + `URL.createObjectURL` e só então entrega ao `PdfViewer`
+1. `react-pdf` e `pdfjs` estão sendo carregados junto com as telas que importam `FileViewerModal`, antes mesmo de abrir um documento. No preview, `react-pdf.js` aparece como recurso grande (~180KB) e lento (~1,6s).
+2. O cache atual vive dentro de cada instância do modal. Ao fechar/reabrir o visualizador ou abrir documentos por outro ponto da aplicação, os signed URLs são perdidos.
+3. O prefetch atual faz `fetch(url)` completo para PDFs/imagens vizinhos. Isso pode competir com o arquivo atual e piorar a primeira abertura em conexões lentas.
+4. O `PdfViewer` sempre renderiza a página com text layer assim que carrega. Isso mantém a seleção de texto, mas pode aumentar o tempo percebido no primeiro render.
 
-Consequências:
-- O PDF só começa a renderizar **depois** do download completo (sem streaming).
-- Trocar de arquivo refaz tudo do zero, mesmo voltando a um já aberto.
-- Não há pré-busca do próximo/anterior.
-- O `pdf.js` suporta Range Requests nativamente; o Supabase Storage também — estamos desperdiçando isso ao baixar tudo como ArrayBuffer.
+## Plano de ajuste seguro
 
-## O que mudar (apenas no visualizador)
+### 1. Carregar o viewer de PDF sob demanda
+- Remover o import direto de `PdfViewer` dentro de `FileViewerModal`.
+- Usar `React.lazy`/`Suspense` apenas quando o arquivo atual for PDF.
+- Resultado: páginas `/declaracoes`, `/drive` e modais de documentos deixam de carregar `react-pdf` antes da necessidade real.
 
-### 1. Cache em memória durante a sessão do modal
-Criar um `useRef<Map<id, { signedUrl, blobUrl?, mime }>>`. Ao trocar de arquivo, se já estiver no cache, exibir **instantaneamente** sem nenhum fetch. Blob URLs criados ficam vivos até o `onClose` (revogados em lote).
+### 2. Cache compartilhado e persistente durante a sessão da aba
+- Criar um pequeno utilitário em frontend para cache de documentos, fora do componente:
+  - `signedUrl` por `arquivo_url`
+  - `blobUrl` apenas quando necessário
+  - `promise` para deduplicar requisições simultâneas
+  - expiração um pouco antes do TTL do signed URL
+- Usar esse cache no `FileViewerModal` para que fechar/reabrir o modal, ou abrir o mesmo documento em outro local, reaproveite o link imediatamente.
 
-### 2. PDFs: streaming direto (sem ArrayBuffer)
-Passar a `signedUrl` diretamente para o `<Document file={...}>` do `react-pdf`. O `pdf.js` faz range requests e renderiza a **primeira página antes** do arquivo inteiro chegar — ganho perceptível enorme em PDFs grandes (extratos, informes). Mantemos blob como fallback se o `onLoadError` disparar (alguns servidores não honram Range).
+### 3. Prefetch sem competir com o arquivo atual
+- Trocar o prefetch pesado por prefetch leve:
+  - primeiro garantir apenas signed URL dos vizinhos;
+  - só aquecer o browser cache após o arquivo atual já estar exibido;
+  - limitar a no máximo anterior/próximo;
+  - abortar corretamente ao trocar/fechar.
+- Evitar baixar PDFs inteiros em background.
 
-### 3. Imagens/texto: usar `signedUrl` direto quando possível
-- Imagens: `<img src={signedUrl}>` — o browser faz cache HTTP nativo, sem precisar baixar tudo em JS.
-- Texto: manter fetch (precisa do conteúdo como string), mas com cache.
-- Office: já usa `signedUrl` direto, sem mudança.
+### 4. Melhorar o tempo percebido na troca de arquivos
+- Ao navegar para o próximo/anterior, manter o shell do visualizador estável e trocar apenas o conteúdo.
+- Mostrar o novo arquivo assim que houver signed URL, sem bloquear por blob.
+- Para imagens, adicionar carregamento antecipado (`Image`) dos vizinhos após o documento atual aparecer.
 
-### 4. Pré-busca dos vizinhos
-Ao abrir um arquivo, em background (sem bloquear UI):
-- Gerar `signedUrl` do anterior e do próximo.
-- Para PDFs/imagens, fazer um `fetch` HEAD/GET leve apenas para aquecer o cache HTTP do browser.
+### 5. Preservar segurança e regras atuais
+- Não alterar banco, RLS, storage policies, upload, remoção, nem lógica de “lançado”.
+- Não editar `src/integrations/supabase/client.ts` nem `types.ts`.
+- Não adicionar dependências.
+- Manter seleção/cópia de texto em PDF.
+- Manter tela cheia, botões e navegação existentes.
 
-Resultado: clicar em "próximo" abre **sem latência perceptível**.
+## Arquivos previstos
 
-### 5. Pequenas otimizações no `PdfViewer`
-- Memoizar o objeto `options` do `<Document>` para evitar re-criação do PDF a cada render.
-- Manter `renderTextLayer` (já necessário para seleção de texto — não regredir).
-- Não tocar em mais nada.
+- `src/components/drive/FileViewerModal.tsx`
+  - usar cache compartilhado, lazy PDF viewer e prefetch mais leve.
+- `src/components/drive/viewers/PdfViewer.tsx`
+  - pequenos ajustes se necessário para lazy import e render mais estável.
+- possível novo arquivo frontend pequeno, por exemplo `src/lib/document-viewer-cache.ts`
+  - cache isolado e reutilizável, sem backend.
 
-## Arquivos a alterar
+## Validação
 
-| Arquivo | Mudança |
-|---|---|
-| `src/components/drive/FileViewerModal.tsx` | Cache por id, PDF/imagem via signedUrl direto com fallback para blob, prefetch de vizinhos, revogação de blobs no unmount |
-| `src/components/drive/viewers/PdfViewer.tsx` | Memoizar `options` do `<Document>`; sem mudança de comportamento visual |
-
-## O que NÃO muda
-
-- Nenhuma alteração de schema, RLS, queries ou lógica de "lançado".
-- Nenhuma alteração nos outros viewers além do necessário para aceitar `signedUrl`.
-- UI/UX visual idêntica — só fica mais rápida.
-- Sem novas dependências.
-
-## Riscos / mitigação
-
-- **Range request não suportado** em algum ambiente → `onLoadError` do `react-pdf` aciona fallback que baixa via fetch+blob (comportamento atual).
-- **Vazamento de blob URLs** → revogados em lote no unmount do modal e ao limpar cache.
-- **Custos de prefetch** → limitado a 2 vizinhos e abortado se o usuário fechar o modal (`AbortController`).
+- Conferir que `/declaracoes` e `/drive` não carregam `react-pdf` antes de abrir PDF.
+- Abrir um PDF e verificar que aparece sem baixar tudo antes.
+- Navegar anterior/próximo e confirmar reaproveitamento de signed URL/cache.
+- Confirmar que texto do PDF continua selecionável e copiável.
+- Confirmar que “Marcar como lançado” continua funcionando sem alteração de regra.
