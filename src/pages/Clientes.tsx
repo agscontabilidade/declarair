@@ -11,6 +11,7 @@ import { ClienteViewModal } from '@/components/clientes/ClienteViewModal';
 import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
 import { DocumentosDeclaracaoModal } from '@/components/declaracoes/DocumentosDeclaracaoModal';
 import { EnviarConviteClienteDialog, type EnviarConviteClienteCtx } from '@/components/clientes/EnviarConviteClienteDialog';
+import GerarLinkConvite from '@/components/clientes/GerarLinkConvite';
 import { useCobrancas } from '@/hooks/useCobrancas';
 import { QueryError } from '@/components/ui/QueryError';
 import { ClientesFilters } from '@/components/clientes/ClientesFilters';
