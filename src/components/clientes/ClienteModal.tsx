@@ -51,7 +51,7 @@ function maskTelefone(value: string) {
 const EMPTY = {
   nome: '', cpf: '', email: '', telefone: '', data_nascimento: '',
   contador_responsavel_id: '', procuracao_ecac: false, procuracao_ecac_validade: '',
-  enviar_convite: true,
+  enviar_convite: false,
 };
 
 export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente, onSavedAndUpload, onSavedAndInvite }: Props) {
