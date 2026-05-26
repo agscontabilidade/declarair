@@ -4,11 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle2, Clock, Eye, EyeOff, Loader2, LogIn, MessageCircle, ArrowRight, Ban } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Eye, EyeOff, Loader2, LogIn, MessageCircle, ArrowRight } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import logoFull from '@/assets/logo-full.png';
 import { getErrorMessage } from '@/lib/errors';
-import { useNovosCadastrosBloqueio } from '@/hooks/useNovosCadastrosBloqueio';
 
 interface ValidacaoResultado {
   status: 'valido' | 'expirado' | 'concluido' | 'inexistente';
