@@ -26,7 +26,7 @@ import { WhatsAppIcon } from './WhatsAppIcon';
 interface Cliente {
   id: string;
   nome: string;
-  cpf: string;
+  cpf: string | null;
   email?: string | null;
   telefone?: string | null;
   data_nascimento?: string | null;
