@@ -51,7 +51,7 @@ function maskTelefone(value: string) {
 const EMPTY = {
   nome: '', cpf: '', email: '', telefone: '', data_nascimento: '',
   contador_responsavel_id: '', procuracao_ecac: false, procuracao_ecac_validade: '',
-  enviar_convite: true,
+  enviar_convite: false,
 };
 
 export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente, onSavedAndUpload, onSavedAndInvite }: Props) {
@@ -101,14 +101,6 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
     }
     const emailClean = form.email.trim() || null;
     const telClean = form.telefone.replace(/\D/g, '') || null;
-    if (!isEdit && form.enviar_convite && !emailClean && !telClean) {
-      toast({
-        title: 'Informe email ou WhatsApp',
-        description: 'Para enviar o convite de acesso, é preciso ter ao menos um contato.',
-        variant: 'destructive',
-      });
-      return null;
-    }
     const base = {
       nome: form.nome.trim(),
       email: emailClean,
@@ -327,30 +319,6 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
             )}
           </div>
 
-          {/* Enviar convite de acesso */}
-          {!isEdit && (
-            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <Send aria-hidden className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <div className="min-w-0">
-                    <Label htmlFor="enviar-convite" className="cursor-pointer">Enviar convite de acesso ao portal</Label>
-                    <p className="text-xs text-muted-foreground">
-                      O contribuinte recebe um link para criar a própria senha e acompanhar o IR.
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  id="enviar-convite"
-                  checked={form.enviar_convite}
-                  onCheckedChange={(v) => setForm(f => ({ ...f, enviar_convite: v }))}
-                />
-              </div>
-              {form.enviar_convite && !form.email.trim() && !form.telefone.replace(/\D/g, '') && (
-                <p className="text-xs text-destructive">Informe email ou WhatsApp para enviar o convite.</p>
-              )}
-            </div>
-          )}
 
           <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 pt-2 border-t">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>
