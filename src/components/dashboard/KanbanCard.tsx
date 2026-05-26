@@ -59,9 +59,14 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay, isAnyDragg
   });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: isOverlay
+      ? `${CSS.Transform.toString(transform) ?? ''} translateZ(0)`.trim()
+      : CSS.Transform.toString(transform),
     opacity: isDragging ? 0.35 : 1,
     transition: isDragging ? undefined : 'transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease',
+    willChange: 'transform' as const,
+    backfaceVisibility: 'hidden' as const,
+    WebkitFontSmoothing: 'antialiased' as const,
   };
 
   const statusLabel = STATUS_LABELS[item.status] || item.status;
