@@ -267,13 +267,34 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
     <div className="space-y-4">
 
       <Card>
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base">Documentos da declaração</CardTitle>
-          {onAddItem && (
-            <Button size="sm" variant="outline" onClick={onAddItem}>
-              <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar item
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadContador.isPending}
+            >
+              {uploadContador.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Anexar documento
             </Button>
-          )}
+            {onAddItem && (
+              <Button size="sm" variant="outline" onClick={onAddItem}>
+                <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar item
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {docs.length === 0 ? (
