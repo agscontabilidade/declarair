@@ -23,7 +23,7 @@ export default function RecuperarSenha() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabaseRecovery.auth.resetPasswordForEmail(email, {
         redirectTo: `${PORTAL_BASE_URL}/redefinir-senha?origem=${origem}`,
       });
       if (error) throw error;
