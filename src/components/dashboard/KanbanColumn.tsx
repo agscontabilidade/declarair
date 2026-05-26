@@ -16,9 +16,10 @@ interface Props {
   status: string;
   color: string;
   items: DeclaracaoKanban[];
+  isAnyDragging?: boolean;
 }
 
-export function KanbanColumn({ title, status, color, items }: Props) {
+export function KanbanColumn({ title, status, color, items, isAnyDragging }: Props) {
   const { setNodeRef, isOver } = useDroppable({
     id: status,
     data: { status },
