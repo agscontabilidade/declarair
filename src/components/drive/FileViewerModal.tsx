@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,6 +31,12 @@ interface Props {
   togglingLancadoId?: string | null;
 }
 
+interface CacheEntry {
+  signedUrl: string;
+  blobUrl?: string;
+  blobPromise?: Promise<string | null>;
+}
+
 function iconForType(type: ReturnType<typeof getFileType>) {
   if (type === 'pdf') return FileText;
   if (type === 'image') return ImageIcon;
@@ -38,14 +44,16 @@ function iconForType(type: ReturnType<typeof getFileType>) {
   return FileIcon;
 }
 
+const BUCKET = 'documentos-clientes';
+const SIGNED_TTL = 3600;
+
 export function FileViewerModal({ files, currentId, onClose, onChange, onToggleLancado, togglingLancadoId }: Props) {
-  // signedUrl: original URL (used by Office Online viewer + download/open buttons)
-  // inlineUrl: blob: URL with forced MIME — used by PDF/image/text viewers so the
-  // browser ALWAYS renders inline (storage may serve some files as octet-stream
-  // or with attachment disposition, which would otherwise force a download).
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [inlineUrl, setInlineUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Session cache: lives while the modal is open. Revoked on close.
+  const cacheRef = useRef<Map<string, CacheEntry>>(new Map());
 
   const currentIndex = files.findIndex(f => f.id === currentId);
   const current = currentIndex >= 0 ? files[currentIndex] : null;
@@ -55,50 +63,158 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
   const isLancado = !!current?.lancado;
   const isToggling = !!current && togglingLancadoId === current.id;
 
+  // Get (or create) a signed URL for a given file id, cached.
+  const getSignedUrl = useCallback(async (file: ViewerFile): Promise<string | null> => {
+    const cached = cacheRef.current.get(file.id);
+    if (cached?.signedUrl) return cached.signedUrl;
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(file.arquivo_url, SIGNED_TTL);
+    if (error || !data?.signedUrl) return null;
+    const entry: CacheEntry = { ...(cached ?? { signedUrl: '' }), signedUrl: data.signedUrl };
+    cacheRef.current.set(file.id, entry);
+    return data.signedUrl;
+  }, []);
+
+  // Build a blob URL (for text viewer / PDF fallback) — cached + dedup'd.
+  const getBlobUrl = useCallback(async (file: ViewerFile, signal?: AbortSignal): Promise<string | null> => {
+    const cached = cacheRef.current.get(file.id);
+    if (cached?.blobUrl) return cached.blobUrl;
+    if (cached?.blobPromise) return cached.blobPromise;
+
+    const promise = (async () => {
+      const url = await getSignedUrl(file);
+      if (!url) return null;
+      try {
+        const res = await fetch(url, { signal });
+        if (!res.ok) throw new Error(`fetch ${res.status}`);
+        const buf = await res.arrayBuffer();
+        const mime = getMimeFromName(file.arquivo_nome);
+        const blob = new Blob([buf], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        const entry = cacheRef.current.get(file.id) ?? { signedUrl: url };
+        entry.blobUrl = blobUrl;
+        entry.blobPromise = undefined;
+        cacheRef.current.set(file.id, entry);
+        return blobUrl;
+      } catch {
+        const entry = cacheRef.current.get(file.id);
+        if (entry) entry.blobPromise = undefined;
+        return null;
+      }
+    })();
+
+    const entry = cacheRef.current.get(file.id) ?? { signedUrl: '' };
+    entry.blobPromise = promise;
+    cacheRef.current.set(file.id, entry);
+    return promise;
+  }, [getSignedUrl]);
+
+  // Main effect: switch current file — uses cache, streams PDFs/images via signed URL.
   useEffect(() => {
     if (!current) { setSignedUrl(null); setInlineUrl(null); return; }
     let cancelled = false;
-    let createdBlobUrl: string | null = null;
-    setLoading(true);
-    setSignedUrl(null);
-    setInlineUrl(null);
+    const controller = new AbortController();
+
+    const type = getFileType(current.arquivo_nome);
+    const cached = cacheRef.current.get(current.id);
+
+    // Optimistic show from cache for instant transitions.
+    if (cached?.signedUrl) {
+      setSignedUrl(cached.signedUrl);
+      // PDFs and images render directly off the signed URL — no need to wait
+      // for blob conversion. Text viewer needs a fetched body.
+      if (type === 'pdf' || type === 'image' || type === 'office' || type === 'unsupported') {
+        setInlineUrl(cached.signedUrl);
+        setLoading(false);
+      } else if (cached.blobUrl) {
+        setInlineUrl(cached.blobUrl);
+        setLoading(false);
+      } else {
+        setInlineUrl(null);
+        setLoading(true);
+      }
+    } else {
+      setSignedUrl(null);
+      setInlineUrl(null);
+      setLoading(true);
+    }
 
     (async () => {
       try {
-        const { data, error } = await supabase.storage
-          .from('documentos-clientes')
-          .createSignedUrl(current.arquivo_url, 3600);
-        if (error || !data?.signedUrl) throw error ?? new Error('no signed url');
+        const url = await getSignedUrl(current);
         if (cancelled) return;
-        setSignedUrl(data.signedUrl);
+        if (!url) throw new Error('signed url failed');
+        setSignedUrl(url);
 
-        // Office viewer needs a public URL — skip blob conversion.
-        // Unsupported types don't need to be fetched at all.
-        if (fileType === 'office' || fileType === 'unsupported') {
-          if (!cancelled) setLoading(false);
-          return;
+        if (type === 'pdf' || type === 'image') {
+          // Stream directly — pdf.js does range requests; <img> uses HTTP cache.
+          setInlineUrl(url);
+          setLoading(false);
+        } else if (type === 'office' || type === 'unsupported') {
+          setInlineUrl(url);
+          setLoading(false);
+        } else {
+          // text / other → needs full body as blob for the TextViewer
+          const blobUrl = await getBlobUrl(current, controller.signal);
+          if (cancelled) return;
+          if (blobUrl) setInlineUrl(blobUrl);
+          setLoading(false);
         }
-
-        const res = await fetch(data.signedUrl);
-        if (!res.ok) throw new Error(`fetch ${res.status}`);
-        const buf = await res.arrayBuffer();
-        if (cancelled) return;
-        const mime = getMimeFromName(current.arquivo_nome);
-        const blob = new Blob([buf], { type: mime });
-        createdBlobUrl = URL.createObjectURL(blob);
-        setInlineUrl(createdBlobUrl);
       } catch {
-        if (!cancelled) toast.error('Erro ao carregar arquivo');
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          toast.error('Erro ao carregar arquivo');
+          setLoading(false);
+        }
       }
     })();
 
     return () => {
       cancelled = true;
-      if (createdBlobUrl) URL.revokeObjectURL(createdBlobUrl);
+      controller.abort();
     };
-  }, [current, fileType]);
+  }, [current, getSignedUrl, getBlobUrl]);
+
+  // Prefetch neighbors (signed URL + warm browser HTTP cache for PDFs/images).
+  useEffect(() => {
+    if (!current) return;
+    const neighbors = [files[currentIndex - 1], files[currentIndex + 1]].filter(Boolean) as ViewerFile[];
+    const controller = new AbortController();
+
+    neighbors.forEach(async (f) => {
+      if (cacheRef.current.get(f.id)?.signedUrl) return;
+      const url = await getSignedUrl(f);
+      if (!url) return;
+      const type = getFileType(f.arquivo_nome);
+      if (type === 'pdf' || type === 'image') {
+        // Warm HTTP cache silently. AbortController stops it on close/change.
+        fetch(url, { signal: controller.signal, mode: 'cors' }).catch(() => {});
+      }
+    });
+
+    return () => controller.abort();
+  }, [current, currentIndex, files, getSignedUrl]);
+
+  // Revoke all blob URLs when modal closes.
+  useEffect(() => {
+    if (currentId) return;
+    const cache = cacheRef.current;
+    cache.forEach((entry) => {
+      if (entry.blobUrl) URL.revokeObjectURL(entry.blobUrl);
+    });
+    cache.clear();
+  }, [currentId]);
+
+  // Also revoke on unmount.
+  useEffect(() => {
+    const cache = cacheRef.current;
+    return () => {
+      cache.forEach((entry) => {
+        if (entry.blobUrl) URL.revokeObjectURL(entry.blobUrl);
+      });
+      cache.clear();
+    };
+  }, []);
 
   const goPrev = useCallback(() => {
     if (currentIndex > 0) onChange(files[currentIndex - 1].id);
@@ -121,6 +237,13 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
   const handleDownload = useCallback(() => {
     if (signedUrl) window.open(signedUrl, '_blank');
   }, [signedUrl]);
+
+  // PDF fallback: if streaming render fails (e.g. no Range support), swap to blob URL.
+  const handlePdfStreamError = useCallback(async () => {
+    if (!current) return;
+    const blobUrl = await getBlobUrl(current);
+    if (blobUrl) setInlineUrl(blobUrl);
+  }, [current, getBlobUrl]);
 
   return (
     <Dialog open={!!currentId} onOpenChange={(o) => !o && onClose()}>
@@ -193,13 +316,15 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
 
         {/* Body */}
         <div className="flex-1 min-h-0 p-3 bg-background">
-          {loading ? (
+          {loading && !inlineUrl ? (
             <div className="w-full h-full flex items-center justify-center">
               <Skeleton className="w-full h-full" />
             </div>
           ) : current ? (
             <>
-              {fileType === 'pdf' && inlineUrl && <PdfViewer url={inlineUrl} nome={current.arquivo_nome} />}
+              {fileType === 'pdf' && inlineUrl && (
+                <PdfViewer url={inlineUrl} nome={current.arquivo_nome} onStreamError={handlePdfStreamError} />
+              )}
               {fileType === 'image' && inlineUrl && <ImageViewer url={inlineUrl} nome={current.arquivo_nome} />}
               {fileType === 'text' && inlineUrl && <TextViewer url={inlineUrl} />}
               {fileType === 'office' && signedUrl && <OfficeViewer url={signedUrl} nome={current.arquivo_nome} />}
