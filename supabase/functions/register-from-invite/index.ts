@@ -96,15 +96,7 @@ Deno.serve(async (req) => {
 
     // 5b. Checklist obrigatório removido — documentos são livres.
 
-    // 6. Mark invite as used
-    await supabaseAdmin
-      .from('convites_cliente')
-      .update({
-        usado: true,
-        usado_em: new Date().toISOString(),
-        usado_por_cliente_id: cliente.id,
-      })
-      .eq('id', convite.id);
+    // 6. Link permanece reutilizável — não marcamos como usado.
 
     // 7. Notify the office
     await supabaseAdmin
