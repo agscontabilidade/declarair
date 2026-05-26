@@ -104,6 +104,7 @@ export function KanbanColumn({ title, status, color, items, isAnyDragging }: Pro
             <KanbanCard
               key={item.id}
               item={item}
+              isAnyDragging={isAnyDragging}
             />
           ))
         )}
