@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClienteHeader } from '@/components/cliente-perfil/ClienteHeader';
 import { AbaVisaoGeral } from '@/components/cliente-perfil/AbaVisaoGeral';
-import { AbaDocumentos } from '@/components/cliente-perfil/AbaDocumentos';
+import { AbaDocumentosUnificada } from '@/components/declaracao/AbaDocumentosUnificada';
 import { AbaCobrancas } from '@/components/cliente-perfil/AbaCobrancas';
 import { AbaComunicacoes } from '@/components/cliente-perfil/AbaComunicacoes';
 import { useClientePerfil } from '@/hooks/useClientePerfil';
