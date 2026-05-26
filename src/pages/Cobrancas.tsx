@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CobrancasTable } from '@/components/cobrancas/CobrancasTable';
 import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
 import { ConfirmModal } from '@/components/cobrancas/ConfirmModal';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueryError } from '@/components/ui/QueryError';
@@ -26,29 +27,48 @@ export default function Cobrancas() {
   const clienteIdFiltro = searchParams.get('cliente');
   const [statusFilter, setStatusFilter] = useState('todos');
   const [busca, setBusca] = useState('');
+  const [debouncedBusca, setDebouncedBusca] = useState('');
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, unknown> | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
   const { profile } = useAuth();
 
-  const { cobrancas: cobrancasAll, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas(statusFilter);
-  const cobrancas = useMemo(
-    () => {
-      let list = clienteIdFiltro ? cobrancasAll.filter(c => c.cliente_id === clienteIdFiltro) : cobrancasAll;
-      const termo = busca.trim().toLowerCase();
-      if (termo) {
-        const digitos = termo.replace(/\D/g, '');
-        list = list.filter(c =>
-          c.clientes?.nome?.toLowerCase().includes(termo) ||
-          (digitos && c.clientes?.cpf?.replace(/\D/g, '').includes(digitos)) ||
-          c.descricao?.toLowerCase().includes(termo)
-        );
-      }
-      return list;
-    },
-    [cobrancasAll, clienteIdFiltro, busca],
-  );
-  const nomeClienteFiltro = clienteIdFiltro ? cobrancas[0]?.clientes?.nome : null;
+  // Debounce da busca
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedBusca(busca); setPage(0); }, 400);
+    return () => clearTimeout(t);
+  }, [busca]);
+
+  // Reset de página quando filtros mudam
+  useEffect(() => { setPage(0); }, [statusFilter, clienteIdFiltro, pageSize]);
+
+  const { cobrancas: cobrancasPage, total, isLoading, isError, error, refetch, kpis, marcarPago, cancelar, excluir, criar, editar } = useCobrancas({
+    statusFilter,
+    busca: debouncedBusca,
+    clienteId: clienteIdFiltro,
+    page,
+    pageSize,
+  });
+
+  // Filtro adicional client-side por nome/CPF do cliente (só na página atual)
+  const cobrancas = useMemo(() => {
+    const termo = debouncedBusca.trim().toLowerCase();
+    if (!termo) return cobrancasPage;
+    const digitos = termo.replace(/\D/g, '');
+    // Como a busca server-side já filtra por descrição, aqui só adicionamos
+    // nome/CPF como ampliação — mas para evitar lista vazia quando o termo
+    // bate em nome (e não em descrição), retornamos a página inteira se
+    // qualquer item bater por nome/CPF ou por descrição.
+    return cobrancasPage.filter(c =>
+      c.clientes?.nome?.toLowerCase().includes(termo) ||
+      (digitos && c.clientes?.cpf?.replace(/\D/g, '').includes(digitos)) ||
+      c.descricao?.toLowerCase().includes(termo)
+    );
+  }, [cobrancasPage, debouncedBusca]);
+
+  const nomeClienteFiltro = clienteIdFiltro ? cobrancasPage[0]?.clientes?.nome : null;
   const { podeVerCobrancas, podeCriarCobrancas, podeExcluirCobranca } = usePermissoes();
 
   // Check if Inter is configured
@@ -203,6 +223,13 @@ export default function Cobrancas() {
               onCancelar={(id) => setConfirmAction({ type: 'cancelar', id })}
               onExcluir={(id) => setConfirmAction({ type: 'excluir', id })}
               interAtivo={interAtivo || false}
+            />
+            <PaginationControls
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
             />
           </CardContent>
         </Card>

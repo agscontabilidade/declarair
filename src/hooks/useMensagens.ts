@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -54,7 +54,14 @@ export function replaceTags(text: string, data: Record<string, string> = MOCK_DA
   return result;
 }
 
-export function useMensagens() {
+interface UseMensagensOptions {
+  loadMensagens?: boolean;
+  mensagensPage?: number;
+  mensagensPageSize?: number;
+}
+
+export function useMensagens(options: UseMensagensOptions = {}) {
+  const { loadMensagens = false, mensagensPage = 0, mensagensPageSize = 25 } = options;
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const escritorioId = profile.escritorioId;
@@ -95,20 +102,27 @@ export function useMensagens() {
     enabled: !!escritorioId,
   });
 
-  const { data: mensagens = [], isLoading: loadingMensagens } = useQuery({
-    queryKey: ['mensagens-enviadas', escritorioId],
+  // Mensagens enviadas: só carrega quando explicitamente solicitado (paginação)
+  const { data: mensagensData, isLoading: loadingMensagens } = useQuery({
+    queryKey: ['mensagens-enviadas', escritorioId, mensagensPage, mensagensPageSize],
     queryFn: async () => {
-      if (!escritorioId) return [];
-      const { data, error } = await supabase
+      if (!escritorioId) return { data: [], total: 0 };
+      const from = mensagensPage * mensagensPageSize;
+      const { data, count, error } = await supabase
         .from('mensagens_enviadas')
-        .select('*, clientes(nome)')
+        .select('*, clientes(nome)', { count: 'exact' })
         .eq('escritorio_id', escritorioId)
-        .order('enviado_em', { ascending: false });
+        .order('enviado_em', { ascending: false })
+        .range(from, from + mensagensPageSize - 1);
       if (error) throw error;
-      return data || [];
+      return { data: data || [], total: count ?? 0 };
     },
-    enabled: !!escritorioId,
+    enabled: !!escritorioId && loadMensagens,
+    placeholderData: keepPreviousData,
   });
+
+  const mensagens = mensagensData?.data ?? [];
+  const mensagensTotal = mensagensData?.total ?? 0;
 
   const criarTemplate = useMutation({
     mutationFn: async (data: { nome: string; canal: string; assunto?: string; corpo: string }) => {
@@ -174,7 +188,8 @@ export function useMensagens() {
   });
 
   return {
-    templates, loadingTemplates, mensagens, loadingMensagens,
+    templates, loadingTemplates,
+    mensagens, mensagensTotal, loadingMensagens,
     criarTemplate, editarTemplate, toggleTemplate, deletarTemplate, enviarMensagem,
   };
 }

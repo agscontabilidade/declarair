@@ -36,7 +36,7 @@ export default function Clientes() {
   const [cobrancaCliente, setCobrancaCliente] = useState<ClienteRow | null>(null);
   const [uploadDocs, setUploadDocs] = useState<{ declaracaoId: string; nome: string } | null>(null);
   const [conviteCtx, setConviteCtx] = useState<EnviarConviteClienteCtx | null>(null);
-  const { criar: criarCobranca } = useCobrancas('todos');
+  const { criar: criarCobranca } = useCobrancas();
   const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente } = usePermissoes();
   const { toast } = useToast();
 
