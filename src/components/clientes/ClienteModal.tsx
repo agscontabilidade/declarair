@@ -211,7 +211,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
 
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <Label htmlFor="cpf">CPF {!isEdit && <span className="text-destructive">*</span>}</Label>
+                <Label htmlFor="cpf">CPF <span className="text-xs font-normal text-muted-foreground">(opcional)</span></Label>
                 <div className="relative">
                   <IdCard aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
