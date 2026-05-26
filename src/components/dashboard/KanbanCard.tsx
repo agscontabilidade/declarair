@@ -36,9 +36,10 @@ const STATUS_TOOLTIPS: Record<string, string> = {
 interface Props {
   item: DeclaracaoKanban;
   isOverlay?: boolean;
+  isAnyDragging?: boolean;
 }
 
-export const KanbanCard = memo(function KanbanCard({ item, isOverlay }: Props) {
+export const KanbanCard = memo(function KanbanCard({ item, isOverlay, isAnyDragging }: Props) {
   const navigate = useNavigate();
   const nome = item.clientes?.nome ?? 'Cliente';
   const cpf = item.clientes?.cpf ?? '';
