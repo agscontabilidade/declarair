@@ -58,16 +58,21 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay, isAnyDragg
     disabled: !!isOverlay,
   });
 
-  const style = {
-    transform: isOverlay
-      ? `${CSS.Transform.toString(transform) ?? ''} translateZ(0)`.trim()
-      : CSS.Transform.toString(transform),
-    opacity: isDragging ? 0.35 : 1,
-    transition: isDragging ? undefined : 'transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease',
-    willChange: 'transform' as const,
-    backfaceVisibility: 'hidden' as const,
-    WebkitFontSmoothing: 'antialiased' as const,
-  };
+  // Com DragOverlay, o card original NÃO deve seguir o cursor.
+  // Aplicamos transform apenas no overlay. No card real durante o arraste,
+  // escondemos mantendo o espaço (placeholder) — evita rastros/borrão na coluna.
+  const style: React.CSSProperties = isOverlay
+    ? {
+        transform: `${CSS.Transform.toString(transform) ?? ''} translateZ(0)`.trim(),
+        willChange: 'transform',
+        backfaceVisibility: 'hidden',
+      }
+    : isDragging
+    ? {
+        visibility: 'hidden',
+        transition: 'none',
+      }
+    : {};
 
   const statusLabel = STATUS_LABELS[item.status] || item.status;
   const statusTooltip = STATUS_TOOLTIPS[item.status] || '';
@@ -86,7 +91,7 @@ export const KanbanCard = memo(function KanbanCard({ item, isOverlay, isAnyDragg
       className={`
         group bg-card rounded-xl p-3.5 shadow-sm border border-border/40
         cursor-grab active:cursor-grabbing
-        ${suppressHover ? '' : 'hover:shadow-lg hover:border-accent/30 hover:-translate-y-0.5'}
+        ${suppressHover ? '' : 'transition-all duration-200 hover:shadow-lg hover:border-accent/30 hover:-translate-y-0.5'}
         ${isOverlay ? 'shadow-2xl rotate-2 scale-105 ring-2 ring-accent/30' : ''}
       `}
     >
