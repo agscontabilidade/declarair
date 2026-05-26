@@ -144,9 +144,9 @@ export default function ClienteDashboard() {
                     <div className="w-full max-w-[140px] mt-3">
                       <div className="flex justify-between text-[10px] mb-1 font-medium text-muted-foreground uppercase tracking-wider">
                         <span>Documentos</span>
-                        <span>{checklist.length}</span>
+                        <span>{arquivosReais.length}</span>
                       </div>
-                      <Progress value={decl?.status_documentos === 'enviado' ? 100 : checklist.length > 0 ? 50 : 0} className="h-1.5" />
+                      <Progress value={decl?.status_documentos === 'enviado' ? 100 : arquivosReais.length > 0 ? 50 : 0} className="h-1.5" />
                     </div>
 
                     <Tooltip delayDuration={150}>
@@ -154,13 +154,13 @@ export default function ClienteDashboard() {
                         <Badge className={`mt-3 cursor-help ${
                           decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
                             ? 'bg-success/15 text-success hover:bg-success/20'
-                            : checklist.length > 0
+                            : arquivosReais.length > 0
                             ? 'bg-primary/15 text-primary hover:bg-primary/20'
                             : 'bg-warning/15 text-warning hover:bg-warning/20'
                         }`}>
                           {decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
                             ? 'Enviado ao Contador'
-                            : checklist.length > 0
+                            : arquivosReais.length > 0
                             ? 'Pronto para Enviar'
                             : 'Pendente'}
                         </Badge>
@@ -168,11 +168,12 @@ export default function ClienteDashboard() {
                       <TooltipContent side="bottom" className="max-w-[260px] text-xs">
                         {decl?.status_documentos === 'enviado' || decl?.status === 'documentacao_recebida' || decl?.status === 'declaracao_pronta' || decl?.status === 'transmitida'
                           ? 'Seus documentos já foram entregues ao contador para análise.'
-                          : checklist.length > 0
+                          : arquivosReais.length > 0
                           ? 'Você já anexou arquivos. Clique no card para revisar e finalizar o envio.'
                           : 'Nenhum documento anexado ainda. Clique no card para começar o upload.'}
                       </TooltipContent>
                     </Tooltip>
+
 
                   </CardContent>
                 </Card>
