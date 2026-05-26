@@ -101,14 +101,6 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
     }
     const emailClean = form.email.trim() || null;
     const telClean = form.telefone.replace(/\D/g, '') || null;
-    if (!isEdit && form.enviar_convite && !emailClean && !telClean) {
-      toast({
-        title: 'Informe email ou WhatsApp',
-        description: 'Para enviar o convite de acesso, é preciso ter ao menos um contato.',
-        variant: 'destructive',
-      });
-      return null;
-    }
     const base = {
       nome: form.nome.trim(),
       email: emailClean,
