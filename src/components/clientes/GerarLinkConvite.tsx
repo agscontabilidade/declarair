@@ -32,7 +32,12 @@ import { maskCPF, validateCPF } from '@/lib/formatters';
 import { getErrorMessage } from '@/lib/errors';
 import { PORTAL_BASE_URL } from '@/lib/constants';
 
-export default function GerarLinkConvite() {
+interface GerarLinkConviteProps {
+  disabled?: boolean;
+  disabledReason?: string;
+}
+
+export default function GerarLinkConvite({ disabled = false, disabledReason }: GerarLinkConviteProps) {
   const { profile, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
