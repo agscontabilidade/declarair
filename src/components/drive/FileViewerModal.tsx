@@ -253,7 +253,7 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
         </div>
 
         {/* Body */}
-        <div className="flex-1 min-h-0 p-3 bg-background">
+        <div className="flex-1 min-h-0 p-2 bg-background select-text">
           {loading && !inlineUrl ? (
             <div className="w-full h-full flex items-center justify-center">
               <Skeleton className="w-full h-full" />
