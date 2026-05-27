@@ -249,6 +249,7 @@ export function EnviarDeclaracaoEmailModal({
         body: {
           templateName: 'envio-manual-declaracao',
           recipientEmail: clienteEmail,
+          escritorioId: profile?.escritorioId,
           templateData,
           attachmentPaths
         }
