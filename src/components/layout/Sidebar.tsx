@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, FileText, DollarSign, MessageSquare, Settings, LogOut, FolderOpen, Puzzle, Phone, BarChart3, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, DollarSign, MessageSquare, Settings, LogOut, FolderOpen, Puzzle, Phone, BarChart3, TrendingUp, BellRing } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +28,7 @@ const navItems = [
   { title: 'Drive', url: '/drive', icon: FolderOpen },
   
   { title: 'Cobrança', url: '/cobrancas', icon: DollarSign, badge: true },
+  { title: 'Lembretes IR', url: '/lembretes', icon: BellRing },
   { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
   { title: 'Recursos Extras', url: '/addons', icon: Puzzle },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },

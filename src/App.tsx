@@ -43,6 +43,7 @@ const DeclaracaoDetalhe = lazy(() => import("./pages/DeclaracaoDetalhe"));
 const ConviteColaborador = lazy(() => import("./pages/ConviteColaborador"));
 const ConfiguracoesAPI = lazy(() => import("./pages/ConfiguracoesAPI"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
+const Lembretes = lazy(() => import("./pages/Lembretes"));
 const WebhooksPage = lazy(() => import("./pages/Webhooks"));
 const CadastroCliente = lazy(() => import("./pages/cliente/CadastroCliente"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -158,6 +159,7 @@ const App = () => (
               <Route path="/addons" element={<ProtectedRoute allowedType="contador"><BillingGate><Addons /></BillingGate></ProtectedRoute>} />
               <Route path="/whatsapp" element={<Navigate to="/configuracoes?tab=mensagens" replace />} />
               <Route path="/relatorios" element={<ProtectedRoute allowedType="contador"><BillingGate><Relatorios /></BillingGate></ProtectedRoute>} />
+              <Route path="/lembretes" element={<ProtectedRoute allowedType="contador"><BillingGate><Lembretes /></BillingGate></ProtectedRoute>} />
               <Route path="/webhooks" element={<ProtectedRoute allowedType="contador"><BillingGate><WebhooksPage /></BillingGate></ProtectedRoute>} />
 
               {/* Contador routes - always accessible */}

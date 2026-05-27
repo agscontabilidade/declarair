@@ -19,3 +19,5 @@ project_id = "bykqurgeptipguqvxwiq"
     verify_jwt = true
   [functions.whatsapp-service]
     verify_jwt = false
+  [functions.enviar-lembretes-prazo]
+    verify_jwt = true

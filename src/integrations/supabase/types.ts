@@ -1632,6 +1632,48 @@ export type Database = {
           },
         ]
       }
+      lembretes_enviados: {
+        Row: {
+          canal: string
+          cliente_id: string
+          declaracao_id: string | null
+          enviado_em: string
+          enviado_por: string | null
+          erro: string | null
+          escritorio_id: string
+          id: string
+          mensagem: string | null
+          prazo_final: string
+          status: string
+        }
+        Insert: {
+          canal: string
+          cliente_id: string
+          declaracao_id?: string | null
+          enviado_em?: string
+          enviado_por?: string | null
+          erro?: string | null
+          escritorio_id: string
+          id?: string
+          mensagem?: string | null
+          prazo_final: string
+          status?: string
+        }
+        Update: {
+          canal?: string
+          cliente_id?: string
+          declaracao_id?: string | null
+          enviado_em?: string
+          enviado_por?: string | null
+          erro?: string | null
+          escritorio_id?: string
+          id?: string
+          mensagem?: string | null
+          prazo_final?: string
+          status?: string
+        }
+        Relationships: []
+      }
       malha_fina_consultas: {
         Row: {
           ano_base: number
