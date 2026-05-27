@@ -73,13 +73,29 @@ const EnvioManualDeclaracaoEmail = ({
           </Text>
           {attachmentLinks.map((item, index) => (
             item.url ? (
-              <Button
+              <Section
                 key={`${item.filename || 'documento'}-${index}`}
-                href={item.url}
-                className="block bg-emerald-600 text-white text-[13px] font-bold rounded-[6px] px-[14px] py-[10px] mb-[8px] text-center"
+                style={{ marginBottom: '8px' }}
               >
-                Baixar {item.filename || 'documento'}
-              </Button>
+                <Button
+                  href={item.url}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    backgroundColor: '#059669',
+                    color: '#ffffff',
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '13px',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    textAlign: 'center' as const,
+                    boxSizing: 'border-box' as const,
+                  }}
+                >
+                  Baixar {item.filename || 'documento'}
+                </Button>
+              </Section>
             ) : null
           ))}
         </Section>
