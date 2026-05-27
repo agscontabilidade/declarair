@@ -22,7 +22,8 @@ export function useClientePerfil(clienteId: string | undefined) {
         .eq('id', clienteId!)
         .single();
       if (error) throw error;
-      return data;
+      // token_convite* têm SELECT revogado a authenticated; preenche null para satisfazer o tipo gerado.
+      return { ...data, token_convite: null, token_convite_expira_em: null };
     },
     enabled: !!clienteId,
   });
