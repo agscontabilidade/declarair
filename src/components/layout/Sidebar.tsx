@@ -28,6 +28,7 @@ const navItems = [
   { title: 'Drive', url: '/drive', icon: FolderOpen },
   
   { title: 'Cobrança', url: '/cobrancas', icon: DollarSign, badge: true },
+  { title: 'Lembretes IR', url: '/lembretes', icon: BellRing },
   { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
   { title: 'Recursos Extras', url: '/addons', icon: Puzzle },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
