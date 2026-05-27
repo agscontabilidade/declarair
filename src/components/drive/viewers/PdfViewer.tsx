@@ -64,7 +64,7 @@ export function PdfViewer({ url, nome, onStreamError }: Props) {
   }, [onStreamError]);
 
   return (
-    <div className="w-full h-full flex flex-col bg-muted rounded-md overflow-hidden">
+    <div className="w-full h-full flex flex-col bg-muted rounded-md overflow-hidden select-text">
       <div className="flex-1 min-h-0 overflow-auto flex justify-center p-4">
         {error ? (
           <div className="flex items-center justify-center text-sm text-muted-foreground text-center px-6">
@@ -92,7 +92,7 @@ export function PdfViewer({ url, nome, onStreamError }: Props) {
       </div>
 
       {!error && numPages > 0 && (
-        <div className="flex items-center justify-center gap-2 p-2 border-t bg-card">
+        <div className="flex items-center justify-center gap-1 py-1 px-2 border-t bg-card">
           <Button
             size="icon"
             variant="ghost"
