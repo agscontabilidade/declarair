@@ -93,6 +93,12 @@ Deno.serve(async (req) => {
       return json({ error: "tipo inválido" }, 400);
     }
 
+    // Path traversal guard: storage_path deve estar dentro do namespace do escritório
+    if (!storage_path.startsWith(`${usuario.escritorio_id}/`)) {
+      return json({ error: "Acesso negado ao arquivo" }, 403);
+    }
+
+
     // Confirma propriedade
     const { data: dec, error: decErr } = await admin
       .from("declaracoes")

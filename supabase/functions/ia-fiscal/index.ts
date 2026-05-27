@@ -43,6 +43,14 @@ serve(async (req) => {
     if (tipo === "validate_owner") {
       if (!arquivo_path) throw new Error("arquivo_path é obrigatório");
 
+      // Path traversal guard: arquivo deve estar dentro do namespace do escritório
+      if (!arquivo_path.startsWith(`${usuario.escritorio_id}/`)) {
+        return new Response(JSON.stringify({ error: "Acesso negado ao arquivo" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const { data: decl } = await supabase
         .from("declaracoes")
         .select("clientes(nome, cpf)")
@@ -51,6 +59,7 @@ serve(async (req) => {
         .single();
 
       if (!decl?.clientes) throw new Error("Declaração não encontrada");
+
 
       const cpfEsperado = onlyDigits((decl.clientes as { cpf?: string }).cpf || "");
       const nomeEsperado = (decl.clientes as { nome?: string }).nome || "";
@@ -143,10 +152,12 @@ Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem texto extra:
         .from("declaracao_analises")
         .select("*")
         .eq("declaracao_id", declaracao_id)
+        .eq("escritorio_id", usuario.escritorio_id)
         .eq("tipo", tipo || "analise")
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+
 
       if (existing) {
         // Return existing as a stream-like or just JSON
