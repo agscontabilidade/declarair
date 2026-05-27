@@ -7,12 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FolderOpen, FileText, Search, Download, ChevronRight, Image as ImageIcon, File, Eye } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCPF } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
+import { getErrorMessage } from '@/lib/errors';
 
 interface DocWithDeclaracao {
   id: string;
@@ -21,6 +22,7 @@ interface DocWithDeclaracao {
   nome_documento: string;
   categoria: string;
   status: string;
+  lancado: boolean | null;
   declaracoes: {
     ano_base: number;
     cliente_id: string;
@@ -37,13 +39,16 @@ export default function Drive() {
   const [expandedCategoria, setExpandedCategoria] = useState<string | null>(null);
   const [viewerState, setViewerState] = useState<{ files: ViewerFile[]; currentId: string | null }>({ files: [], currentId: null });
 
+  const queryClient = useQueryClient();
+  const [togglingLancadoId, setTogglingLancadoId] = useState<string | null>(null);
+
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ['drive-docs', escritorioId, anoFiltro],
     queryFn: async () => {
       if (!escritorioId) return [];
       const { data } = await supabase
         .from('checklist_documentos')
-        .select('id, arquivo_nome, arquivo_url, nome_documento, categoria, status, created_at, declaracoes!inner(ano_base, cliente_id, clientes(id, nome, cpf))')
+        .select('id, arquivo_nome, arquivo_url, nome_documento, categoria, status, lancado, created_at, declaracoes!inner(ano_base, cliente_id, clientes(id, nome, cpf))')
         .eq('declaracoes.escritorio_id', escritorioId)
         .eq('declaracoes.ano_base', Number(anoFiltro))
         .not('arquivo_url', 'is', null)
@@ -52,6 +57,37 @@ export default function Drive() {
       return (data || []).filter((d: { arquivo_url: string | null }) => !d.arquivo_url?.includes('/_analise_caixa/'));
     },
     enabled: !!escritorioId,
+  });
+
+  const toggleLancado = useMutation({
+    mutationFn: async ({ id, novoValor }: { id: string; novoValor: boolean }) => {
+      setTogglingLancadoId(id);
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from('checklist_documentos')
+        .update({
+          lancado: novoValor,
+          lancado_em: novoValor ? new Date().toISOString() : null,
+          lancado_por: novoValor ? userData.user?.id ?? null : null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+      return { id, novoValor };
+    },
+    onSuccess: (res) => {
+      toast.success(res.novoValor ? 'Documento marcado como lançado' : 'Marcação removida');
+      // Atualiza o file aberto no modal (e a lista do Drive) sem aguardar refetch
+      setViewerState((s) => ({
+        ...s,
+        files: s.files.map((f) => (f.id === res.id ? { ...f, lancado: res.novoValor } : f)),
+      }));
+      queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist'] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e, 'Falha ao atualizar status')),
+    onSettled: () => setTogglingLancadoId(null),
   });
 
   const tree = useMemo(() => {
@@ -105,7 +141,7 @@ export default function Drive() {
   const openViewer = useCallback((docs: DocWithDeclaracao[], docId: string) => {
     const files: ViewerFile[] = docs
       .filter(d => d.arquivo_url && d.arquivo_nome)
-      .map(d => ({ id: d.id, arquivo_url: d.arquivo_url!, arquivo_nome: d.arquivo_nome! }));
+      .map(d => ({ id: d.id, arquivo_url: d.arquivo_url!, arquivo_nome: d.arquivo_nome!, lancado: !!d.lancado }));
     setViewerState({ files, currentId: docId });
   }, []);
 
@@ -231,6 +267,8 @@ export default function Drive() {
         currentId={viewerState.currentId}
         onClose={() => setViewerState({ files: [], currentId: null })}
         onChange={(id) => setViewerState(s => ({ ...s, currentId: id }))}
+        onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
+        togglingLancadoId={togglingLancadoId}
       />
     </DashboardLayout>
   );

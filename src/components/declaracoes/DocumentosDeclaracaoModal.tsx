@@ -172,6 +172,7 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
       queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracaoId] });
       queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracaoId] });
       queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
     },
     onError: (e) => toast.error(getErrorMessage(e, 'Falha ao atualizar status')),
   });
