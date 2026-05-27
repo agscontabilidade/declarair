@@ -1,48 +1,69 @@
 ## Objetivo
 
-1. Restaurar a seleção de texto nos PDFs anexados.
-2. Reduzir a altura do header e do rodapé do visualizador para dar mais área útil ao documento.
+Unificar o comportamento do visualizador de arquivos em `/drive` e em `/declaracoes`:
 
-## 1. Seleção de texto no PDF
+1. `/drive` passa a exibir o botão **"Marcar como lançado"** no topo do `FileViewerModal` (já presente em `/declaracoes`).
+2. Alternar "lançado" em qualquer um dos dois lugares reflete imediatamente no outro (invalidação cruzada de cache).
+3. Garantir que todos os PDFs sejam selecionáveis (text layer sempre ativo).
 
-O `PdfViewer` já está configurado corretamente para permitir seleção:
-- `renderTextLayer={true}` no `<Page>`
-- CSS do TextLayer importado (`react-pdf/dist/Page/TextLayer.css`)
-- `className="select-text"` no `<Page>`
+---
 
-Ou seja, **não removi essa funcionalidade** — o código de seleção continua intacto desde a última versão. O que pode estar atrapalhando é a camada de anotação/CSS herdada do Dialog. Vou:
+## Escopo (mínimo necessário)
 
-- Garantir que o wrapper do PDF em `PdfViewer.tsx` não tenha `select-none` herdado, adicionando explicitamente `select-text` no container do `<Document>`.
-- Confirmar que o `react-pdf/dist/Page/TextLayer.css` está sendo aplicado (ele depende do `.textLayer` gerado pelo pdf.js — se um CSS global zerar `pointer-events` ou `user-select`, a seleção quebra).
-- Verificar visualmente no preview, abrindo um PDF e tentando selecionar texto.
+### 1. `/drive` — exibir e gravar `lancado`
 
-Nenhuma mudança de lógica, só garantia de CSS.
+Arquivo: `src/pages/Drive.tsx`
 
-## 2. Mais área de visualização (header/rodapé mais finos)
+- Adicionar `lancado` ao `select` da query `drive-docs` e ao tipo `DocWithDeclaracao`.
+- Incluir `lancado` no objeto `ViewerFile` criado em `openViewer`.
+- Adicionar uma mutation `toggleLancado` igual à de `DocumentosDeclaracaoModal.tsx` (linhas 157-177): atualiza `checklist_documentos` com `lancado`, `lancado_em`, `lancado_por`.
+- No `onSuccess`, invalidar **as três** query keys para refletir em todas as telas:
+  - `['drive-docs']`
+  - `['documentos-declaracao']`
+  - `['declaracao-aba-docs']`
+  - `['declaracao-checklist']`
+- Passar `onToggleLancado` e `togglingLancadoId` para o `<FileViewerModal>`.
 
-Alterações puramente visuais, sem mexer em comportamento:
+### 2. `/declaracoes` — invalidar também o cache do Drive
 
-**`src/components/drive/FileViewerModal.tsx` (header)**
-- `p-3` → `px-3 py-1.5` no header.
-- Botões: `size="icon"` continua, mas com classe `h-8 w-8` (hoje é o default de 40px).
-- Ícone do tipo: `h-5 w-5` → `h-4 w-4`.
-- Body: `p-3` → `p-2` para sobrar mais espaço.
+Arquivos: `src/components/declaracoes/DocumentosDeclaracaoModal.tsx` e `src/components/declaracao/AbaDocumentosUnificada.tsx`
 
-**`src/components/drive/viewers/PdfViewer.tsx` (rodapé)**
-- Barra inferior: `p-2` → `py-1 px-2`.
-- Botões já são `h-8 w-8`; mantém.
-- Ajuste de `gap-2` → `gap-1` na barra inferior para compactar.
+- Adicionar `queryClient.invalidateQueries({ queryKey: ['drive-docs'] })` ao `onSuccess` da mutation `toggleLancado` existente nos dois arquivos (hoje só invalidam as queries da declaração).
 
-Resultado: ganho de ~20–25px no topo e ~10px embaixo, sem remover nenhum controle.
+### 3. Seleção de texto em PDFs
 
-## Escopo estrito
+Arquivo: `src/components/drive/viewers/PdfViewer.tsx`
 
-- Só edito `FileViewerModal.tsx` e `PdfViewer.tsx`.
-- Nenhuma mudança de RLS, banco, edge function, ou outros componentes.
-- Nenhuma remoção de botão ou funcionalidade.
+- Já está com `renderTextLayer={true}`, `select-text` no wrapper e o CSS `react-pdf/dist/Page/TextLayer.css` importado. Apenas **confirmar** que segue assim — sem mexer.
+- **Limitação importante**: PDFs digitalizados/escaneados (como muitos recibos da RFB) não possuem text layer no arquivo; nenhum visualizador web torna esse tipo selecionável sem OCR. O comportamento atual já é o máximo possível sem rodar OCR no servidor.
 
-## Verificação
+---
 
-Após aplicar, abro um PDF no preview e:
-1. Tento selecionar texto com o mouse.
-2. Confirmo visualmente que header e rodapé ficaram mais finos.
+## Detalhes técnicos
+
+**Tipo `ViewerFile`** (`FileViewerModal.tsx`) já aceita `lancado?: boolean` e já renderiza o botão quando `onToggleLancado` é passado — nenhuma mudança nele.
+
+**Schema**: `checklist_documentos` já tem as colunas `lancado`, `lancado_em`, `lancado_por`. Sem migration.
+
+**RLS**: A policy `Atualizar checklist do escritorio` já permite update por qualquer usuário do escritório dono da declaração — funciona para o Drive sem alteração.
+
+---
+
+## Não está no escopo
+
+- Refatorar a mutation em um hook compartilhado (manteremos duplicada em 3 lugares para evitar mudanças além do pedido).
+- OCR de PDFs escaneados.
+- Alterações de layout/estilo do header/footer do visualizador.
+- Qualquer mudança em outras telas.
+
+---
+
+## Arquivos a alterar
+
+```
+src/pages/Drive.tsx                                          (query + mutation + props do modal)
+src/components/declaracoes/DocumentosDeclaracaoModal.tsx     (1 linha: invalidar drive-docs)
+src/components/declaracao/AbaDocumentosUnificada.tsx         (1 linha: invalidar drive-docs)
+```
+
+Nenhum arquivo é criado ou removido.
