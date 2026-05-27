@@ -92,7 +92,7 @@ export function PdfViewer({ url, nome, onStreamError }: Props) {
       </div>
 
       {!error && numPages > 0 && (
-        <div className="flex items-center justify-center gap-2 p-2 border-t bg-card">
+        <div className="flex items-center justify-center gap-1 py-1 px-2 border-t bg-card">
           <Button
             size="icon"
             variant="ghost"
