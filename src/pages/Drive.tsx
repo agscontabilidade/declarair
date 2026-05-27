@@ -22,6 +22,7 @@ interface DocWithDeclaracao {
   nome_documento: string;
   categoria: string;
   status: string;
+  lancado: boolean | null;
   declaracoes: {
     ano_base: number;
     cliente_id: string;
