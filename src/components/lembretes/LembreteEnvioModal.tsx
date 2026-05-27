@@ -37,11 +37,9 @@ export function LembreteEnvioModal({ open, onOpenChange, clientes, whatsappAtivo
     if (open) {
       setCanal(canalInicial);
       setMensagem(MENSAGEM_PADRAO);
-      // sugere data padrão: último dia do mês corrente
-      const hoje = new Date();
-      const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-      const iso = ultimoDia.toISOString().slice(0, 10);
-      setPrazoFinal(iso);
+      // sugere data padrão: prazo oficial IRPF (30/05 do ano corrente)
+      const ano = new Date().getFullYear();
+      setPrazoFinal(`${ano}-05-30`);
     }
   }, [open, canalInicial]);
 
