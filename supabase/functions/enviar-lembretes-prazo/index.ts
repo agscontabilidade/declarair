@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
         const res = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${serviceKey}`,
+            Authorization: authHeader,
             apikey: anonKey,
             "Content-Type": "application/json",
           },
