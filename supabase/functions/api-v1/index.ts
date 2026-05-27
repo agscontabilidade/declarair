@@ -76,7 +76,17 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: auth.error }, auth.status);
     }
 
-    const { escritorioId } = auth;
+    const { escritorioId, permissoes } = auth;
+
+    // Permission enforcement: keys with empty/null permissoes or '*' have full access (back-compat).
+    // Otherwise the array must contain the required scope, e.g. 'clientes:read', 'declaracoes:write'.
+    const permsArr: string[] = Array.isArray(permissoes) ? permissoes : [];
+    const hasFullAccess = permsArr.length === 0 || permsArr.includes('*') || permsArr.includes('all');
+    const requiredScope = `${resource}:${method === 'GET' ? 'read' : 'write'}`;
+    if (resource && !hasFullAccess && !permsArr.includes(requiredScope)) {
+      return jsonResponse({ error: `Forbidden: API Key sem permissão '${requiredScope}'.` }, 403);
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // ── CLIENTES ──
