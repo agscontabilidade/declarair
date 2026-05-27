@@ -1,69 +1,61 @@
+
 ## Objetivo
 
-Unificar o comportamento do visualizador de arquivos em `/drive` e em `/declaracoes`:
+Hoje todos os emails enviados chegam como **"DeclaraIR <noreply@declarair.com.br>"**. Muitos contribuintes acham que é spam por não conhecerem a marca. O plano é fazer cada email sair com o **nome do escritório do contador** no campo "De", mantendo o domínio verificado da plataforma (que não pode mudar, pois é o que garante entrega).
 
-1. `/drive` passa a exibir o botão **"Marcar como lançado"** no topo do `FileViewerModal` (já presente em `/declaracoes`).
-2. Alternar "lançado" em qualquer um dos dois lugares reflete imediatamente no outro (invalidação cruzada de cache).
-3. Garantir que todos os PDFs sejam selecionáveis (text layer sempre ativo).
+Resultado visual na caixa de entrada:
+- Antes: `DeclaraIR` → Declaração IRPF 2026 - AGS CONTABILIDADE...
+- Depois: `AGS Contabilidade Integrada` → Declaração IRPF 2026...
 
----
+## Como funciona tecnicamente
 
-## Escopo (mínimo necessário)
-
-### 1. `/drive` — exibir e gravar `lancado`
-
-Arquivo: `src/pages/Drive.tsx`
-
-- Adicionar `lancado` ao `select` da query `drive-docs` e ao tipo `DocWithDeclaracao`.
-- Incluir `lancado` no objeto `ViewerFile` criado em `openViewer`.
-- Adicionar uma mutation `toggleLancado` igual à de `DocumentosDeclaracaoModal.tsx` (linhas 157-177): atualiza `checklist_documentos` com `lancado`, `lancado_em`, `lancado_por`.
-- No `onSuccess`, invalidar **as três** query keys para refletir em todas as telas:
-  - `['drive-docs']`
-  - `['documentos-declaracao']`
-  - `['declaracao-aba-docs']`
-  - `['declaracao-checklist']`
-- Passar `onToggleLancado` e `togglingLancadoId` para o `<FileViewerModal>`.
-
-### 2. `/declaracoes` — invalidar também o cache do Drive
-
-Arquivos: `src/components/declaracoes/DocumentosDeclaracaoModal.tsx` e `src/components/declaracao/AbaDocumentosUnificada.tsx`
-
-- Adicionar `queryClient.invalidateQueries({ queryKey: ['drive-docs'] })` ao `onSuccess` da mutation `toggleLancado` existente nos dois arquivos (hoje só invalidam as queries da declaração).
-
-### 3. Seleção de texto em PDFs
-
-Arquivo: `src/components/drive/viewers/PdfViewer.tsx`
-
-- Já está com `renderTextLayer={true}`, `select-text` no wrapper e o CSS `react-pdf/dist/Page/TextLayer.css` importado. Apenas **confirmar** que segue assim — sem mexer.
-- **Limitação importante**: PDFs digitalizados/escaneados (como muitos recibos da RFB) não possuem text layer no arquivo; nenhum visualizador web torna esse tipo selecionável sem OCR. O comportamento atual já é o máximo possível sem rodar OCR no servidor.
-
----
-
-## Detalhes técnicos
-
-**Tipo `ViewerFile`** (`FileViewerModal.tsx`) já aceita `lancado?: boolean` e já renderiza o botão quando `onToggleLancado` é passado — nenhuma mudança nele.
-
-**Schema**: `checklist_documentos` já tem as colunas `lancado`, `lancado_em`, `lancado_por`. Sem migration.
-
-**RLS**: A policy `Atualizar checklist do escritorio` já permite update por qualquer usuário do escritório dono da declaração — funciona para o Drive sem alteração.
-
----
-
-## Não está no escopo
-
-- Refatorar a mutation em um hook compartilhado (manteremos duplicada em 3 lugares para evitar mudanças além do pedido).
-- OCR de PDFs escaneados.
-- Alterações de layout/estilo do header/footer do visualizador.
-- Qualquer mudança em outras telas.
-
----
-
-## Arquivos a alterar
-
+O campo "De" de um email tem duas partes: **nome amigável** (visível ao usuário) + **endereço técnico**. Exemplo:
 ```
-src/pages/Drive.tsx                                          (query + mutation + props do modal)
-src/components/declaracoes/DocumentosDeclaracaoModal.tsx     (1 linha: invalidar drive-docs)
-src/components/declaracao/AbaDocumentosUnificada.tsx         (1 linha: invalidar drive-docs)
+AGS Contabilidade Integrada <noreply@declarair.com.br>
 ```
 
-Nenhum arquivo é criado ou removido.
+O endereço técnico **precisa continuar em `declarair.com.br`** porque é o domínio verificado (DNS, SPF, DKIM). O que vamos personalizar é o **nome amigável** — é isso que o cliente vê no Gmail/Outlook.
+
+Adicional: usar o **email do escritório como `Reply-To`**, para que quando o cliente clicar em "Responder", a resposta vá direto para o contador, não para a plataforma.
+
+## Mudanças
+
+### 1. Edge function `send-transactional-email`
+- Aceitar um novo parâmetro opcional `escritorioId` no body.
+- Quando recebido, buscar `nome` e `email` da tabela `escritorios`.
+- Montar `from` dinamicamente:
+  - Com escritório: `"AGS Contabilidade <noreply@declarair.com.br>"`
+  - Sem escritório (fallback, ex: emails do sistema/admin): `"DeclaraIR <noreply@declarair.com.br>"`
+- Adicionar `reply_to: <email do escritório>` ao payload da fila quando disponível.
+- Sanitizar o nome (remover caracteres que quebram o header: `<`, `>`, `"`, quebras de linha).
+
+### 2. Dispatcher `process-email-queue`
+- Repassar `reply_to` para a API de envio (Lovable Email aceita esse campo).
+
+### 3. Todos os call-sites de `supabase.functions.invoke('send-transactional-email', ...)`
+Localizações conhecidas a atualizar para enviar `escritorioId`:
+- `EnviarConviteClienteDialog`, `GerarLinkConvite` (convite-cliente)
+- `NovaDeclaracaoModal` / hook de criar declaração (nova-declaracao)
+- Fluxo de transmissão (declaracao-transmitida)
+- `CobrancaModal` / cron de cobrança (cobranca-vencendo, cobranca-paga)
+- `LembreteEnvioModal` / `enviar-lembretes-prazo` (envio-manual-declaracao, lembrete-prazo-ir)
+- Convite de colaborador (mantém remetente DeclaraIR, pois ainda não há vínculo do convidado com escritório → **exceção**)
+- Boas-vindas pós-signup do dono (mantém DeclaraIR — primeiro contato)
+
+Onde o `escritorio_id` já existe no contexto (cliente, declaração, cobrança), passamos direto. Em jobs server-side (cron de cobrança/lembretes) busca-se via join com `clientes`/`declaracoes`.
+
+### 4. Templates — sem alteração estrutural
+Os templates já recebem `nomeEscritorio` como prop e mostram no corpo/assinatura. A mudança é apenas no header "De".
+
+## O que NÃO muda
+- Domínio de envio continua `notifica.declarair.com.br` (verificado).
+- Logo/branding interno dos emails já é dinâmico via `siteName`/`escritorio` (whitelabel existente).
+- Nenhuma alteração de DNS ou de domínio do cliente.
+
+## Limitação importante a comunicar
+Não é possível enviar de `@dominiodoescritorio.com.br` sem que cada escritório configure DNS próprio. Isso seria um recurso whitelabel premium futuro (requer verificação de domínio por escritório). O nome amigável + Reply-To resolve ~90% do problema de reconhecimento sem essa complexidade.
+
+## Validação
+1. Disparar convite-cliente de um escritório de teste → verificar no Gmail que aparece o nome do escritório no "De".
+2. Clicar em "Responder" → confirmar que o destinatário é o email do escritório.
+3. Verificar que emails sem `escritorioId` (boas-vindas, convite colaborador) ainda saem como "DeclaraIR".
