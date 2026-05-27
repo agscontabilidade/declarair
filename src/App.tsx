@@ -159,6 +159,7 @@ const App = () => (
               <Route path="/addons" element={<ProtectedRoute allowedType="contador"><BillingGate><Addons /></BillingGate></ProtectedRoute>} />
               <Route path="/whatsapp" element={<Navigate to="/configuracoes?tab=mensagens" replace />} />
               <Route path="/relatorios" element={<ProtectedRoute allowedType="contador"><BillingGate><Relatorios /></BillingGate></ProtectedRoute>} />
+              <Route path="/lembretes" element={<ProtectedRoute allowedType="contador"><BillingGate><Lembretes /></BillingGate></ProtectedRoute>} />
               <Route path="/webhooks" element={<ProtectedRoute allowedType="contador"><BillingGate><WebhooksPage /></BillingGate></ProtectedRoute>} />
 
               {/* Contador routes - always accessible */}
