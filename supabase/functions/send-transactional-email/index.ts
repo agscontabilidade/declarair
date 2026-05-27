@@ -389,6 +389,32 @@ Deno.serve(async (req) => {
       ? template.subject(templateData)
       : template.subject
 
+  // Resolve dynamic From name + Reply-To based on the escritório.
+  // The sending domain stays fixed (verified DNS); only the display name changes,
+  // so clients recognize the brand of their accountant in the inbox.
+  let fromHeader = `${SITE_NAME} <noreply@${FROM_DOMAIN}>`
+  let replyToHeader: string | undefined
+  if (escritorioId) {
+    const { data: escritorio, error: escritorioError } = await supabase
+      .from('escritorios')
+      .select('nome, nome_fantasia, email')
+      .eq('id', escritorioId)
+      .maybeSingle()
+    if (escritorioError) {
+      console.warn('Failed to load escritorio for From header', { escritorioId, error: escritorioError })
+    }
+    const rawName = (escritorio?.nome_fantasia || escritorio?.nome || '').trim()
+    // Sanitize: strip characters that break RFC 5322 headers
+    const safeName = rawName.replace(/[<>"\r\n]/g, '').slice(0, 78)
+    if (safeName) {
+      fromHeader = `${safeName} <noreply@${FROM_DOMAIN}>`
+    }
+    const replyEmail = (escritorio?.email || '').trim().toLowerCase()
+    if (replyEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyEmail)) {
+      replyToHeader = replyEmail
+    }
+  }
+
   // 5. Enqueue the pre-rendered email for async processing by the dispatcher.
   // The dispatcher (process-email-queue) handles sending, retries, and rate-limit backoff.
 
@@ -405,7 +431,8 @@ Deno.serve(async (req) => {
     payload: {
       message_id: messageId,
       to: effectiveRecipient,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+      from: fromHeader,
+      ...(replyToHeader ? { reply_to: replyToHeader } : {}),
       sender_domain: SENDER_DOMAIN,
       subject: resolvedSubject,
       html,
@@ -417,6 +444,7 @@ Deno.serve(async (req) => {
       queued_at: new Date().toISOString(),
     },
   })
+
 
   if (enqueueError) {
     console.error('Failed to enqueue email', {
