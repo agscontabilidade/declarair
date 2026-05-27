@@ -14,9 +14,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { useClientes } from '@/hooks/useClientes';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { QueryError } from '@/components/ui/QueryError';
 import { useUsageStatus } from '@/hooks/useUsageStatus';
@@ -43,7 +42,6 @@ export default function Dashboard() {
     hasActiveFilters,
   } = useDashboardFilters(declaracoes.data ?? []);
   const { profile, signOut } = useAuth();
-  const { clientes, contadores } = useClientes();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -56,6 +54,39 @@ export default function Dashboard() {
   const [novoAno, setNovoAno] = useState(String(currentYear));
   const [novoContadorId, setNovoContadorId] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const modalClientes = useQuery({
+    queryKey: ['dashboard-modal-clientes', profile.escritorioId],
+    queryFn: async () => {
+      if (!profile.escritorioId) return [];
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('id, nome')
+        .eq('escritorio_id', profile.escritorioId)
+        .order('nome', { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: showModal && !!profile.escritorioId,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const modalContadores = useQuery({
+    queryKey: ['dashboard-modal-contadores', profile.escritorioId],
+    queryFn: async () => {
+      if (!profile.escritorioId) return [];
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('id, nome')
+        .eq('escritorio_id', profile.escritorioId)
+        .eq('ativo', true)
+        .order('nome', { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: showModal && !!profile.escritorioId,
+    staleTime: 1000 * 60 * 10,
+  });
 
   function handleNovaDeclaracao() {
     if (usage.level === 'blocked') {
@@ -215,7 +246,7 @@ export default function Dashboard() {
               <Select value={novoClienteId} onValueChange={setNovoClienteId}>
                 <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
                 <SelectContent>
-                  {clientes.map(c => (
+                  {(modalClientes.data ?? []).map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                   ))}
                 </SelectContent>
@@ -237,7 +268,7 @@ export default function Dashboard() {
               <Select value={novoContadorId} onValueChange={setNovoContadorId}>
                 <SelectTrigger><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
                 <SelectContent>
-                  {contadores.map(c => (
+                  {(modalContadores.data ?? []).map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                   ))}
                 </SelectContent>
