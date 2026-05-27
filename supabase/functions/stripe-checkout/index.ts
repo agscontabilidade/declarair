@@ -433,7 +433,16 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
 
-    const { escritorio, admin } = await authenticateUser(req);
+    const { escritorio, admin, usuario } = await authenticateUser(req);
+
+    // Role enforcement: only 'dono' can perform billing operations (read-only allowed for all)
+    const READ_ONLY_ACTIONS = new Set(["get-subscription", "get-payments"]);
+    if (!READ_ONLY_ACTIONS.has(action ?? "") && usuario.papel !== "dono") {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: apenas o dono do escritório pode gerenciar o faturamento." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     let result;
 
