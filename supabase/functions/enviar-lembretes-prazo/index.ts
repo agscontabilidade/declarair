@@ -162,6 +162,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             templateName: "lembrete-prazo-ir",
             recipientEmail: cli.email,
+            escritorioId: usuario.escritorio_id,
             idempotencyKey: `lembrete-${declaracaoId || cli.id}-${body.prazoFinal}`,
             templateData: {
               nomeCliente: cli.nome,
