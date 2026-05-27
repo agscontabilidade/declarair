@@ -189,9 +189,9 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
         <DialogTitle className="sr-only">{current?.arquivo_nome ?? 'Visualizador'}</DialogTitle>
 
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 p-3 border-b bg-card">
+        <div className="flex items-center justify-between gap-3 px-3 py-1.5 border-b bg-card">
           <div className="flex items-center gap-2 min-w-0">
-            <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
+            <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="font-medium text-foreground truncate">{current?.arquivo_nome}</span>
             {ext && <Badge variant="secondary" className="text-[10px] uppercase">{ext}</Badge>}
             {isLancado && (
