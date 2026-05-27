@@ -152,25 +152,32 @@ Deno.serve(async (req) => {
         continue;
       }
       try {
-        const payload = {
-          template_name: "lembrete-prazo-ir",
-          recipient_email: cli.email,
-          template_data: {
-            nomeCliente: cli.nome,
-            nomeEscritorio,
-            prazoFinal: prazoBR,
-            anoBase: anoCorrente,
-            linkPortal: `${PORTAL_BASE_URL}/cliente/dashboard`,
-            mensagemPersonalizada: body.mensagem || "",
+        const res = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${serviceKey}`,
+            apikey: anonKey,
+            "Content-Type": "application/json",
           },
-          idempotency_key: `lembrete-${declaracaoId || cli.id}-${body.prazoFinal}`,
-          purpose: "transactional",
-        };
-        const { error: enqErr } = await admin.rpc("enqueue_email", {
-          queue_name: "transactional_emails",
-          payload,
+          body: JSON.stringify({
+            templateName: "lembrete-prazo-ir",
+            recipientEmail: cli.email,
+            idempotencyKey: `lembrete-${declaracaoId || cli.id}-${body.prazoFinal}`,
+            templateData: {
+              nomeCliente: cli.nome,
+              nomeEscritorio,
+              prazoFinal: prazoBR,
+              anoBase: anoCorrente,
+              linkPortal: `${PORTAL_BASE_URL}/cliente/dashboard`,
+              mensagemPersonalizada: body.mensagem || "",
+            },
+          }),
         });
-        if (enqErr) throw enqErr;
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error(`send-transactional-email ${res.status}: ${txt.slice(0, 200)}`);
+        }
+        await res.json().catch(() => ({}));
         enfileirados.push(cli.id);
         await admin.from("lembretes_enviados").insert({
           escritorio_id: usuario.escritorio_id,
