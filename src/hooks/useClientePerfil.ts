@@ -11,13 +11,19 @@ export function useClientePerfil(clienteId: string | undefined) {
   const cliente = useQuery({
     queryKey: ['cliente', clienteId],
     queryFn: async () => {
+      // Lista explícita — token_convite/token_convite_expira_em têm SELECT revogado a authenticated.
+      const cols =
+        'id, escritorio_id, contador_responsavel_id, nome, cpf, email, telefone, ' +
+        'data_nascimento, status_onboarding, tema_preferido, procuracao_ecac, ' +
+        'procuracao_ecac_validade, conta_azul_id, auth_user_id, created_at';
       const { data, error } = await supabase
         .from('clientes')
-        .select('*, usuarios!clientes_contador_responsavel_id_fkey(id, nome)')
+        .select(`${cols}, usuarios!clientes_contador_responsavel_id_fkey(id, nome)`)
         .eq('id', clienteId!)
         .single();
       if (error) throw error;
-      return data;
+      // token_convite* têm SELECT revogado a authenticated; preenche null para satisfazer o tipo gerado.
+      return { ...data, token_convite: null, token_convite_expira_em: null };
     },
     enabled: !!clienteId,
   });
