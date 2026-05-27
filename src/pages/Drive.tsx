@@ -267,6 +267,8 @@ export default function Drive() {
         currentId={viewerState.currentId}
         onClose={() => setViewerState({ files: [], currentId: null })}
         onChange={(id) => setViewerState(s => ({ ...s, currentId: id }))}
+        onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
+        togglingLancadoId={togglingLancadoId}
       />
     </DashboardLayout>
   );
