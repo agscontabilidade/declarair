@@ -96,6 +96,7 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
       queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs', declaracaoId] });
       queryClient.invalidateQueries({ queryKey: ['documentos-declaracao', declaracaoId] });
       queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
     },
     onError: (e) => toast.error(getErrorMessage(e, 'Falha ao atualizar status')),
   });
