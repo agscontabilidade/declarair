@@ -129,7 +129,7 @@ export default function Lembretes() {
             <div>
               <h1 className="font-display text-2xl font-bold text-foreground">Lembretes de prazo IR</h1>
               <p className="text-sm text-muted-foreground">
-                {pendentes.length} cliente(s) aguardando documentos
+                {pendentes.length} cliente(s) ainda não enviaram documentos
               </p>
             </div>
           </div>
