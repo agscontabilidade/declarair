@@ -29,6 +29,7 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
   const [scale, setScale] = useState<number>(1.8);
   const [error, setError] = useState<string | null>(null);
   const [extractingText, setExtractingText] = useState(false);
+  const [hasNativeText, setHasNativeText] = useState<boolean | null>(null);
   const pdfDocRef = useRef<import('pdfjs-dist').PDFDocumentProxy | null>(null);
   const fallbackTriedRef = useRef(false);
 
@@ -36,6 +37,7 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
   useEffect(() => {
     fallbackTriedRef.current = false;
     setError(null);
+    setHasNativeText(null);
   }, [url]);
 
   // Stable options object — recreating it forces pdf.js to reload the document.
@@ -52,11 +54,20 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
   // Memoize the file source so <Document> doesn't reload on unrelated re-renders.
   const fileSource = useMemo(() => ({ url }), [url]);
 
-  const onLoadSuccess = useCallback((pdf: import('pdfjs-dist').PDFDocumentProxy) => {
+  const onLoadSuccess = useCallback(async (pdf: import('pdfjs-dist').PDFDocumentProxy) => {
     pdfDocRef.current = pdf;
     setNumPages(pdf.numPages);
     setPageNumber(1);
     setError(null);
+    // Detecta uma única vez se o PDF tem texto nativo (≥ 50 chars na 1ª pág)
+    try {
+      const firstPage = await pdf.getPage(1);
+      const tc = await firstPage.getTextContent();
+      const txt = tc.items.map((it) => ('str' in it ? it.str : '')).join('').trim();
+      setHasNativeText(txt.length >= 50);
+    } catch {
+      setHasNativeText(false);
+    }
   }, []);
 
 
@@ -142,11 +153,16 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
               renderTextLayer={true}
               renderAnnotationLayer={false}
               loading={<Skeleton className="w-[600px] h-[800px]" />}
-              className="select-text"
             />
           </Document>
         )}
       </div>
+
+      {!error && numPages > 0 && hasNativeText === true && (
+        <div className="bg-success/10 border-t border-success/20 px-3 py-1.5 text-[11px] text-success-foreground/80 text-center">
+          PDF selecionável — arraste para selecionar o texto ou use Ctrl+F do navegador para buscar.
+        </div>
+      )}
 
       {!error && numPages > 0 && (
         <div className="flex items-center justify-center gap-1 py-1 px-2 border-t bg-card">
@@ -217,7 +233,7 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
             className="h-8 gap-1.5 text-xs"
             onClick={handleCopyText}
             disabled={extractingText}
-            title="Copiar texto do PDF"
+            title={hasNativeText === false ? 'Reconhecer texto via OCR e copiar' : 'Copiar todo o texto do PDF'}
           >
             {extractingText ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardCopy className="h-3.5 w-3.5" />}
             Copiar texto
