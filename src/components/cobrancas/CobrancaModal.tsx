@@ -23,9 +23,11 @@ interface CobrancaModalProps {
   clienteIdLocked?: string | null;
   /** Nome opcional para exibir quando clienteIdLocked está definido. */
   clienteNomeLocked?: string | null;
+  /** Pré-seleciona a declaração vinculada (não bloqueia). */
+  declaracaoIdInicial?: string | null;
 }
 
-export function CobrancaModal({ open, onOpenChange, onSave, loading, editData, clienteIdLocked, clienteNomeLocked }: CobrancaModalProps) {
+export function CobrancaModal({ open, onOpenChange, onSave, loading, editData, clienteIdLocked, clienteNomeLocked, declaracaoIdInicial }: CobrancaModalProps) {
   const { profile } = useAuth();
   const [clienteId, setClienteId] = useState('');
   const [declaracaoId, setDeclaracaoId] = useState('');
