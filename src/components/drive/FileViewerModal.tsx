@@ -73,7 +73,6 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
     setInlineUrl(null);
 
     (async () => {
-    (async () => {
       const url = await getSignedUrlCached(current.arquivo_url);
       if (cancelled) return;
       if (!url) {
