@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -173,56 +174,64 @@ export function DashboardFilters({
       </div>
 
       {/* Row 2: Filter selects */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Select
-          value={filters.contadorId || 'todos'}
-          onValueChange={(v) => onContadorChange(v === 'todos' ? null : v)}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Todos os contadores" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os contadores</SelectItem>
-            {contadores.map(c => (
-              <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex items-end gap-3 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs font-medium text-muted-foreground">Contador</Label>
+          <Select
+            value={filters.contadorId || 'todos'}
+            onValueChange={(v) => onContadorChange(v === 'todos' ? null : v)}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Todos os contadores" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os contadores</SelectItem>
+              {contadores.map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Select
-          value={filters.status || 'todos'}
-          onValueChange={(v) => onStatusChange(v === 'todos' ? null : v)}
-        >
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs font-medium text-muted-foreground">Status</Label>
+          <Select
+            value={filters.status || 'todos'}
+            onValueChange={(v) => onStatusChange(v === 'todos' ? null : v)}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Todos os status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os status</SelectItem>
+              <SelectItem value="aguardando_documentos">Aguardando Documentação</SelectItem>
+              <SelectItem value="documentacao_recebida">Documentação Recebida</SelectItem>
+              <SelectItem value="declaracao_pronta">Declaração Pronta</SelectItem>
+              <SelectItem value="transmitida">Transmitida</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Todos os status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os status</SelectItem>
-            <SelectItem value="aguardando_documentos">Aguardando Documentação</SelectItem>
-            <SelectItem value="documentacao_recebida">Documentação Recebida</SelectItem>
-            <SelectItem value="declaracao_pronta">Declaração Pronta</SelectItem>
-            <SelectItem value="transmitida">Transmitida</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.ordenacao}
-          onValueChange={(v) => onOrdenacaoChange(v as OrdenacaoDashboard)}
-        >
-          <SelectTrigger className="w-[200px]">
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
-              <SelectValue />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="cadastro_recente">Mais recentes</SelectItem>
-            <SelectItem value="cadastro_antigo">Mais antigos</SelectItem>
-            <SelectItem value="alfabetica_az">Nome (A → Z)</SelectItem>
-            <SelectItem value="alfabetica_za">Nome (Z → A)</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs font-medium text-muted-foreground">Ordenar por</Label>
+          <Select
+            value={filters.ordenacao}
+            onValueChange={(v) => onOrdenacaoChange(v as OrdenacaoDashboard)}
+          >
+            <SelectTrigger className="w-[200px]">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cadastro_recente">Mais recentes</SelectItem>
+              <SelectItem value="cadastro_antigo">Mais antigos</SelectItem>
+              <SelectItem value="alfabetica_az">Nome (A → Z)</SelectItem>
+              <SelectItem value="alfabetica_za">Nome (Z → A)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={onClear} className="gap-1.5 text-muted-foreground">
