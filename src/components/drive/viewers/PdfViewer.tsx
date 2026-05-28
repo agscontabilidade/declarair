@@ -204,11 +204,6 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
             variant="ghost"
             className="h-8 w-8"
             onClick={() => setScale(1.8)}
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8"
-            onClick={() => setScale(1.8)}
             title="Redefinir zoom"
           >
             <RotateCcw className="h-4 w-4" />
@@ -226,12 +221,6 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
           >
             {extractingText ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardCopy className="h-3.5 w-3.5" />}
             Copiar texto
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
           </Button>
         </div>
       )}
