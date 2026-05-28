@@ -211,9 +211,9 @@ export default function GerarLinkConvite() {
               <DialogDescription className="mt-1">
                 {linkGerado
                   ? 'Copie ou compartilhe diretamente com o contribuinte.'
-                  : 'Crie um link único para o contribuinte se autocadastrar no portal.'}
+                  : 'Use para um contribuinte que ainda não foi cadastrado. Ele criará a própria conta pelo link. Se o cliente já existe na sua lista, use o botão "Convite" na linha dele.'}
               </DialogDescription>
-            </div>
+
           </div>
         </DialogHeader>
 
