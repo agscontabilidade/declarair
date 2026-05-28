@@ -43,7 +43,14 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [viewerCurrentId, setViewerCurrentId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewerCurrentId = searchParams.get('doc');
+  const setViewerCurrentId = useCallback((id: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set('doc', id);
+    else next.delete('doc');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const { data: ctx } = useQuery({
     queryKey: ['declaracao-ctx', declaracaoId],
