@@ -26,13 +26,22 @@ import { QueryError } from '@/components/ui/QueryError';
 
 export default function DeclaracaoDetalhe() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const hook = useDeclaracao(id);
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const [transmitidaModalOpen, setTransmitidaModalOpen] = useState(false);
   const [enviarModalOpen, setEnviarModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
-  
+
+  const tabAtiva = searchParams.get('tab') || 'documentos';
+  const handleTabChange = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === 'documentos') next.delete('tab');
+    else next.set('tab', value);
+    setSearchParams(next, { replace: true });
+  };
+
 
   const handleChangeStatus = (newStatus: string) => {
     if (newStatus === 'transmitida') {
