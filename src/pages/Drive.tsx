@@ -273,10 +273,14 @@ export default function Drive() {
       </div>
 
       <FileViewerModal
-        files={viewerState.files}
-        currentId={viewerState.currentId}
-        onClose={() => setViewerState({ files: [], currentId: null })}
-        onChange={(id) => setViewerState(s => ({ ...s, currentId: id }))}
+        files={viewerFiles.length > 0 ? viewerFiles : (
+          docs
+            .filter((d) => d.arquivo_url && d.arquivo_nome)
+            .map((d) => ({ id: d.id, arquivo_url: d.arquivo_url!, arquivo_nome: d.arquivo_nome!, lancado: !!d.lancado }))
+        )}
+        currentId={viewerCurrentId}
+        onClose={() => { setViewerCurrentId(null); setViewerFiles([]); }}
+        onChange={(id) => setViewerCurrentId(id)}
         onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
         togglingLancadoId={togglingLancadoId}
       />
