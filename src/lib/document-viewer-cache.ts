@@ -76,13 +76,72 @@ export async function getBlobUrlCached(
       const entry = cache.get(path) ?? { signedUrl: url, signedAt: Date.now() };
       entry.blobUrl = blobUrl;
       entry.blobPromise = undefined;
-      cache.set(path, entry);
-      return blobUrl;
+/** Faz prefetch leve apenas do signed URL (sem baixar o arquivo). */
+export function prefetchSignedUrl(path: string): void {
+  const current = cache.get(path);
+  if ((current && isFresh(current)) || current?.signedPromise) return;
+  void getSignedUrlCached(path);
+}
+
+// ------------------------------------------------------------------
+// Sidecar OCR — busca versão pesquisável `<path>.ocr.pdf` se existir.
+// Permite que PDFs escaneados fiquem com texto selecionável.
+// ------------------------------------------------------------------
+
+function sidecarPathOf(path: string): string {
+  if (path.toLowerCase().endsWith('.pdf')) return path.slice(0, -4) + '.ocr.pdf';
+  return path + '.ocr.pdf';
+}
+
+const sidecarResolved = new Map<string, string | null>();
+const sidecarInflight = new Map<string, Promise<string | null>>();
+
+/**
+ * Retorna o signed URL do sidecar OCR (`<path>.ocr.pdf`) se existir no bucket,
+ * ou null caso contrário. Resultado cacheado em memória por sessão.
+ */
+export async function getSearchablePdfUrl(path: string): Promise<string | null> {
+  if (!path.toLowerCase().endsWith('.pdf') || path.toLowerCase().endsWith('.ocr.pdf')) {
+    return null;
+  }
+  if (sidecarResolved.has(path)) {
+    const cached = sidecarResolved.get(path)!;
+    return cached;
+  }
+  const inflight = sidecarInflight.get(path);
+  if (inflight) return inflight;
+
+  const promise = (async () => {
+    const out = sidecarPathOf(path);
+    const dir = out.includes('/') ? out.substring(0, out.lastIndexOf('/')) : '';
+    const name = out.substring(out.lastIndexOf('/') + 1);
+    try {
+      const { data } = await supabase.storage.from(BUCKET).list(dir, { search: name, limit: 1 });
+      if (!data?.some((e) => e.name === name)) {
+        sidecarResolved.set(path, null);
+        return null;
+      }
+      const url = await getSignedUrlCached(out);
+      sidecarResolved.set(path, url);
+      return url;
     } catch {
-      const e = cache.get(path);
-      if (e) e.blobPromise = undefined;
+      sidecarResolved.set(path, null);
       return null;
+    } finally {
+      sidecarInflight.delete(path);
     }
+  })();
+
+  sidecarInflight.set(path, promise);
+  return promise;
+}
+
+/** Invalida cache do sidecar para forçar nova verificação (após OCR concluir). */
+export function invalidateSearchablePdfCache(path: string): void {
+  sidecarResolved.delete(path);
+  sidecarInflight.delete(path);
+}
+
   })();
 
   const seed: Entry = existing ?? { signedUrl: '', signedAt: 0 };
