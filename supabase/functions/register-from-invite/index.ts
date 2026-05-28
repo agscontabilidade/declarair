@@ -56,8 +56,21 @@ Deno.serve(async (req) => {
     });
 
     if (authError || !authData.user) {
-      console.error('[register-from-invite] Auth error:', authError);
-      throw new Error('Erro ao criar conta: ' + (authError?.message || 'desconhecido'));
+      console.error('[register-from-invite] Auth error:', JSON.stringify(authError));
+      const raw = (authError?.message || '').toLowerCase();
+      let friendly = 'Não foi possível criar sua conta. Tente novamente em alguns instantes.';
+      if (raw.includes('already') && raw.includes('registered')) {
+        friendly = 'Este email já possui uma conta. Faça login ou use "Esqueci minha senha" para recuperar o acesso.';
+      } else if (raw.includes('password') && raw.includes('least')) {
+        friendly = 'A senha precisa ter pelo menos 8 caracteres.';
+      } else if (raw.includes('password') && raw.includes('weak')) {
+        friendly = 'Senha muito fraca. Use letras, números e pelo menos 8 caracteres.';
+      } else if (raw.includes('invalid') && raw.includes('email')) {
+        friendly = 'O email informado parece inválido. Verifique e tente novamente.';
+      } else if (raw.includes('rate') && raw.includes('limit')) {
+        friendly = 'Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.';
+      }
+      throw new Error(friendly);
     }
 
     // 4. Create client record
@@ -78,45 +91,55 @@ Deno.serve(async (req) => {
     if (clienteError) {
       // Rollback auth user
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      console.error('[register-from-invite] Client error:', clienteError);
-      throw new Error('Erro ao criar cliente: ' + clienteError.message);
+      console.error('[register-from-invite] Client error:', JSON.stringify(clienteError));
+      throw new Error('Não foi possível concluir seu cadastro. Fale com seu contador para verificar seus dados.');
     }
 
-    // 5. Create declaration for current year
-    const anoAtual = new Date().getFullYear();
-    const { data: newDecl } = await supabaseAdmin
-      .from('declaracoes')
-      .insert({
-        escritorio_id: convite.escritorio_id,
-        cliente_id: cliente.id,
-        ano_base: anoAtual,
-        status: 'aguardando_documentos',
-      })
-      .select('id')
-      .single();
+    // 5. Create declaration for current year (não bloqueia o cadastro se falhar)
+    try {
+      const anoAtual = new Date().getFullYear();
+      await supabaseAdmin
+        .from('declaracoes')
+        .insert({
+          escritorio_id: convite.escritorio_id,
+          cliente_id: cliente.id,
+          ano_base: anoAtual,
+          status: 'aguardando_documentos',
+        });
+    } catch (e) {
+      console.error('[register-from-invite] Declaracao insert ignored:', e);
+    }
 
     // 5b. Checklist obrigatório removido — documentos são livres.
 
     // 6. Link permanece reutilizável — não marcamos como usado.
 
-    // 7. Notify the office
-    await supabaseAdmin
-      .from('notificacoes')
-      .insert({
-        escritorio_id: convite.escritorio_id,
-        titulo: '👤 Novo cliente cadastrado',
-        mensagem: `${nome} se cadastrou através do link de convite.`,
-        link_destino: `/clientes/${cliente.id}`,
-      });
+    // 7. Notify the office (best-effort, não bloqueia)
+    try {
+      await supabaseAdmin
+        .from('notificacoes')
+        .insert({
+          escritorio_id: convite.escritorio_id,
+          titulo: '👤 Novo cliente cadastrado',
+          mensagem: `${nome} se cadastrou através do link de convite.`,
+          link_destino: `/clientes/${cliente.id}`,
+        });
+    } catch (e) {
+      console.error('[register-from-invite] Notificacao insert ignored:', e);
+    }
 
-    // 8. Audit log
-    await supabaseAdmin.rpc('registrar_log_auditoria', {
-      p_tipo: 'convite_aceito',
-      p_evento: 'cliente_registrado',
-      p_dados: { cliente_id: cliente.id, escritorio_id: convite.escritorio_id, convite_id: convite.id },
-      p_status: 'sucesso',
-      p_mensagem: `${nome} aceitou o convite.`
-    });
+    // 8. Audit log (best-effort)
+    try {
+      await supabaseAdmin.rpc('registrar_log_auditoria', {
+        p_tipo: 'convite_aceito',
+        p_evento: 'cliente_registrado',
+        p_dados: { cliente_id: cliente.id, escritorio_id: convite.escritorio_id, convite_id: convite.id },
+        p_status: 'sucesso',
+        p_mensagem: `${nome} aceitou o convite.`
+      });
+    } catch (e) {
+      console.error('[register-from-invite] Audit log ignored:', e);
+    }
 
     return new Response(
       JSON.stringify({ success: true, cliente_id: cliente.id }),
