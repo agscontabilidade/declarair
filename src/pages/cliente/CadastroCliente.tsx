@@ -105,7 +105,7 @@ export default function CadastroCliente() {
     else if (!/\S+@\S+\.\S+/.test(form.email)) novosErros.email = 'Email inválido';
     if (!form.telefone.trim()) novosErros.telefone = 'Telefone é obrigatório';
     if (!form.senha) novosErros.senha = 'Senha é obrigatória';
-    else if (form.senha.length < 6) novosErros.senha = 'Mínimo 6 caracteres';
+    else if (form.senha.length < 8) novosErros.senha = 'A senha precisa ter pelo menos 8 caracteres';
     if (form.senha !== form.confirmarSenha) novosErros.confirmarSenha = 'Senhas não conferem';
     if (!form.aceitouTermos) novosErros.termos = 'Você deve aceitar os termos';
 
@@ -133,8 +133,10 @@ export default function CadastroCliente() {
         },
       });
 
+      // A mensagem real vem no corpo (data.error); o `error` do SDK é genérico
+      const realError = (data as { error?: string } | null)?.error;
+      if (realError) throw new Error(realError);
       if (error) throw new Error(error.message || 'Erro ao cadastrar');
-      if (data?.error) throw new Error(data.error);
 
       // Auto-login
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -151,7 +153,11 @@ export default function CadastroCliente() {
       toast({ title: 'Conta criada com sucesso!', description: 'Redirecionando para o portal...' });
       setTimeout(() => navigate('/cliente/dashboard'), 1500);
     } catch (err: unknown) {
-      toast({ title: 'Erro', description: getErrorMessage(err), variant: 'destructive' });
+      toast({
+        title: 'Não foi possível criar sua conta',
+        description: getErrorMessage(err, 'Tente novamente em alguns instantes ou fale com seu contador.'),
+        variant: 'destructive',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -317,7 +323,7 @@ export default function CadastroCliente() {
                       type={showPassword ? 'text' : 'password'}
                       value={form.senha}
                       onChange={(e) => setForm({ ...form, senha: e.target.value })}
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Mínimo 8 caracteres"
                       className={erros.senha ? 'border-destructive' : ''}
                     />
                     <button
