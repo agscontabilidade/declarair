@@ -36,6 +36,7 @@ export default function Drive() {
   const escritorioId = profile.escritorioId;
   const [busca, setBusca] = useState('');
   const [anoFiltro, setAnoFiltro] = useState(String(new Date().getFullYear()));
+  const [expandedCliente, setExpandedCliente] = useState<string | null>(null);
   const [expandedCategoria, setExpandedCategoria] = useState<string | null>(null);
   const [viewerFiles, setViewerFiles] = useState<ViewerFile[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
