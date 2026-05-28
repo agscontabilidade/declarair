@@ -394,6 +394,8 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
         onChange={setViewerCurrentId}
         onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
         togglingLancadoId={toggleLancado.isPending ? toggleLancado.variables?.id ?? null : null}
+        onDelete={async (id) => { await deleteDoc.mutateAsync(id); }}
+        deletingId={deletingId}
       />
     </>
   );
