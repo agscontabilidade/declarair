@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Webhook, Plus, Trash2, Copy, Eye, EyeOff } from 'lucide-react';
+import { Webhook, Plus, Trash2, Copy } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -20,7 +20,7 @@ interface Webhook {
   escritorio_id: string;
   url: string;
   eventos: string[];
-  secret: string;
+  secret?: string;
   created_at?: string;
   ativo?: boolean;
 }
@@ -41,7 +41,7 @@ export default function WebhooksPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [url, setUrl] = useState('');
   const [selectedEventos, setSelectedEventos] = useState<string[]>([]);
-  const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
+  const [novoSecret, setNovoSecret] = useState<string | null>(null);
 
   const escritorioId = profile.escritorioId;
   const isDono = profile.papel === 'dono';
@@ -49,9 +49,11 @@ export default function WebhooksPage() {
   const { data: webhooks = [], isLoading } = useQuery({
     queryKey: ['webhooks', escritorioId],
     queryFn: async () => {
+      // Não selecionamos `secret` — coluna tem SELECT revogado por segurança.
+      // O secret é mostrado apenas no momento da criação.
       const { data, error } = await supabase
         .from('webhooks' as never)
-        .select('*')
+        .select('id, escritorio_id, url, eventos, ativo, created_at')
         .eq('escritorio_id', escritorioId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -72,17 +74,18 @@ export default function WebhooksPage() {
           secret,
         } as never);
       if (error) throw error;
+      return secret;
     },
-    onSuccess: () => {
+    onSuccess: (secret) => {
       toast.success('Webhook criado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['webhooks'] });
       setDialogOpen(false);
       setUrl('');
       setSelectedEventos([]);
+      setNovoSecret(secret);
     },
     onError: () => toast.error('Erro ao criar webhook'),
   });
-
   const deletarWebhook = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('webhooks' as never).delete().eq('id', id);
@@ -160,6 +163,29 @@ export default function WebhooksPage() {
                       </DialogContent>
                     </Dialog>
                   )}
+
+                  <Dialog open={!!novoSecret} onOpenChange={(o) => !o && setNovoSecret(null)}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Webhook criado</DialogTitle>
+                        <DialogDescription>
+                          Copie e guarde este secret agora. Por segurança, ele não poderá ser visualizado novamente.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+                        <code className="text-xs flex-1 break-all">{novoSecret}</code>
+                        <Button
+                          variant="ghost" size="icon" className="h-7 w-7"
+                          onClick={() => { if (novoSecret) { navigator.clipboard.writeText(novoSecret); toast.success('Copiado!'); } }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={() => setNovoSecret(null)}>Entendi, guardei o secret</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardHeader>
               <CardContent>
@@ -191,15 +217,7 @@ export default function WebhooksPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1">
-                              <code className="text-xs">{showSecret[wh.id] ? wh.secret : 'whsec_••••••••'}</code>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowSecret(p => ({ ...p, [wh.id]: !p[wh.id] }))}>
-                                {showSecret[wh.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { navigator.clipboard.writeText(wh.secret); toast.success('Copiado!'); }}>
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </div>
+                            <code className="text-xs text-muted-foreground">whsec_••••••••</code>
                           </TableCell>
                           <TableCell>
                             <Badge className={wh.ativo ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : ''} variant={wh.ativo ? 'outline' : 'secondary'}>
