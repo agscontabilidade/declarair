@@ -133,8 +133,10 @@ export default function CadastroCliente() {
         },
       });
 
+      // A mensagem real vem no corpo (data.error); o `error` do SDK é genérico
+      const realError = (data as { error?: string } | null)?.error;
+      if (realError) throw new Error(realError);
       if (error) throw new Error(error.message || 'Erro ao cadastrar');
-      if (data?.error) throw new Error(data.error);
 
       // Auto-login
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -151,7 +153,11 @@ export default function CadastroCliente() {
       toast({ title: 'Conta criada com sucesso!', description: 'Redirecionando para o portal...' });
       setTimeout(() => navigate('/cliente/dashboard'), 1500);
     } catch (err: unknown) {
-      toast({ title: 'Erro', description: getErrorMessage(err), variant: 'destructive' });
+      toast({
+        title: 'Não foi possível criar sua conta',
+        description: getErrorMessage(err, 'Tente novamente em alguns instantes ou fale com seu contador.'),
+        variant: 'destructive',
+      });
     } finally {
       setSubmitting(false);
     }
