@@ -50,9 +50,10 @@ Deno.serve(async (req) => {
   const { data: userData, error: userErr } = await userClient.auth.getUser();
   if (userErr || !userData?.user) return jsonResponse({ error: 'unauthorized' }, 401);
 
-  let body: { path?: string };
+  let body: { path?: string; mode?: 'searchable' | 'text' };
   try { body = await req.json(); } catch { return jsonResponse({ error: 'invalid_json' }, 400); }
   const path = (body.path ?? '').trim();
+  const mode = body.mode === 'text' ? 'text' : 'searchable';
   if (!path || path.toLowerCase().endsWith('.ocr.pdf') || !path.toLowerCase().endsWith('.pdf')) {
     return jsonResponse({ error: 'invalid_path' }, 400);
   }
