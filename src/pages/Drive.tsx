@@ -51,6 +51,7 @@ export default function Drive() {
 
   const queryClient = useQueryClient();
   const [togglingLancadoId, setTogglingLancadoId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ['drive-docs', escritorioId, anoFiltro],
