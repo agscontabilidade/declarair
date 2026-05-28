@@ -57,7 +57,7 @@ const EMPTY = {
   enviar_convite: false,
 };
 
-export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente, onSavedAndUpload, onSavedAndInvite }: Props) {
+export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente, onSavedAndUpload, onSavedAndInvite, onSavedCreate }: Props) {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState<null | 'save' | 'save-upload'>(null);
   const [form, setForm] = useState(EMPTY);
