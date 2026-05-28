@@ -34,6 +34,8 @@ interface Props {
   onChange: (id: string) => void;
   onToggleLancado?: (id: string, novoValor: boolean) => void;
   togglingLancadoId?: string | null;
+  onDelete?: (id: string) => Promise<void> | void;
+  deletingId?: string | null;
 }
 
 function iconForType(type: ReturnType<typeof getFileType>) {
@@ -43,7 +45,11 @@ function iconForType(type: ReturnType<typeof getFileType>) {
   return FileIcon;
 }
 
-export function FileViewerModal({ files, currentId, onClose, onChange, onToggleLancado, togglingLancadoId }: Props) {
+export function FileViewerModal({ files, currentId, onClose, onChange, onToggleLancado, togglingLancadoId, onDelete, deletingId }: Props) {
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [inlineUrl, setInlineUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [inlineUrl, setInlineUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
