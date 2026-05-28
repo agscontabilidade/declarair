@@ -50,9 +50,6 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
   const [inlineUrl, setInlineUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const [inlineUrl, setInlineUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   // Blobs criados nesta sessão do modal — revogados ao fechar/desmontar
   // para não vazar memória. O signed URL é compartilhado (cache global).
