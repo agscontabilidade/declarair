@@ -301,8 +301,6 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
             </Button>
             <Button variant="ghost" size="icon" onClick={() => signedUrl && window.open(signedUrl, '_blank')} disabled={!signedUrl} title="Abrir em nova aba">
               <ExternalLink className="h-4 w-4" />
-            <Button variant="ghost" size="icon" onClick={() => signedUrl && window.open(signedUrl, '_blank')} disabled={!signedUrl} title="Abrir em nova aba">
-              <ExternalLink className="h-4 w-4" />
             </Button>
             {onDelete && current && (
               <>
