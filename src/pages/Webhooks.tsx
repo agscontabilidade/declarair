@@ -41,7 +41,7 @@ export default function WebhooksPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [url, setUrl] = useState('');
   const [selectedEventos, setSelectedEventos] = useState<string[]>([]);
-  const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
+  const [novoSecret, setNovoSecret] = useState<string | null>(null);
 
   const escritorioId = profile.escritorioId;
   const isDono = profile.papel === 'dono';
@@ -49,9 +49,11 @@ export default function WebhooksPage() {
   const { data: webhooks = [], isLoading } = useQuery({
     queryKey: ['webhooks', escritorioId],
     queryFn: async () => {
+      // Não selecionamos `secret` — coluna tem SELECT revogado por segurança.
+      // O secret é mostrado apenas no momento da criação.
       const { data, error } = await supabase
         .from('webhooks' as never)
-        .select('*')
+        .select('id, escritorio_id, url, eventos, ativo, created_at')
         .eq('escritorio_id', escritorioId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -72,17 +74,18 @@ export default function WebhooksPage() {
           secret,
         } as never);
       if (error) throw error;
+      return secret;
     },
-    onSuccess: () => {
+    onSuccess: (secret) => {
       toast.success('Webhook criado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['webhooks'] });
       setDialogOpen(false);
       setUrl('');
       setSelectedEventos([]);
+      setNovoSecret(secret);
     },
     onError: () => toast.error('Erro ao criar webhook'),
   });
-
   const deletarWebhook = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('webhooks' as never).delete().eq('id', id);
