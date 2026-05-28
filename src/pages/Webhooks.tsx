@@ -20,7 +20,7 @@ interface Webhook {
   escritorio_id: string;
   url: string;
   eventos: string[];
-  secret: string;
+  secret?: string;
   created_at?: string;
   ativo?: boolean;
 }
