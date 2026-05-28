@@ -36,9 +36,17 @@ export default function Drive() {
   const escritorioId = profile.escritorioId;
   const [busca, setBusca] = useState('');
   const [anoFiltro, setAnoFiltro] = useState(String(new Date().getFullYear()));
-  const [expandedCliente, setExpandedCliente] = useState<string | null>(null);
   const [expandedCategoria, setExpandedCategoria] = useState<string | null>(null);
-  const [viewerState, setViewerState] = useState<{ files: ViewerFile[]; currentId: string | null }>({ files: [], currentId: null });
+  const [viewerFiles, setViewerFiles] = useState<ViewerFile[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewerCurrentId = searchParams.get('doc');
+  const setViewerCurrentId = useCallback((id: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set('doc', id);
+    else next.delete('doc');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
 
   const queryClient = useQueryClient();
   const [togglingLancadoId, setTogglingLancadoId] = useState<string | null>(null);
