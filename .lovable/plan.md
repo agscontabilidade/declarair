@@ -1,48 +1,52 @@
+# Cobrança automática após cadastro de cliente
 
-## Problema
-
-No template `envio-manual-declaracao` (email com anexos da declaração + recibo), os botões "Baixar X" usam apenas classes Tailwind (`className="block bg-emerald-600 ..."`). Em clientes de email mais restritivos (Outlook, iOS Mail, alguns mobile) parte do CSS gerado pelo `<Tailwind>` é descartada, o `display: block` se perde e o `<a>` herda o estilo "visited" — fica **roxo, sem fundo, e inline**, exatamente como na imagem do cliente.
-
-O CC que abriu no Gmail web viu correto por sorte (Gmail processa o CSS gerado). Não é confiável.
-
-## Correção
-
-No arquivo `supabase/functions/_shared/transactional-email-templates/envio-manual-declaracao.tsx`, substituir o bloco de botões por **estilos inline explícitos** (a forma mais resiliente para email), mantendo o visual atual (verde emerald, mesma fonte/tamanho/cantos):
-
-1. Trocar `<Button className="block bg-emerald-600 ...">` por `<Button style={{...}}>` com um objeto de estilo contendo:
-   - `display: 'block'`
-   - `width: '100%'`
-   - `backgroundColor: '#059669'` (emerald-600 em hex — clients não interpretam classes)
-   - `color: '#ffffff'`
-   - `textDecoration: 'none'`
-   - `fontWeight: 'bold'`
-   - `fontSize: '13px'`
-   - `padding: '10px 14px'`
-   - `borderRadius: '6px'`
-   - `textAlign: 'center' as const`
-   - `boxSizing: 'border-box' as const`
-
-2. Envolver cada botão em seu próprio `<Section style={{ marginBottom: '8px' }}>` para garantir empilhamento vertical em todos os clientes (sem depender de margin de Tailwind).
-
-3. Manter o resto do template intacto — header, mensagem, layout, footer.
-
-## Por que isso resolve
-
-- `style` inline é o único caminho 100% confiável em email: Outlook, Gmail, Apple Mail, Yahoo, iOS Mail, Android Mail respeitam atributo `style` direto no elemento.
-- Definir `color: #ffffff` inline **vence** a regra `:visited { color: purple }` do cliente, eliminando o bug roxo.
-- `display: block` + `width: 100%` inline garante empilhamento (sem ficar lado a lado).
-- Cor em hex (`#059669`) em vez de classe `bg-emerald-600` remove qualquer dependência de processamento Tailwind.
+## Objetivo
+Quando o contador terminar de cadastrar um novo cliente em `/clientes`, exibir um diálogo perguntando se já deseja cadastrar a cobrança do Imposto de Renda. Se confirmar, abre o `CobrancaModal` já travado no cliente recém-criado (e na declaração do ano corrente, quando existir). Se recusar, fluxo termina normalmente.
 
 ## Escopo
+- Apenas no fluxo de **criação** (`mode="create"`) do `ClienteModal` em `src/pages/Clientes.tsx`.
+- Vale para os três botões finais do modal: **Salvar**, **Salvar e enviar documentos** e quando o usuário marcar **Enviar convite**. Em todos os casos, depois do sucesso, perguntar sobre a cobrança.
+- Não altera edição, exclusão, nem o portal do cliente.
 
-- **Apenas** o template `envio-manual-declaracao.tsx`.
-- Nenhuma mudança em outros templates, edge functions, banco ou call-sites.
-- Visual final idêntico ao que o CC já vê (verde empilhado), garantido em todos os clientes.
+## Fluxo proposto
+1. Contador clica em "Novo Cliente" → preenche → salva.
+2. `createCliente.mutateAsync` retorna `{ clienteId, declaracaoId }` (já existe).
+3. `Clientes.tsx` guarda esse contexto e abre um `AlertDialog` "Gerar cobrança do IR agora?" com:
+   - Título: **Cadastrar cobrança do Imposto de Renda?**
+   - Descrição: "O cliente *Nome* foi cadastrado. Deseja já registrar a cobrança da declaração?"
+   - Botões: **Agora não** / **Sim, cadastrar cobrança**.
+4. Se "Sim": abre o `CobrancaModal` existente passando:
+   - `clienteIdLocked = clienteId`
+   - `clienteNomeLocked = nome`
+   - pré-preenche `declaracaoId` com a recém criada (ano corrente) quando houver — fazemos isso passando um novo prop opcional `declaracaoIdInicial` ao `CobrancaModal`.
+5. Se "Agora não": fecha e segue. Os fluxos paralelos (upload de documentos, envio de convite) continuam funcionando como hoje — o prompt de cobrança aparece **depois** do modal de cliente fechar, sem bloquear esses outros diálogos (eles podem coexistir em ordem: cobrança primeiro, depois upload/convite, ou abrimos a cobrança somente quando o usuário fechar o upload, para evitar dois modais sobrepostos — ver "Decisão UX" abaixo).
 
-## Deploy
+## Decisão UX — coexistência com upload/convite
+Hoje, "Salvar e enviar documentos" já abre `DocumentosDeclaracaoModal` e "Enviar convite" abre `EnviarConviteClienteDialog`. Para evitar empilhar diálogos:
+- O `AlertDialog` de cobrança só é mostrado **após** o fechamento do `DocumentosDeclaracaoModal`/`EnviarConviteClienteDialog`. Implementação: armazenar `pendingCobrancaCtx` no `Clientes.tsx` e disparar o `AlertDialog` no `onOpenChange(false)` do diálogo subsequente. Quando o usuário só clicou "Salvar" (sem upload/convite), o prompt aparece imediatamente.
 
-Após editar, redeploy de `send-transactional-email` (que importa o registry).
+## Mudanças técnicas
+### `src/pages/Clientes.tsx`
+- Novo estado: `pendingCobrancaCtx: { clienteId, nome, declaracaoId } | null` e `askCobrancaOpen: boolean`.
+- No `onSave` do `ClienteModal` (create): aguardar o `mutateAsync`, capturar o retorno, salvar em `pendingCobrancaCtx`.
+- Disparar `setAskCobrancaOpen(true)` quando não houver upload/convite pendentes; caso contrário, disparar no `onOpenChange(false)` desses modais.
+- Adicionar `<AlertDialog>` (shadcn) com as ações. Confirmar → abrir o `CobrancaModal` existente (`setCobrancaCliente({...})`) passando também `declaracaoId`.
 
-## Validação
+### `src/components/cobrancas/CobrancaModal.tsx`
+- Adicionar prop opcional `declaracaoIdInicial?: string | null`.
+- No `useEffect` de inicialização (quando não é edição), se houver `declaracaoIdInicial`, pré-selecionar.
 
-- Reenviar o email para um endereço de teste e verificar nos clientes mais comuns (Gmail, Outlook web, iOS Mail) que os dois botões aparecem verdes, empilhados e com texto branco.
+### `src/components/clientes/ClienteModal.tsx`
+- Sem mudanças funcionais. Apenas garantir que `onSave` retorne o resultado da mutation para o pai (já retorna via `Promise`).
+
+## Fora de escopo
+- Não muda RLS, schema, hooks ou regras de negócio de cobrança.
+- Não cria cobrança automaticamente — sempre passa pelo `CobrancaModal` para o contador definir descrição, valor e vencimento.
+- Não altera fluxo de auto-cadastro do cliente (portal externo).
+
+## Critérios de aceite
+- Após salvar um novo cliente, o sistema pergunta sobre criar cobrança.
+- Ao confirmar, abre `CobrancaModal` com cliente travado e (se existir) declaração do ano pré-selecionada.
+- Recusar fecha o prompt sem efeitos colaterais.
+- Combinações com "Salvar e enviar documentos" e "Enviar convite" funcionam sem sobreposição visual.
+- Fluxo de edição de cliente não exibe o prompt.
