@@ -30,10 +30,6 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [extractingText, setExtractingText] = useState(false);
   const pdfDocRef = useRef<import('pdfjs-dist').PDFDocumentProxy | null>(null);
-  const [numPages, setNumPages] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.8);
-  const [error, setError] = useState<string | null>(null);
   const fallbackTriedRef = useRef(false);
 
   // Reset fallback flag when the URL changes (new file).
