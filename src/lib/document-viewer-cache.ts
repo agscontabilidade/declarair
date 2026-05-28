@@ -76,6 +76,21 @@ export async function getBlobUrlCached(
       const entry = cache.get(path) ?? { signedUrl: url, signedAt: Date.now() };
       entry.blobUrl = blobUrl;
       entry.blobPromise = undefined;
+      cache.set(path, entry);
+      return blobUrl;
+    } catch {
+      const e = cache.get(path);
+      if (e) e.blobPromise = undefined;
+      return null;
+    }
+  })();
+
+  const seed: Entry = existing ?? { signedUrl: '', signedAt: 0 };
+  seed.blobPromise = promise;
+  cache.set(path, seed);
+  return promise;
+}
+
 /** Faz prefetch leve apenas do signed URL (sem baixar o arquivo). */
 export function prefetchSignedUrl(path: string): void {
   const current = cache.get(path);
@@ -105,8 +120,7 @@ export async function getSearchablePdfUrl(path: string): Promise<string | null> 
     return null;
   }
   if (sidecarResolved.has(path)) {
-    const cached = sidecarResolved.get(path)!;
-    return cached;
+    return sidecarResolved.get(path)!;
   }
   const inflight = sidecarInflight.get(path);
   if (inflight) return inflight;
@@ -136,23 +150,9 @@ export async function getSearchablePdfUrl(path: string): Promise<string | null> 
   return promise;
 }
 
-/** Invalida cache do sidecar para forçar nova verificação (após OCR concluir). */
+/** Invalida cache do sidecar para forçar nova verificação. */
 export function invalidateSearchablePdfCache(path: string): void {
   sidecarResolved.delete(path);
   sidecarInflight.delete(path);
 }
 
-  })();
-
-  const seed: Entry = existing ?? { signedUrl: '', signedAt: 0 };
-  seed.blobPromise = promise;
-  cache.set(path, seed);
-  return promise;
-}
-
-/** Faz prefetch leve apenas do signed URL (sem baixar o arquivo). */
-export function prefetchSignedUrl(path: string): void {
-  const current = cache.get(path);
-  if ((current && isFresh(current)) || current?.signedPromise) return;
-  void getSignedUrlCached(path);
-}
