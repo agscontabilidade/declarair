@@ -39,7 +39,10 @@ interface Props {
   cliente?: ClienteEditavel | null;
   onSavedAndUpload?: (ctx: SavedClienteResult) => void;
   onSavedAndInvite?: (ctx: SavedClienteResult) => void;
+  /** Disparado após criar cliente (qualquer botão), para fluxos pós-cadastro. */
+  onSavedCreate?: (ctx: SavedClienteResult) => void;
 }
+
 
 function maskTelefone(value: string) {
   const d = value.replace(/\D/g, '').slice(0, 11);
