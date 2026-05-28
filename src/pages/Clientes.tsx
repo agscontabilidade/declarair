@@ -185,6 +185,7 @@ export default function Clientes() {
         mode="create"
         onSavedAndUpload={(ctx) => {
           if (ctx.declaracaoId) setUploadDocs({ declaracaoId: ctx.declaracaoId, nome: ctx.nome });
+          setPendingCobranca({ clienteId: ctx.clienteId, nome: ctx.nome, declaracaoId: ctx.declaracaoId });
         }}
         onSavedAndInvite={(ctx) => {
           setConviteCtx({
@@ -193,9 +194,11 @@ export default function Clientes() {
             email: ctx.email ?? null,
             telefone: ctx.telefone ?? null,
           });
+          setPendingCobranca({ clienteId: ctx.clienteId, nome: ctx.nome, declaracaoId: ctx.declaracaoId });
         }}
         onSavedCreate={(ctx) => {
           setPendingCobranca({ clienteId: ctx.clienteId, nome: ctx.nome, declaracaoId: ctx.declaracaoId });
+          setAskCobrancaOpen(true);
         }}
       />
 
