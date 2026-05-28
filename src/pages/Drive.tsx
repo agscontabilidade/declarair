@@ -100,6 +100,49 @@ export default function Drive() {
     onSettled: () => setTogglingLancadoId(null),
   });
 
+  const deleteDoc = useMutation({
+    mutationFn: async (id: string) => {
+      setDeletingId(id);
+      const file = viewerFiles.find((f) => f.id === id);
+      const path = file?.arquivo_url;
+      if (path) {
+        await supabase.storage.from('documentos-clientes').remove([path, `${path}.ocr.pdf`]);
+      }
+      const { error } = await supabase
+        .from('checklist_documentos')
+        .update({
+          arquivo_url: null,
+          arquivo_nome: null,
+          data_recebimento: null,
+          status: 'pendente',
+          lancado: false,
+          lancado_em: null,
+          lancado_por: null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (id) => {
+      toast.success('Documento excluído');
+      const idx = viewerFiles.findIndex((f) => f.id === id);
+      const remaining = viewerFiles.filter((f) => f.id !== id);
+      setViewerFiles(remaining);
+      if (remaining.length === 0) {
+        setViewerCurrentId(null);
+      } else {
+        const nextIdx = Math.min(idx, remaining.length - 1);
+        setViewerCurrentId(remaining[nextIdx].id);
+      }
+      queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
+      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist'] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e, 'Falha ao excluir documento')),
+    onSettled: () => setDeletingId(null),
+  });
+
   const tree = useMemo(() => {
     const clienteMap = new Map<string, { id: string; nome: string; cpf: string; cliente: DocWithDeclaracao[]; contador: DocWithDeclaracao[] }>();
     for (const doc of docs as DocWithDeclaracao[]) {
