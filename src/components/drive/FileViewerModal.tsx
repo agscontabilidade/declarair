@@ -13,8 +13,7 @@ import { ImageViewer } from './viewers/ImageViewer';
 import { TextViewer } from './viewers/TextViewer';
 import { OfficeViewer } from './viewers/OfficeViewer';
 import { UnsupportedViewer } from './viewers/UnsupportedViewer';
-import { getSignedUrlCached, getBlobUrlCached, prefetchSignedUrl, getSearchablePdfUrl, invalidateSearchablePdfCache } from '@/lib/document-viewer-cache';
-import { supabase } from '@/integrations/supabase/client';
+import { getSignedUrlCached, getBlobUrlCached, prefetchSignedUrl } from '@/lib/document-viewer-cache';
 
 // PDF viewer carregado sob demanda — evita arrastar ~180KB de react-pdf/pdfjs
 // para páginas que apenas listam documentos.
