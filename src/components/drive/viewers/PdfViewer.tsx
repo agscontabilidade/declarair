@@ -153,11 +153,16 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
               renderTextLayer={true}
               renderAnnotationLayer={false}
               loading={<Skeleton className="w-[600px] h-[800px]" />}
-              className="select-text"
             />
           </Document>
         )}
       </div>
+
+      {!error && numPages > 0 && hasNativeText === true && (
+        <div className="bg-success/10 border-t border-success/20 px-3 py-1.5 text-[11px] text-success-foreground/80 text-center">
+          PDF selecionável — arraste para selecionar o texto ou use Ctrl+F do navegador para buscar.
+        </div>
+      )}
 
       {!error && numPages > 0 && (
         <div className="flex items-center justify-center gap-1 py-1 px-2 border-t bg-card">
