@@ -50,18 +50,19 @@ export function PdfViewer({ url, nome, onStreamError, onScannedDetected }: Props
 
   const scanDetectedRef = useRef(false);
 
-  const onLoadSuccess = useCallback(async (pdf: { numPages: number; getPage: (n: number) => Promise<{ getTextContent: () => Promise<{ items: Array<{ str?: string }> }> }> }) => {
+  const onLoadSuccess = useCallback(async (pdf: import('pdfjs-dist').PDFDocumentProxy) => {
     setNumPages(pdf.numPages);
     setPageNumber(1);
     setError(null);
 
-    // Heurística "PDF escaneado": pega texto da página 1; se vier vazio/curto,
-    // avisa o pai (FileViewerModal) para disparar OCR sob demanda.
     if (!onScannedDetected || scanDetectedRef.current) return;
     try {
       const page = await pdf.getPage(1);
       const tc = await page.getTextContent();
-      const text = tc.items.map((it) => it.str ?? '').join('').trim();
+      const text = tc.items
+        .map((it) => ('str' in it ? it.str : ''))
+        .join('')
+        .trim();
       if (text.length < 50) {
         scanDetectedRef.current = true;
         onScannedDetected();
