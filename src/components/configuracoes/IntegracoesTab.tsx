@@ -327,7 +327,9 @@ function ContaAzulSection({ escritorioId, isDono }: { escritorioId: string | nul
   useEffect(() => {
     if (caConfig) {
       setCaClientId((caConfig.client_id as string) || '');
-      setCaClientSecret((caConfig.client_secret_encrypted as string) || '');
+      // client_secret_encrypted não é mais legível via API (REVOKE de coluna).
+      // O usuário só vê o campo vazio e deve reinserir caso queira atualizar.
+      setCaClientSecret('');
     }
   }, [caConfig]);
 
