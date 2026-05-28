@@ -15,6 +15,7 @@ import { formatCPF } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
 import { getErrorMessage } from '@/lib/errors';
+import { useDeleteDocumento } from '@/hooks/useDeleteDocumento';
 
 interface DocWithDeclaracao {
   id: string;
@@ -51,7 +52,6 @@ export default function Drive() {
 
   const queryClient = useQueryClient();
   const [togglingLancadoId, setTogglingLancadoId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ['drive-docs', escritorioId, anoFiltro],
@@ -100,47 +100,12 @@ export default function Drive() {
     onSettled: () => setTogglingLancadoId(null),
   });
 
-  const deleteDoc = useMutation({
-    mutationFn: async (id: string) => {
-      setDeletingId(id);
-      const file = viewerFiles.find((f) => f.id === id);
-      const path = file?.arquivo_url;
-      if (path) {
-        await supabase.storage.from('documentos-clientes').remove([path, `${path}.ocr.pdf`]);
-      }
-      const { error } = await supabase
-        .from('checklist_documentos')
-        .update({
-          arquivo_url: null,
-          arquivo_nome: null,
-          data_recebimento: null,
-          status: 'pendente',
-          lancado: false,
-          lancado_em: null,
-          lancado_por: null,
-        })
-        .eq('id', id);
-      if (error) throw error;
-      return id;
-    },
-    onSuccess: (id) => {
-      toast.success('Documento excluído');
-      const idx = viewerFiles.findIndex((f) => f.id === id);
-      const remaining = viewerFiles.filter((f) => f.id !== id);
+  const { deleteDoc, deletingId } = useDeleteDocumento({
+    getFiles: () => viewerFiles,
+    onAfterDelete: (remaining, nextId) => {
       setViewerFiles(remaining);
-      if (remaining.length === 0) {
-        setViewerCurrentId(null);
-      } else {
-        const nextIdx = Math.min(idx, remaining.length - 1);
-        setViewerCurrentId(remaining[nextIdx].id);
-      }
-      queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
-      queryClient.invalidateQueries({ queryKey: ['documentos-declaracao'] });
-      queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs'] });
-      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist'] });
+      setViewerCurrentId(nextId);
     },
-    onError: (e) => toast.error(getErrorMessage(e, 'Falha ao excluir documento')),
-    onSettled: () => setDeletingId(null),
   });
 
   const tree = useMemo(() => {
