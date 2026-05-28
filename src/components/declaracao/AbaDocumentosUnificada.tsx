@@ -87,6 +87,11 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
     [docs]
   );
 
+  const { deleteDoc, deletingId } = useDeleteDocumento({
+    getFiles: () => viewerFiles,
+    onAfterDelete: (_remaining, nextId) => setViewerCurrentId(nextId),
+  });
+
   const toggleLancado = useMutation({
     mutationFn: async ({ id, novoValor }: { id: string; novoValor: boolean }) => {
       const { data: userData } = await supabase.auth.getUser();

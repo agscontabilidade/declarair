@@ -103,6 +103,11 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
     [docs]
   );
 
+  const { deleteDoc, deletingId } = useDeleteDocumento({
+    getFiles: () => viewerFiles,
+    onAfterDelete: (_remaining, nextId) => setViewerCurrentId(nextId),
+  });
+
   const upload = useMutation({
     mutationFn: async (files: File[]) => {
       if (!ctx || !declaracaoId) throw new Error('Declaração não carregada');
