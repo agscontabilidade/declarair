@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (conviteError || !convite) {
-      throw new Error('Link de convite inválido');
+      throw new Error('Este link de convite é inválido ou foi removido. Peça um novo link ao seu contador.');
     }
 
     // 2. Check if CPF already exists in this office
@@ -41,10 +41,10 @@ Deno.serve(async (req) => {
       .select('id')
       .eq('cpf', cpfLimpo)
       .eq('escritorio_id', convite.escritorio_id)
-      .single();
+      .maybeSingle();
 
     if (clienteExistente) {
-      throw new Error('Este CPF já está cadastrado neste escritório');
+      throw new Error('Este CPF já está cadastrado neste escritório. Faça login ou peça ajuda ao seu contador.');
     }
 
     // 3. Create auth user
