@@ -213,9 +213,10 @@ export default function GerarLinkConvite() {
                   ? 'Copie ou compartilhe diretamente com o contribuinte.'
                   : 'Use para um contribuinte que ainda não foi cadastrado. Ele criará a própria conta pelo link. Se o cliente já existe na sua lista, use o botão "Convite" na linha dele.'}
               </DialogDescription>
-
+            </div>
           </div>
         </DialogHeader>
+
 
         {!linkGerado ? (
           <div className="px-6 py-5 space-y-6">
