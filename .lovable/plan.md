@@ -1,34 +1,38 @@
-# Corrigir prompt de cobrança após "Salvar"
+## Objetivo
+Adicionar labels visíveis acima de cada filtro nas páginas **Clientes** e **Declarações** para que o contador entenda imediatamente o que cada select filtra (hoje aparece só o valor atual, ex: "Nome (A → Z)", "Todas...", sem contexto).
 
-## Problema
-No `ClienteModal`, o botão verde "Salvar" (handleSubmit) dispara `onSavedCreate`, mas em `src/pages/Clientes.tsx` o `AlertDialog` de cobrança só abre dentro dos `onClose` do `EnviarConviteClienteDialog` e do `DocumentosDeclaracaoModal`. Como o "Salvar" puro não abre nenhum desses dois modais, o prompt nunca é exibido.
+## Mudanças
 
-## Correção (escopo mínimo, só presentation)
+### 1. `src/components/clientes/ClientesFilters.tsx`
+Envolver cada `Select` num bloco vertical com um `<Label>` pequeno acima:
+- "Ordenar por" → select de ordenação
+- "Cobrança" → select de cobrança
+- "Procuração e-CAC" → select de procuração
 
-### `src/components/clientes/ClienteModal.tsx`
-- Diferenciar o caminho do salvamento. Adicionar um flag `intent` nos callbacks ou separar:
-  - `handleSubmit` (Salvar puro) → chama `onSavedCreate(ctx)` apenas.
-  - `handleSubmitAndUpload` → chama `onSavedAndUpload(ctx)` apenas (remover `onSavedCreate` daqui).
-  - Caminho de "Salvar e enviar convite" (se existir) → chama `onSavedAndInvite(ctx)` apenas.
-- Assim, `onSavedCreate` passa a sinalizar exclusivamente "Salvar puro".
+Layout: `flex flex-col gap-1` por filtro, mantendo o `flex-wrap` no container externo. Label em `text-xs font-medium text-muted-foreground`. Botão "Limpar" alinhado à base.
 
-### `src/pages/Clientes.tsx`
-- No handler `onSavedCreate` da instância de criação, além de setar `pendingCobranca`, abrir o `AlertDialog` imediatamente:
-  ```ts
-  onSavedCreate={(ctx) => {
-    setPendingCobranca({ clienteId: ctx.clienteId, nome: ctx.nome, declaracaoId: ctx.declaracaoId });
-    setAskCobrancaOpen(true);
-  }}
-  ```
-- Manter a lógica atual nos `onClose` do `EnviarConviteClienteDialog` e `DocumentosDeclaracaoModal`: ao fechar, se houver `pendingCobranca`, abrir `askCobrancaOpen` (esses caminhos continuam funcionando pois `pendingCobranca` é setado por `onSavedAndUpload`/`onSavedAndInvite`).
-- Para isso, ajustar `onSavedAndUpload` e `onSavedAndInvite` em `Clientes.tsx` para também setarem `pendingCobranca` (já que o `ClienteModal` não mais o fará nesses caminhos).
+### 2. `src/pages/Declaracoes.tsx` (linhas ~295-350, barra de filtros)
+Mesmo padrão de label acima:
+- "Ano-base" → select de ano
+- "Status" → select de status
+- "Resultado" → select de resultado
+- "Processo (RFB)" → select de processo
+- "Arquivos" → select de declaração/recibo
+- "Buscar" → input de busca
+
+Manter larguras e ícones atuais dentro do trigger; só adiciono o label acima.
+
+### 3. (Opcional, mesma melhoria) `src/components/dashboard/DashboardFilters.tsx`
+Aplicar o mesmo tratamento de labels para os selects de contador / status / ordenação na Row 2, para manter consistência visual em todas as páginas com filtros.
+
+## Detalhes técnicos
+- Usar `<Label>` de `@/components/ui/label` com classe `text-xs font-medium text-muted-foreground`.
+- Não alterar lógica de filtragem, estado, hooks ou tipos — apenas markup/estrutura.
+- Sem mudanças de banco, RLS ou comportamento.
 
 ## Critérios de aceite
-- Clicar "Salvar" no `ClienteModal` (modo create) → modal fecha → `AlertDialog` "Cadastrar cobrança do Imposto de Renda?" aparece imediatamente.
-- Clicar "Salvar e enviar documentos" → fluxo de upload abre; ao fechá-lo, o prompt de cobrança aparece.
-- Clicar "Salvar e enviar convite" → diálogo de convite abre; ao fechá-lo, o prompt de cobrança aparece.
-- Em `mode="edit"`, nenhum prompt aparece.
-- Confirmar no prompt abre `CobrancaModal` com cliente travado e declaração pré-selecionada. "Agora não" fecha sem efeitos.
+- Cada filtro nas páginas Clientes, Declarações e Dashboard exibe um rótulo curto acima.
+- Larguras, ícones e comportamento dos selects permanecem iguais.
+- Em viewport menor, os filtros continuam quebrando linha (flex-wrap preservado).
 
-## Fora de escopo
-Sem mudanças em RLS, schema, hooks ou regras de negócio.
+Confirma se inclui o Dashboard ou prefere limitar a Clientes + Declarações?
