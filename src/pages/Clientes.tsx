@@ -19,6 +19,7 @@ import { ClientesFilters } from '@/components/clientes/ClientesFilters';
 import type { ClienteWithContador } from '@/types/domain';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/errors';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,8 +37,11 @@ export default function Clientes() {
   const [viewCliente, setViewCliente] = useState<ClienteRow | null>(null);
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
   const [cobrancaCliente, setCobrancaCliente] = useState<ClienteRow | null>(null);
+  const [cobrancaDeclaracaoId, setCobrancaDeclaracaoId] = useState<string | null>(null);
   const [uploadDocs, setUploadDocs] = useState<{ declaracaoId: string; nome: string } | null>(null);
   const [conviteCtx, setConviteCtx] = useState<EnviarConviteClienteCtx | null>(null);
+  const [pendingCobranca, setPendingCobranca] = useState<{ clienteId: string; nome: string; declaracaoId: string | null } | null>(null);
+  const [askCobrancaOpen, setAskCobrancaOpen] = useState(false);
   const { criar: criarCobranca } = useCobrancas();
   const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente } = usePermissoes();
   const { toast } = useToast();
@@ -190,13 +194,27 @@ export default function Clientes() {
             telefone: ctx.telefone ?? null,
           });
         }}
+        onSavedCreate={(ctx) => {
+          setPendingCobranca({ clienteId: ctx.clienteId, nome: ctx.nome, declaracaoId: ctx.declaracaoId });
+        }}
       />
 
-      <EnviarConviteClienteDialog ctx={conviteCtx} onClose={() => setConviteCtx(null)} />
+      <EnviarConviteClienteDialog
+        ctx={conviteCtx}
+        onClose={() => {
+          setConviteCtx(null);
+          if (pendingCobranca && !uploadDocs) setAskCobrancaOpen(true);
+        }}
+      />
 
       <DocumentosDeclaracaoModal
         open={!!uploadDocs}
-        onOpenChange={(o) => !o && setUploadDocs(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setUploadDocs(null);
+            if (pendingCobranca && !conviteCtx) setAskCobrancaOpen(true);
+          }
+        }}
         declaracaoId={uploadDocs?.declaracaoId ?? null}
         clienteNome={uploadDocs?.nome}
       />
@@ -220,17 +238,56 @@ export default function Clientes() {
 
       <CobrancaModal
         open={!!cobrancaCliente}
-        onOpenChange={(o) => !o && setCobrancaCliente(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setCobrancaCliente(null);
+            setCobrancaDeclaracaoId(null);
+          }
+        }}
         clienteIdLocked={cobrancaCliente?.id ?? null}
         clienteNomeLocked={cobrancaCliente?.nome ?? null}
+        declaracaoIdInicial={cobrancaDeclaracaoId}
         loading={criarCobranca.isPending}
         onSave={(data) => {
           criarCobranca.mutate(
             data as { cliente_id: string; declaracao_id?: string; descricao: string; valor: number; data_vencimento: string },
-            { onSuccess: () => setCobrancaCliente(null) },
+            { onSuccess: () => { setCobrancaCliente(null); setCobrancaDeclaracaoId(null); } },
           );
         }}
       />
+
+      <AlertDialog
+        open={askCobrancaOpen}
+        onOpenChange={(o) => {
+          setAskCobrancaOpen(o);
+          if (!o) setPendingCobranca(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cadastrar cobrança do Imposto de Renda?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingCobranca
+                ? `O cliente ${pendingCobranca.nome} foi cadastrado. Deseja já registrar a cobrança da declaração?`
+                : 'Deseja já registrar a cobrança da declaração?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Agora não</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingCobranca) return;
+                setCobrancaCliente({ id: pendingCobranca.clienteId, nome: pendingCobranca.nome } as ClienteRow);
+                setCobrancaDeclaracaoId(pendingCobranca.declaracaoId);
+                setAskCobrancaOpen(false);
+                setPendingCobranca(null);
+              }}
+            >
+              Sim, cadastrar cobrança
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

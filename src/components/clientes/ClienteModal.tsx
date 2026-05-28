@@ -39,7 +39,10 @@ interface Props {
   cliente?: ClienteEditavel | null;
   onSavedAndUpload?: (ctx: SavedClienteResult) => void;
   onSavedAndInvite?: (ctx: SavedClienteResult) => void;
+  /** Disparado após criar cliente (qualquer botão), para fluxos pós-cadastro. */
+  onSavedCreate?: (ctx: SavedClienteResult) => void;
 }
+
 
 function maskTelefone(value: string) {
   const d = value.replace(/\D/g, '').slice(0, 11);
@@ -54,7 +57,7 @@ const EMPTY = {
   enviar_convite: false,
 };
 
-export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente, onSavedAndUpload, onSavedAndInvite }: Props) {
+export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'create', cliente, onSavedAndUpload, onSavedAndInvite, onSavedCreate }: Props) {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState<null | 'save' | 'save-upload'>(null);
   const [form, setForm] = useState(EMPTY);
@@ -134,6 +137,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
       clearForm();
       onOpenChange(false);
       if (wantInvite) onSavedAndInvite?.(r);
+      if (!isEdit && r.clienteId) onSavedCreate?.(r);
     } catch (err: unknown) {
       toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
@@ -150,12 +154,14 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
       clearForm();
       onOpenChange(false);
       if (r.declaracaoId) onSavedAndUpload?.(r);
+      if (!isEdit && r.clienteId) onSavedCreate?.(r);
     } catch (err: unknown) {
       toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
       setSubmitting(null);
     }
   };
+
 
   const loading = submitting !== null;
 
