@@ -42,7 +42,14 @@ interface Props {
  */
 export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }: Props) {
   const queryClient = useQueryClient();
-  const [viewerCurrentId, setViewerCurrentId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewerCurrentId = searchParams.get('doc');
+  const setViewerCurrentId = useCallback((id: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set('doc', id);
+    else next.delete('doc');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const { data: items = [] as ChecklistItem[], isLoading } = useQuery({
