@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Download, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Image as ImageIcon, FileSpreadsheet, File as FileIcon, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Download, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Image as ImageIcon, FileSpreadsheet, File as FileIcon, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { getFileType, getFileExtension, getMimeFromName } from '@/lib/file-types';
@@ -33,6 +34,8 @@ interface Props {
   onChange: (id: string) => void;
   onToggleLancado?: (id: string, novoValor: boolean) => void;
   togglingLancadoId?: string | null;
+  onDelete?: (id: string) => Promise<void> | void;
+  deletingId?: string | null;
 }
 
 function iconForType(type: ReturnType<typeof getFileType>) {
@@ -42,10 +45,11 @@ function iconForType(type: ReturnType<typeof getFileType>) {
   return FileIcon;
 }
 
-export function FileViewerModal({ files, currentId, onClose, onChange, onToggleLancado, togglingLancadoId }: Props) {
+export function FileViewerModal({ files, currentId, onClose, onChange, onToggleLancado, togglingLancadoId, onDelete, deletingId }: Props) {
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [inlineUrl, setInlineUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   // Blobs criados nesta sessão do modal — revogados ao fechar/desmontar
   // para não vazar memória. O signed URL é compartilhado (cache global).
@@ -298,6 +302,21 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
             <Button variant="ghost" size="icon" onClick={() => signedUrl && window.open(signedUrl, '_blank')} disabled={!signedUrl} title="Abrir em nova aba">
               <ExternalLink className="h-4 w-4" />
             </Button>
+            {onDelete && current && (
+              <>
+                <div className="w-px h-5 bg-border mx-1" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setConfirmDeleteOpen(true)}
+                  disabled={deletingId === current.id}
+                  title="Excluir"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  {deletingId === current.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                </Button>
+              </>
+            )}
             <Button variant="ghost" size="icon" onClick={onClose} title="Fechar (Esc)">
               <X className="h-4 w-4" />
             </Button>
@@ -325,6 +344,32 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
           ) : null}
         </div>
       </DialogContent>
+
+      {onDelete && (
+        <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir documento</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir <span className="font-medium text-foreground">{current?.arquivo_nome}</span>? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={async () => {
+                  if (!current) return;
+                  setConfirmDeleteOpen(false);
+                  await onDelete(current.id);
+                }}
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Dialog>
   );
 }
