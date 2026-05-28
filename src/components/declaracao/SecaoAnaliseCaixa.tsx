@@ -64,7 +64,14 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
   const [loading, setLoading] = useState(false);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<string | null>(null);
   const [analiseRecenteId, setAnaliseRecenteId] = useState<string | null>(null);
-  const [viewerOpen, setViewerOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewerOpen = searchParams.get('doc') === 'analise-caixa';
+  const setViewerOpen = (open: boolean) => {
+    const next = new URLSearchParams(searchParams);
+    if (open) next.set('doc', 'analise-caixa');
+    else next.delete('doc');
+    setSearchParams(next, { replace: true });
+  };
   const [analiseSelecionadaId, setAnaliseSelecionadaId] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<{
     motivo: 'mismatch' | 'unreadable';
