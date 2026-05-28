@@ -122,7 +122,11 @@ Deno.serve(async (req) => {
   const anoCorrente = new Date().getFullYear();
   const { data: clientes, error: cliErr } = await admin
     .from("clientes")
-    .select("id, nome, email, telefone, declaracoes!inner(id, ano_base, status)")
+    .select(`id, nome, email, telefone, declaracoes!inner(
+      id, ano_base, status, arquivos_outros,
+      arquivo_declaracao_url, arquivo_recibo_url, arquivo_darf_url,
+      arquivo_mei_url, arquivo_analise_caixa_url
+    )`)
     .eq("escritorio_id", usuario.escritorio_id)
     .in("id", body.clienteIds)
     .eq("declaracoes.ano_base", anoCorrente)
@@ -132,7 +136,38 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Erro ao buscar clientes" }, 500);
   }
 
+  // Rede de segurança: cross-check de documentos já entregues
+  const declMap = new Map<string, { declaracaoId: string; jaTemDoc: boolean }>();
+  const declaracaoIds: string[] = [];
+  for (const cli of clientes || []) {
+    const decl = Array.isArray(cli.declaracoes) ? cli.declaracoes[0] : cli.declaracoes;
+    if (!decl) continue;
+    const arquivosOutros = Array.isArray(decl.arquivos_outros) ? decl.arquivos_outros : [];
+    const jaTemDoc = !!(
+      decl.arquivo_declaracao_url || decl.arquivo_recibo_url || decl.arquivo_darf_url ||
+      decl.arquivo_mei_url || decl.arquivo_analise_caixa_url ||
+      arquivosOutros.length > 0
+    );
+    declMap.set(cli.id, { declaracaoId: decl.id, jaTemDoc });
+    declaracaoIds.push(decl.id);
+  }
+
+  // checklist_documentos: status recebido ou com arquivo
+  const declsComChecklist = new Set<string>();
+  if (declaracaoIds.length > 0) {
+    const { data: checklist } = await admin
+      .from("checklist_documentos")
+      .select("declaracao_id, status, arquivo_url")
+      .in("declaracao_id", declaracaoIds);
+    for (const ck of checklist || []) {
+      if (ck.status === "recebido" || ck.arquivo_url) {
+        declsComChecklist.add(ck.declaracao_id);
+      }
+    }
+  }
+
   const prazoBR = formatPrazoBR(body.prazoFinal);
+
   const enfileirados: string[] = [];
   const pulados: Array<{ clienteId: string; motivo: string }> = [];
 
@@ -145,6 +180,14 @@ Deno.serve(async (req) => {
   for (const cli of clientes || []) {
     const decl = Array.isArray(cli.declaracoes) ? cli.declaracoes[0] : cli.declaracoes;
     const declaracaoId = decl?.id ?? null;
+
+    // Rede de segurança: não envia lembrete se já há qualquer documento entregue
+    const info = declMap.get(cli.id);
+    if (info?.jaTemDoc || (declaracaoId && declsComChecklist.has(declaracaoId))) {
+      pulados.push({ clienteId: cli.id, motivo: "ja_possui_documentos" });
+      continue;
+    }
+
 
     if (body.canal === "email") {
       if (!cli.email) {

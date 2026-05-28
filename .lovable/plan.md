@@ -1,92 +1,60 @@
-## Diagnóstico
+## Problema
 
-PDFs digitais nativos já são selecionáveis (o `PdfViewer` renderiza `renderTextLayer={true}`). O problema é com PDFs **escaneados** (imagem dentro de PDF): não têm camada de texto, então o pdf.js não tem o que selecionar.
+`/lembretes` lista clientes apenas pelo `declaracoes.status = 'aguardando_documentos'`. Isso é frágil: o status só muda automaticamente quando o cliente faz upload pelo portal. Existem cenários reais onde o cliente já enviou documentos mas o status continua `aguardando_documentos`:
 
-Solução definitiva: gerar uma versão **"searchable PDF"** (mesma imagem + camada de texto invisível via OCR) e servir essa versão no visualizador quando o original for um PDF escaneado. Sem mexer em upload, kanban, checklist, formulários, RLS ou estrutura de tabelas.
+- Contador anexou o documento manualmente pelo perfil do cliente (insere em `checklist_documentos` com status `recebido`, mas não muda o status da declaração).
+- Documentos enviados em anos anteriores ou via fluxos legados (`arquivos_outros` no `declaracoes`, `arquivo_*_url` específicos).
+- Falha pontual em algum gatilho de mudança de status (regressão / dados antigos).
+- Upload direto via Drive para a pasta do cliente sem atualização da `declaracoes`.
 
-## Estratégia: sidecar em storage + OCR sob demanda
+Risco: contador dispara lembrete cobrando documento de quem já enviou. Inaceitável em produção.
 
-Para cada PDF em `documentos-clientes/<path>.pdf`, geramos um sidecar:
-```
-documentos-clientes/<path>.pdf            ← original (não é tocado)
-documentos-clientes/<path>.ocr.pdf        ← versão pesquisável (gerada quando necessário)
-```
+## Solução — defesa em profundidade (somente leitura, sem mudar status)
 
-O visualizador, ao abrir um PDF:
-1. Verifica se já existe `<path>.ocr.pdf` no storage → usa esse (instantâneo).
-2. Senão, carrega o original e, **em paralelo**, faz uma checagem rápida de qualidade do texto extraído (≥500 chars + ≥100 letras, mesmo critério já usado no `processar-pdf-declaracao`).
-3. Se o texto for ruim → chama edge function `ocr-pdf-searchable` que gera e salva o sidecar; ao concluir, troca a URL do viewer para o sidecar (toast discreto "PDF pesquisável pronto").
-4. Se o texto for bom → não faz nada; original já é selecionável.
+Filtrar no hook `useLembretesPendentes` removendo qualquer cliente que tenha **qualquer indício** de documento já entregue para a declaração do ano corrente. Nada de schema novo, nada de mudar status automaticamente — só não listar.
 
-Resultado: usuário **sempre** consegue selecionar texto, sem precisar reabrir o documento e sem alterar nenhum fluxo upstream.
+### Sinais que excluem o cliente da lista de lembretes
 
-## Componentes
+Para cada declaração do ano corrente em `aguardando_documentos`, considera "já tem documento" se **qualquer** destas condições for verdadeira:
 
-### 1. Nova edge function `ocr-pdf-searchable`
-- Input: `{ path: string }` (caminho no bucket `documentos-clientes`).
-- Validações: JWT obrigatório; valida que o usuário tem permissão de leitura no `path` (via signed URL próprio do caller — mesma lógica do viewer).
-- Idempotente: se `<path>.ocr.pdf` já existe, retorna `{ status: 'ready', path }`.
-- Lock: usa `INSERT ... ON CONFLICT DO NOTHING` em uma tabela leve `ocr_jobs (path PK, status, created_at)` para evitar duas chamadas processarem o mesmo arquivo simultaneamente.
-- Fluxo OCR (provedor: **OCR.space**, já temos `OCRSPACE_API_KEY`):
-  - Baixa o PDF via service role.
-  - POST para `https://api.ocr.space/parse/image` com `isCreateSearchablePdf=true`, `isSearchablePdfHideTextLayer=true`, `OCREngine=2`, `language=por`.
-  - Recebe URL do searchable PDF, baixa o arquivo e faz upload em `<path>.ocr.pdf` (mesma pasta, mesmas permissões — herda RLS do bucket).
-  - Marca job como `ready`. Em falha, marca `failed` com erro; o viewer continua mostrando o original (degrada silenciosamente).
-- Limite: OCR.space gratuito aceita até 3MB / 3 páginas. Para PDFs maiores: marcar job como `skipped_too_large` e logar; fica como follow-up futuro (plano pago ou Tesseract self-hosted no Deno — fora deste escopo para não estourar custo).
+1. Existe linha em `checklist_documentos` para `declaracao_id` com `status = 'recebido'` **ou** com `arquivo_url` não nulo.
+2. `declaracoes.arquivos_outros` é array com pelo menos 1 item.
+3. Qualquer um destes campos da `declaracoes` está preenchido: `arquivo_declaracao_url`, `arquivo_recibo_url`, `arquivo_darf_url`, `arquivo_mei_url`, `arquivo_analise_caixa_url`.
+4. (Camada extra, defensiva) Storage `documentos-clientes` tem pelo menos 1 objeto sob o prefixo `{escritorio_id}/{cliente_id}/` ignorando sufixos `.ocr.pdf` (sidecar de OCR não conta como documento novo).
 
-### 2. Tabela `ocr_jobs` (única mudança de DB, mínima)
-```
-ocr_jobs(
-  path text primary key,
-  status text not null check (status in ('processing','ready','failed','skipped_too_large')),
-  error text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-)
-```
-- Sem RLS de usuário (acesso só via service role na edge function).
-- GRANT só para `service_role`.
+Se qualquer sinal for verdadeiro → **não aparece em `/lembretes`**, e ainda registra um pequeno aviso no console com o motivo (debug).
 
-### 3. Camada de cache no frontend (`src/lib/document-viewer-cache.ts`)
-Adiciona `getSearchablePdfUrl(path)`:
-- Verifica em memória se já resolveu para esse path.
-- Faz `supabase.storage.from('documentos-clientes').list(folder, { search: '<name>.ocr.pdf' })` (1 chamada barata) → se existe, retorna o signed URL do sidecar.
-- Senão, retorna `null`.
+### Implementação
 
-### 4. Pequeno ajuste no `PdfViewer.tsx`
-- Após `onLoadSuccess`, faz uma checagem rápida da página 1: `page.getTextContent()` → conta caracteres.
-- Se < 50 chars na página 1 (heurística de scaneado) **e** `current.arquivo_url` ainda é o original, dispara `supabase.functions.invoke('ocr-pdf-searchable', { body: { path }})`.
-- Quando a função retorna `ready`, chama callback do `FileViewerModal` para trocar `inlineUrl` pelo signed URL do sidecar. Toast: "PDF pesquisável pronto".
-- Sem checagem se já é sidecar (`.ocr.pdf` no nome) — evita loop.
+Arquivo único: `src/hooks/useLembretesPendentes.ts`.
 
-### 5. `FileViewerModal.tsx`
-- No effect que busca URL, **antes** de pegar o original, chama `getSearchablePdfUrl(path)`. Se existir, usa direto.
-- Adiciona prop/callback `onSearchableReady(newUrl)` que o `PdfViewer` invoca após OCR concluir.
+Passos dentro do `queryFn`, após buscar `decls`:
 
-## O que NÃO muda
+1. Coletar `declaracaoIds` e `clienteIds`.
+2. Em paralelo (`Promise.all`):
+   - `supabase.from('checklist_documentos').select('declaracao_id, status, arquivo_url').in('declaracao_id', declaracaoIds)`
+   - Para campos 2 e 3, já estão disponíveis em `decls` — adicionar à seleção atual: `arquivos_outros, arquivo_declaracao_url, arquivo_recibo_url, arquivo_darf_url, arquivo_mei_url, arquivo_analise_caixa_url`.
+   - Para storage (camada 4): `supabase.storage.from('documentos-clientes').list(\`${escritorioId}/${clienteId}\`, { limit: 5 })` por cliente, com `Promise.allSettled` e `limit` de concorrência simples (ex.: lotes de 8). Filtra nomes terminando em `.ocr.pdf`. Se a chamada falhar (permissão / inexistente), trata como "sem objetos" — nunca bloqueia a lista por erro de storage.
+3. Construir um `Set<clienteId>` de "clientes com documento" e remover esses do array final retornado.
+4. Manter ordenação e shape atuais — nenhuma mudança no componente `Lembretes.tsx` nem no `LembreteEnvioModal`.
 
-- Nenhum fluxo de upload, kanban, checklist, declaração, billing, RLS, auth.
-- Nenhum componente fora de `FileViewerModal`, `PdfViewer`, `document-viewer-cache`.
-- Tabelas existentes intocadas (só adição de `ocr_jobs`).
-- PDFs digitais nativos continuam funcionando exatamente como hoje (zero overhead — heurística só dispara quando texto é ruim).
-- Sidecar fica no mesmo bucket/pasta → herda exatamente as mesmas policies RLS do original. Quem vê o PDF original vê o `.ocr.pdf`.
+### Reforço no backend (edge function `enviar-lembretes-prazo`)
 
-## Backfill (opcional, segunda fase)
+Como rede de segurança, replicar as checagens 1–3 na função (storage list é opcional aqui para não custar I/O). Antes de enfileirar email/WhatsApp para um cliente, se houver qualquer sinal de documento entregue, pular com motivo `ja_possui_documentos`. Isso garante que mesmo se o front estiver desatualizado em cache, nenhum lembrete sai indevidamente.
 
-Script `npm run backfill-ocr` (ou cron noturno) que percorre `documentos-clientes` e chama `ocr-pdf-searchable` para PDFs sem sidecar. **Não faz parte deste deploy** — implementação inicial gera sob demanda conforme contadores abrem documentos. Discutimos depois se vale a pena rodar em massa.
+### O que NÃO muda
 
-## Aceitação
+- Nenhuma migração de banco.
+- Nenhum status é alterado automaticamente.
+- UI da página `/lembretes` permanece igual (apenas a lista fica mais precisa).
+- Modal, fluxo de envio, automações WhatsApp, contadores — tudo intacto.
+- RLS, multi-tenant, permissões — sem alteração.
 
-- Abrir PDF nativo selecionável → continua selecionável, sem chamadas extras.
-- Abrir PDF escaneado pela 1ª vez → carrega original, toast "Gerando versão pesquisável…", em ~5-15s troca para sidecar com texto selecionável.
-- Reabrir o mesmo PDF escaneado → carrega direto o sidecar (instantâneo).
-- PDF > 3MB / muitas páginas → continua abrindo normalmente, sem OCR (degrada silenciosamente, logado).
-- Falha de OCR → original continua acessível, sem erro visível ao contador.
+### Critério de aceite
 
-## Riscos & mitigações
-
-- **Custo OCR.space**: free tier é 25k chamadas/mês. Suficiente para começar; monitorar via `ocr_jobs`.
-- **Latência**: OCR roda async; viewer não bloqueia. Original fica visível durante o processo.
-- **Sidecar órfão se original for deletado**: adicionar trigger futuro para limpeza — fora deste escopo (não quebra nada, só ocupa storage).
-
-Aprove para eu implementar.
+- Cliente com `aguardando_documentos` + qualquer `checklist_documentos.status='recebido'` **não aparece** em `/lembretes`.
+- Cliente com qualquer `arquivo_*_url` preenchido na declaração **não aparece**.
+- Cliente com `arquivos_outros` não vazio **não aparece**.
+- Cliente com objetos no storage `{escritorio_id}/{cliente_id}/...` (excluindo `.ocr.pdf`) **não aparece**.
+- Edge function `enviar-lembretes-prazo` retorna `pulados` com motivo `ja_possui_documentos` se o cliente, por race condition, tiver enviado entre o list e o envio.
+- Clientes legitimamente sem nenhum documento continuam aparecendo normalmente.
