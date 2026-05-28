@@ -137,7 +137,7 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
       clearForm();
       onOpenChange(false);
       if (wantInvite) onSavedAndInvite?.(r);
-      if (!isEdit && r.clienteId) onSavedCreate?.(r);
+      else if (!isEdit && r.clienteId) onSavedCreate?.(r);
     } catch (err: unknown) {
       toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
@@ -154,7 +154,6 @@ export function ClienteModal({ open, onOpenChange, contadores, onSave, mode = 'c
       clearForm();
       onOpenChange(false);
       if (r.declaracaoId) onSavedAndUpload?.(r);
-      if (!isEdit && r.clienteId) onSavedCreate?.(r);
     } catch (err: unknown) {
       toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
