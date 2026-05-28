@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
 import { getErrorMessage } from '@/lib/errors';
+import { useDeleteDocumento } from '@/hooks/useDeleteDocumento';
 
 interface ChecklistItem {
   id: string;
@@ -85,6 +86,11 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
     })),
     [docs]
   );
+
+  const { deleteDoc, deletingId } = useDeleteDocumento({
+    getFiles: () => viewerFiles,
+    onAfterDelete: (_remaining, nextId) => setViewerCurrentId(nextId),
+  });
 
   const toggleLancado = useMutation({
     mutationFn: async ({ id, novoValor }: { id: string; novoValor: boolean }) => {
@@ -349,6 +355,8 @@ export function AbaDocumentosUnificada({ declaracaoId, clienteNome, onAddItem }:
         onChange={setViewerCurrentId}
         onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
         togglingLancadoId={toggleLancado.isPending ? toggleLancado.variables?.id ?? null : null}
+        onDelete={async (id) => { await deleteDoc.mutateAsync(id); }}
+        deletingId={deletingId}
       />
     </div>
   );

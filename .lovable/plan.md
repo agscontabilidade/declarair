@@ -1,45 +1,40 @@
-## Diagnóstico
-O sidecar `.ocr.pdf` gerado pelo OCR.space (free tier) cria uma camada de texto invisível com coordenadas/tamanhos que **não batem** com o raster do PDF original. Resultado: ao selecionar, o texto aparece gigante e desalinhado (como na imagem). Além disso, dispara OCR no servidor toda vez que um PDF escaneado é aberto pela primeira vez — custo desnecessário.
+## Problema
 
-## Proposta
-**Remover o swap automático para o sidecar OCR** e substituir por um botão sob demanda **"Copiar texto"** no toolbar do `PdfViewer`, que:
+O botão "Excluir documento" no `FileViewerModal` só aparece quando o componente pai passa `onDelete`. Hoje isso só acontece em `src/pages/Drive.tsx`. Quando o visualizador é aberto pela tela de detalhe da declaração (`/declaracoes/:id` — onde o usuário está agora), ele é renderizado por `AbaDocumentosUnificada` e por `DocumentosDeclaracaoModal` sem `onDelete`, então o ícone da lixeira não aparece.
 
-1. Para PDFs nativos (com texto real) → usa `pdf.js` direto, sem chamar servidor.
-2. Para PDFs escaneados → roda OCR **uma vez sob demanda**, mostra o texto em um painel lateral selecionável/copiável. **Não** sobrepõe nada no PDF (zero risco de desalinhamento visual).
+## Solução
 
-O PDF original continua renderizando com qualidade perfeita; nada de overlay quebrado.
+Extrair a mutação de exclusão usada hoje em `Drive.tsx` para um hook compartilhado e plugá-lo nos outros dois usos do `FileViewerModal`. Sem mudanças de schema, RLS, UI do modal ou comportamento de toggle "lançado".
 
-## Mudanças
+### 1. Novo hook `src/hooks/useDeleteDocumento.ts`
 
-### `src/components/drive/FileViewerModal.tsx`
-- Remover `getSearchablePdfUrl` / `invalidateSearchablePdfCache` do efeito principal e o `handleScannedPdfDetected`.
-- Não passar mais `onScannedDetected` ao `PdfViewer`.
-- O sidecar nunca mais é carregado automaticamente.
+- Recebe a lista atual `viewerFiles` e callbacks (`onAfterDelete(remainingFiles, nextId)`) do chamador.
+- Faz o mesmo que o `deleteDoc` atual em `Drive.tsx`:
+  1. Remove `arquivo_url` e o sidecar `${path}.ocr.pdf` do bucket `documentos-clientes` (best-effort).
+  2. `update` em `checklist_documentos` zerando `arquivo_url`, `arquivo_nome`, `data_recebimento`, `status='pendente'`, `lancado=false`, `lancado_em=null`, `lancado_por=null`.
+  3. Invalida `['drive-docs']`, `['documentos-declaracao']`, `['declaracao-aba-docs']`, `['declaracao-checklist']`.
+  4. Toasts de sucesso/erro idênticos.
+- Expõe `{ deleteDoc, deletingId }`.
 
-### `src/components/drive/viewers/PdfViewer.tsx`
-- Remover prop `onScannedDetected` e a heurística de detecção.
-- Adicionar botão **"Copiar texto"** (ícone `ClipboardCopy`) no toolbar inferior, ao lado do zoom.
-- Ao clicar:
-  - Tenta extrair texto nativo de todas as páginas via `pdf.getPage(n).getTextContent()`.
-  - Se total > 50 chars → copia para clipboard + toast "Texto copiado".
-  - Se vazio (escaneado) → chama edge function `ocr-pdf-extract-text` (novo modo `extractOnly`), copia o resultado, toast.
-  - Loader no botão durante o processo.
+### 2. `src/pages/Drive.tsx`
 
-### `supabase/functions/ocr-pdf-searchable/index.ts`
-- Adicionar parâmetro `mode: 'searchable' | 'text'` (default mantém compat: `'searchable'`).
-- Quando `mode === 'text'`: chama OCR.space sem `isCreateSearchablePdf`, retorna `{ text: string }` direto — sem upload de sidecar.
-- Frontend chama apenas com `mode: 'text'` daqui pra frente.
+- Substituir o `useMutation` local pelo novo hook, mantendo o comportamento atual (cálculo do próximo `viewerCurrentId` no `onAfterDelete`).
 
-### Sidecars antigos (`<path>.ocr.pdf`)
-- Permanecem no storage mas **deixam de ser usados** pelo viewer.
-- Não excluímos automaticamente (preserva histórico). Helpers `getSearchablePdfUrl` em `document-viewer-cache.ts` ficam órfãos — removo as referências mas mantenho as funções (uso futuro opcional) ou removo tudo se preferir limpeza total.
+### 3. `src/components/declaracao/AbaDocumentosUnificada.tsx`
 
-## Não faremos
-- Não mexer em RLS, schema, ou outras rotas.
-- Não trocar OCR provider (Lovable AI / Google Vision) — fora do escopo "melhorar sem mais servidor".
-- Não excluir sidecars existentes (segurança/reversibilidade).
+- Usar o hook e passar `onDelete` + `deletingId` para o `FileViewerModal` (linhas 345–351).
+- No `onAfterDelete`, atualizar `viewerFiles` local e mover `viewerCurrentId` para o próximo arquivo (ou fechar se vazio), espelhando o Drive.
 
-## Resultado para o usuário
-- PDFs escaneados voltam a abrir limpos, sem overlay bugado.
-- Quem precisa do texto clica em **"Copiar texto"** e recebe o conteúdo no clipboard.
-- Servidor só é chamado quando o usuário pede explicitamente — custo praticamente zero por padrão.
+### 4. `src/components/declaracoes/DocumentosDeclaracaoModal.tsx`
+
+- Mesmo tratamento do item 3 para o `FileViewerModal` (linhas 384–390).
+
+### 5. `src/components/declaracao/SecaoAnaliseCaixa.tsx`
+
+- **Não alterar.** Esse visualizador é da Análise de Caixa (arquivos em `_analise_caixa/`), fluxo diferente, e não havia exclusão antes.
+
+## Validação
+
+- Abrir `/declaracoes/:id?doc=...` → ícone de lixeira aparece no header do viewer; confirmação pede "Excluir"; após confirmar, arquivo some, lista do Drive/abas atualiza, checklist volta a "pendente".
+- Repetir abrindo pelo `DocumentosDeclaracaoModal` (botão Documentos no card).
+- `Drive.tsx` continua funcionando igual.

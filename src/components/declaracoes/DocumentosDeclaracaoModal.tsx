@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
 import { getErrorMessage } from '@/lib/errors';
+import { useDeleteDocumento } from '@/hooks/useDeleteDocumento';
 
 interface Props {
   declaracaoId: string | null;
@@ -101,6 +102,11 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
         })),
     [docs]
   );
+
+  const { deleteDoc, deletingId } = useDeleteDocumento({
+    getFiles: () => viewerFiles,
+    onAfterDelete: (_remaining, nextId) => setViewerCurrentId(nextId),
+  });
 
   const upload = useMutation({
     mutationFn: async (files: File[]) => {
@@ -388,6 +394,8 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
         onChange={setViewerCurrentId}
         onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
         togglingLancadoId={toggleLancado.isPending ? toggleLancado.variables?.id ?? null : null}
+        onDelete={async (id) => { await deleteDoc.mutateAsync(id); }}
+        deletingId={deletingId}
       />
     </>
   );
