@@ -1,38 +1,21 @@
-## Objetivo
-Adicionar labels visíveis acima de cada filtro nas páginas **Clientes** e **Declarações** para que o contador entenda imediatamente o que cada select filtra (hoje aparece só o valor atual, ex: "Nome (A → Z)", "Todas...", sem contexto).
+Pelo diagnóstico, não parece ser cookies. O erro da imagem bate com falha real no backend: nos logs recentes, a função `register-from-invite` retornou 400 porque o CPF já estava cadastrado no escritório. A tela antiga mostra isso como mensagem genérica “Edge Function returned a non-2xx status code”, por isso parece erro técnico.
 
-## Mudanças
+Plano para corrigir:
 
-### 1. `src/components/clientes/ClientesFilters.tsx`
-Envolver cada `Select` num bloco vertical com um `<Label>` pequeno acima:
-- "Ordenar por" → select de ordenação
-- "Cobrança" → select de cobrança
-- "Procuração e-CAC" → select de procuração
+1. Melhorar a mensagem exibida no cadastro antigo
+- Ajustar `src/pages/cliente/CadastroCliente.tsx` para extrair corretamente o corpo do erro quando a função retorna não-2xx.
+- Em vez de mostrar “Edge Function returned a non-2xx status code”, mostrar a mensagem real: CPF já cadastrado, email já usado, link inválido, senha fraca etc.
 
-Layout: `flex flex-col gap-1` por filtro, mantendo o `flex-wrap` no container externo. Label em `text-xs font-medium text-muted-foreground`. Botão "Limpar" alinhado à base.
+2. Tratar CPF já existente de forma útil
+- Ajustar `supabase/functions/register-from-invite/index.ts` para, quando o CPF já existir no mesmo escritório:
+  - se o cliente já tiver acesso, retornar orientação clara para fazer login ou recuperar senha;
+  - se o cliente existir mas ainda não tiver acesso, retornar orientação clara para pedir ao contador o “convite de acesso” pelo cadastro do cliente, evitando o autocadastro duplicado.
 
-### 2. `src/pages/Declaracoes.tsx` (linhas ~295-350, barra de filtros)
-Mesmo padrão de label acima:
-- "Ano-base" → select de ano
-- "Status" → select de status
-- "Resultado" → select de resultado
-- "Processo (RFB)" → select de processo
-- "Arquivos" → select de declaração/recibo
-- "Buscar" → input de busca
+3. Reduzir confusão entre dois tipos de convite
+- O botão “Gerar Link de Convite” hoje cria link de autocadastro em `/cadastro-cliente/:token`, que falha quando o CPF já existe.
+- Manter esse fluxo para novo contribuinte, mas melhorar o texto do modal para deixar claro que ele é para contribuinte ainda não cadastrado.
+- O convite de acesso para cliente já cadastrado continua sendo o link `/cliente/convite/:token` gerado na linha do cliente/tabela.
 
-Manter larguras e ícones atuais dentro do trigger; só adiciono o label acima.
-
-### 3. (Opcional, mesma melhoria) `src/components/dashboard/DashboardFilters.tsx`
-Aplicar o mesmo tratamento de labels para os selects de contador / status / ordenação na Row 2, para manter consistência visual em todas as páginas com filtros.
-
-## Detalhes técnicos
-- Usar `<Label>` de `@/components/ui/label` com classe `text-xs font-medium text-muted-foreground`.
-- Não alterar lógica de filtragem, estado, hooks ou tipos — apenas markup/estrutura.
-- Sem mudanças de banco, RLS ou comportamento.
-
-## Critérios de aceite
-- Cada filtro nas páginas Clientes, Declarações e Dashboard exibe um rótulo curto acima.
-- Larguras, ícones e comportamento dos selects permanecem iguais.
-- Em viewport menor, os filtros continuam quebrando linha (flex-wrap preservado).
-
-Confirma se inclui o Dashboard ou prefere limitar a Clientes + Declarações?
+4. Validar o resultado
+- Consultar logs da função após a alteração e garantir que os erros continuem controlados, mas com mensagem amigável no frontend.
+- Não alterar schema, RLS ou regras de multi-tenancy.

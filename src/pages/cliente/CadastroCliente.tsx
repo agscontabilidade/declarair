@@ -136,7 +136,21 @@ export default function CadastroCliente() {
       // A mensagem real vem no corpo (data.error); o `error` do SDK é genérico
       const realError = (data as { error?: string } | null)?.error;
       if (realError) throw new Error(realError);
-      if (error) throw new Error(error.message || 'Erro ao cadastrar');
+      if (error) {
+        // FunctionsHttpError esconde a mensagem real no Response do `context`
+        const ctx = (error as { context?: Response }).context;
+        if (ctx && typeof ctx.json === 'function') {
+          try {
+            const body = await ctx.clone().json();
+            if (body?.error) throw new Error(body.error);
+          } catch (parseErr) {
+            if (parseErr instanceof Error && parseErr.message && parseErr.message !== 'Edge Function returned a non-2xx status code') {
+              throw parseErr;
+            }
+          }
+        }
+        throw new Error(error.message || 'Erro ao cadastrar');
+      }
 
       // Auto-login
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -162,6 +176,7 @@ export default function CadastroCliente() {
       setSubmitting(false);
     }
   };
+
 
   if (loading) {
     return (
