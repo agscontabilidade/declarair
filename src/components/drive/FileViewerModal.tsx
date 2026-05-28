@@ -73,21 +73,8 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
     setInlineUrl(null);
 
     (async () => {
-      // PDF: prefere sidecar pesquisável (`<path>.ocr.pdf`) quando existir.
-      let effectiveStoragePath = current.arquivo_url;
-      if (type === 'pdf') {
-        const sidecar = await getSearchablePdfUrl(current.arquivo_url);
-        if (cancelled) return;
-        if (sidecar) {
-          setSignedUrl(sidecar);
-          setInlineUrl(sidecar);
-          setLoading(false);
-          return;
-        }
-      }
-
-      const url = await getSignedUrlCached(effectiveStoragePath);
-      if (cancelled) return;
+    (async () => {
+      const url = await getSignedUrlCached(current.arquivo_url);
       if (!url) {
         toast.error('Erro ao carregar arquivo');
         setLoading(false);
