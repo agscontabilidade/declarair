@@ -323,7 +323,7 @@ export default function CadastroCliente() {
                       type={showPassword ? 'text' : 'password'}
                       value={form.senha}
                       onChange={(e) => setForm({ ...form, senha: e.target.value })}
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Mínimo 8 caracteres"
                       className={erros.senha ? 'border-destructive' : ''}
                     />
                     <button
