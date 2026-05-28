@@ -163,6 +163,29 @@ export default function WebhooksPage() {
                       </DialogContent>
                     </Dialog>
                   )}
+
+                  <Dialog open={!!novoSecret} onOpenChange={(o) => !o && setNovoSecret(null)}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Webhook criado</DialogTitle>
+                        <DialogDescription>
+                          Copie e guarde este secret agora. Por segurança, ele não poderá ser visualizado novamente.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+                        <code className="text-xs flex-1 break-all">{novoSecret}</code>
+                        <Button
+                          variant="ghost" size="icon" className="h-7 w-7"
+                          onClick={() => { if (novoSecret) { navigator.clipboard.writeText(novoSecret); toast.success('Copiado!'); } }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={() => setNovoSecret(null)}>Entendi, guardei o secret</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardHeader>
               <CardContent>
