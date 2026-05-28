@@ -47,9 +47,9 @@ export function CobrancaModal({ open, onOpenChange, onSave, loading, editData, c
       setDescricao('');
       setValorStr('');
       setDataVencimento(undefined);
-      setDeclaracaoId('');
+      setDeclaracaoId(declaracaoIdInicial ?? '');
     }
-  }, [editData, open, clienteIdLocked]);
+  }, [editData, open, clienteIdLocked, declaracaoIdInicial]);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes-select', profile.escritorioId],
