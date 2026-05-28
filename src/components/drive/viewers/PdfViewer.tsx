@@ -17,9 +17,11 @@ interface Props {
   nome: string;
   /** Called when streaming render fails — parent can switch to a blob URL fallback. */
   onStreamError?: () => void;
+  /** Called once when we detect the PDF is likely scanned (no extractable text). */
+  onScannedDetected?: () => void;
 }
 
-export function PdfViewer({ url, nome, onStreamError }: Props) {
+export function PdfViewer({ url, nome, onStreamError, onScannedDetected }: Props) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.8);
@@ -46,11 +48,35 @@ export function PdfViewer({ url, nome, onStreamError }: Props) {
   // Memoize the file source so <Document> doesn't reload on unrelated re-renders.
   const fileSource = useMemo(() => ({ url }), [url]);
 
-  const onLoadSuccess = useCallback(({ numPages: n }: { numPages: number }) => {
-    setNumPages(n);
+  const scanDetectedRef = useRef(false);
+
+  const onLoadSuccess = useCallback(async (pdf: import('pdfjs-dist').PDFDocumentProxy) => {
+    setNumPages(pdf.numPages);
     setPageNumber(1);
     setError(null);
-  }, []);
+
+    if (!onScannedDetected || scanDetectedRef.current) return;
+    try {
+      const page = await pdf.getPage(1);
+      const tc = await page.getTextContent();
+      const text = tc.items
+        .map((it) => ('str' in it ? it.str : ''))
+        .join('')
+        .trim();
+      if (text.length < 50) {
+        scanDetectedRef.current = true;
+        onScannedDetected();
+      }
+    } catch (e) {
+      console.warn('[PdfViewer] scan detection failed', e);
+    }
+  }, [onScannedDetected]);
+
+  // Reset detection flag quando troca de arquivo.
+  useEffect(() => {
+    scanDetectedRef.current = false;
+  }, [url]);
+
 
   const onLoadError = useCallback((err: Error) => {
     console.error('[PdfViewer] load error', err);
