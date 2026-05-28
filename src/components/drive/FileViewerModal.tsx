@@ -75,6 +75,7 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
     (async () => {
     (async () => {
       const url = await getSignedUrlCached(current.arquivo_url);
+      if (cancelled) return;
       if (!url) {
         toast.error('Erro ao carregar arquivo');
         setLoading(false);
