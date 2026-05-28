@@ -327,7 +327,7 @@ export default function Drive() {
         onChange={(id) => setViewerCurrentId(id)}
         onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
         togglingLancadoId={togglingLancadoId}
-        onDelete={(id) => deleteDoc.mutateAsync(id)}
+        onDelete={async (id) => { await deleteDoc.mutateAsync(id); }}
         deletingId={deletingId}
       />
     </DashboardLayout>
