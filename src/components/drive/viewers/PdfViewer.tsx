@@ -52,34 +52,12 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
   // Memoize the file source so <Document> doesn't reload on unrelated re-renders.
   const fileSource = useMemo(() => ({ url }), [url]);
 
-  const scanDetectedRef = useRef(false);
-
-  const onLoadSuccess = useCallback(async (pdf: import('pdfjs-dist').PDFDocumentProxy) => {
+  const onLoadSuccess = useCallback((pdf: import('pdfjs-dist').PDFDocumentProxy) => {
+    pdfDocRef.current = pdf;
     setNumPages(pdf.numPages);
     setPageNumber(1);
     setError(null);
-
-    if (!onScannedDetected || scanDetectedRef.current) return;
-    try {
-      const page = await pdf.getPage(1);
-      const tc = await page.getTextContent();
-      const text = tc.items
-        .map((it) => ('str' in it ? it.str : ''))
-        .join('')
-        .trim();
-      if (text.length < 50) {
-        scanDetectedRef.current = true;
-        onScannedDetected();
-      }
-    } catch (e) {
-      console.warn('[PdfViewer] scan detection failed', e);
-    }
-  }, [onScannedDetected]);
-
-  // Reset detection flag quando troca de arquivo.
-  useEffect(() => {
-    scanDetectedRef.current = false;
-  }, [url]);
+  }, []);
 
 
   const onLoadError = useCallback((err: Error) => {
