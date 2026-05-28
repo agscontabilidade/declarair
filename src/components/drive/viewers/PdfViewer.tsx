@@ -233,7 +233,7 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
             className="h-8 gap-1.5 text-xs"
             onClick={handleCopyText}
             disabled={extractingText}
-            title="Copiar texto do PDF"
+            title={hasNativeText === false ? 'Reconhecer texto via OCR e copiar' : 'Copiar todo o texto do PDF'}
           >
             {extractingText ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardCopy className="h-3.5 w-3.5" />}
             Copiar texto
