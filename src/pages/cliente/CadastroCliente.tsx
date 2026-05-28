@@ -105,7 +105,7 @@ export default function CadastroCliente() {
     else if (!/\S+@\S+\.\S+/.test(form.email)) novosErros.email = 'Email inválido';
     if (!form.telefone.trim()) novosErros.telefone = 'Telefone é obrigatório';
     if (!form.senha) novosErros.senha = 'Senha é obrigatória';
-    else if (form.senha.length < 6) novosErros.senha = 'Mínimo 6 caracteres';
+    else if (form.senha.length < 8) novosErros.senha = 'A senha precisa ter pelo menos 8 caracteres';
     if (form.senha !== form.confirmarSenha) novosErros.confirmarSenha = 'Senhas não conferem';
     if (!form.aceitouTermos) novosErros.termos = 'Você deve aceitar os termos';
 
