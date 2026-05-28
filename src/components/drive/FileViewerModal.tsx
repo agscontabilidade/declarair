@@ -104,7 +104,7 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
       cancelled = true;
       controller.abort();
     };
-  }, [current]);
+  }, [current?.id, current?.arquivo_url]);
 
   // Prefetch leve apenas dos signed URLs dos vizinhos — não baixa o arquivo
   // inteiro para não competir com o arquivo atual em conexões lentas.
