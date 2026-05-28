@@ -36,8 +36,11 @@ export default function Clientes() {
   const [viewCliente, setViewCliente] = useState<ClienteRow | null>(null);
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
   const [cobrancaCliente, setCobrancaCliente] = useState<ClienteRow | null>(null);
+  const [cobrancaDeclaracaoId, setCobrancaDeclaracaoId] = useState<string | null>(null);
   const [uploadDocs, setUploadDocs] = useState<{ declaracaoId: string; nome: string } | null>(null);
   const [conviteCtx, setConviteCtx] = useState<EnviarConviteClienteCtx | null>(null);
+  const [pendingCobranca, setPendingCobranca] = useState<{ clienteId: string; nome: string; declaracaoId: string | null } | null>(null);
+  const [askCobrancaOpen, setAskCobrancaOpen] = useState(false);
   const { criar: criarCobranca } = useCobrancas();
   const { podeVerClientes, podeCriarClientes, podeEditarClientes, podeExcluirCliente } = usePermissoes();
   const { toast } = useToast();
