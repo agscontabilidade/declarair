@@ -71,6 +71,55 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
     setError('Não foi possível renderizar este PDF. Use "Abrir em nova aba" no topo do modal.');
   }, [onStreamError]);
 
+  const handleCopyText = useCallback(async () => {
+    const pdf = pdfDocRef.current;
+    if (!pdf || extractingText) return;
+    setExtractingText(true);
+    const toastId = toast.loading('Extraindo texto…');
+    try {
+      // 1) tenta texto nativo via pdf.js
+      let nativeText = '';
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const tc = await page.getTextContent();
+        nativeText += tc.items.map((it) => ('str' in it ? it.str : '')).join(' ');
+        nativeText += '\n\n';
+      }
+      const trimmed = nativeText.trim();
+      if (trimmed.length >= 50) {
+        await navigator.clipboard.writeText(trimmed);
+        toast.success('Texto copiado para a área de transferência', { id: toastId });
+        return;
+      }
+      // 2) escaneado → OCR sob demanda
+      if (!storagePath) {
+        toast.error('Este PDF é escaneado e não contém texto', { id: toastId });
+        return;
+      }
+      toast.loading('Reconhecendo texto via OCR (pode levar alguns segundos)…', { id: toastId });
+      const { data, error } = await supabase.functions.invoke('ocr-pdf-searchable', {
+        body: { path: storagePath, mode: 'text' },
+      });
+      if (error) throw error;
+      const result = data as { status?: string; text?: string; error?: string };
+      if (result?.status === 'skipped_too_large') {
+        toast.error('PDF muito grande para OCR (máx. 3MB)', { id: toastId });
+        return;
+      }
+      if (result?.status !== 'ready' || !result.text) {
+        throw new Error(result?.error || 'falha no OCR');
+      }
+      await navigator.clipboard.writeText(result.text);
+      toast.success('Texto copiado para a área de transferência', { id: toastId });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Erro ao extrair texto';
+      toast.error(msg, { id: toastId });
+    } finally {
+      setExtractingText(false);
+    }
+  }, [extractingText, storagePath]);
+
+
   return (
     <div className="w-full h-full flex flex-col bg-muted rounded-md overflow-hidden select-text">
       <div className="flex-1 min-h-0 overflow-auto flex justify-center p-4">
