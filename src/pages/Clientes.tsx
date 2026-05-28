@@ -3,6 +3,8 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
 import { Plus, Search, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
 // (bloqueio de cadastros revertido — contador volta a poder criar clientes normalmente)
 import { useClientes } from '@/hooks/useClientes';
