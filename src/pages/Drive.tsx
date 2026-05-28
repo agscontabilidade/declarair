@@ -151,8 +151,9 @@ export default function Drive() {
     const files: ViewerFile[] = docs
       .filter(d => d.arquivo_url && d.arquivo_nome)
       .map(d => ({ id: d.id, arquivo_url: d.arquivo_url!, arquivo_nome: d.arquivo_nome!, lancado: !!d.lancado }));
-    setViewerState({ files, currentId: docId });
-  }, []);
+    setViewerFiles(files);
+    setViewerCurrentId(docId);
+  }, [setViewerCurrentId]);
 
   return (
     <DashboardLayout>
