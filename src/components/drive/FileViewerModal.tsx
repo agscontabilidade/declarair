@@ -301,7 +301,24 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
             </Button>
             <Button variant="ghost" size="icon" onClick={() => signedUrl && window.open(signedUrl, '_blank')} disabled={!signedUrl} title="Abrir em nova aba">
               <ExternalLink className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={() => signedUrl && window.open(signedUrl, '_blank')} disabled={!signedUrl} title="Abrir em nova aba">
+              <ExternalLink className="h-4 w-4" />
             </Button>
+            {onDelete && current && (
+              <>
+                <div className="w-px h-5 bg-border mx-1" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setConfirmDeleteOpen(true)}
+                  disabled={deletingId === current.id}
+                  title="Excluir"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  {deletingId === current.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                </Button>
+              </>
+            )}
             <Button variant="ghost" size="icon" onClick={onClose} title="Fechar (Esc)">
               <X className="h-4 w-4" />
             </Button>
