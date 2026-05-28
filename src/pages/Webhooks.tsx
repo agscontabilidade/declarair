@@ -194,15 +194,7 @@ export default function WebhooksPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1">
-                              <code className="text-xs">{showSecret[wh.id] ? wh.secret : 'whsec_••••••••'}</code>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowSecret(p => ({ ...p, [wh.id]: !p[wh.id] }))}>
-                                {showSecret[wh.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { navigator.clipboard.writeText(wh.secret); toast.success('Copiado!'); }}>
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </div>
+                            <code className="text-xs text-muted-foreground">whsec_••••••••</code>
                           </TableCell>
                           <TableCell>
                             <Badge className={wh.ativo ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : ''} variant={wh.ativo ? 'outline' : 'secondary'}>
