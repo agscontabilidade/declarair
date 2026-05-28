@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
 import { getErrorMessage } from '@/lib/errors';
+import { useDeleteDocumento } from '@/hooks/useDeleteDocumento';
 
 interface ChecklistItem {
   id: string;
