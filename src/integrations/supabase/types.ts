@@ -1970,6 +1970,30 @@ export type Database = {
           },
         ]
       }
+      ocr_jobs: {
+        Row: {
+          created_at: string
+          error: string | null
+          path: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          path: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          path?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pagamentos_assinatura: {
         Row: {
           asaas_payment_id: string | null
