@@ -6,7 +6,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, Download, Eye, User, Briefcase, Upload, Loader2, Trash2, CheckCircle2 } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { FileViewerModal, type ViewerFile } from '@/components/drive/FileViewerModal';
@@ -42,7 +43,14 @@ export function DocumentosDeclaracaoModal({ declaracaoId, clienteNome, open, onO
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [viewerCurrentId, setViewerCurrentId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewerCurrentId = searchParams.get('doc');
+  const setViewerCurrentId = useCallback((id: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set('doc', id);
+    else next.delete('doc');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const { data: ctx } = useQuery({
     queryKey: ['declaracao-ctx', declaracaoId],

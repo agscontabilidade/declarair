@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,16 @@ export default function Drive() {
   const [anoFiltro, setAnoFiltro] = useState(String(new Date().getFullYear()));
   const [expandedCliente, setExpandedCliente] = useState<string | null>(null);
   const [expandedCategoria, setExpandedCategoria] = useState<string | null>(null);
-  const [viewerState, setViewerState] = useState<{ files: ViewerFile[]; currentId: string | null }>({ files: [], currentId: null });
+  const [viewerFiles, setViewerFiles] = useState<ViewerFile[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewerCurrentId = searchParams.get('doc');
+  const setViewerCurrentId = useCallback((id: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set('doc', id);
+    else next.delete('doc');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
 
   const queryClient = useQueryClient();
   const [togglingLancadoId, setTogglingLancadoId] = useState<string | null>(null);
@@ -77,10 +87,9 @@ export default function Drive() {
     onSuccess: (res) => {
       toast.success(res.novoValor ? 'Documento marcado como lançado' : 'Marcação removida');
       // Atualiza o file aberto no modal (e a lista do Drive) sem aguardar refetch
-      setViewerState((s) => ({
-        ...s,
-        files: s.files.map((f) => (f.id === res.id ? { ...f, lancado: res.novoValor } : f)),
-      }));
+      setViewerFiles((files) =>
+        files.map((f) => (f.id === res.id ? { ...f, lancado: res.novoValor } : f)),
+      );
       queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
       queryClient.invalidateQueries({ queryKey: ['documentos-declaracao'] });
       queryClient.invalidateQueries({ queryKey: ['declaracao-aba-docs'] });
@@ -142,8 +151,9 @@ export default function Drive() {
     const files: ViewerFile[] = docs
       .filter(d => d.arquivo_url && d.arquivo_nome)
       .map(d => ({ id: d.id, arquivo_url: d.arquivo_url!, arquivo_nome: d.arquivo_nome!, lancado: !!d.lancado }));
-    setViewerState({ files, currentId: docId });
-  }, []);
+    setViewerFiles(files);
+    setViewerCurrentId(docId);
+  }, [setViewerCurrentId]);
 
   return (
     <DashboardLayout>
@@ -263,10 +273,14 @@ export default function Drive() {
       </div>
 
       <FileViewerModal
-        files={viewerState.files}
-        currentId={viewerState.currentId}
-        onClose={() => setViewerState({ files: [], currentId: null })}
-        onChange={(id) => setViewerState(s => ({ ...s, currentId: id }))}
+        files={viewerFiles.length > 0 ? viewerFiles : (
+          docs
+            .filter((d) => d.arquivo_url && d.arquivo_nome)
+            .map((d) => ({ id: d.id, arquivo_url: d.arquivo_url!, arquivo_nome: d.arquivo_nome!, lancado: !!d.lancado }))
+        )}
+        currentId={viewerCurrentId}
+        onClose={() => { setViewerCurrentId(null); setViewerFiles([]); }}
+        onChange={(id) => setViewerCurrentId(id)}
         onToggleLancado={(id, novoValor) => toggleLancado.mutate({ id, novoValor })}
         togglingLancadoId={togglingLancadoId}
       />

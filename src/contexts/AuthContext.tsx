@@ -163,9 +163,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else if (event === 'SIGNED_OUT') {
           resetAuthState();
           setLoading(false);
-        } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
-          loadProfile(newSession.user);
         }
+        // TOKEN_REFRESHED: deliberadamente NÃO recarregamos o profile.
+        // O refresh de token (disparado ao voltar para a aba após algum tempo)
+        // não muda dados do usuário — apenas renova o JWT. Recarregar o profile
+        // aqui causa cascata de re-renders que desmonta modais abertos
+        // (ex.: visualizador de documentos), atrapalhando o trabalho do contador.
       }
     );
 

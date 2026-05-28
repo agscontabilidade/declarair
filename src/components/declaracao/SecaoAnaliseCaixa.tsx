@@ -9,7 +9,7 @@ import {
   Eye, Trash2, RotateCcw, ChevronDown, ChevronUp, History, 
   AlertCircle, CheckCircle2, XCircle
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -64,7 +64,14 @@ export function SecaoAnaliseCaixa({ declaracaoId }: Props) {
   const [loading, setLoading] = useState(false);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<string | null>(null);
   const [analiseRecenteId, setAnaliseRecenteId] = useState<string | null>(null);
-  const [viewerOpen, setViewerOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewerOpen = searchParams.get('doc') === 'analise-caixa';
+  const setViewerOpen = (open: boolean) => {
+    const next = new URLSearchParams(searchParams);
+    if (open) next.set('doc', 'analise-caixa');
+    else next.delete('doc');
+    setSearchParams(next, { replace: true });
+  };
   const [analiseSelecionadaId, setAnaliseSelecionadaId] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<{
     motivo: 'mismatch' | 'unreadable';

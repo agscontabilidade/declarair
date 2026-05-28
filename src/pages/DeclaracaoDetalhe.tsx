@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,13 +26,22 @@ import { QueryError } from '@/components/ui/QueryError';
 
 export default function DeclaracaoDetalhe() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const hook = useDeclaracao(id);
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const [transmitidaModalOpen, setTransmitidaModalOpen] = useState(false);
   const [enviarModalOpen, setEnviarModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
-  
+
+  const tabAtiva = searchParams.get('tab') || 'documentos';
+  const handleTabChange = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === 'documentos') next.delete('tab');
+    else next.set('tab', value);
+    setSearchParams(next, { replace: true });
+  };
+
 
   const handleChangeStatus = (newStatus: string) => {
     if (newStatus === 'transmitida') {
@@ -160,7 +169,7 @@ export default function DeclaracaoDetalhe() {
           </div>
         )}
 
-        <Tabs defaultValue="documentos" className="w-full">
+        <Tabs value={tabAtiva} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
             <TabsTrigger value="cadastro">Informações Cadastrais</TabsTrigger>
