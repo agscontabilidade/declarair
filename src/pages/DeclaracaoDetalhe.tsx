@@ -169,7 +169,7 @@ export default function DeclaracaoDetalhe() {
           </div>
         )}
 
-        <Tabs defaultValue="documentos" className="w-full">
+        <Tabs value={tabAtiva} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
             <TabsTrigger value="cadastro">Informações Cadastrais</TabsTrigger>
