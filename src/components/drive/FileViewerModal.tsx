@@ -283,7 +283,7 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
             <>
               {fileType === 'pdf' && inlineUrl && (
                 <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><Skeleton className="w-full h-full" /></div>}>
-                  <PdfViewer url={inlineUrl} nome={current.arquivo_nome} onStreamError={handlePdfStreamError} onScannedDetected={handleScannedPdfDetected} />
+                  <PdfViewer url={inlineUrl} nome={current.arquivo_nome} onStreamError={handlePdfStreamError} />
                 </Suspense>
               )}
               {fileType === 'image' && inlineUrl && <ImageViewer url={inlineUrl} nome={current.arquivo_nome} />}
