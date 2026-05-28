@@ -181,6 +181,14 @@ Deno.serve(async (req) => {
     const decl = Array.isArray(cli.declaracoes) ? cli.declaracoes[0] : cli.declaracoes;
     const declaracaoId = decl?.id ?? null;
 
+    // Rede de segurança: não envia lembrete se já há qualquer documento entregue
+    const info = declMap.get(cli.id);
+    if (info?.jaTemDoc || (declaracaoId && declsComChecklist.has(declaracaoId))) {
+      pulados.push({ clienteId: cli.id, motivo: "ja_possui_documentos" });
+      continue;
+    }
+
+
     if (body.canal === "email") {
       if (!cli.email) {
         pulados.push({ clienteId: cli.id, motivo: "sem_email" });
