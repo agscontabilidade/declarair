@@ -1,40 +1,54 @@
-## Problema
+## Diagnóstico
 
-O botão "Excluir documento" no `FileViewerModal` só aparece quando o componente pai passa `onDelete`. Hoje isso só acontece em `src/pages/Drive.tsx`. Quando o visualizador é aberto pela tela de detalhe da declaração (`/declaracoes/:id` — onde o usuário está agora), ele é renderizado por `AbaDocumentosUnificada` e por `DocumentosDeclaracaoModal` sem `onDelete`, então o ícone da lixeira não aparece.
+O `PdfViewer` já liga `renderTextLayer={true}` e importa `react-pdf/dist/Page/TextLayer.css` — então a camada de texto invisível do pdf.js (a mesma técnica que o Adobe usa) **é renderizada** para PDFs nativos. Confirmei no `node_modules`:
 
-## Solução
+- `react-pdf` v10 aplica `position: relative` inline em `.react-pdf__Page`.
+- `TextLayer.css` posiciona `.textLayer` com `inset: 0; z-index: 2;` e dá `cursor: text` aos `span`s.
 
-Extrair a mutação de exclusão usada hoje em `Drive.tsx` para um hook compartilhado e plugá-lo nos outros dois usos do `FileViewerModal`. Sem mudanças de schema, RLS, UI do modal ou comportamento de toggle "lançado".
+Portanto a infraestrutura está certa. O motivo da seleção não estar funcionando para PDFs nativos é provavelmente uma das três causas, todas frontend-only e **sem custo de servidor**:
 
-### 1. Novo hook `src/hooks/useDeleteDocumento.ts`
+1. **Canvas interceptando o evento de seleção** — pdf.js pinta o canvas e a camada de texto por cima, mas, dependendo do navegador, arrastar começa no canvas e o navegador não promove para `selection` da camada de texto sem `pointer-events: none` no `<canvas>`.
+2. **Algum ancestral (Dialog do shadcn, sidebar, etc.) propagando `user-select: none`** ou `onMouseDown` que faz `preventDefault`.
+3. **`disableStream/disableAutoFetch` ativos** combinados com algum servidor de storage que retorna o PDF inteiro de uma vez — irrelevante para seleção, mas vale confirmar.
 
-- Recebe a lista atual `viewerFiles` e callbacks (`onAfterDelete(remainingFiles, nextId)`) do chamador.
-- Faz o mesmo que o `deleteDoc` atual em `Drive.tsx`:
-  1. Remove `arquivo_url` e o sidecar `${path}.ocr.pdf` do bucket `documentos-clientes` (best-effort).
-  2. `update` em `checklist_documentos` zerando `arquivo_url`, `arquivo_nome`, `data_recebimento`, `status='pendente'`, `lancado=false`, `lancado_em=null`, `lancado_por=null`.
-  3. Invalida `['drive-docs']`, `['documentos-declaracao']`, `['declaracao-aba-docs']`, `['declaracao-checklist']`.
-  4. Toasts de sucesso/erro idênticos.
-- Expõe `{ deleteDoc, deletingId }`.
+## Mudanças propostas (escopo estrito: só seleção de PDF nativo)
 
-### 2. `src/pages/Drive.tsx`
+### 1. `src/index.css` — adicionar bloco mínimo dedicado ao viewer
 
-- Substituir o `useMutation` local pelo novo hook, mantendo o comportamento atual (cálculo do próximo `viewerCurrentId` no `onAfterDelete`).
+```css
+/* Garante que a camada de texto invisível do pdf.js fique selecionável
+   sobre o canvas, sem que o canvas roube o pointer/seleção. */
+.react-pdf__Page { user-select: text; -webkit-user-select: text; }
+.react-pdf__Page__canvas { pointer-events: none; user-select: none; }
+.react-pdf__Page__textContent,
+.react-pdf__Page .textLayer { user-select: text; -webkit-user-select: text; cursor: text; }
+.react-pdf__Page .textLayer span,
+.react-pdf__Page .textLayer br { user-select: text; -webkit-user-select: text; }
+```
 
-### 3. `src/components/declaracao/AbaDocumentosUnificada.tsx`
+Isso resolve as causas (1) e (2) sem mexer em nenhum componente. Nada de novo é renderizado.
 
-- Usar o hook e passar `onDelete` + `deletingId` para o `FileViewerModal` (linhas 345–351).
-- No `onAfterDelete`, atualizar `viewerFiles` local e mover `viewerCurrentId` para o próximo arquivo (ou fechar se vazio), espelhando o Drive.
+### 2. `src/components/drive/viewers/PdfViewer.tsx` — limpeza pontual
 
-### 4. `src/components/declaracoes/DocumentosDeclaracaoModal.tsx`
+- Remover `className="select-text"` redundante do `<Page>` (o CSS acima já garante).
+- Manter o resto do componente intacto — toolbar, "Copiar texto", paginação, zoom, fallback de blob, OCR sob demanda.
 
-- Mesmo tratamento do item 3 para o `FileViewerModal` (linhas 384–390).
+### 3. Pequena melhoria de descoberta
 
-### 5. `src/components/declaracao/SecaoAnaliseCaixa.tsx`
+- Quando o PDF nativo for detectado (texto extraído tem ≥ 50 chars na primeira página), trocar o tooltip do botão para **"PDF selecionável — use Ctrl+F do navegador ou arraste para selecionar"**.
+- Quando não houver texto nativo, manter o atual "Copiar texto" que dispara OCR sob demanda (já implementado, sem custo recorrente).
 
-- **Não alterar.** Esse visualizador é da Análise de Caixa (arquivos em `_analise_caixa/`), fluxo diferente, e não havia exclusão antes.
+Detecção feita uma única vez no `onLoadSuccess` (leitura da primeira página via `getTextContent()`), guardada em estado. Custo zero adicional — é a mesma chamada que o "Copiar texto" já faria.
 
 ## Validação
 
-- Abrir `/declaracoes/:id?doc=...` → ícone de lixeira aparece no header do viewer; confirmação pede "Excluir"; após confirmar, arquivo some, lista do Drive/abas atualiza, checklist volta a "pendente".
-- Repetir abrindo pelo `DocumentosDeclaracaoModal` (botão Documentos no card).
-- `Drive.tsx` continua funcionando igual.
+1. Abrir um informe de rendimentos do banco (PDF nativo) em `/declaracoes/:id?doc=...`.
+2. Arrastar o mouse sobre um trecho → deve aparecer cursor de texto + seleção azul + Ctrl+C funcionando.
+3. Ctrl+F do navegador deve achar palavras dentro do PDF.
+4. Abrir um documento escaneado (foto) → seleção não acontece (esperado), botão "Copiar texto" continua disparando OCR sob demanda.
+
+## O que NÃO está no escopo
+
+- Nenhuma chamada extra de OCR para PDFs nativos.
+- Nenhuma mudança em banco, RLS, storage, edge functions.
+- Nenhuma mudança no fluxo de upload — o arquivo original continua sendo o mesmo PDF nativo que o usuário enviou.
