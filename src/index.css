@@ -477,3 +477,20 @@ button, a, [role="button"] {
   height: 1px;
   background: linear-gradient(90deg, transparent, hsl(var(--lv2-slate-200)), transparent);
 }
+
+/* react-pdf — garante seleção de texto sobre o canvas em PDFs nativos.
+   pdf.js renderiza canvas + camada de texto invisível por cima; sem isto,
+   alguns navegadores deixam o canvas roubar o pointer/seleção. */
+.react-pdf__Page { user-select: text; -webkit-user-select: text; }
+.react-pdf__Page__canvas { pointer-events: none; user-select: none; }
+.react-pdf__Page__textContent,
+.react-pdf__Page .textLayer {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+.react-pdf__Page .textLayer span,
+.react-pdf__Page .textLayer br {
+  user-select: text;
+  -webkit-user-select: text;
+}

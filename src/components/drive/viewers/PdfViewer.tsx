@@ -29,6 +29,7 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
   const [scale, setScale] = useState<number>(1.8);
   const [error, setError] = useState<string | null>(null);
   const [extractingText, setExtractingText] = useState(false);
+  const [hasNativeText, setHasNativeText] = useState<boolean | null>(null);
   const pdfDocRef = useRef<import('pdfjs-dist').PDFDocumentProxy | null>(null);
   const fallbackTriedRef = useRef(false);
 
@@ -36,6 +37,7 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
   useEffect(() => {
     fallbackTriedRef.current = false;
     setError(null);
+    setHasNativeText(null);
   }, [url]);
 
   // Stable options object — recreating it forces pdf.js to reload the document.
@@ -52,11 +54,20 @@ export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
   // Memoize the file source so <Document> doesn't reload on unrelated re-renders.
   const fileSource = useMemo(() => ({ url }), [url]);
 
-  const onLoadSuccess = useCallback((pdf: import('pdfjs-dist').PDFDocumentProxy) => {
+  const onLoadSuccess = useCallback(async (pdf: import('pdfjs-dist').PDFDocumentProxy) => {
     pdfDocRef.current = pdf;
     setNumPages(pdf.numPages);
     setPageNumber(1);
     setError(null);
+    // Detecta uma única vez se o PDF tem texto nativo (≥ 50 chars na 1ª pág)
+    try {
+      const firstPage = await pdf.getPage(1);
+      const tc = await firstPage.getTextContent();
+      const txt = tc.items.map((it) => ('str' in it ? it.str : '')).join('').trim();
+      setHasNativeText(txt.length >= 50);
+    } catch {
+      setHasNativeText(false);
+    }
   }, []);
 
 
