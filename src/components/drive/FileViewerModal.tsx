@@ -197,6 +197,44 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
     }
   }, [current]);
 
+  // Trigger OCR sob demanda quando o PDF aberto não tem texto extraível
+  // (escaneado). Substitui o inlineUrl pelo sidecar pesquisável ao concluir.
+  const ocrTriggeredRef = useRef<Set<string>>(new Set());
+  const handleScannedPdfDetected = useCallback(async () => {
+    if (!current) return;
+    const path = current.arquivo_url;
+    if (path.toLowerCase().endsWith('.ocr.pdf')) return;
+    if (ocrTriggeredRef.current.has(path)) return;
+    ocrTriggeredRef.current.add(path);
+
+    const toastId = toast.loading('Tornando PDF pesquisável…');
+    try {
+      const { data, error } = await supabase.functions.invoke('ocr-pdf-searchable', {
+        body: { path },
+      });
+      if (error) throw error;
+      const status = (data as { status?: string } | null)?.status;
+      if (status === 'ready') {
+        invalidateSearchablePdfCache(path);
+        const sidecar = await getSearchablePdfUrl(path);
+        if (sidecar) {
+          setSignedUrl(sidecar);
+          setInlineUrl(sidecar);
+          toast.success('PDF pesquisável pronto', { id: toastId });
+          return;
+        }
+      }
+      if (status === 'skipped_too_large') {
+        toast.dismiss(toastId);
+        return;
+      }
+      toast.dismiss(toastId);
+    } catch {
+      toast.dismiss(toastId);
+    }
+  }, [current]);
+
+
   return (
     <Dialog open={!!currentId} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-none w-screen h-screen p-0 flex flex-col gap-0 rounded-none border-0 sm:rounded-none">
