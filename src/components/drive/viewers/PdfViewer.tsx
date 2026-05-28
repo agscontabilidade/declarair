@@ -2,7 +2,9 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw, ClipboardCopy, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -17,15 +19,17 @@ interface Props {
   nome: string;
   /** Called when streaming render fails — parent can switch to a blob URL fallback. */
   onStreamError?: () => void;
-  /** Called once when we detect the PDF is likely scanned (no extractable text). */
-  onScannedDetected?: () => void;
+  /** Storage path used to call OCR for scanned PDFs (optional). */
+  storagePath?: string;
 }
 
-export function PdfViewer({ url, nome, onStreamError, onScannedDetected }: Props) {
+export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.8);
   const [error, setError] = useState<string | null>(null);
+  const [extractingText, setExtractingText] = useState(false);
+  const pdfDocRef = useRef<import('pdfjs-dist').PDFDocumentProxy | null>(null);
   const fallbackTriedRef = useRef(false);
 
   // Reset fallback flag when the URL changes (new file).
@@ -48,34 +52,12 @@ export function PdfViewer({ url, nome, onStreamError, onScannedDetected }: Props
   // Memoize the file source so <Document> doesn't reload on unrelated re-renders.
   const fileSource = useMemo(() => ({ url }), [url]);
 
-  const scanDetectedRef = useRef(false);
-
-  const onLoadSuccess = useCallback(async (pdf: import('pdfjs-dist').PDFDocumentProxy) => {
+  const onLoadSuccess = useCallback((pdf: import('pdfjs-dist').PDFDocumentProxy) => {
+    pdfDocRef.current = pdf;
     setNumPages(pdf.numPages);
     setPageNumber(1);
     setError(null);
-
-    if (!onScannedDetected || scanDetectedRef.current) return;
-    try {
-      const page = await pdf.getPage(1);
-      const tc = await page.getTextContent();
-      const text = tc.items
-        .map((it) => ('str' in it ? it.str : ''))
-        .join('')
-        .trim();
-      if (text.length < 50) {
-        scanDetectedRef.current = true;
-        onScannedDetected();
-      }
-    } catch (e) {
-      console.warn('[PdfViewer] scan detection failed', e);
-    }
-  }, [onScannedDetected]);
-
-  // Reset detection flag quando troca de arquivo.
-  useEffect(() => {
-    scanDetectedRef.current = false;
-  }, [url]);
+  }, []);
 
 
   const onLoadError = useCallback((err: Error) => {
@@ -88,6 +70,55 @@ export function PdfViewer({ url, nome, onStreamError, onScannedDetected }: Props
     }
     setError('Não foi possível renderizar este PDF. Use "Abrir em nova aba" no topo do modal.');
   }, [onStreamError]);
+
+  const handleCopyText = useCallback(async () => {
+    const pdf = pdfDocRef.current;
+    if (!pdf || extractingText) return;
+    setExtractingText(true);
+    const toastId = toast.loading('Extraindo texto…');
+    try {
+      // 1) tenta texto nativo via pdf.js
+      let nativeText = '';
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const tc = await page.getTextContent();
+        nativeText += tc.items.map((it) => ('str' in it ? it.str : '')).join(' ');
+        nativeText += '\n\n';
+      }
+      const trimmed = nativeText.trim();
+      if (trimmed.length >= 50) {
+        await navigator.clipboard.writeText(trimmed);
+        toast.success('Texto copiado para a área de transferência', { id: toastId });
+        return;
+      }
+      // 2) escaneado → OCR sob demanda
+      if (!storagePath) {
+        toast.error('Este PDF é escaneado e não contém texto', { id: toastId });
+        return;
+      }
+      toast.loading('Reconhecendo texto via OCR (pode levar alguns segundos)…', { id: toastId });
+      const { data, error } = await supabase.functions.invoke('ocr-pdf-searchable', {
+        body: { path: storagePath, mode: 'text' },
+      });
+      if (error) throw error;
+      const result = data as { status?: string; text?: string; error?: string };
+      if (result?.status === 'skipped_too_large') {
+        toast.error('PDF muito grande para OCR (máx. 3MB)', { id: toastId });
+        return;
+      }
+      if (result?.status !== 'ready' || !result.text) {
+        throw new Error(result?.error || 'falha no OCR');
+      }
+      await navigator.clipboard.writeText(result.text);
+      toast.success('Texto copiado para a área de transferência', { id: toastId });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Erro ao extrair texto';
+      toast.error(msg, { id: toastId });
+    } finally {
+      setExtractingText(false);
+    }
+  }, [extractingText, storagePath]);
+
 
   return (
     <div className="w-full h-full flex flex-col bg-muted rounded-md overflow-hidden select-text">
@@ -176,6 +207,20 @@ export function PdfViewer({ url, nome, onStreamError, onScannedDetected }: Props
             title="Redefinir zoom"
           >
             <RotateCcw className="h-4 w-4" />
+          </Button>
+
+          <div className="w-px h-5 bg-border mx-2" />
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 gap-1.5 text-xs"
+            onClick={handleCopyText}
+            disabled={extractingText}
+            title="Copiar texto do PDF"
+          >
+            {extractingText ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardCopy className="h-3.5 w-3.5" />}
+            Copiar texto
           </Button>
         </div>
       )}

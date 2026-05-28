@@ -1,44 +1,45 @@
-## Objetivo
-Adicionar botão "Excluir" no `FileViewerModal` (visualizador de documentos do Drive) com diálogo de confirmação, sem quebrar fluxos existentes.
+## Diagnóstico
+O sidecar `.ocr.pdf` gerado pelo OCR.space (free tier) cria uma camada de texto invisível com coordenadas/tamanhos que **não batem** com o raster do PDF original. Resultado: ao selecionar, o texto aparece gigante e desalinhado (como na imagem). Além disso, dispara OCR no servidor toda vez que um PDF escaneado é aberto pela primeira vez — custo desnecessário.
 
-## Escopo (estrito)
-- Apenas o visualizador acessado pelo `/drive`. Em outros lugares onde o `FileViewerModal` é usado (ex.: `AbaDocumentosUnificada`, `DocumentosDeclaracaoModal`), o botão **não aparece** — controlado por prop opcional `onDelete`.
-- Sem alterações de schema, RLS ou outros componentes além dos listados.
+## Proposta
+**Remover o swap automático para o sidecar OCR** e substituir por um botão sob demanda **"Copiar texto"** no toolbar do `PdfViewer`, que:
 
-## Comportamento
-1. Botão "Excluir" (ícone lixeira, variante destrutiva discreta) no header do `FileViewerModal`, ao lado dos botões existentes, **apenas quando** a prop `onDelete` for fornecida.
-2. Ao clicar → abre `AlertDialog` (shadcn) com:
-   - Título: "Excluir documento"
-   - Descrição: "Tem certeza que deseja excluir **{nome do arquivo}**? Esta ação não pode ser desfeita."
-   - Ações: "Cancelar" / "Excluir" (destrutivo).
-3. Confirmação → chama `onDelete(currentId)`:
-   - Remove o arquivo do bucket `documentos-clientes` (e o sidecar `.ocr.pdf` se existir — best-effort, ignora erro).
-   - Faz `update` em `checklist_documentos` zerando `arquivo_url`, `arquivo_nome`, `data_recebimento`, `status='pendente'`, `lancado=false` (mantém o item do checklist para o contador poder receber novamente — preserva fluxos).
-   - Invalida queries: `drive-docs`, `documentos-declaracao`, `declaracao-aba-docs`, `declaracao-checklist`.
-   - Toast de sucesso/erro.
-4. Após excluir, o modal:
-   - Se houver próximo arquivo na lista, navega para ele.
-   - Se for o último, fecha o modal.
-   - Remove o item de `viewerFiles` localmente.
+1. Para PDFs nativos (com texto real) → usa `pdf.js` direto, sem chamar servidor.
+2. Para PDFs escaneados → roda OCR **uma vez sob demanda**, mostra o texto em um painel lateral selecionável/copiável. **Não** sobrepõe nada no PDF (zero risco de desalinhamento visual).
 
-## Arquivos a alterar
-- **`src/components/drive/FileViewerModal.tsx`**
-  - Nova prop opcional: `onDelete?: (id: string) => Promise<void> | void` e `deletingId?: string | null`.
-  - Importar `AlertDialog*` de `@/components/ui/alert-dialog` e ícone `Trash2`.
-  - Estado local `confirmOpen`. Botão só renderiza se `onDelete` existir.
-  - Loader (`Loader2`) quando `deletingId === current.id`.
+O PDF original continua renderizando com qualidade perfeita; nada de overlay quebrado.
 
-- **`src/pages/Drive.tsx`**
-  - Nova `useMutation` `deleteDoc`:
-    - `supabase.storage.from('documentos-clientes').remove([path, path + '.ocr.pdf'])` (ignora erro do sidecar).
-    - `update` em `checklist_documentos` (campos acima) `eq('id', id)`.
-    - Em `onSuccess`: invalida queries, remove do `viewerFiles`, navega para próximo ou fecha.
-  - Passar `onDelete` e `deletingId` ao `FileViewerModal`.
+## Mudanças
 
-## Segurança
-- RLS de `checklist_documentos` e do bucket já garantem que apenas usuários do escritório podem excluir. Sem mudanças necessárias.
+### `src/components/drive/FileViewerModal.tsx`
+- Remover `getSearchablePdfUrl` / `invalidateSearchablePdfCache` do efeito principal e o `handleScannedPdfDetected`.
+- Não passar mais `onScannedDetected` ao `PdfViewer`.
+- O sidecar nunca mais é carregado automaticamente.
+
+### `src/components/drive/viewers/PdfViewer.tsx`
+- Remover prop `onScannedDetected` e a heurística de detecção.
+- Adicionar botão **"Copiar texto"** (ícone `ClipboardCopy`) no toolbar inferior, ao lado do zoom.
+- Ao clicar:
+  - Tenta extrair texto nativo de todas as páginas via `pdf.getPage(n).getTextContent()`.
+  - Se total > 50 chars → copia para clipboard + toast "Texto copiado".
+  - Se vazio (escaneado) → chama edge function `ocr-pdf-extract-text` (novo modo `extractOnly`), copia o resultado, toast.
+  - Loader no botão durante o processo.
+
+### `supabase/functions/ocr-pdf-searchable/index.ts`
+- Adicionar parâmetro `mode: 'searchable' | 'text'` (default mantém compat: `'searchable'`).
+- Quando `mode === 'text'`: chama OCR.space sem `isCreateSearchablePdf`, retorna `{ text: string }` direto — sem upload de sidecar.
+- Frontend chama apenas com `mode: 'text'` daqui pra frente.
+
+### Sidecars antigos (`<path>.ocr.pdf`)
+- Permanecem no storage mas **deixam de ser usados** pelo viewer.
+- Não excluímos automaticamente (preserva histórico). Helpers `getSearchablePdfUrl` em `document-viewer-cache.ts` ficam órfãos — removo as referências mas mantenho as funções (uso futuro opcional) ou removo tudo se preferir limpeza total.
 
 ## Não faremos
-- Não adicionar exclusão nos modais de declaração (mantém comportamento atual).
-- Não excluir o registro do `checklist_documentos` (apenas limpa o arquivo) — preserva o checklist do contador.
-- Sem alterações de design system, sem migrações.
+- Não mexer em RLS, schema, ou outras rotas.
+- Não trocar OCR provider (Lovable AI / Google Vision) — fora do escopo "melhorar sem mais servidor".
+- Não excluir sidecars existentes (segurança/reversibilidade).
+
+## Resultado para o usuário
+- PDFs escaneados voltam a abrir limpos, sem overlay bugado.
+- Quem precisa do texto clica em **"Copiar texto"** e recebe o conteúdo no clipboard.
+- Servidor só é chamado quando o usuário pede explicitamente — custo praticamente zero por padrão.

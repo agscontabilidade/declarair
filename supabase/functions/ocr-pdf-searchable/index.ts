@@ -50,9 +50,10 @@ Deno.serve(async (req) => {
   const { data: userData, error: userErr } = await userClient.auth.getUser();
   if (userErr || !userData?.user) return jsonResponse({ error: 'unauthorized' }, 401);
 
-  let body: { path?: string };
+  let body: { path?: string; mode?: 'searchable' | 'text' };
   try { body = await req.json(); } catch { return jsonResponse({ error: 'invalid_json' }, 400); }
   const path = (body.path ?? '').trim();
+  const mode = body.mode === 'text' ? 'text' : 'searchable';
   if (!path || path.toLowerCase().endsWith('.ocr.pdf') || !path.toLowerCase().endsWith('.pdf')) {
     return jsonResponse({ error: 'invalid_path' }, 400);
   }
@@ -63,6 +64,45 @@ Deno.serve(async (req) => {
     .createSignedUrl(path, 60);
   if (signErr || !signed?.signedUrl) {
     return jsonResponse({ error: 'forbidden_or_missing' }, 403);
+  }
+  // ── Modo "text": extrai texto via OCR.space e retorna direto, sem sidecar.
+  if (mode === 'text') {
+    try {
+      const dl = await fetch(signed.signedUrl);
+      if (!dl.ok) throw new Error(`download failed ${dl.status}`);
+      const buf = new Uint8Array(await dl.arrayBuffer());
+      if (buf.byteLength > MAX_BYTES) {
+        return jsonResponse({ status: 'skipped_too_large' }, 200);
+      }
+      const fileName = path.substring(path.lastIndexOf('/') + 1);
+      const form = new FormData();
+      form.append('file', new Blob([buf], { type: 'application/pdf' }), fileName);
+      form.append('OCREngine', '2');
+      form.append('language', 'por');
+      form.append('scale', 'true');
+      form.append('detectOrientation', 'true');
+
+      const ocrRes = await fetch(OCR_URL, {
+        method: 'POST',
+        headers: { apikey: ocrApiKey },
+        body: form,
+      });
+      if (!ocrRes.ok) throw new Error(`ocr.space ${ocrRes.status}`);
+      const ocrJson = await ocrRes.json() as {
+        IsErroredOnProcessing?: boolean;
+        ErrorMessage?: string | string[];
+        ParsedResults?: Array<{ ParsedText?: string }>;
+      };
+      if (ocrJson.IsErroredOnProcessing) {
+        const msg = Array.isArray(ocrJson.ErrorMessage) ? ocrJson.ErrorMessage.join('; ') : (ocrJson.ErrorMessage ?? 'unknown');
+        throw new Error(`ocr: ${msg}`);
+      }
+      const text = (ocrJson.ParsedResults ?? []).map((r) => r.ParsedText ?? '').join('\n\n').trim();
+      return jsonResponse({ status: 'ready', text });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return jsonResponse({ status: 'failed', error: msg }, 200);
+    }
   }
 
   // From here on, use service role for sidecar storage + job tracking.

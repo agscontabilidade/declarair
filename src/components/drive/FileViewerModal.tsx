@@ -13,8 +13,7 @@ import { ImageViewer } from './viewers/ImageViewer';
 import { TextViewer } from './viewers/TextViewer';
 import { OfficeViewer } from './viewers/OfficeViewer';
 import { UnsupportedViewer } from './viewers/UnsupportedViewer';
-import { getSignedUrlCached, getBlobUrlCached, prefetchSignedUrl, getSearchablePdfUrl, invalidateSearchablePdfCache } from '@/lib/document-viewer-cache';
-import { supabase } from '@/integrations/supabase/client';
+import { getSignedUrlCached, getBlobUrlCached, prefetchSignedUrl } from '@/lib/document-viewer-cache';
 
 // PDF viewer carregado sob demanda — evita arrastar ~180KB de react-pdf/pdfjs
 // para páginas que apenas listam documentos.
@@ -74,20 +73,7 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
     setInlineUrl(null);
 
     (async () => {
-      // PDF: prefere sidecar pesquisável (`<path>.ocr.pdf`) quando existir.
-      let effectiveStoragePath = current.arquivo_url;
-      if (type === 'pdf') {
-        const sidecar = await getSearchablePdfUrl(current.arquivo_url);
-        if (cancelled) return;
-        if (sidecar) {
-          setSignedUrl(sidecar);
-          setInlineUrl(sidecar);
-          setLoading(false);
-          return;
-        }
-      }
-
-      const url = await getSignedUrlCached(effectiveStoragePath);
+      const url = await getSignedUrlCached(current.arquivo_url);
       if (cancelled) return;
       if (!url) {
         toast.error('Erro ao carregar arquivo');
@@ -201,43 +187,6 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
     }
   }, [current]);
 
-  // Trigger OCR sob demanda quando o PDF aberto não tem texto extraível
-  // (escaneado). Substitui o inlineUrl pelo sidecar pesquisável ao concluir.
-  const ocrTriggeredRef = useRef<Set<string>>(new Set());
-  const handleScannedPdfDetected = useCallback(async () => {
-    if (!current) return;
-    const path = current.arquivo_url;
-    if (path.toLowerCase().endsWith('.ocr.pdf')) return;
-    if (ocrTriggeredRef.current.has(path)) return;
-    ocrTriggeredRef.current.add(path);
-
-    const toastId = toast.loading('Tornando PDF pesquisável…');
-    try {
-      const { data, error } = await supabase.functions.invoke('ocr-pdf-searchable', {
-        body: { path },
-      });
-      if (error) throw error;
-      const status = (data as { status?: string } | null)?.status;
-      if (status === 'ready') {
-        invalidateSearchablePdfCache(path);
-        const sidecar = await getSearchablePdfUrl(path);
-        if (sidecar) {
-          setSignedUrl(sidecar);
-          setInlineUrl(sidecar);
-          toast.success('PDF pesquisável pronto', { id: toastId });
-          return;
-        }
-      }
-      if (status === 'skipped_too_large') {
-        toast.dismiss(toastId);
-        return;
-      }
-      toast.dismiss(toastId);
-    } catch {
-      toast.dismiss(toastId);
-    }
-  }, [current]);
-
 
   return (
     <Dialog open={!!currentId} onOpenChange={(o) => !o && onClose()}>
@@ -333,7 +282,7 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
             <>
               {fileType === 'pdf' && inlineUrl && (
                 <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><Skeleton className="w-full h-full" /></div>}>
-                  <PdfViewer url={inlineUrl} nome={current.arquivo_nome} onStreamError={handlePdfStreamError} onScannedDetected={handleScannedPdfDetected} />
+                  <PdfViewer url={inlineUrl} nome={current.arquivo_nome} onStreamError={handlePdfStreamError} storagePath={current.arquivo_url} />
                 </Suspense>
               )}
               {fileType === 'image' && inlineUrl && <ImageViewer url={inlineUrl} nome={current.arquivo_nome} />}
