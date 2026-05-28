@@ -48,11 +48,34 @@ export function PdfViewer({ url, nome, onStreamError, onScannedDetected }: Props
   // Memoize the file source so <Document> doesn't reload on unrelated re-renders.
   const fileSource = useMemo(() => ({ url }), [url]);
 
-  const onLoadSuccess = useCallback(({ numPages: n }: { numPages: number }) => {
-    setNumPages(n);
+  const scanDetectedRef = useRef(false);
+
+  const onLoadSuccess = useCallback(async (pdf: { numPages: number; getPage: (n: number) => Promise<{ getTextContent: () => Promise<{ items: Array<{ str?: string }> }> }> }) => {
+    setNumPages(pdf.numPages);
     setPageNumber(1);
     setError(null);
-  }, []);
+
+    // Heurística "PDF escaneado": pega texto da página 1; se vier vazio/curto,
+    // avisa o pai (FileViewerModal) para disparar OCR sob demanda.
+    if (!onScannedDetected || scanDetectedRef.current) return;
+    try {
+      const page = await pdf.getPage(1);
+      const tc = await page.getTextContent();
+      const text = tc.items.map((it) => it.str ?? '').join('').trim();
+      if (text.length < 50) {
+        scanDetectedRef.current = true;
+        onScannedDetected();
+      }
+    } catch (e) {
+      console.warn('[PdfViewer] scan detection failed', e);
+    }
+  }, [onScannedDetected]);
+
+  // Reset detection flag quando troca de arquivo.
+  useEffect(() => {
+    scanDetectedRef.current = false;
+  }, [url]);
+
 
   const onLoadError = useCallback((err: Error) => {
     console.error('[PdfViewer] load error', err);
