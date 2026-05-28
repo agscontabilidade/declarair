@@ -17,9 +17,11 @@ interface Props {
   nome: string;
   /** Called when streaming render fails — parent can switch to a blob URL fallback. */
   onStreamError?: () => void;
+  /** Called once when we detect the PDF is likely scanned (no extractable text). */
+  onScannedDetected?: () => void;
 }
 
-export function PdfViewer({ url, nome, onStreamError }: Props) {
+export function PdfViewer({ url, nome, onStreamError, onScannedDetected }: Props) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.8);
