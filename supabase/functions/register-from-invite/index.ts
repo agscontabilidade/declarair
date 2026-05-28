@@ -38,14 +38,18 @@ Deno.serve(async (req) => {
     const cpfLimpo = cpf.replace(/\D/g, '');
     const { data: clienteExistente } = await supabaseAdmin
       .from('clientes')
-      .select('id')
+      .select('id, auth_user_id, status_onboarding, email')
       .eq('cpf', cpfLimpo)
       .eq('escritorio_id', convite.escritorio_id)
       .maybeSingle();
 
     if (clienteExistente) {
-      throw new Error('Este CPF já está cadastrado neste escritório. Faça login ou peça ajuda ao seu contador.');
+      if (clienteExistente.auth_user_id) {
+        throw new Error('Este CPF já tem uma conta criada neste escritório. Faça login com seu email e senha, ou use "Esqueci minha senha" para recuperar o acesso.');
+      }
+      throw new Error('Este CPF já está cadastrado pelo seu contador. Peça a ele para te enviar o link de "convite de acesso" (diferente deste link de autocadastro) para você criar sua senha.');
     }
+
 
     // 3. Create auth user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
