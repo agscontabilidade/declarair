@@ -344,6 +344,32 @@ export function FileViewerModal({ files, currentId, onClose, onChange, onToggleL
           ) : null}
         </div>
       </DialogContent>
+
+      {onDelete && (
+        <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir documento</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir <span className="font-medium text-foreground">{current?.arquivo_nome}</span>? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={async () => {
+                  if (!current) return;
+                  setConfirmDeleteOpen(false);
+                  await onDelete(current.id);
+                }}
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Dialog>
   );
 }
