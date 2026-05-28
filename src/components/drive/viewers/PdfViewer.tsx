@@ -19,11 +19,17 @@ interface Props {
   nome: string;
   /** Called when streaming render fails — parent can switch to a blob URL fallback. */
   onStreamError?: () => void;
-  /** Called once when we detect the PDF is likely scanned (no extractable text). */
-  onScannedDetected?: () => void;
+  /** Storage path used to call OCR for scanned PDFs (optional). */
+  storagePath?: string;
 }
 
-export function PdfViewer({ url, nome, onStreamError, onScannedDetected }: Props) {
+export function PdfViewer({ url, nome, onStreamError, storagePath }: Props) {
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [scale, setScale] = useState<number>(1.8);
+  const [error, setError] = useState<string | null>(null);
+  const [extractingText, setExtractingText] = useState(false);
+  const pdfDocRef = useRef<import('pdfjs-dist').PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.8);
