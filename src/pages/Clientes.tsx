@@ -3,6 +3,8 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
 import { Plus, Search, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
 // (bloqueio de cadastros revertido — contador volta a poder criar clientes normalmente)
 import { useClientes } from '@/hooks/useClientes';
@@ -104,15 +106,21 @@ export default function Clientes() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-full sm:max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome ou CPF..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-9"
-            />
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1.5 w-full sm:max-w-sm">
+            <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <Search className="h-3.5 w-3.5" />
+              Buscar
+            </Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou CPF..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
           <ClientesFilters
             ordenacao={ordenacao}
@@ -123,6 +131,7 @@ export default function Clientes() {
             onFiltroCobrancaChange={setFiltroCobranca}
           />
         </div>
+
 
         <Card className="shadow-sm">
           <CardContent className="p-0">
