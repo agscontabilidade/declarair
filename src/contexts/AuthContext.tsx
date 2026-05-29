@@ -61,13 +61,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadProfile = useCallback(async (currentUser: User) => {
     try {
-      // Check if is admin
-      const { data: adminRole } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', currentUser.id)
-        .eq('role', 'admin')
-        .maybeSingle();
+      // Dispara as 3 lookups em paralelo. O caso comum (contador) só usa "usuario";
+      // adminRole e cliente são consultas rápidas que só "ganham" se o usuário for
+      // de fato admin/cliente. Rodar tudo junto economiza 2 round-trips no boot.
+      const [adminRes, usuarioRes, clienteRes] = await Promise.all([
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', currentUser.id)
+          .eq('role', 'admin')
+          .maybeSingle(),
+        supabase
+          .from('usuarios')
+          .select('escritorio_id, papel, nome')
+          .eq('id', currentUser.id)
+          .maybeSingle(),
+        supabase
+          .from('clientes')
+          .select('id, nome')
+          .eq('auth_user_id', currentUser.id)
+          .maybeSingle(),
+      ]);
+
+      const adminRole = adminRes.data;
+      const usuario = usuarioRes.data;
+      const cliente = clienteRes.data;
 
       if (adminRole) {
         setUserType('admin');
@@ -80,13 +98,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         return;
       }
-
-      // Check if is contador
-      const { data: usuario, error: errorUsuario } = await supabase
-        .from('usuarios')
-        .select('escritorio_id, papel, nome')
-        .eq('id', currentUser.id)
-        .maybeSingle();
 
       if (usuario) {
         let onboardingCompleto: boolean | null = null;
@@ -115,13 +126,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         return;
       }
-
-      // Check if is cliente
-      const { data: cliente, error: errorCliente } = await supabase
-        .from('clientes')
-        .select('id, nome')
-        .eq('auth_user_id', currentUser.id)
-        .maybeSingle();
 
       if (cliente) {
         setUserType('cliente');

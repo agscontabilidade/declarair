@@ -1,33 +1,71 @@
-# Corrigir busca em /cobrancas
+## Diagnóstico da lentidão (urgente)
 
-## Problema
-O campo de busca em `/cobrancas` anuncia "Buscar por cliente, CPF ou descrição", mas o hook `useCobrancas` só filtra server-side por `descricao` (`.ilike('descricao', ...)`). Como `nome`/`cpf` ficam na tabela relacionada `clientes`, o filtro client-side que existe hoje (`Cobrancas.tsx` linhas 55-69) roda em cima de uma página já vazia. Resultado: buscas por nome ou CPF nunca encontram nada, mesmo quando o cliente existe.
+Não é o banco — o Lovable Cloud responde normal (3 conexões ativas, sem locks). O problema é **cascata de awaits no client** entre login e renderização do Dashboard.
 
-## Escopo
-Apenas o hook `src/hooks/useCobrancas.ts` e remoção do filtro client-side redundante em `src/pages/Cobrancas.tsx`. Sem mudanças de UI, schema, RLS ou edge functions.
+### Tempo real observado
+Da sua última sessão (network logs): **23s entre abrir `/dashboard` e o spinner sumir**, com cada request pequeno chegando em 200 OK rápido — o tempo é gasto **esperando o anterior terminar**, não no servidor.
 
-## Mudança
+### Cadeia que está rodando hoje (sequencial)
 
-### `src/hooks/useCobrancas.ts`
-Quando `buscaTrim` está preenchido:
+```text
+ProtectedRoute (loading)
+  └── AuthContext.loadProfile          ← 3 awaits sequenciais
+       1. SELECT user_roles            (sempre roda, mesmo p/ contador)
+       2. SELECT usuarios
+       3. SELECT escritorios.onboarding_completo
+                ↓
+BillingGate (loading)                  ← bloqueia Dashboard com spinner próprio
+  └── useBillingStatus.queryFn         ← 3 awaits sequenciais
+       1. SELECT assinaturas
+       2. SELECT escritorios.plano     (duplicado abaixo)
+       3. SELECT escritorio_addons     (duplicado abaixo)
+                ↓
+Dashboard mount
+  ├── useUsageStatus      → SELECT escritorios.plano,declaracoes_utilizadas  (3ª vez)
+  ├── useBilling          → SELECT escritorios.plano + SELECT escritorio_addons (4ª e 2ª vez)
+  ├── dashboard_kpis RPC  → 187 ms
+  └── dashboard-declaracoes SELECT com joins
+```
 
-1. Detectar se o termo parece CPF (≥3 dígitos após `replace(/\D/g,'')`).
-2. Fazer uma pré-consulta em `clientes` (mesmo `escritorio_id`) para obter `id` dos clientes cujo `nome ilike %termo%` OU (se houver dígitos) `cpf ilike %digitos%`. Limitar a, por exemplo, 500 ids para segurança.
-3. Na query principal de `cobrancas`, usar `.or()` combinando:
-   - `descricao.ilike.%termo%`
-   - `cliente_id.in.(id1,id2,...)` — somente quando a pré-consulta retornou ids.
-4. Se a pré-consulta retornar 0 ids e o termo não bater por descrição, o `.or` cai só em `descricao.ilike`, mantendo comportamento atual para esse caso.
-5. Manter `count: 'exact'` e paginação intactos — agora `total` reflete o resultado real da busca, então a paginação funciona corretamente.
+Total: ~6–9 requests em série até a tela aparecer, sendo que **5 deles eram paralelizáveis** e **3 são duplicatas** da mesma linha de `escritorios` + `escritorio_addons`.
 
-### `src/pages/Cobrancas.tsx`
-Remover o `useMemo` de filtro client-side (linhas 55-69) e passar `cobrancasPage` direto para `<CobrancasTable />`. Não é mais necessário, pois o servidor já devolve o conjunto correto e completo (paginado).
+Também: o canal realtime de `declaracoes` invalida `dashboard-kpis` e `dashboard-declaracoes` em **qualquer mudança de coluna** (até `observacoes_cliente_lida_em`), refetchando agressivo — `dashboard_kpis` rodou 265× em pouco tempo.
 
-## Por que não usar `clientes!inner` + filtro em foreign table
-PostgREST suporta filtros em tabela embutida, mas combinar com `.or()` cruzando tabela base + embutida é frágil e não conta corretamente com `count: 'exact'` em alguns cenários. A pré-consulta em `clientes` é simples, previsível e mantém o `count` correto para a paginação.
+---
 
-## Validação
-- Buscar por parte do nome do cliente → retorna cobranças desse cliente.
-- Buscar por CPF (com ou sem máscara) → retorna cobranças.
-- Buscar por parte da descrição → continua funcionando.
-- Termo vazio → comportamento original.
-- Combinação com filtro de status / período / cliente fixado pela URL continua funcionando (filtros aplicados em sequência na mesma query).
+## O que mudar (somente performance, sem mexer em regras/RLS/UI)
+
+### 1. `src/contexts/AuthContext.tsx` — paralelizar `loadProfile`
+- Disparar `user_roles`, `usuarios` e (quando tiver `escritorio_id`) `escritorios.onboarding_completo` em **`Promise.all`** em vez de aguardar um por um.
+- Para o caso comum (contador), economiza ~2 round-trips.
+
+### 2. `src/hooks/useBillingStatus.ts` — paralelizar as 3 leituras
+- Trocar os 3 `await` por `Promise.all([assinaturas, escritorios.plano, escritorio_addons])`. As três são independentes.
+
+### 3. Deduplicar `escritorios.plano` / `escritorio_addons`
+- `useBilling`, `useBillingStatus` e `useUsageStatus` leem as **mesmas linhas** com chaves diferentes no React Query, sem dedup.
+- Unificar em **dois hooks-fonte** com `staleTime` longo:
+  - `useEscritorioBilling()` → `escritorios { plano, declaracoes_utilizadas, limite_declaracoes, onboarding_completo }` — chave `['escritorio-billing', escritorioId]`, `staleTime: 5 min`.
+  - `useEscritorioAddons()` → `escritorio_addons` ativos — chave `['escritorio-addons', escritorioId]`, `staleTime: 5 min`.
+- `useBilling`, `useBillingStatus`, `useUsageStatus` passam a **consumir** esses dois hooks (mantêm a mesma API externa para não quebrar nada). A query `onboarding_completo` também pode vir daí, eliminando o 3º await do `loadProfile`.
+
+### 4. `BillingGate` — não bloquear o Dashboard inteiro
+- Hoje, enquanto `useBillingStatus.isLoading`, o `BillingGate` renderiza um spinner e **esconde toda a página**. Só precisamos bloquear se `isBlocked === true`.
+- Mudar para: renderizar `children` direto; só redirecionar quando `loading=false && isBlocked`. Como `isBlocked` exige `subStatus === 'overdue'/'blocked'` + `plano !== 'gratuito'`, o falso-positivo durante o carregamento já não acontece (padrão é `free`/sem flag). O Dashboard começa a renderizar em paralelo com a checagem de billing.
+
+### 5. `src/hooks/useDashboardData.ts` — invalidação realtime mais cirúrgica
+- Hoje qualquer `UPDATE` em `declaracoes` invalida `dashboard-kpis` e `dashboard-declaracoes`. Manter a invalidação de `dashboard-declaracoes` (a lista precisa refletir mudanças), mas invalidar `dashboard-kpis` **só em `INSERT`/`DELETE` ou quando `payload.new.status !== payload.old.status`** — que são os únicos eventos que mexem nos KPIs. Reduz fortemente os 265 refetches do RPC.
+
+### Fora de escopo (não mexer agora)
+- Não alterar RLS, schemas, edge functions, nem comportamento de billing/limites.
+- Não trocar bibliotecas. Não tocar Sentry, Stripe, Inter, WhatsApp.
+- Não mexer no PdfViewer, Cobranças (já consertado) nem em /declaracoes.
+
+---
+
+## Resultado esperado
+- Tempo até Dashboard interativo: de **~20–25 s** para **~3–5 s** em rede típica.
+- Carga no DB do RPC `dashboard_kpis` cai ~70 % (menos refetches por realtime).
+- Sem mudança visual nem de regras de negócio.
+
+Confirmo e parto para implementação?

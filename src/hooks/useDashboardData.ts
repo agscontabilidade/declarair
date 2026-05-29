@@ -113,9 +113,23 @@ export function useDashboardData(anoBase: number) {
     if (!escritorioId) return;
     const channel = supabase
       .channel('dashboard-declaracoes-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'declaracoes', filter: `escritorio_id=eq.${escritorioId}` }, () => {
-        debouncedInvalidate(['dashboard-kpis', escritorioId, anoBase]);
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'declaracoes', filter: `escritorio_id=eq.${escritorioId}` }, (payload) => {
+        // A lista sempre precisa refletir mudanças (qualquer coluna).
         debouncedInvalidate(['dashboard-declaracoes', escritorioId, anoBase]);
+
+        // KPIs só mudam em INSERT/DELETE ou quando o status muda.
+        // Updates em colunas como observacoes_cliente_lida_em não afetam KPIs —
+        // evita refetches desnecessários do RPC dashboard_kpis (mais caro).
+        const isKpiRelevant =
+          payload.eventType === 'INSERT' ||
+          payload.eventType === 'DELETE' ||
+          (payload.eventType === 'UPDATE' &&
+            (payload.new as { status?: string } | null)?.status !==
+              (payload.old as { status?: string } | null)?.status);
+
+        if (isKpiRelevant) {
+          debouncedInvalidate(['dashboard-kpis', escritorioId, anoBase]);
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
