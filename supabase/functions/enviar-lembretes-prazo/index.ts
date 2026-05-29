@@ -272,6 +272,7 @@ Deno.serve(async (req) => {
         escritorio: nomeEscritorio,
         custom: body.mensagem || "",
         anoBase: anoCorrente,
+        template: templateWhatsApp,
       });
       try {
         const res = await fetch(`${supabaseUrl}/functions/v1/whatsapp-service?action=send-message`, {
