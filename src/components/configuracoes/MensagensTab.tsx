@@ -6,7 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone, User, Calendar, Plus, Zap, FileText, Info } from 'lucide-react';
+import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone, User, Calendar, Plus, Zap, FileText, Info, Bell } from 'lucide-react';
+import { LembretesTemplateTab } from '@/components/configuracoes/LembretesTemplateTab';
 import {
   useWhatsAppStatus,
   useCreateInstance,
