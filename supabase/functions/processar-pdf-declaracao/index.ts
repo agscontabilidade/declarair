@@ -343,11 +343,9 @@ Deno.serve(async (req) => {
       updates.arquivo_declaracao_uploaded_at = nowIso;
       updates.declaracao_validada_em = nowIso;
       updates.declaracao_extracao = extracao;
-      // Só promove para "declaracao_pronta" se NÃO houver qualquer sinal de transmissão.
-      // Isso evita regressão de "transmitida" → "declaracao_pronta" em uploads paralelos.
-      if (!jaTransmitida && ["aguardando_documentos", "documentacao_recebida"].includes(statusAtual)) {
-        updates.status = "declaracao_pronta";
-      }
+      // NÃO altera status aqui. A promoção para "declaracao_pronta" é feita em
+      // UPDATE condicional separado (abaixo) para evitar race condition em uploads
+      // paralelos de declaração + recibo (READ COMMITTED não vê commit concorrente).
       // Resultado (restituição/pagamento) é extraído do RECIBO, não daqui.
     } else if (tipo === "recibo") {
       updates.arquivo_recibo_url = storage_path;
