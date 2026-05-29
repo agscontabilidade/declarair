@@ -20,14 +20,11 @@ const PLACEHOLDERS: Array<{ key: string; label: string }> = [
 function renderPreview(tpl: string): string {
   const base = tpl.trim() ? tpl : DEFAULT_LEMBRETE_WHATSAPP_TEMPLATE;
   return base
-    .replaceAll('{nome}', 'João Silva')
-    .replaceAll('{ano_base}', '2026')
-    .replaceAll('{prazo}', '29/05/2026')
-    .replaceAll('{escritorio}', 'AGSCONT')
-    .replaceAll(
-      '{mensagem_adicional}',
-      'Por favor, envie os documentos pendentes assim que possível.',
-    );
+    .split('{nome}').join('João Silva')
+    .split('{ano_base}').join('2026')
+    .split('{prazo}').join('29/05/2026')
+    .split('{escritorio}').join('AGSCONT')
+    .split('{mensagem_adicional}').join('Por favor, envie os documentos pendentes assim que possível.');
 }
 
 export function LembretesTemplateTab() {
