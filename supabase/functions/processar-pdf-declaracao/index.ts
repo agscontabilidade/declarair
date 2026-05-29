@@ -343,11 +343,9 @@ Deno.serve(async (req) => {
       updates.arquivo_declaracao_uploaded_at = nowIso;
       updates.declaracao_validada_em = nowIso;
       updates.declaracao_extracao = extracao;
-      // Só promove para "declaracao_pronta" se NÃO houver qualquer sinal de transmissão.
-      // Isso evita regressão de "transmitida" → "declaracao_pronta" em uploads paralelos.
-      if (!jaTransmitida && ["aguardando_documentos", "documentacao_recebida"].includes(statusAtual)) {
-        updates.status = "declaracao_pronta";
-      }
+      // NÃO altera status aqui. A promoção para "declaracao_pronta" é feita em
+      // UPDATE condicional separado (abaixo) para evitar race condition em uploads
+      // paralelos de declaração + recibo (READ COMMITTED não vê commit concorrente).
       // Resultado (restituição/pagamento) é extraído do RECIBO, não daqui.
     } else if (tipo === "recibo") {
       updates.arquivo_recibo_url = storage_path;
@@ -393,6 +391,26 @@ Deno.serve(async (req) => {
       console.error("Update error", upErr);
       return fail("Erro ao atualizar declaração: " + upErr.message);
     }
+
+    // Promoção condicional do status para "declaracao_pronta" (apenas para tipo=declaracao).
+    // Usa WHERE com pré-condições para que, se outra transação concorrente já marcou
+    // o recibo/transmitida, o UPDATE não case e o status seja preservado.
+    if (tipo === "declaracao") {
+      const { data: promoted } = await admin
+        .from("declaracoes")
+        .update({ status: "declaracao_pronta", ultima_atualizacao_status: nowIso })
+        .eq("id", declaracao_id)
+        .in("status", ["aguardando_documentos", "documentacao_recebida"])
+        .is("recibo_validado_em", null)
+        .is("arquivo_recibo_url", null)
+        .is("numero_recibo", null)
+        .is("data_transmissao", null)
+        .select("id");
+      if (promoted && promoted.length > 0) {
+        updates.status = "declaracao_pronta";
+      }
+    }
+
     console.log(
       `[final] tipo=${tipo} metodo=${metodoValidacao} ano=${(extracao as { ano_exercicio?: number; ano_calendario?: number }).ano_exercicio ?? (extracao as { ano_calendario?: number }).ano_calendario ?? "?"} resultado=${(extracao as { tipo_resultado?: string }).tipo_resultado ?? "-"} valor=${(extracao as { valor_resultado?: number }).valor_resultado ?? "-"} novo_status=${updates.status ?? dec.status}`,
     );
