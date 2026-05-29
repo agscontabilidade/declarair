@@ -39,7 +39,17 @@ function renderMensagemWhatsApp(opts: {
   escritorio: string;
   custom: string;
   anoBase: number;
+  template?: string | null;
 }): string {
+  const tpl = (opts.template ?? "").trim();
+  if (tpl) {
+    return tpl
+      .replaceAll("{nome}", opts.nome)
+      .replaceAll("{ano_base}", String(opts.anoBase))
+      .replaceAll("{prazo}", opts.prazoBR)
+      .replaceAll("{escritorio}", opts.escritorio)
+      .replaceAll("{mensagem_adicional}", opts.custom?.trim() || "");
+  }
   const head = `Olá *${opts.nome}*,\n\nLembrete: ainda não recebemos seus documentos para a declaração de IR ${opts.anoBase}.\n\n📅 *Prazo final:* ${opts.prazoBR}`;
   const body = opts.custom?.trim() ? `\n\n${opts.custom.trim()}` : `\n\nEnvie seus documentos o quanto antes para evitar multas.`;
   const foot = `\n\n— ${opts.escritorio}`;
