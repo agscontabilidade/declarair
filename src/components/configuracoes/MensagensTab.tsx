@@ -107,12 +107,15 @@ export function MensagensTab() {
       </div>
 
       <Tabs defaultValue="conexao" className="w-full">
-        <TabsList className="grid w-full max-w-[600px] grid-cols-3">
+        <TabsList className="grid w-full max-w-[760px] grid-cols-4">
           <TabsTrigger value="conexao" className="gap-2">
             <Phone className="h-4 w-4" /> Conexão
           </TabsTrigger>
           <TabsTrigger value="templates" className="gap-2">
             <FileText className="h-4 w-4" /> Modelos
+          </TabsTrigger>
+          <TabsTrigger value="lembretes" className="gap-2">
+            <Bell className="h-4 w-4" /> Lembretes
           </TabsTrigger>
           <TabsTrigger value="automacoes" className="gap-2">
             <Zap className="h-4 w-4" /> Disparos automáticos
