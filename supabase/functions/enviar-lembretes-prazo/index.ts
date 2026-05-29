@@ -39,7 +39,17 @@ function renderMensagemWhatsApp(opts: {
   escritorio: string;
   custom: string;
   anoBase: number;
+  template?: string | null;
 }): string {
+  const tpl = (opts.template ?? "").trim();
+  if (tpl) {
+    return tpl
+      .replaceAll("{nome}", opts.nome)
+      .replaceAll("{ano_base}", String(opts.anoBase))
+      .replaceAll("{prazo}", opts.prazoBR)
+      .replaceAll("{escritorio}", opts.escritorio)
+      .replaceAll("{mensagem_adicional}", opts.custom?.trim() || "");
+  }
   const head = `Olá *${opts.nome}*,\n\nLembrete: ainda não recebemos seus documentos para a declaração de IR ${opts.anoBase}.\n\n📅 *Prazo final:* ${opts.prazoBR}`;
   const body = opts.custom?.trim() ? `\n\n${opts.custom.trim()}` : `\n\nEnvie seus documentos o quanto antes para evitar multas.`;
   const foot = `\n\n— ${opts.escritorio}`;
@@ -113,10 +123,11 @@ Deno.serve(async (req) => {
   // Dados do escritório
   const { data: escritorio } = await admin
     .from("escritorios")
-    .select("id, nome, nome_fantasia")
+    .select("id, nome, nome_fantasia, lembrete_whatsapp_template")
     .eq("id", usuario.escritorio_id)
     .single();
   const nomeEscritorio = escritorio?.nome_fantasia || escritorio?.nome || "Seu contador";
+  const templateWhatsApp = escritorio?.lembrete_whatsapp_template || null;
 
   // Busca clientes elegíveis: aguardando_documentos no ano corrente
   const anoCorrente = new Date().getFullYear();
@@ -261,6 +272,7 @@ Deno.serve(async (req) => {
         escritorio: nomeEscritorio,
         custom: body.mensagem || "",
         anoBase: anoCorrente,
+        template: templateWhatsApp,
       });
       try {
         const res = await fetch(`${supabaseUrl}/functions/v1/whatsapp-service?action=send-message`, {

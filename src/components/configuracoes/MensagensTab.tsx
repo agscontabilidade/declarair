@@ -6,7 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone, User, Calendar, Plus, Zap, FileText, Info } from 'lucide-react';
+import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone, User, Calendar, Plus, Zap, FileText, Info, Bell } from 'lucide-react';
+import { LembretesTemplateTab } from '@/components/configuracoes/LembretesTemplateTab';
 import {
   useWhatsAppStatus,
   useCreateInstance,
@@ -106,12 +107,15 @@ export function MensagensTab() {
       </div>
 
       <Tabs defaultValue="conexao" className="w-full">
-        <TabsList className="grid w-full max-w-[600px] grid-cols-3">
+        <TabsList className="grid w-full max-w-[760px] grid-cols-4">
           <TabsTrigger value="conexao" className="gap-2">
             <Phone className="h-4 w-4" /> Conexão
           </TabsTrigger>
           <TabsTrigger value="templates" className="gap-2">
             <FileText className="h-4 w-4" /> Modelos
+          </TabsTrigger>
+          <TabsTrigger value="lembretes" className="gap-2">
+            <Bell className="h-4 w-4" /> Lembretes
           </TabsTrigger>
           <TabsTrigger value="automacoes" className="gap-2">
             <Zap className="h-4 w-4" /> Disparos automáticos
@@ -289,6 +293,12 @@ export function MensagensTab() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="lembretes" className="mt-4 space-y-4">
+          <LembretesTemplateTab />
+        </TabsContent>
+
+
 
         <TabsContent value="automacoes" className="mt-4 space-y-4">
           <div>
