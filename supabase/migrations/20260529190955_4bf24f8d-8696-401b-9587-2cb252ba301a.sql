@@ -1,0 +1,1 @@
+ALTER TABLE public.escritorios ADD COLUMN IF NOT EXISTS lembrete_whatsapp_template text;

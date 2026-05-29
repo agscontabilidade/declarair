@@ -1337,6 +1337,7 @@ export type Database = {
           endereco_uf: string | null
           favicon_url: string | null
           id: string
+          lembrete_whatsapp_template: string | null
           limite_declaracoes: number | null
           logo_url: string | null
           nome: string
@@ -1375,6 +1376,7 @@ export type Database = {
           endereco_uf?: string | null
           favicon_url?: string | null
           id?: string
+          lembrete_whatsapp_template?: string | null
           limite_declaracoes?: number | null
           logo_url?: string | null
           nome: string
@@ -1413,6 +1415,7 @@ export type Database = {
           endereco_uf?: string | null
           favicon_url?: string | null
           id?: string
+          lembrete_whatsapp_template?: string | null
           limite_declaracoes?: number | null
           logo_url?: string | null
           nome?: string
