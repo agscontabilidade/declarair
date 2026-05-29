@@ -123,10 +123,11 @@ Deno.serve(async (req) => {
   // Dados do escritório
   const { data: escritorio } = await admin
     .from("escritorios")
-    .select("id, nome, nome_fantasia")
+    .select("id, nome, nome_fantasia, lembrete_whatsapp_template")
     .eq("id", usuario.escritorio_id)
     .single();
   const nomeEscritorio = escritorio?.nome_fantasia || escritorio?.nome || "Seu contador";
+  const templateWhatsApp = escritorio?.lembrete_whatsapp_template || null;
 
   // Busca clientes elegíveis: aguardando_documentos no ano corrente
   const anoCorrente = new Date().getFullYear();
