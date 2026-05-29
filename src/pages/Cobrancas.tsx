@@ -52,21 +52,7 @@ export default function Cobrancas() {
     pageSize,
   });
 
-  // Filtro adicional client-side por nome/CPF do cliente (só na página atual)
-  const cobrancas = useMemo(() => {
-    const termo = debouncedBusca.trim().toLowerCase();
-    if (!termo) return cobrancasPage;
-    const digitos = termo.replace(/\D/g, '');
-    // Como a busca server-side já filtra por descrição, aqui só adicionamos
-    // nome/CPF como ampliação — mas para evitar lista vazia quando o termo
-    // bate em nome (e não em descrição), retornamos a página inteira se
-    // qualquer item bater por nome/CPF ou por descrição.
-    return cobrancasPage.filter(c =>
-      c.clientes?.nome?.toLowerCase().includes(termo) ||
-      (digitos && c.clientes?.cpf?.replace(/\D/g, '').includes(digitos)) ||
-      c.descricao?.toLowerCase().includes(termo)
-    );
-  }, [cobrancasPage, debouncedBusca]);
+  const cobrancas = cobrancasPage;
 
   const nomeClienteFiltro = clienteIdFiltro ? cobrancasPage[0]?.clientes?.nome : null;
   const { podeVerCobrancas, podeCriarCobrancas, podeExcluirCobranca } = usePermissoes();

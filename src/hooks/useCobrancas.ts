@@ -66,9 +66,25 @@ export function useCobrancas(params: UseCobrancasParams = {}) {
       if (clienteId) query = query.eq('cliente_id', clienteId);
 
       if (buscaTrim) {
-        // Busca por descrição (server-side). Nome/CPF do cliente em tabela relacionada
-        // ficam fora do .or() por simplicidade; filtro client-side cobre a página atual.
-        query = query.ilike('descricao', `%${buscaTrim}%`);
+        // Busca server-side em descrição + nome/CPF do cliente.
+        // Pré-consulta em `clientes` para obter ids correspondentes ao termo.
+        const digitos = buscaTrim.replace(/\D/g, '');
+        const escaped = buscaTrim.replace(/[%,()]/g, ' ');
+        const orParts: string[] = [`nome.ilike.%${escaped}%`];
+        if (digitos.length >= 3) orParts.push(`cpf.ilike.%${digitos}%`);
+
+        const { data: clientesMatch } = await supabase
+          .from('clientes')
+          .select('id')
+          .eq('escritorio_id', escritorioId)
+          .or(orParts.join(','))
+          .limit(500);
+
+        const ids = (clientesMatch || []).map((c) => c.id);
+        const orFilter = ids.length > 0
+          ? `descricao.ilike.%${escaped}%,cliente_id.in.(${ids.join(',')})`
+          : `descricao.ilike.%${escaped}%`;
+        query = query.or(orFilter);
       }
 
       const from = page * pageSize;
