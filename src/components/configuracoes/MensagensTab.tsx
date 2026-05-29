@@ -294,6 +294,12 @@ export function MensagensTab() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="lembretes" className="mt-4 space-y-4">
+          <LembretesTemplateTab />
+        </TabsContent>
+
+
+
         <TabsContent value="automacoes" className="mt-4 space-y-4">
           <div>
             <h2 className="font-display text-xl font-bold text-foreground">Disparos automáticos</h2>
