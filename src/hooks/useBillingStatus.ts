@@ -85,24 +85,29 @@ export function useBillingStatus(): BillingState {
   const { data, isLoading } = useQuery({
     queryKey: ['billing-status', profile.escritorioId],
     queryFn: async () => {
-      const { data: assinatura } = await supabase
-        .from('assinaturas')
-        .select('status, plano, proxima_cobranca')
-        .eq('escritorio_id', profile.escritorioId!)
-        .maybeSingle();
+      // Os 3 SELECTs são independentes — rodar em paralelo elimina ~2 round-trips
+      // do caminho crítico antes do Dashboard renderizar.
+      const [assinaturaRes, escritorioRes, addonsRes] = await Promise.all([
+        supabase
+          .from('assinaturas')
+          .select('status, plano, proxima_cobranca')
+          .eq('escritorio_id', profile.escritorioId!)
+          .maybeSingle(),
+        supabase
+          .from('escritorios')
+          .select('plano')
+          .eq('id', profile.escritorioId!)
+          .single(),
+        supabase
+          .from('escritorio_addons')
+          .select('addon_id, status, addons(nome)')
+          .eq('escritorio_id', profile.escritorioId!)
+          .eq('status', 'ativo'),
+      ]);
 
-      const { data: escritorio } = await supabase
-        .from('escritorios')
-        .select('plano')
-        .eq('id', profile.escritorioId!)
-        .single();
-
-      // Check active addons
-      const { data: addons } = await supabase
-        .from('escritorio_addons')
-        .select('addon_id, status, addons(nome)')
-        .eq('escritorio_id', profile.escritorioId!)
-        .eq('status', 'ativo');
+      const assinatura = assinaturaRes.data;
+      const escritorio = escritorioRes.data;
+      const addons = addonsRes.data;
 
       const activeAddonNames = (addons || []).map((a: { addons?: { nome?: string } }) => a.addons?.nome?.toLowerCase() || '');
 

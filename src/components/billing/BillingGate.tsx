@@ -15,18 +15,13 @@ interface BillingGateProps {
 export function BillingGate({ children, allowWhenBlocked = false }: BillingGateProps) {
   const { isBlocked, loading } = useBillingStatus();
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[200px] items-center justify-center">
-        <div className="animate-spin h-6 w-6 border-3 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (isBlocked && !allowWhenBlocked) {
+  // Só redirecionamos quando temos certeza (loading=false E isBlocked=true).
+  // Durante o carregamento o default de `isBlocked` é false (plano "gratuito"
+  // não é bloqueado), então não há falso-positivo. Renderizar o conteúdo em
+  // paralelo elimina o spinner extra entre auth e Dashboard.
+  if (!loading && isBlocked && !allowWhenBlocked) {
     return <Navigate to="/checkout" replace />;
   }
-
 
   return <>{children}</>;
 }
