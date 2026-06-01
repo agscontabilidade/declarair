@@ -86,16 +86,19 @@ function applyPlaceholders(tpl: string, ctx: RenderCtx): string {
   const linhaAtraso = ctx.diasAtraso > 0
     ? `⏰ *Em atraso há ${ctx.diasAtraso} dia(s).*`
     : "";
-  return tpl
-    .replaceAll("{nome}", ctx.nome)
-    .replaceAll("{descricao}", ctx.descricao)
-    .replaceAll("{valor}", ctx.valor)
-    .replaceAll("{vencimento}", ctx.vencimento)
-    .replaceAll("{dias_atraso}", String(ctx.diasAtraso))
-    .replaceAll("{linha_atraso}", linhaAtraso)
-    .replaceAll("{escritorio}", ctx.escritorio)
-    .replaceAll("{chave_pix}", ctx.chavePix || "")
-    .replaceAll("{mensagem_adicional}", ctx.mensagemAdicional || "")
+  const expand = (s: string) =>
+    s
+      .replaceAll("{nome}", ctx.nome)
+      .replaceAll("{descricao}", ctx.descricao)
+      .replaceAll("{valor}", ctx.valor)
+      .replaceAll("{vencimento}", ctx.vencimento)
+      .replaceAll("{dias_atraso}", String(ctx.diasAtraso))
+      .replaceAll("{linha_atraso}", linhaAtraso)
+      .replaceAll("{escritorio}", ctx.escritorio)
+      .replaceAll("{chave_pix}", ctx.chavePix || "");
+  const mensagemAdicionalExpandida = expand(ctx.mensagemAdicional || "");
+  return expand(tpl)
+    .replaceAll("{mensagem_adicional}", mensagemAdicionalExpandida)
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

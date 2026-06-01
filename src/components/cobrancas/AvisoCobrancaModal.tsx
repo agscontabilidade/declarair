@@ -8,8 +8,9 @@ import { Mail, MessageCircle, Lock, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { useAddons } from '@/hooks/useAddons';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import type { CobrancaComCliente } from '@/types/domain';
@@ -26,6 +27,8 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { myAddons, catalog } = useAddons();
+  const { profile } = useAuth();
+  const escritorioId = profile?.escritorioId;
 
   const [canal, setCanal] = useState<'email' | 'whatsapp'>('email');
   const [mensagem, setMensagem] = useState<string>('');
@@ -37,18 +40,73 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
     ? myAddons.some((a) => a.addon_id === whatsappAddon.id && a.status === 'ativo')
     : false;
 
+  const { data: escritorio } = useQuery({
+    queryKey: ['escritorio-aviso-cobranca', escritorioId],
+    enabled: !!escritorioId && open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('escritorios')
+        .select('nome, nome_fantasia, chave_pix')
+        .eq('id', escritorioId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const chavePix = escritorio?.chave_pix?.trim() || '';
+  const nomeEscritorio = escritorio?.nome_fantasia?.trim() || escritorio?.nome?.trim() || '';
+
+  const elegiveisRaw = useMemo(
+    () => cobrancas.filter((c) => c.status === 'pendente' || c.status === 'atrasado'),
+    [cobrancas],
+  );
+
+  const mensagemPadrao = useMemo(() => {
+    const blocoPix = chavePix
+      ? `\n\nCaso ainda não tenha pago, segue nossa chave Pix:\n🔑 ${chavePix}`
+      : '';
+    if (modo === 'individual' && elegiveisRaw.length === 1) {
+      const c = elegiveisRaw[0];
+      const nome = c.clientes?.nome?.split(' ')[0] || 'tudo bem';
+      const valor = formatCurrency(Number(c.valor));
+      const descricao = c.descricao || 'honorários contábeis';
+      const venc = formatDate(c.data_vencimento);
+      return (
+        `Olá ${nome}, tudo bem?\n\n` +
+        `Passando para lembrar que o honorário no valor de ${valor} referente a ${descricao} está em aberto (vencimento ${venc}).\n\n` +
+        `Se você já realizou o pagamento, por favor desconsidere este aviso. 🙂` +
+        blocoPix +
+        `\n\nQualquer dúvida, estamos à disposição.`
+      );
+    }
+    return (
+      `Olá {nome}, tudo bem?\n\n` +
+      `Passando para lembrar que o honorário no valor de R$ {valor} referente a {descricao} está em aberto (vencimento {vencimento}).\n\n` +
+      `Se você já realizou o pagamento, por favor desconsidere este aviso. 🙂` +
+      (chavePix
+        ? `\n\nCaso ainda não tenha pago, segue nossa chave Pix:\n🔑 {chave_pix}`
+        : '') +
+      `\n\nQualquer dúvida, estamos à disposição.`
+    );
+  }, [modo, elegiveisRaw, chavePix]);
+
   useEffect(() => {
     if (open) {
       setCanal('email');
-      setMensagem('');
       setExcluidos(new Set());
     }
   }, [open]);
 
-  const elegiveis = useMemo(
-    () => cobrancas.filter((c) => c.status === 'pendente' || c.status === 'atrasado'),
-    [cobrancas],
-  );
+  // Pré-popula a mensagem assim que dados do escritório carregarem (somente se vazia)
+  useEffect(() => {
+    if (open && !mensagem.trim() && mensagemPadrao) {
+      setMensagem(mensagemPadrao);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, mensagemPadrao]);
+
+  const elegiveis = elegiveisRaw;
   const alvo = useMemo(() => elegiveis.filter((c) => !excluidos.has(c.id)), [elegiveis, excluidos]);
 
   const semCanal = useMemo(() => {
@@ -147,8 +205,15 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
               placeholder="Ex: Por favor, regularize até sexta-feira para evitar juros."
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Substitui <code className="font-mono">{'{mensagem_adicional}'}</code> no template do escritório.
+              {modo === 'massa'
+                ? <>Use <code className="font-mono">{'{nome}'}</code>, <code className="font-mono">{'{valor}'}</code>, <code className="font-mono">{'{descricao}'}</code>, <code className="font-mono">{'{vencimento}'}</code>, <code className="font-mono">{'{chave_pix}'}</code> — serão substituídos por destinatário.</>
+                : <>Substitui <code className="font-mono">{'{mensagem_adicional}'}</code> no template do escritório.</>}
             </p>
+            {!chavePix && (
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
+                Nenhuma chave Pix cadastrada. Cadastre em Configurações para incluí-la automaticamente.
+              </p>
+            )}
           </div>
 
           {modo === 'massa' && elegiveis.length > 0 && (
