@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Check, Edit, X, Trash2, DollarSign, CreditCard, QrCode, FileText } from 'lucide-react';
+import { Check, Edit, X, Trash2, DollarSign, CreditCard, QrCode, FileText, Bell } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { GerarBoletoModal, VerQrModal, VerBoletoModal } from './PixBoletoModals';
