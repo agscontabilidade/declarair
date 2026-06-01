@@ -138,6 +138,20 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
       toast({ title: 'Nenhuma cobrança selecionada', variant: 'destructive' });
       return;
     }
+
+    // Parse and validate CC emails (only for email channel)
+    const ccList: string[] = [];
+    if (canal === 'email' && ccEmails.trim()) {
+      const parts = ccEmails.split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const invalid = parts.filter((e) => !emailRegex.test(e));
+      if (invalid.length > 0) {
+        toast({ title: 'Emails de cópia inválidos', description: invalid.join(', '), variant: 'destructive' });
+        return;
+      }
+      ccList.push(...parts.slice(0, 10));
+    }
+
     setEnviando(true);
     try {
       const { data, error } = await supabase.functions.invoke('enviar-aviso-cobranca', {
@@ -145,6 +159,7 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
           canal,
           mensagem,
           cobrancaIds: alvo.map((c) => c.id),
+          ...(canal === 'email' && ccList.length > 0 ? { cc: ccList } : {}),
         },
       });
       if (error) throw error;
