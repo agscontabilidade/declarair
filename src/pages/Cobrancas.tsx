@@ -248,6 +248,7 @@ export default function Cobrancas() {
               onEditar={(c) => { setEditData(c); setModalOpen(true); }}
               onCancelar={(id) => setConfirmAction({ type: 'cancelar', id })}
               onExcluir={(id) => setConfirmAction({ type: 'excluir', id })}
+              onAvisar={(c) => setAvisoModal({ cobrancas: [c], modo: 'individual' })}
               interAtivo={interAtivo || false}
             />
             <PaginationControls
