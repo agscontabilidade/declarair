@@ -67,6 +67,7 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
     const blocoPix = chavePix
       ? `\n\nCaso ainda não tenha pago, segue nossa chave Pix:\n🔑 *${chavePix}*`
       : '';
+    const assinatura = nomeEscritorio ? `\n\nAtenciosamente,\n*${nomeEscritorio}*` : '';
     if (modo === 'individual' && elegiveisRaw.length === 1) {
       const c = elegiveisRaw[0];
       const nome = c.clientes?.nome?.split(' ')[0] || 'tudo bem';
@@ -78,7 +79,8 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
         `Passando para lembrar que o honorário no valor de *${valor}* referente a ${descricao} está em aberto (vencimento *${venc}*).\n\n` +
         `Se você já realizou o pagamento, por favor desconsidere este aviso. 🙂` +
         blocoPix +
-        `\n\nQualquer dúvida, estamos à disposição.`
+        `\n\nQualquer dúvida, estamos à disposição.` +
+        assinatura
       );
     }
     return (
@@ -88,9 +90,10 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
       (chavePix
         ? `\n\nCaso ainda não tenha pago, segue nossa chave Pix:\n🔑 *{chave_pix}*`
         : '') +
-      `\n\nQualquer dúvida, estamos à disposição.`
+      `\n\nQualquer dúvida, estamos à disposição.` +
+      assinatura
     );
-  }, [modo, elegiveisRaw, chavePix]);
+  }, [modo, elegiveisRaw, chavePix, nomeEscritorio]);
 
   // Chave que identifica o alvo atual (muda quando cliente/cobrança muda)
   const alvoKey = useMemo(() => elegiveisRaw.map((c) => c.id).join(','), [elegiveisRaw]);
