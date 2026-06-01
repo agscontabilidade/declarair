@@ -121,6 +121,11 @@ export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, o
                   )}
                   {c.status !== 'cancelado' && podeEditarCobrancas && (
                     <>
+                      {onAvisar && (c.status === 'pendente' || c.status === 'atrasado') && (
+                        <Button size="icon" variant="iconAction" className="h-8 w-8" onClick={() => onAvisar(c)} title="Avisar cliente">
+                          <Bell className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button size="icon" variant="iconAction" className="h-8 w-8" onClick={() => onEditar(c)} title="Editar">
                         <Edit className="h-4 w-4" />
                       </Button>
