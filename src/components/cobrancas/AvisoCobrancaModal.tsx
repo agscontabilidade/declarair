@@ -106,10 +106,7 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mensagemPadrao]);
 
-  const elegiveis = useMemo(
-    () => cobrancas.filter((c) => c.status === 'pendente' || c.status === 'atrasado'),
-    [cobrancas],
-  );
+  const elegiveis = elegiveisRaw;
   const alvo = useMemo(() => elegiveis.filter((c) => !excluidos.has(c.id)), [elegiveis, excluidos]);
 
   const semCanal = useMemo(() => {
