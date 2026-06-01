@@ -233,9 +233,13 @@ export function ComprovacaoProcessamentoModal({
       // Rollback do checklist (e tentativa de remover o arquivo se subiu)
       if (checklistId) {
         if (storagePath) {
-          await supabase.storage.from('documentos-clientes').remove([storagePath]).catch(() => {});
+          try {
+            await supabase.storage.from('documentos-clientes').remove([storagePath]);
+          } catch { /* ignore */ }
         }
-        await supabase.from('checklist_documentos').delete().eq('id', checklistId).catch(() => {});
+        try {
+          await supabase.from('checklist_documentos').delete().eq('id', checklistId);
+        } catch { /* ignore */ }
       }
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar comprovação.');
     } finally {
