@@ -64,7 +64,7 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
 
   const mensagemPadrao = useMemo(() => {
     const blocoPix = chavePix
-      ? `\n\nCaso ainda não tenha pago, segue nossa chave Pix:\n🔑 ${chavePix}`
+      ? `\n\nCaso ainda não tenha pago, segue nossa chave Pix:\n🔑 *${chavePix}*`
       : '';
     if (modo === 'individual' && elegiveisRaw.length === 1) {
       const c = elegiveisRaw[0];
@@ -74,7 +74,7 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
       const venc = formatDate(c.data_vencimento);
       return (
         `Olá ${nome}, tudo bem?\n\n` +
-        `Passando para lembrar que o honorário no valor de ${valor} referente a ${descricao} está em aberto (vencimento ${venc}).\n\n` +
+        `Passando para lembrar que o honorário no valor de *${valor}* referente a ${descricao} está em aberto (vencimento *${venc}*).\n\n` +
         `Se você já realizou o pagamento, por favor desconsidere este aviso. 🙂` +
         blocoPix +
         `\n\nQualquer dúvida, estamos à disposição.`
@@ -82,23 +82,29 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
     }
     return (
       `Olá {nome}, tudo bem?\n\n` +
-      `Passando para lembrar que o honorário no valor de R$ {valor} referente a {descricao} está em aberto (vencimento {vencimento}).\n\n` +
+      `Passando para lembrar que o honorário no valor de *R$ {valor}* referente a {descricao} está em aberto (vencimento *{vencimento}*).\n\n` +
       `Se você já realizou o pagamento, por favor desconsidere este aviso. 🙂` +
       (chavePix
-        ? `\n\nCaso ainda não tenha pago, segue nossa chave Pix:\n🔑 {chave_pix}`
+        ? `\n\nCaso ainda não tenha pago, segue nossa chave Pix:\n🔑 *{chave_pix}*`
         : '') +
       `\n\nQualquer dúvida, estamos à disposição.`
     );
   }, [modo, elegiveisRaw, chavePix]);
 
+  // Chave que identifica o alvo atual (muda quando cliente/cobrança muda)
+  const alvoKey = useMemo(() => elegiveisRaw.map((c) => c.id).join(','), [elegiveisRaw]);
+
+  // Reseta canal/exclusões/mensagem ao abrir OU quando alvo muda
+  // Evita reaproveitar texto do cliente anterior
   useEffect(() => {
     if (open) {
       setCanal('email');
       setExcluidos(new Set());
+      setMensagem('');
     }
-  }, [open]);
+  }, [open, alvoKey]);
 
-  // Pré-popula a mensagem assim que dados do escritório carregarem (somente se vazia)
+  // Pré-popula a mensagem quando o template padrão estiver pronto (somente se vazia)
   useEffect(() => {
     if (open && !mensagem.trim() && mensagemPadrao) {
       setMensagem(mensagemPadrao);
