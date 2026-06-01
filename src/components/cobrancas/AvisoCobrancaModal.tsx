@@ -232,11 +232,28 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
                 ? <>Use <code className="font-mono">{'{nome}'}</code>, <code className="font-mono">{'{valor}'}</code>, <code className="font-mono">{'{descricao}'}</code>, <code className="font-mono">{'{vencimento}'}</code>, <code className="font-mono">{'{chave_pix}'}</code> — serão substituídos por destinatário.</>
                 : <>Substitui <code className="font-mono">{'{mensagem_adicional}'}</code> no template do escritório.</>}
             </p>
-            {!chavePix && (
-              <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
-                Nenhuma chave Pix cadastrada. Cadastre em Configurações para incluí-la automaticamente.
+          {canal === 'email' && (
+            <div>
+              <Label htmlFor="cc-emails">Com cópia (CC) — emails adicionais</Label>
+              <Textarea
+                id="cc-emails"
+                rows={2}
+                value={ccEmails}
+                onChange={(e) => setCcEmails(e.target.value)}
+                maxLength={500}
+                placeholder="ex: socio@empresa.com, financeiro@empresa.com"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Separe múltiplos emails por vírgula. Máximo 10 endereços.
               </p>
-            )}
+            </div>
+          )}
+
+          {!chavePix && (
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
+              Nenhuma chave Pix cadastrada. Cadastre em Configurações para incluí-la automaticamente.
+            </p>
+          )}
           </div>
 
           {modo === 'massa' && elegiveis.length > 0 && (
