@@ -244,6 +244,12 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
                 ? <>Use <code className="font-mono">{'{nome}'}</code>, <code className="font-mono">{'{valor}'}</code>, <code className="font-mono">{'{descricao}'}</code>, <code className="font-mono">{'{vencimento}'}</code>, <code className="font-mono">{'{chave_pix}'}</code> — serão substituídos por destinatário.</>
                 : <>Substitui <code className="font-mono">{'{mensagem_adicional}'}</code> no template do escritório.</>}
             </p>
+          {canal === 'email' && modo === 'individual' && elegiveisRaw[0]?.clientes?.email && (
+            <div className="mt-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs">
+              <span className="text-muted-foreground">Será enviado para: </span>
+              <span className="font-medium text-foreground">{elegiveisRaw[0].clientes.email}</span>
+            </div>
+          )}
           {canal === 'email' && (
             <div>
               <Label htmlFor="cc-emails">Com cópia (CC) — emails adicionais</Label>
