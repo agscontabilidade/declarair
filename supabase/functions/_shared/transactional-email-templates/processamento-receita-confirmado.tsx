@@ -37,7 +37,7 @@ const ProcessamentoReceitaConfirmadoEmail = ({
       siteName={nomeEscritorio || SITE_NAME}
     >
       <Heading className="text-gray-900 text-[20px] font-bold text-center p-0 my-[30px] mx-0">
-        Declaração processada sem erros
+        Declaração processada com sucesso
       </Heading>
 
       <Text className="text-gray-800 text-[14px] leading-[24px]">
@@ -53,7 +53,7 @@ const ProcessamentoReceitaConfirmadoEmail = ({
           ))
         ) : (
           <Text className="text-gray-800 text-[14px] leading-[24px]">
-            Sua Declaração de Imposto de Renda {anoBase || ''} foi <strong>processada sem erros pela Receita Federal</strong>.
+            Sua Declaração de Imposto de Renda {anoBase || ''} foi <strong>processada com sucesso pela Receita Federal</strong>.
             Em anexo o documento que comprova o processamento.
           </Text>
         )}
@@ -109,7 +109,7 @@ export const template = {
     nomeEscritorio: 'Contabilidade ABC',
     anoBase: '2026',
     mensagemPersonalizada:
-      'Sua Declaração de Imposto de Renda 2026 foi **processada sem erros pela Receita Federal**.\nEm anexo o documento que comprova o processamento.',
+      'Sua Declaração de Imposto de Renda 2026 foi **processada com sucesso pela Receita Federal**.\nEm anexo o documento que comprova o processamento.',
     attachmentLinks: [
       { filename: 'Comprovacao_Processamento_IRPF_2026.pdf', url: 'https://example.com/comprovacao.pdf' },
     ],

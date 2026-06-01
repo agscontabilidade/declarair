@@ -73,7 +73,7 @@ export function ComprovacaoProcessamentoModal({
     setEnviarEmail(true);
     const padrao =
       `Olá ${clienteNome},\n\n` +
-      `Sua Declaração de Imposto de Renda ${anoBase} foi **processada sem erros pela Receita Federal**.\n\n` +
+      `Sua Declaração de Imposto de Renda ${anoBase} foi **processada com sucesso pela Receita Federal**.\n\n` +
       `Em anexo o documento que comprova o processamento. Você também pode baixá-lo pelo botão abaixo.\n\n` +
       `Ficamos à disposição para qualquer dúvida.`;
     setMensagem(padrao);
