@@ -8,13 +8,13 @@ interface Convite {
   email: string;
   nome: string;
   papel: string;
-  token: string;
   enviado_por: string;
   usado: boolean;
   expira_em: string;
   usado_em: string | null;
   created_at: string;
 }
+
 
 export const useColaboradores = (escritorioId: string) => {
   const queryClient = useQueryClient();
@@ -38,8 +38,9 @@ export const useColaboradores = (escritorioId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('colaborador_convites')
-        .select('*')
+        .select('id, escritorio_id, email, nome, papel, enviado_por, usado, expira_em, usado_em, created_at')
         .eq('escritorio_id', escritorioId)
+
         .eq('usado', false)
         .gte('expira_em', new Date().toISOString())
         .order('created_at', { ascending: false });

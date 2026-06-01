@@ -2889,6 +2889,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_colaborador_convite_token: {
+        Args: { _convite_id: string }
+        Returns: string
+      }
       get_colaborador_invite_public: {
         Args: { _token: string }
         Returns: {

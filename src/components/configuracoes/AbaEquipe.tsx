@@ -120,11 +120,17 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
     setUsuarioEditando(null);
   };
 
-  const copiarLink = (token: string) => {
-    const link = `${window.location.origin}/convite-colaborador/${token}`;
-    navigator.clipboard.writeText(link);
+  const copiarLink = async (conviteId: string) => {
+    const { data, error } = await supabase.rpc('get_colaborador_convite_token', { _convite_id: conviteId });
+    if (error || !data) {
+      toast.error('Não foi possível recuperar o link do convite');
+      return;
+    }
+    const link = `${window.location.origin}/convite-colaborador/${data}`;
+    await navigator.clipboard.writeText(link);
     toast.success('Link copiado para a área de transferência');
   };
+
 
   return (
     <div className="space-y-6">
@@ -290,7 +296,7 @@ export default function AbaEquipe({ escritorioId, isDono, usuarios, loadingUsers
                     <TableCell>{new Date(convite.expira_em).toLocaleDateString('pt-BR')}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => copiarLink(convite.token)} title="Copiar link">
+                        <Button variant="ghost" size="sm" onClick={() => copiarLink(convite.id)} title="Copiar link">
                           <Copy className="h-4 w-4" />
                         </Button>
                         <Button
