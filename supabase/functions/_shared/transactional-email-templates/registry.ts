@@ -20,6 +20,7 @@ import { template as cobrancaVencendo } from './cobranca-vencendo.tsx'
 import { template as cobrancaPaga } from './cobranca-paga.tsx'
 import { template as envioManualDeclaracao } from './envio-manual-declaracao.tsx'
 import { template as lembretePrazoIR } from './lembrete-prazo-ir.tsx'
+import { template as avisoCobranca } from './aviso-cobranca.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'boas-vindas': boasVindas,
@@ -31,4 +32,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'cobranca-paga': cobrancaPaga,
   'envio-manual-declaracao': envioManualDeclaracao,
   'lembrete-prazo-ir': lembretePrazoIR,
+  'aviso-cobranca': avisoCobranca,
 }
