@@ -255,6 +255,7 @@ Deno.serve(async (req) => {
               mensagemPersonalizada: corpo,
               statusLabel: dias > 0 ? "Cobrança em Atraso" : "Cobrança Pendente",
             },
+            ...(body.cc && body.cc.length > 0 ? { cc: body.cc } : {}),
           }),
         });
         if (!res.ok) {
