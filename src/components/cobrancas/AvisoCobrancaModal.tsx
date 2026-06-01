@@ -98,6 +98,9 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
   // Chave que identifica o alvo atual (muda quando cliente/cobrança muda)
   const alvoKey = useMemo(() => elegiveisRaw.map((c) => c.id).join(','), [elegiveisRaw]);
 
+  // Guarda o último template padrão aplicado, para detectar se o usuário editou
+  const ultimoPadraoRef = useRef<string>('');
+
   // Reseta canal/exclusões/mensagem/cc ao abrir OU quando alvo muda
   // Evita reaproveitar texto do cliente anterior
   useEffect(() => {
@@ -106,13 +109,19 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
       setExcluidos(new Set());
       setMensagem('');
       setCcEmails('');
+      ultimoPadraoRef.current = '';
     }
   }, [open, alvoKey]);
 
-  // Pré-popula a mensagem quando o template padrão estiver pronto (somente se vazia)
+  // Pré-popula a mensagem quando o template padrão estiver pronto.
+  // Também atualiza quando dados assíncronos (chave Pix, nome do escritório)
+  // chegam DEPOIS do primeiro render — desde que o usuário ainda não tenha editado.
   useEffect(() => {
-    if (open && !mensagem.trim() && mensagemPadrao) {
+    if (!open || !mensagemPadrao) return;
+    const usuarioNaoEditou = !mensagem.trim() || mensagem === ultimoPadraoRef.current;
+    if (usuarioNaoEditou) {
       setMensagem(mensagemPadrao);
+      ultimoPadraoRef.current = mensagemPadrao;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mensagemPadrao]);
