@@ -1,20 +1,15 @@
-Trocar "processada sem erros" por "processada com sucesso" na mensagem padrão do modal de comprovação e no template de e-mail correspondente, mantendo consistência entre UI e e-mail enviado.
+## Plan: Update processing confirmation wording
 
-## Arquivos alterados
+Replace "processada com sucesso" with "processada com sucesso e sem pendências" in the processing confirmation modal and email template.
 
-1. `src/components/declaracoes/ComprovacaoProcessamentoModal.tsx` (linha 76)
-   - Mensagem padrão pré-preenchida no textarea.
+### Files to edit
+1. `src/components/declaracoes/ComprovacaoProcessamentoModal.tsx`
+   - Line 76: default message textarea text
 
 2. `supabase/functions/_shared/transactional-email-templates/processamento-receita-confirmado.tsx`
-   - Linha 40: Preview do e-mail ("Declaração processada com sucesso").
-   - Linha 56: Corpo padrão do e-mail (quando o contador não customiza).
-   - Linha 112: `previewData` usado no preview da Cloud.
+   - Line 40: `<Heading>` preview text
+   - Line 56: default email body fallback
+   - Line 112: `previewData.mensagemPersonalizada`
 
-## Fora de escopo
-
-- Nenhuma mudança de lógica, schema ou fluxo. Apenas texto.
-- Não altero o título "Comprovação de processamento" nem o botão "Confirmar processamento".
-
-## Deploy
-
-- Após editar o template, redeploy do `send-transactional-email` para refletir a mudança nos envios.
+### Post-edit
+- Redeploy `send-transactional-email` and `preview-transactional-email` edge functions.
