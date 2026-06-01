@@ -109,7 +109,7 @@ export const template = {
     nomeEscritorio: 'Contabilidade ABC',
     anoBase: '2026',
     mensagemPersonalizada:
-      'Sua Declaração de Imposto de Renda 2026 foi **processada sem erros pela Receita Federal**.\nEm anexo o documento que comprova o processamento.',
+      'Sua Declaração de Imposto de Renda 2026 foi **processada com sucesso pela Receita Federal**.\nEm anexo o documento que comprova o processamento.',
     attachmentLinks: [
       { filename: 'Comprovacao_Processamento_IRPF_2026.pdf', url: 'https://example.com/comprovacao.pdf' },
     ],
