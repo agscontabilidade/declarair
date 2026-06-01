@@ -5,6 +5,21 @@ import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = 'DeclaraIR'
 
+// Converte marcadores *texto* e **texto** em <strong>, preservando o restante.
+// Usado para destacar valor e chave Pix dentro da mensagem personalizada.
+function renderBold(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>
+    }
+    if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+      return <strong key={i}>{part.slice(1, -1)}</strong>
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>
+  })
+}
+
 interface AvisoCobrancaProps {
   nomeCliente?: string
   nomeEscritorio?: string
@@ -50,7 +65,7 @@ const AvisoCobrancaEmail = ({
 
       {mensagemPersonalizada ? (
         <Text className="text-gray-800 text-[14px] leading-[24px] whitespace-pre-line">
-          {mensagemPersonalizada}
+          {renderBold(mensagemPersonalizada)}
         </Text>
       ) : (
         <Text className="text-gray-800 text-[14px] leading-[24px]">
