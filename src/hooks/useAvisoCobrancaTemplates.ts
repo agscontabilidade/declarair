@@ -55,7 +55,11 @@ export function useAvisoCobrancaTemplates() {
   const mutation = useMutation({
     mutationFn: async (input: Partial<AvisoTemplates>) => {
       if (!escritorioId) throw new Error('Escritório não encontrado');
-      const patch: Record<string, string | null> = {};
+      const patch: {
+        cobranca_aviso_whatsapp_template?: string | null;
+        cobranca_aviso_email_assunto?: string | null;
+        cobranca_aviso_email_corpo?: string | null;
+      } = {};
       if (input.whatsapp !== undefined) patch.cobranca_aviso_whatsapp_template = input.whatsapp.trim() ? input.whatsapp : null;
       if (input.emailAssunto !== undefined) patch.cobranca_aviso_email_assunto = input.emailAssunto.trim() ? input.emailAssunto : null;
       if (input.emailCorpo !== undefined) patch.cobranca_aviso_email_corpo = input.emailCorpo.trim() ? input.emailCorpo : null;
