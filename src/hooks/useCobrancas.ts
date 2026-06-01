@@ -56,7 +56,7 @@ export function useCobrancas(params: UseCobrancasParams = {}) {
 
       let query = supabase
         .from('cobrancas')
-        .select('*, clientes(nome, cpf)', { count: 'exact' })
+        .select('*, clientes(nome, cpf, email, telefone)', { count: 'exact' })
         .eq('escritorio_id', escritorioId)
         .order('data_vencimento', { ascending: false });
 
