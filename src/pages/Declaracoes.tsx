@@ -758,6 +758,7 @@ export default function Declaracoes() {
         declaracaoId={comprovTarget?.id ?? null}
         clienteId={comprovTarget?.cliente_id ?? null}
         clienteNome={comprovTarget?.clienteNome ?? ''}
+        clienteCpf={comprovTarget?.clienteCpf ?? null}
         clienteEmail={comprovTarget?.clienteEmail ?? null}
         escritorioId={escritorioId}
         anoBase={comprovTarget?.ano_base ?? Number(anoBase)}

@@ -20,13 +20,127 @@ import {
   Upload,
   X,
   AlertCircle,
+  AlertTriangle,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { pdfjs } from 'react-pdf';
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+type AnaliseStatus =
+  | 'idle'
+  | 'analisando'
+  | 'match'
+  | 'mismatch_cpf'
+  | 'mismatch_nome'
+  | 'sem_texto'
+  | 'erro';
+
+interface AnaliseResultado {
+  status: AnaliseStatus;
+  cpfEncontrado?: string;
+  mensagem?: string;
+}
+
+function normalizarNome(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function formatCpf(d: string): string {
+  const x = d.replace(/\D/g, '').padStart(11, '0').slice(0, 11);
+  return `${x.slice(0, 3)}.${x.slice(3, 6)}.${x.slice(6, 9)}-${x.slice(9, 11)}`;
+}
+
+async function extrairTextoPdf(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const loadingTask = pdfjs.getDocument({ data: buf });
+  const pdf = await loadingTask.promise;
+  let texto = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const strs = (content.items as Array<{ str?: string }>).map((it) => it?.str || '');
+    texto += '\n' + strs.join(' ');
+  }
+  return texto;
+}
+
+async function analisarPdfContribuinte(
+  file: File,
+  clienteCpf: string | null,
+  clienteNome: string,
+): Promise<AnaliseResultado> {
+  try {
+    const texto = await extrairTextoPdf(file);
+    if (!texto || texto.replace(/\s/g, '').length < 20) {
+      return { status: 'sem_texto' };
+    }
+
+    const cpfEsperadoDigits = (clienteCpf || '').replace(/\D/g, '');
+    const matches = Array.from(texto.matchAll(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g)).map((m) =>
+      m[0].replace(/\D/g, ''),
+    );
+
+    let cpfOk = false;
+    let cpfEncontrado: string | undefined;
+    if (cpfEsperadoDigits.length === 11) {
+      cpfOk = matches.some((m) => m === cpfEsperadoDigits);
+      if (!cpfOk && matches.length > 0) cpfEncontrado = matches[0];
+    } else {
+      cpfOk = true; // sem CPF de referência, não bloqueia
+    }
+
+    const textoNorm = normalizarNome(texto);
+    const nomeNorm = normalizarNome(clienteNome || '');
+    let nomeOk = false;
+    if (nomeNorm.length >= 3) {
+      if (textoNorm.includes(nomeNorm)) {
+        nomeOk = true;
+      } else {
+        const partes = nomeNorm.split(' ').filter((p) => p.length >= 3);
+        if (partes.length >= 2) {
+          const primeiro = partes[0];
+          const ultimo = partes[partes.length - 1];
+          nomeOk = textoNorm.includes(primeiro) && textoNorm.includes(ultimo);
+        } else if (partes.length === 1) {
+          nomeOk = textoNorm.includes(partes[0]);
+        }
+      }
+    } else {
+      nomeOk = true;
+    }
+
+    if (!cpfOk) {
+      return {
+        status: 'mismatch_cpf',
+        cpfEncontrado,
+        mensagem: cpfEncontrado
+          ? `CPF do PDF (${formatCpf(cpfEncontrado)}) não confere com o do cliente (${formatCpf(cpfEsperadoDigits)}).`
+          : `Nenhum CPF correspondente a ${formatCpf(cpfEsperadoDigits)} foi encontrado no PDF.`,
+      };
+    }
+    if (!nomeOk) {
+      return {
+        status: 'mismatch_nome',
+        mensagem: `O nome "${clienteNome}" não foi localizado no documento.`,
+      };
+    }
+    return { status: 'match' };
+  } catch (e) {
+    console.error('Falha ao analisar PDF:', e);
+    return { status: 'erro', mensagem: 'Não foi possível analisar o PDF.' };
+  }
+}
 
 interface Props {
   open: boolean;
@@ -34,6 +148,7 @@ interface Props {
   declaracaoId: string | null;
   clienteId: string | null;
   clienteNome: string;
+  clienteCpf?: string | null;
   clienteEmail: string | null;
   escritorioId: string | null;
   anoBase: number;
@@ -49,6 +164,7 @@ export function ComprovacaoProcessamentoModal({
   declaracaoId,
   clienteId,
   clienteNome,
+  clienteCpf,
   clienteEmail,
   escritorioId,
   anoBase,
@@ -64,6 +180,8 @@ export function ComprovacaoProcessamentoModal({
   const [mensagem, setMensagem] = useState('');
   const [loading, setLoading] = useState(false);
   const [nomeEscritorio, setNomeEscritorio] = useState('Seu Contador');
+  const [analise, setAnalise] = useState<AnaliseResultado>({ status: 'idle' });
+  const [overrideMismatch, setOverrideMismatch] = useState(false);
   const isReenvio = !!comprovacaoExistenteUrl;
 
   // Carrega nome do escritório e mensagem padrão ao abrir
@@ -71,6 +189,8 @@ export function ComprovacaoProcessamentoModal({
     if (!open) return;
     setFile(null);
     setEnviarEmail(true);
+    setAnalise({ status: 'idle' });
+    setOverrideMismatch(false);
     const padrao =
       `Olá ${clienteNome},\n\n` +
       `Sua Declaração de Imposto de Renda ${anoBase} foi **processada com sucesso e sem pendências pela Receita Federal**.\n\n` +
@@ -87,6 +207,25 @@ export function ComprovacaoProcessamentoModal({
     })();
   }, [open, clienteNome, anoBase, profile?.escritorioId]);
 
+  // Reanalisa o PDF sempre que um novo arquivo for selecionado
+  useEffect(() => {
+    if (!file) {
+      setAnalise({ status: 'idle' });
+      setOverrideMismatch(false);
+      return;
+    }
+    let cancelled = false;
+    setAnalise({ status: 'analisando' });
+    setOverrideMismatch(false);
+    (async () => {
+      const res = await analisarPdfContribuinte(file, clienteCpf ?? null, clienteNome);
+      if (!cancelled) setAnalise(res);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [file, clienteCpf, clienteNome]);
+
   function pickFile(f: File | null) {
     if (!f) return;
     if (f.type !== 'application/pdf') {
@@ -99,6 +238,7 @@ export function ComprovacaoProcessamentoModal({
     }
     setFile(f);
   }
+
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] ?? null;
@@ -323,6 +463,79 @@ export function ComprovacaoProcessamentoModal({
             )}
           </div>
 
+          {/* Análise automática do PDF (CPF + Nome) */}
+          {file && (
+            <>
+              {analise.status === 'analisando' && (
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Analisando documento...</span>
+                </div>
+              )}
+              {analise.status === 'match' && (
+                <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm">
+                  <ShieldCheck className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium text-emerald-800">Documento confere</p>
+                    <p className="text-emerald-700 text-xs mt-0.5">
+                      CPF e nome do contribuinte correspondem a <strong>{clienteNome}</strong>
+                      {clienteCpf ? ` (${formatCpf(clienteCpf)})` : ''}.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {(analise.status === 'mismatch_cpf' || analise.status === 'mismatch_nome') && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm space-y-2">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-medium text-amber-900">
+                        Descasamento de informação no PDF
+                      </p>
+                      <p className="text-amber-800 text-xs mt-0.5">{analise.mensagem}</p>
+                      <p className="text-amber-800 text-xs mt-1">
+                        Esperado: <strong>{clienteNome}</strong>
+                        {clienteCpf ? ` — ${formatCpf(clienteCpf)}` : ''}.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 pl-8">
+                    <Checkbox
+                      id="override-mismatch"
+                      checked={overrideMismatch}
+                      onCheckedChange={(v) => setOverrideMismatch(!!v)}
+                      disabled={loading}
+                      className="mt-0.5"
+                    />
+                    <Label
+                      htmlFor="override-mismatch"
+                      className="text-xs text-amber-900 cursor-pointer leading-snug"
+                    >
+                      Verifiquei manualmente e confirmo que o documento pertence a este cliente.
+                    </Label>
+                  </div>
+                </div>
+              )}
+              {analise.status === 'sem_texto' && (
+                <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-muted-foreground text-xs">
+                    Não foi possível ler o texto do PDF automaticamente (pode ser um documento escaneado).
+                    Verifique manualmente se o CPF e o nome correspondem ao cliente antes de enviar.
+                  </p>
+                </div>
+              )}
+              {analise.status === 'erro' && (
+                <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-muted-foreground text-xs">
+                    {analise.mensagem || 'Falha ao analisar o PDF.'} Verifique manualmente antes de enviar.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
           {/* Toggle e-mail */}
           <div className="flex items-start gap-3 rounded-lg border border-border p-3">
             <Checkbox
@@ -373,7 +586,16 @@ export function ComprovacaoProcessamentoModal({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancelar
           </Button>
-          <Button onClick={handleConfirm} disabled={loading || !file} className="gap-2">
+          <Button
+            onClick={handleConfirm}
+            disabled={
+              loading ||
+              !file ||
+              analise.status === 'analisando' ||
+              ((analise.status === 'mismatch_cpf' || analise.status === 'mismatch_nome') && !overrideMismatch)
+            }
+            className="gap-2"
+          >
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
