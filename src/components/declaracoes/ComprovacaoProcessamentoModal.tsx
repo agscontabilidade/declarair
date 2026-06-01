@@ -164,6 +164,7 @@ export function ComprovacaoProcessamentoModal({
   declaracaoId,
   clienteId,
   clienteNome,
+  clienteCpf,
   clienteEmail,
   escritorioId,
   anoBase,
@@ -179,6 +180,8 @@ export function ComprovacaoProcessamentoModal({
   const [mensagem, setMensagem] = useState('');
   const [loading, setLoading] = useState(false);
   const [nomeEscritorio, setNomeEscritorio] = useState('Seu Contador');
+  const [analise, setAnalise] = useState<AnaliseResultado>({ status: 'idle' });
+  const [overrideMismatch, setOverrideMismatch] = useState(false);
   const isReenvio = !!comprovacaoExistenteUrl;
 
   // Carrega nome do escritório e mensagem padrão ao abrir
@@ -186,6 +189,8 @@ export function ComprovacaoProcessamentoModal({
     if (!open) return;
     setFile(null);
     setEnviarEmail(true);
+    setAnalise({ status: 'idle' });
+    setOverrideMismatch(false);
     const padrao =
       `Olá ${clienteNome},\n\n` +
       `Sua Declaração de Imposto de Renda ${anoBase} foi **processada com sucesso e sem pendências pela Receita Federal**.\n\n` +
@@ -202,6 +207,25 @@ export function ComprovacaoProcessamentoModal({
     })();
   }, [open, clienteNome, anoBase, profile?.escritorioId]);
 
+  // Reanalisa o PDF sempre que um novo arquivo for selecionado
+  useEffect(() => {
+    if (!file) {
+      setAnalise({ status: 'idle' });
+      setOverrideMismatch(false);
+      return;
+    }
+    let cancelled = false;
+    setAnalise({ status: 'analisando' });
+    setOverrideMismatch(false);
+    (async () => {
+      const res = await analisarPdfContribuinte(file, clienteCpf ?? null, clienteNome);
+      if (!cancelled) setAnalise(res);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [file, clienteCpf, clienteNome]);
+
   function pickFile(f: File | null) {
     if (!f) return;
     if (f.type !== 'application/pdf') {
@@ -214,6 +238,7 @@ export function ComprovacaoProcessamentoModal({
     }
     setFile(f);
   }
+
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] ?? null;
