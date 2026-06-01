@@ -204,7 +204,6 @@ export function ComprovacaoProcessamentoModal({
     setAnalise({ status: 'idle' });
     setOverrideMismatch(false);
     const padrao =
-      `Olá ${clienteNome},\n\n` +
       `Sua Declaração de Imposto de Renda ${anoBase} foi **processada com sucesso e sem pendências pela Receita Federal**.\n\n` +
       `Em anexo o documento que comprova o processamento. Você também pode baixá-lo pelo botão abaixo.\n\n` +
       `Ficamos à disposição para qualquer dúvida.`;
