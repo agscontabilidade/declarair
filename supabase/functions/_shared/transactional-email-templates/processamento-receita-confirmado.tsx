@@ -37,7 +37,7 @@ const ProcessamentoReceitaConfirmadoEmail = ({
       siteName={nomeEscritorio || SITE_NAME}
     >
       <Heading className="text-gray-900 text-[20px] font-bold text-center p-0 my-[30px] mx-0">
-        Declaração processada sem erros
+        Declaração processada com sucesso
       </Heading>
 
       <Text className="text-gray-800 text-[14px] leading-[24px]">
