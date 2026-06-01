@@ -463,6 +463,79 @@ export function ComprovacaoProcessamentoModal({
             )}
           </div>
 
+          {/* Análise automática do PDF (CPF + Nome) */}
+          {file && (
+            <>
+              {analise.status === 'analisando' && (
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Analisando documento...</span>
+                </div>
+              )}
+              {analise.status === 'match' && (
+                <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm">
+                  <ShieldCheck className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium text-emerald-800">Documento confere</p>
+                    <p className="text-emerald-700 text-xs mt-0.5">
+                      CPF e nome do contribuinte correspondem a <strong>{clienteNome}</strong>
+                      {clienteCpf ? ` (${formatCpf(clienteCpf)})` : ''}.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {(analise.status === 'mismatch_cpf' || analise.status === 'mismatch_nome') && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm space-y-2">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-medium text-amber-900">
+                        Descasamento de informação no PDF
+                      </p>
+                      <p className="text-amber-800 text-xs mt-0.5">{analise.mensagem}</p>
+                      <p className="text-amber-800 text-xs mt-1">
+                        Esperado: <strong>{clienteNome}</strong>
+                        {clienteCpf ? ` — ${formatCpf(clienteCpf)}` : ''}.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 pl-8">
+                    <Checkbox
+                      id="override-mismatch"
+                      checked={overrideMismatch}
+                      onCheckedChange={(v) => setOverrideMismatch(!!v)}
+                      disabled={loading}
+                      className="mt-0.5"
+                    />
+                    <Label
+                      htmlFor="override-mismatch"
+                      className="text-xs text-amber-900 cursor-pointer leading-snug"
+                    >
+                      Verifiquei manualmente e confirmo que o documento pertence a este cliente.
+                    </Label>
+                  </div>
+                </div>
+              )}
+              {analise.status === 'sem_texto' && (
+                <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-muted-foreground text-xs">
+                    Não foi possível ler o texto do PDF automaticamente (pode ser um documento escaneado).
+                    Verifique manualmente se o CPF e o nome correspondem ao cliente antes de enviar.
+                  </p>
+                </div>
+              )}
+              {analise.status === 'erro' && (
+                <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-muted-foreground text-xs">
+                    {analise.mensagem || 'Falha ao analisar o PDF.'} Verifique manualmente antes de enviar.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
           {/* Toggle e-mail */}
           <div className="flex items-start gap-3 rounded-lg border border-border p-3">
             <Checkbox
