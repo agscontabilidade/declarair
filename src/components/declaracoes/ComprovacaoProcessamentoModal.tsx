@@ -61,18 +61,21 @@ function formatCpf(d: string): string {
   return `${x.slice(0, 3)}.${x.slice(3, 6)}.${x.slice(6, 9)}-${x.slice(9, 11)}`;
 }
 
-async function extrairTextoPdf(file: File): Promise<string> {
+async function extrairTextoPdf(file: File): Promise<{ texto: string; digitos: string }> {
   const buf = await file.arrayBuffer();
   const loadingTask = pdfjs.getDocument({ data: buf });
   const pdf = await loadingTask.promise;
   let texto = '';
+  let digitos = '';
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const strs = (content.items as Array<{ str?: string }>).map((it) => it?.str || '');
     texto += '\n' + strs.join(' ');
+    // Concatena sem separadores — pdf.js às vezes quebra dígitos do CPF em items distintos
+    digitos += strs.join('').replace(/\D/g, '');
   }
-  return texto;
+  return { texto, digitos };
 }
 
 async function analisarPdfContribuinte(
@@ -81,20 +84,25 @@ async function analisarPdfContribuinte(
   clienteNome: string,
 ): Promise<AnaliseResultado> {
   try {
-    const texto = await extrairTextoPdf(file);
-    if (!texto || texto.replace(/\s/g, '').length < 20) {
+    const { texto, digitos } = await extrairTextoPdf(file);
+    if ((!texto || texto.replace(/\s/g, '').length < 20) && digitos.length < 11) {
       return { status: 'sem_texto' };
     }
 
     const cpfEsperadoDigits = (clienteCpf || '').replace(/\D/g, '');
-    const matches = Array.from(texto.matchAll(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g)).map((m) =>
-      m[0].replace(/\D/g, ''),
-    );
+
+    // 1) tenta achar CPFs formatados (com pontos/traço/espaços)
+    const formatRe = /\d{3}[.\s]?\d{3}[.\s]?\d{3}[-\s]?\d{2}/g;
+    const matches = Array.from(texto.matchAll(formatRe)).map((m) => m[0].replace(/\D/g, ''));
 
     let cpfOk = false;
     let cpfEncontrado: string | undefined;
     if (cpfEsperadoDigits.length === 11) {
       cpfOk = matches.some((m) => m === cpfEsperadoDigits);
+      // 2) fallback: procura a sequência de 11 dígitos no stream concatenado
+      if (!cpfOk && digitos.includes(cpfEsperadoDigits)) {
+        cpfOk = true;
+      }
       if (!cpfOk && matches.length > 0) cpfEncontrado = matches[0];
     } else {
       cpfOk = true; // sem CPF de referência, não bloqueia
@@ -107,13 +115,17 @@ async function analisarPdfContribuinte(
       if (textoNorm.includes(nomeNorm)) {
         nomeOk = true;
       } else {
+        // Match por tokens: aceita se ≥60% dos tokens significativos do nome aparecem
         const partes = nomeNorm.split(' ').filter((p) => p.length >= 3);
-        if (partes.length >= 2) {
+        if (partes.length > 0) {
+          const tokensTexto = new Set(textoNorm.split(' ').filter(Boolean));
+          const presentes = partes.filter((p) => tokensTexto.has(p) || textoNorm.includes(p));
+          const ratio = presentes.length / partes.length;
           const primeiro = partes[0];
           const ultimo = partes[partes.length - 1];
-          nomeOk = textoNorm.includes(primeiro) && textoNorm.includes(ultimo);
-        } else if (partes.length === 1) {
-          nomeOk = textoNorm.includes(partes[0]);
+          nomeOk =
+            ratio >= 0.6 ||
+            (partes.length >= 2 && textoNorm.includes(primeiro) && textoNorm.includes(ultimo));
         }
       }
     } else {
