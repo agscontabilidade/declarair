@@ -205,8 +205,15 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
               placeholder="Ex: Por favor, regularize até sexta-feira para evitar juros."
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Substitui <code className="font-mono">{'{mensagem_adicional}'}</code> no template do escritório.
+              {modo === 'massa'
+                ? <>Use <code className="font-mono">{'{nome}'}</code>, <code className="font-mono">{'{valor}'}</code>, <code className="font-mono">{'{descricao}'}</code>, <code className="font-mono">{'{vencimento}'}</code>, <code className="font-mono">{'{chave_pix}'}</code> — serão substituídos por destinatário.</>
+                : <>Substitui <code className="font-mono">{'{mensagem_adicional}'}</code> no template do escritório.</>}
             </p>
+            {!chavePix && (
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
+                Nenhuma chave Pix cadastrada. Cadastre em Configurações para incluí-la automaticamente.
+              </p>
+            )}
           </div>
 
           {modo === 'massa' && elegiveis.length > 0 && (
