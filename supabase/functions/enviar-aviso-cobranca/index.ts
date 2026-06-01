@@ -228,7 +228,16 @@ Deno.serve(async (req) => {
         continue;
       }
       const assunto = applyPlaceholders(emailAssuntoTpl, ctx);
-      const corpo = applyPlaceholders(emailCorpoTpl, ctx);
+      // Se o usuário escreveu uma mensagem personalizada no modal, usa-a como
+      // corpo (apenas expandindo placeholders) — evita duplicar o template
+      // padrão + a mensagem do modal. Caso contrário, usa o template do escritório.
+      const usarPersonalizada = (body.mensagem || "").trim().length > 0;
+      let corpo = usarPersonalizada
+        ? applyPlaceholders(ctx.mensagemAdicional, { ...ctx, mensagemAdicional: "" })
+        : applyPlaceholders(emailCorpoTpl, ctx);
+      // Remove saudação inicial duplicada ("Olá Fulano, ...") — o template
+      // de email já renderiza "Olá {nomeCliente}," no cabeçalho.
+      corpo = corpo.replace(/^\s*Ol[áa][^\n]*\n+/i, "").trimStart();
       try {
         const res = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
           method: "POST",
