@@ -20,13 +20,127 @@ import {
   Upload,
   X,
   AlertCircle,
+  AlertTriangle,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { pdfjs } from 'react-pdf';
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+type AnaliseStatus =
+  | 'idle'
+  | 'analisando'
+  | 'match'
+  | 'mismatch_cpf'
+  | 'mismatch_nome'
+  | 'sem_texto'
+  | 'erro';
+
+interface AnaliseResultado {
+  status: AnaliseStatus;
+  cpfEncontrado?: string;
+  mensagem?: string;
+}
+
+function normalizarNome(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function formatCpf(d: string): string {
+  const x = d.replace(/\D/g, '').padStart(11, '0').slice(0, 11);
+  return `${x.slice(0, 3)}.${x.slice(3, 6)}.${x.slice(6, 9)}-${x.slice(9, 11)}`;
+}
+
+async function extrairTextoPdf(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const loadingTask = pdfjs.getDocument({ data: buf });
+  const pdf = await loadingTask.promise;
+  let texto = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const strs = (content.items as Array<{ str?: string }>).map((it) => it?.str || '');
+    texto += '\n' + strs.join(' ');
+  }
+  return texto;
+}
+
+async function analisarPdfContribuinte(
+  file: File,
+  clienteCpf: string | null,
+  clienteNome: string,
+): Promise<AnaliseResultado> {
+  try {
+    const texto = await extrairTextoPdf(file);
+    if (!texto || texto.replace(/\s/g, '').length < 20) {
+      return { status: 'sem_texto' };
+    }
+
+    const cpfEsperadoDigits = (clienteCpf || '').replace(/\D/g, '');
+    const matches = Array.from(texto.matchAll(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g)).map((m) =>
+      m[0].replace(/\D/g, ''),
+    );
+
+    let cpfOk = false;
+    let cpfEncontrado: string | undefined;
+    if (cpfEsperadoDigits.length === 11) {
+      cpfOk = matches.some((m) => m === cpfEsperadoDigits);
+      if (!cpfOk && matches.length > 0) cpfEncontrado = matches[0];
+    } else {
+      cpfOk = true; // sem CPF de referência, não bloqueia
+    }
+
+    const textoNorm = normalizarNome(texto);
+    const nomeNorm = normalizarNome(clienteNome || '');
+    let nomeOk = false;
+    if (nomeNorm.length >= 3) {
+      if (textoNorm.includes(nomeNorm)) {
+        nomeOk = true;
+      } else {
+        const partes = nomeNorm.split(' ').filter((p) => p.length >= 3);
+        if (partes.length >= 2) {
+          const primeiro = partes[0];
+          const ultimo = partes[partes.length - 1];
+          nomeOk = textoNorm.includes(primeiro) && textoNorm.includes(ultimo);
+        } else if (partes.length === 1) {
+          nomeOk = textoNorm.includes(partes[0]);
+        }
+      }
+    } else {
+      nomeOk = true;
+    }
+
+    if (!cpfOk) {
+      return {
+        status: 'mismatch_cpf',
+        cpfEncontrado,
+        mensagem: cpfEncontrado
+          ? `CPF do PDF (${formatCpf(cpfEncontrado)}) não confere com o do cliente (${formatCpf(cpfEsperadoDigits)}).`
+          : `Nenhum CPF correspondente a ${formatCpf(cpfEsperadoDigits)} foi encontrado no PDF.`,
+      };
+    }
+    if (!nomeOk) {
+      return {
+        status: 'mismatch_nome',
+        mensagem: `O nome "${clienteNome}" não foi localizado no documento.`,
+      };
+    }
+    return { status: 'match' };
+  } catch (e) {
+    console.error('Falha ao analisar PDF:', e);
+    return { status: 'erro', mensagem: 'Não foi possível analisar o PDF.' };
+  }
+}
 
 interface Props {
   open: boolean;
@@ -34,6 +148,7 @@ interface Props {
   declaracaoId: string | null;
   clienteId: string | null;
   clienteNome: string;
+  clienteCpf?: string | null;
   clienteEmail: string | null;
   escritorioId: string | null;
   anoBase: number;
