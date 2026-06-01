@@ -36,7 +36,10 @@ export default function Cobrancas() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, unknown> | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
+  const [avisoModal, setAvisoModal] = useState<{ cobrancas: CobrancaComCliente[]; modo: 'individual' | 'massa' } | null>(null);
+  const [loadingMassa, setLoadingMassa] = useState(false);
   const { profile } = useAuth();
+  const { toast } = useToast();
 
   // Debounce da busca
   useEffect(() => {
