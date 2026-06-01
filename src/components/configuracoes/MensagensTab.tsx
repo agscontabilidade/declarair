@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageSquare, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Phone, User, Calendar, Plus, Zap, FileText, Info, Bell } from 'lucide-react';
 import { LembretesTemplateTab } from '@/components/configuracoes/LembretesTemplateTab';
+import { AvisoCobrancaTemplateTab } from '@/components/configuracoes/AvisoCobrancaTemplateTab';
 import {
   useWhatsAppStatus,
   useCreateInstance,
