@@ -449,7 +449,6 @@ Deno.serve(async (req) => {
     },
   })
 
-
   if (enqueueError) {
     console.error('Failed to enqueue email', {
       error: enqueueError,
@@ -469,6 +468,56 @@ Deno.serve(async (req) => {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
+  }
+
+  // Enqueue CC copies
+  for (let i = 0; i < ccEmails.length; i++) {
+    const ccEmail = ccEmails[i]
+    const ccMessageId = crypto.randomUUID()
+    const ccIdempotencyKey = `${idempotencyKey}-cc-${i}`
+    const ccUnsubscribeToken = generateToken()
+    await supabase.from('email_unsubscribe_tokens').upsert(
+      { token: ccUnsubscribeToken, email: ccEmail.toLowerCase() },
+      { onConflict: 'email', ignoreDuplicates: true }
+    )
+    await supabase.from('email_send_log').insert({
+      message_id: ccMessageId,
+      template_name: templateName,
+      recipient_email: ccEmail,
+      status: 'pending',
+    })
+    const { error: ccEnqueueError } = await supabase.rpc('enqueue_email', {
+      queue_name: 'transactional_emails',
+      payload: {
+        message_id: ccMessageId,
+        to: ccEmail,
+        from: fromHeader,
+        ...(replyToHeader ? { reply_to: replyToHeader } : {}),
+        sender_domain: SENDER_DOMAIN,
+        subject: resolvedSubject,
+        html,
+        text: plainText,
+        purpose: 'transactional',
+        label: templateName,
+        idempotency_key: ccIdempotencyKey,
+        unsubscribe_token: ccUnsubscribeToken,
+        queued_at: new Date().toISOString(),
+      },
+    })
+    if (ccEnqueueError) {
+      console.error('Failed to enqueue CC email', {
+        error: ccEnqueueError,
+        templateName,
+        ccEmail,
+      })
+      await supabase.from('email_send_log').insert({
+        message_id: ccMessageId,
+        template_name: templateName,
+        recipient_email: ccEmail,
+        status: 'failed',
+        error_message: 'Failed to enqueue CC email',
+      })
+    }
   }
 
   console.log('Transactional email enqueued', { templateName, effectiveRecipient })
