@@ -17,6 +17,11 @@ export type StatusProcessamentoRfb = 'aguardando' | 'processada' | 'pendencias' 
 interface Props {
   declaracaoId: string;
   status: StatusProcessamentoRfb;
+  /**
+   * Quando definido, ao clicar em "Processada" o switch NÃO altera o status direto,
+   * apenas dispara este callback (para abrir um modal que pede a comprovação).
+   */
+  onRequestProcessada?: () => void;
 }
 
 const META: Record<
@@ -55,7 +60,7 @@ const META: Record<
 
 const ORDEM: StatusProcessamentoRfb[] = ['aguardando', 'processada', 'pendencias', 'malha_fina'];
 
-export function ProcessamentoSwitch({ declaracaoId, status }: Props) {
+export function ProcessamentoSwitch({ declaracaoId, status, onRequestProcessada }: Props) {
   const queryClient = useQueryClient();
   const atual = META[status] || META.aguardando;
   const Icon = atual.icon;
@@ -116,7 +121,14 @@ export function ProcessamentoSwitch({ declaracaoId, status }: Props) {
             return (
               <DropdownMenuItem
                 key={s}
-                onClick={() => !ativo && mutate.mutate(s)}
+                onClick={() => {
+                  if (ativo) return;
+                  if (s === 'processada' && onRequestProcessada) {
+                    onRequestProcessada();
+                    return;
+                  }
+                  mutate.mutate(s);
+                }}
                 className="flex items-start gap-2 py-2 cursor-pointer"
               >
                 <SIcon className={`h-4 w-4 mt-0.5 shrink-0 ${m.cls.split(' ').find((c) => c.startsWith('text-')) || ''}`} />

@@ -968,6 +968,10 @@ export type Database = {
           arquivo_recibo_url: string | null
           arquivos_outros: Json
           cliente_id: string
+          comprovacao_processamento_enviada_em: string | null
+          comprovacao_processamento_nome: string | null
+          comprovacao_processamento_uploaded_at: string | null
+          comprovacao_processamento_url: string | null
           contador_id: string | null
           created_at: string
           darf_extracao: Json | null
@@ -1017,6 +1021,10 @@ export type Database = {
           arquivo_recibo_url?: string | null
           arquivos_outros?: Json
           cliente_id: string
+          comprovacao_processamento_enviada_em?: string | null
+          comprovacao_processamento_nome?: string | null
+          comprovacao_processamento_uploaded_at?: string | null
+          comprovacao_processamento_url?: string | null
           contador_id?: string | null
           created_at?: string
           darf_extracao?: Json | null
@@ -1066,6 +1074,10 @@ export type Database = {
           arquivo_recibo_url?: string | null
           arquivos_outros?: Json
           cliente_id?: string
+          comprovacao_processamento_enviada_em?: string | null
+          comprovacao_processamento_nome?: string | null
+          comprovacao_processamento_uploaded_at?: string | null
+          comprovacao_processamento_url?: string | null
           contador_id?: string | null
           created_at?: string
           darf_extracao?: Json | null
@@ -2909,6 +2921,10 @@ export type Database = {
           arquivo_recibo_url: string | null
           arquivos_outros: Json
           cliente_id: string
+          comprovacao_processamento_enviada_em: string | null
+          comprovacao_processamento_nome: string | null
+          comprovacao_processamento_uploaded_at: string | null
+          comprovacao_processamento_url: string | null
           contador_id: string | null
           created_at: string
           darf_extracao: Json | null

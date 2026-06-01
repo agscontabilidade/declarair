@@ -39,6 +39,7 @@ import { usePermissoes } from '@/hooks/usePermissoes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldAlert, Send } from 'lucide-react';
 import { EnviarDeclaracaoEmailModal } from '@/components/declaracoes/EnviarDeclaracaoEmailModal';
+import { ComprovacaoProcessamentoModal } from '@/components/declaracoes/ComprovacaoProcessamentoModal';
 
 const STATUS_COLORS: Record<string, string> = {
   aguardando_documentos: 'bg-amber-100 text-amber-800',
@@ -107,6 +108,7 @@ export default function Declaracoes() {
   const [docsTarget, setDocsTarget] = useState<{ id: string; nome: string } | null>(null);
   const [obsTarget, setObsTarget] = useState<{ id: string; nome: string } | null>(null);
   const [emailTarget, setEmailTarget] = useState<DeclaracaoListaItem | null>(null);
+  const [comprovTarget, setComprovTarget] = useState<DeclaracaoListaItem | null>(null);
   const { podeVerDeclaracoes } = usePermissoes();
 
   useEffect(() => {
@@ -158,6 +160,7 @@ export default function Declaracoes() {
     status_processamento_rfb: StatusProcessamentoRfb | null;
     declaracao_enviada_em: string | null;
     clientes: { nome: string; cpf: string; email: string } | null;
+    cliente_id: string;
     clienteNome: string;
     clienteCpf: string;
     clienteEmail: string;
@@ -166,6 +169,8 @@ export default function Declaracoes() {
     observacoes_cliente: string | null;
     observacoes_cliente_atualizado_em: string | null;
     observacoes_cliente_lida_em: string | null;
+    comprovacao_processamento_url: string | null;
+    comprovacao_processamento_nome: string | null;
 
   }
 
@@ -181,7 +186,7 @@ export default function Declaracoes() {
         supabase
           .from('declaracoes')
           .select(`
-            id, status, ano_base, ultima_atualizacao_status,
+            id, status, ano_base, ultima_atualizacao_status, cliente_id,
             tipo_resultado, valor_resultado,
             arquivo_declaracao_url, arquivo_declaracao_nome,
             arquivo_recibo_url, arquivo_recibo_nome, recibo_validado_em,
@@ -189,6 +194,7 @@ export default function Declaracoes() {
             arquivo_darf_url, arquivo_darf_nome, darf_validado_em,
             arquivos_outros,
             em_processamento, status_processamento_rfb, declaracao_enviada_em,
+            comprovacao_processamento_url, comprovacao_processamento_nome,
             observacoes_cliente, observacoes_cliente_atualizado_em, observacoes_cliente_lida_em,
             clientes(nome, cpf, email),
             declaracao_notas_internas(conteudo)
@@ -502,7 +508,11 @@ export default function Declaracoes() {
                               )}
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
-                              <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
+                              <ProcessamentoSwitch
+                                declaracaoId={d.id}
+                                status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb}
+                                onRequestProcessada={() => setComprovTarget(d)}
+                              />
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()} className="text-right pr-4">
                               <div className="inline-flex items-center gap-1">
@@ -690,7 +700,11 @@ export default function Declaracoes() {
                                   arquivosOutros={d.arquivos_outros}
                             />
                           )}
-                          <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
+                          <ProcessamentoSwitch
+                            declaracaoId={d.id}
+                            status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb}
+                            onRequestProcessada={() => setComprovTarget(d)}
+                          />
                         </div>
                       </div>
                     );
@@ -738,6 +752,21 @@ export default function Declaracoes() {
           }}
         />
       )}
+      <ComprovacaoProcessamentoModal
+        open={!!comprovTarget}
+        onOpenChange={(o) => !o && setComprovTarget(null)}
+        declaracaoId={comprovTarget?.id ?? null}
+        clienteId={comprovTarget?.cliente_id ?? null}
+        clienteNome={comprovTarget?.clienteNome ?? ''}
+        clienteEmail={comprovTarget?.clienteEmail ?? null}
+        escritorioId={escritorioId}
+        anoBase={comprovTarget?.ano_base ?? Number(anoBase)}
+        comprovacaoExistenteUrl={comprovTarget?.comprovacao_processamento_url ?? null}
+        comprovacaoExistenteNome={comprovTarget?.comprovacao_processamento_nome ?? null}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+        }}
+      />
     </DashboardLayout>
   );
 }
