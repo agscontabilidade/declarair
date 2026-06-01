@@ -50,7 +50,7 @@ const AvisoCobrancaEmail = ({
 
       {mensagemPersonalizada ? (
         <Text className="text-gray-800 text-[14px] leading-[24px] whitespace-pre-line">
-          {mensagemPersonalizada}
+          {renderBold(mensagemPersonalizada)}
         </Text>
       ) : (
         <Text className="text-gray-800 text-[14px] leading-[24px]">
