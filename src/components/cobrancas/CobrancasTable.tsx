@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Check, Edit, X, Trash2, DollarSign, CreditCard, QrCode, FileText } from 'lucide-react';
+import { Check, Edit, X, Trash2, DollarSign, CreditCard, QrCode, FileText, Bell } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { usePermissoes } from '@/hooks/usePermissoes';
 import { GerarBoletoModal, VerQrModal, VerBoletoModal } from './PixBoletoModals';
@@ -31,10 +31,11 @@ interface CobrancasTableProps {
   onEditar: (cobranca: CobrancaComCliente) => void;
   onCancelar: (id: string) => void;
   onExcluir: (id: string) => void;
+  onAvisar?: (cobranca: CobrancaComCliente) => void;
   interAtivo?: boolean;
 }
 
-export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, onCancelar, onExcluir, interAtivo = false }: CobrancasTableProps) {
+export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, onCancelar, onExcluir, onAvisar, interAtivo = false }: CobrancasTableProps) {
   const { podeExcluirCobranca, podeEditarCobrancas } = usePermissoes();
   const [gerarModal, setGerarModal] = useState<CobrancaComCliente | null>(null);
   const [qrModal, setQrModal] = useState<{ pixQrcode: string; pixQrcodeUrl?: string } | null>(null);
@@ -120,6 +121,11 @@ export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, o
                   )}
                   {c.status !== 'cancelado' && podeEditarCobrancas && (
                     <>
+                      {onAvisar && (c.status === 'pendente' || c.status === 'atrasado') && (
+                        <Button size="icon" variant="iconAction" className="h-8 w-8" onClick={() => onAvisar(c)} title="Avisar cliente">
+                          <Bell className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button size="icon" variant="iconAction" className="h-8 w-8" onClick={() => onEditar(c)} title="Editar">
                         <Edit className="h-4 w-4" />
                       </Button>

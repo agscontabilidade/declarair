@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Plus, DollarSign, TrendingUp, AlertTriangle, X, Search } from 'lucide-react';
+import { Plus, DollarSign, TrendingUp, AlertTriangle, X, Search, Bell, Loader2 } from 'lucide-react';
 import { useCobrancas } from '@/hooks/useCobrancas';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -14,7 +14,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { CobrancasTable } from '@/components/cobrancas/CobrancasTable';
 import { CobrancaModal } from '@/components/cobrancas/CobrancaModal';
 import { ConfirmModal } from '@/components/cobrancas/ConfirmModal';
+import { AvisoCobrancaModal } from '@/components/cobrancas/AvisoCobrancaModal';
 import { PaginationControls } from '@/components/ui/pagination-controls';
+import { useToast } from '@/hooks/use-toast';
+import type { CobrancaComCliente } from '@/types/domain';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueryError } from '@/components/ui/QueryError';
@@ -33,7 +36,10 @@ export default function Cobrancas() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, unknown> | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancelar' | 'excluir'; id: string } | null>(null);
+  const [avisoModal, setAvisoModal] = useState<{ cobrancas: CobrancaComCliente[]; modo: 'individual' | 'massa' } | null>(null);
+  const [loadingMassa, setLoadingMassa] = useState(false);
   const { profile } = useAuth();
+  const { toast } = useToast();
 
   // Debounce da busca
   useEffect(() => {
@@ -100,16 +106,50 @@ export default function Cobrancas() {
     }
   };
 
+  const handleAvisarMassa = async () => {
+    if (!profile.escritorioId) return;
+    setLoadingMassa(true);
+    try {
+      const { data, error } = await supabase
+        .from('cobrancas')
+        .select('*, clientes:cliente_id(id, nome, email, telefone, cpf)')
+        .eq('escritorio_id', profile.escritorioId)
+        .in('status', ['pendente', 'atrasado'])
+        .order('data_vencimento', { ascending: true })
+        .limit(500);
+      if (error) throw error;
+      const lista = (data || []) as unknown as CobrancaComCliente[];
+      if (lista.length === 0) {
+        toast({ title: 'Nada a avisar', description: 'Nenhuma cobrança pendente ou atrasada.' });
+        return;
+      }
+      setAvisoModal({ cobrancas: lista, modo: 'massa' });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro inesperado';
+      toast({ title: 'Falha ao carregar', description: msg, variant: 'destructive' });
+    } finally {
+      setLoadingMassa(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-2xl font-bold text-foreground">Cobranças</h1>
-          {podeCriarCobrancas && (
-            <Button className="active:scale-[0.98]" onClick={() => { setEditData(null); setModalOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" /> Nova Cobrança
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {podeCriarCobrancas && (
+              <Button variant="outline" className="active:scale-[0.98]" onClick={handleAvisarMassa} disabled={loadingMassa}>
+                {loadingMassa ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bell className="h-4 w-4 mr-2" />}
+                Avisar em massa
+              </Button>
+            )}
+            {podeCriarCobrancas && (
+              <Button className="active:scale-[0.98]" onClick={() => { setEditData(null); setModalOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Cobrança
+              </Button>
+            )}
+          </div>
         </div>
 
         {clienteIdFiltro && (
@@ -208,6 +248,7 @@ export default function Cobrancas() {
               onEditar={(c) => { setEditData(c); setModalOpen(true); }}
               onCancelar={(id) => setConfirmAction({ type: 'cancelar', id })}
               onExcluir={(id) => setConfirmAction({ type: 'excluir', id })}
+              onAvisar={(c) => setAvisoModal({ cobrancas: [c], modo: 'individual' })}
               interAtivo={interAtivo || false}
             />
             <PaginationControls
@@ -238,6 +279,13 @@ export default function Cobrancas() {
         description={confirmAction?.type === 'cancelar' ? 'Tem certeza que deseja cancelar esta cobrança?' : 'Esta ação é irreversível. Deseja excluir?'}
         onConfirm={handleConfirm}
         loading={cancelar.isPending || excluir.isPending}
+      />
+
+      <AvisoCobrancaModal
+        open={!!avisoModal}
+        onOpenChange={(v) => { if (!v) setAvisoModal(null); }}
+        cobrancas={avisoModal?.cobrancas || []}
+        modo={avisoModal?.modo || 'individual'}
       />
     </DashboardLayout>
   );
