@@ -508,7 +508,11 @@ export default function Declaracoes() {
                               )}
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
-                              <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
+                              <ProcessamentoSwitch
+                                declaracaoId={d.id}
+                                status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb}
+                                onRequestProcessada={() => setComprovTarget(d)}
+                              />
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()} className="text-right pr-4">
                               <div className="inline-flex items-center gap-1">
@@ -696,7 +700,11 @@ export default function Declaracoes() {
                                   arquivosOutros={d.arquivos_outros}
                             />
                           )}
-                          <ProcessamentoSwitch declaracaoId={d.id} status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb} />
+                          <ProcessamentoSwitch
+                            declaracaoId={d.id}
+                            status={(d.status_processamento_rfb || 'aguardando') as StatusProcessamentoRfb}
+                            onRequestProcessada={() => setComprovTarget(d)}
+                          />
                         </div>
                       </div>
                     );
@@ -744,6 +752,21 @@ export default function Declaracoes() {
           }}
         />
       )}
+      <ComprovacaoProcessamentoModal
+        open={!!comprovTarget}
+        onOpenChange={(o) => !o && setComprovTarget(null)}
+        declaracaoId={comprovTarget?.id ?? null}
+        clienteId={comprovTarget?.cliente_id ?? null}
+        clienteNome={comprovTarget?.clienteNome ?? ''}
+        clienteEmail={comprovTarget?.clienteEmail ?? null}
+        escritorioId={escritorioId}
+        anoBase={comprovTarget?.ano_base ?? Number(anoBase)}
+        comprovacaoExistenteUrl={comprovTarget?.comprovacao_processamento_url ?? null}
+        comprovacaoExistenteNome={comprovTarget?.comprovacao_processamento_nome ?? null}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+        }}
+      />
     </DashboardLayout>
   );
 }
