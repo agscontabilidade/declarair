@@ -586,7 +586,16 @@ export function ComprovacaoProcessamentoModal({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancelar
           </Button>
-          <Button onClick={handleConfirm} disabled={loading || !file} className="gap-2">
+          <Button
+            onClick={handleConfirm}
+            disabled={
+              loading ||
+              !file ||
+              analise.status === 'analisando' ||
+              ((analise.status === 'mismatch_cpf' || analise.status === 'mismatch_nome') && !overrideMismatch)
+            }
+            className="gap-2"
+          >
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
