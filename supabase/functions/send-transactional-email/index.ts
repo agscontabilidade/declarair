@@ -108,6 +108,7 @@ Deno.serve(async (req) => {
   let templateData: Record<string, unknown> = {}
   let attachmentPaths: Array<{ filename: string; path: string }> = []
   let escritorioId: string | null = null
+  let ccEmails: string[] = []
   const attachmentLinks: AttachmentLink[] = []
   try {
     const body = await req.json()
@@ -125,6 +126,9 @@ Deno.serve(async (req) => {
       escritorioId = body.escritorioId
     } else if (typeof body.escritorio_id === 'string' && body.escritorio_id.length > 0) {
       escritorioId = body.escritorio_id
+    }
+    if (Array.isArray(body.cc)) {
+      ccEmails = body.cc.filter((e: unknown) => typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)).slice(0, 10)
     }
   } catch {
     return new Response(
