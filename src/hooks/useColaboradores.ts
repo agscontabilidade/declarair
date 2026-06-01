@@ -8,13 +8,13 @@ interface Convite {
   email: string;
   nome: string;
   papel: string;
-  token: string;
   enviado_por: string;
   usado: boolean;
   expira_em: string;
   usado_em: string | null;
   created_at: string;
 }
+
 
 export const useColaboradores = (escritorioId: string) => {
   const queryClient = useQueryClient();
