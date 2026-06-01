@@ -31,10 +31,11 @@ interface CobrancasTableProps {
   onEditar: (cobranca: CobrancaComCliente) => void;
   onCancelar: (id: string) => void;
   onExcluir: (id: string) => void;
+  onAvisar?: (cobranca: CobrancaComCliente) => void;
   interAtivo?: boolean;
 }
 
-export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, onCancelar, onExcluir, interAtivo = false }: CobrancasTableProps) {
+export function CobrancasTable({ cobrancas, isLoading, onMarcarPago, onEditar, onCancelar, onExcluir, onAvisar, interAtivo = false }: CobrancasTableProps) {
   const { podeExcluirCobranca, podeEditarCobrancas } = usePermissoes();
   const [gerarModal, setGerarModal] = useState<CobrancaComCliente | null>(null);
   const [qrModal, setQrModal] = useState<{ pixQrcode: string; pixQrcodeUrl?: string } | null>(null);
