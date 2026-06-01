@@ -1,0 +1,389 @@
+import { useState, useRef, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  CheckCircle2,
+  FileText,
+  Loader2,
+  Upload,
+  X,
+  AlertCircle,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  declaracaoId: string | null;
+  clienteId: string | null;
+  clienteNome: string;
+  clienteEmail: string | null;
+  escritorioId: string | null;
+  anoBase: number;
+  /** Path do arquivo já existente (para reenvio/substituição). */
+  comprovacaoExistenteUrl?: string | null;
+  comprovacaoExistenteNome?: string | null;
+  onSuccess?: () => void;
+}
+
+export function ComprovacaoProcessamentoModal({
+  open,
+  onOpenChange,
+  declaracaoId,
+  clienteId,
+  clienteNome,
+  clienteEmail,
+  escritorioId,
+  anoBase,
+  comprovacaoExistenteUrl,
+  comprovacaoExistenteNome,
+  onSuccess,
+}: Props) {
+  const { profile } = useAuth();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [enviarEmail, setEnviarEmail] = useState(true);
+  const [mensagem, setMensagem] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [nomeEscritorio, setNomeEscritorio] = useState('Seu Contador');
+  const isReenvio = !!comprovacaoExistenteUrl;
+
+  // Carrega nome do escritório e mensagem padrão ao abrir
+  useEffect(() => {
+    if (!open) return;
+    setFile(null);
+    setEnviarEmail(true);
+    const padrao =
+      `Olá ${clienteNome},\n\n` +
+      `Sua Declaração de Imposto de Renda ${anoBase} foi **processada sem erros pela Receita Federal**.\n\n` +
+      `Em anexo o documento que comprova o processamento. Você também pode baixá-lo pelo botão abaixo.\n\n` +
+      `Ficamos à disposição para qualquer dúvida.`;
+    setMensagem(padrao);
+
+    (async () => {
+      if (!profile?.escritorioId) return;
+      const { data } = await supabase
+        .rpc('get_escritorio_safe_data', { esc_id: profile.escritorioId })
+        .maybeSingle();
+      if (data?.nome) setNomeEscritorio(data.nome);
+    })();
+  }, [open, clienteNome, anoBase, profile?.escritorioId]);
+
+  function pickFile(f: File | null) {
+    if (!f) return;
+    if (f.type !== 'application/pdf') {
+      toast.error('Apenas arquivos PDF são aceitos.');
+      return;
+    }
+    if (f.size > MAX_SIZE) {
+      toast.error('Arquivo muito grande (máx. 10MB).');
+      return;
+    }
+    setFile(f);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] ?? null;
+    pickFile(f);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    const f = e.dataTransfer.files?.[0] ?? null;
+    pickFile(f);
+  }
+
+  async function handleConfirm() {
+    if (!declaracaoId || !clienteId || !escritorioId) {
+      toast.error('Dados da declaração indisponíveis.');
+      return;
+    }
+    if (!file) {
+      toast.error('Selecione o PDF de comprovação.');
+      return;
+    }
+    if (enviarEmail && !clienteEmail) {
+      toast.error('Cliente não possui e-mail cadastrado. Desmarque o envio de e-mail para continuar.');
+      return;
+    }
+
+    setLoading(true);
+    let checklistId: string | null = null;
+    let storagePath: string | null = null;
+
+    try {
+      // 1) Cria linha em checklist_documentos para obter o id
+      const nomeSemExt = file.name.replace(/\.[^/.]+$/, '');
+      const { data: inserted, error: insertErr } = await supabase
+        .from('checklist_documentos')
+        .insert({
+          declaracao_id: declaracaoId,
+          categoria: 'contador',
+          nome_documento: nomeSemExt,
+          obrigatorio: false,
+          status: 'recebido',
+          arquivo_nome: file.name,
+          data_recebimento: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+      if (insertErr || !inserted) throw insertErr || new Error('Falha ao registrar documento');
+      checklistId = inserted.id;
+
+      // 2) Upload no storage
+      storagePath = `${escritorioId}/${clienteId}/${inserted.id}/${file.name}`;
+      const { error: upErr } = await supabase.storage
+        .from('documentos-clientes')
+        .upload(storagePath, file, { upsert: true, contentType: 'application/pdf' });
+      if (upErr) throw upErr;
+
+      // 3) Atualiza arquivo_url
+      const { error: updErr } = await supabase
+        .from('checklist_documentos')
+        .update({ arquivo_url: storagePath })
+        .eq('id', inserted.id);
+      if (updErr) throw updErr;
+
+      // 4) Atualiza declaracoes
+      const { error: declErr } = await supabase
+        .from('declaracoes')
+        .update({
+          status_processamento_rfb: 'processada',
+          em_processamento: true,
+          comprovacao_processamento_url: storagePath,
+          comprovacao_processamento_nome: file.name,
+          comprovacao_processamento_uploaded_at: new Date().toISOString(),
+        })
+        .eq('id', declaracaoId);
+      if (declErr) throw declErr;
+
+      toast.success(
+        isReenvio
+          ? 'Comprovação substituída com sucesso.'
+          : 'Comprovação salva e disponibilizada no Drive do cliente.',
+      );
+
+      // 5) Envia e-mail (fila — não bloqueia o sucesso principal)
+      if (enviarEmail && clienteEmail) {
+        try {
+          const { data, error } = await supabase.functions.invoke('send-transactional-email', {
+            body: {
+              templateName: 'processamento-receita-confirmado',
+              recipientEmail: clienteEmail,
+              escritorioId: profile?.escritorioId,
+              idempotencyKey: `comprov-proc-${declaracaoId}-${Date.now()}`,
+              templateData: {
+                nomeCliente: clienteNome,
+                nomeEscritorio,
+                anoBase: String(anoBase),
+                mensagemPersonalizada: mensagem,
+              },
+              attachmentPaths: [
+                {
+                  filename: file.name,
+                  path: storagePath,
+                },
+              ],
+            },
+          });
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+
+          await supabase
+            .from('declaracoes')
+            .update({ comprovacao_processamento_enviada_em: new Date().toISOString() })
+            .eq('id', declaracaoId);
+
+          toast.success('E-mail enviado ao cliente.');
+        } catch (mailErr) {
+          console.error('Erro ao enviar e-mail de comprovação:', mailErr);
+          toast.warning('Comprovação salva, mas não foi possível enviar o e-mail. Tente reenviar mais tarde.');
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['declaracoes-lista'] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['declaracao-checklist', declaracaoId] });
+      queryClient.invalidateQueries({ queryKey: ['drive-docs'] });
+
+      onSuccess?.();
+      onOpenChange(false);
+    } catch (err: unknown) {
+      console.error('Erro na comprovação de processamento:', err);
+      // Rollback do checklist (e tentativa de remover o arquivo se subiu)
+      if (checklistId) {
+        if (storagePath) {
+          await supabase.storage.from('documentos-clientes').remove([storagePath]).catch(() => {});
+        }
+        await supabase.from('checklist_documentos').delete().eq('id', checklistId).catch(() => {});
+      }
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar comprovação.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !loading && onOpenChange(o)}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+            Comprovação de processamento
+          </DialogTitle>
+          <DialogDescription>
+            Anexe o PDF emitido pela Receita Federal que comprova o processamento da declaração de{' '}
+            <strong>{clienteNome}</strong> ({anoBase}). Ele será salvo no Drive do cliente
+            {enviarEmail ? ' e enviado por e-mail.' : '.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {isReenvio && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Já existe uma comprovação registrada (<strong>{comprovacaoExistenteNome}</strong>).
+                Enviar uma nova adicionará outro arquivo ao Drive do cliente.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Upload area */}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className="cursor-pointer rounded-lg border-2 border-dashed border-border p-6 text-center transition hover:border-primary/50 hover:bg-muted/30"
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            {file ? (
+              <div className="flex items-center justify-center gap-3">
+                <FileText className="h-8 w-8 text-emerald-600" />
+                <div className="text-left">
+                  <p className="text-sm font-medium truncate max-w-[280px]">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFile(null);
+                  }}
+                  disabled={loading}
+                  aria-label="Remover arquivo"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Upload className="h-8 w-8 text-muted-foreground mx-auto" />
+                <p className="text-sm font-medium">Clique ou arraste o PDF aqui</p>
+                <p className="text-xs text-muted-foreground">Apenas PDF, até 10MB</p>
+              </div>
+            )}
+          </div>
+
+          {/* Toggle e-mail */}
+          <div className="flex items-start gap-3 rounded-lg border border-border p-3">
+            <Checkbox
+              id="enviar-email"
+              checked={enviarEmail}
+              onCheckedChange={(v) => setEnviarEmail(!!v)}
+              disabled={loading}
+              className="mt-0.5"
+            />
+            <div className="flex-1 min-w-0">
+              <Label htmlFor="enviar-email" className="text-sm font-medium cursor-pointer">
+                Enviar e-mail ao cliente com o anexo
+              </Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {clienteEmail ? (
+                  <>
+                    Para: <span className="font-medium text-foreground">{clienteEmail}</span>
+                  </>
+                ) : (
+                  <span className="text-amber-600">Cliente sem e-mail cadastrado</span>
+                )}
+              </p>
+            </div>
+            <Badge variant="outline" className="text-[10px]">PDF anexo + link</Badge>
+          </div>
+
+          {/* Mensagem */}
+          {enviarEmail && (
+            <div className="space-y-2">
+              <Label htmlFor="mensagem-comprov" className="text-sm font-medium">
+                Mensagem do e-mail
+              </Label>
+              <Textarea
+                id="mensagem-comprov"
+                value={mensagem}
+                onChange={(e) => setMensagem(e.target.value)}
+                className="min-h-[140px] text-[13.5px] leading-relaxed resize-none"
+                disabled={loading}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Use <code className="px-1 rounded bg-muted">**texto**</code> para destacar em <strong>negrito</strong>.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button onClick={handleConfirm} disabled={loading || !file} className="gap-2">
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Confirmar processamento
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
