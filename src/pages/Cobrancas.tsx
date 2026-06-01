@@ -137,11 +137,19 @@ export default function Cobrancas() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-2xl font-bold text-foreground">Cobranças</h1>
-          {podeCriarCobrancas && (
-            <Button className="active:scale-[0.98]" onClick={() => { setEditData(null); setModalOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" /> Nova Cobrança
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {podeCriarCobrancas && (
+              <Button variant="outline" className="active:scale-[0.98]" onClick={handleAvisarMassa} disabled={loadingMassa}>
+                {loadingMassa ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bell className="h-4 w-4 mr-2" />}
+                Avisar em massa
+              </Button>
+            )}
+            {podeCriarCobrancas && (
+              <Button className="active:scale-[0.98]" onClick={() => { setEditData(null); setModalOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Cobrança
+              </Button>
+            )}
+          </div>
         </div>
 
         {clienteIdFiltro && (
