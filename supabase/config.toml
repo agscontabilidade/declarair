@@ -21,3 +21,5 @@ project_id = "bykqurgeptipguqvxwiq"
     verify_jwt = false
   [functions.enviar-lembretes-prazo]
     verify_jwt = true
+  [functions.enviar-aviso-cobranca]
+    verify_jwt = true
