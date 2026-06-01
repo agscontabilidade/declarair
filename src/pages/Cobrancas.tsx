@@ -280,6 +280,13 @@ export default function Cobrancas() {
         onConfirm={handleConfirm}
         loading={cancelar.isPending || excluir.isPending}
       />
+
+      <AvisoCobrancaModal
+        open={!!avisoModal}
+        onOpenChange={(v) => { if (!v) setAvisoModal(null); }}
+        cobrancas={avisoModal?.cobrancas || []}
+        modo={avisoModal?.modo || 'individual'}
+      />
     </DashboardLayout>
   );
 }
