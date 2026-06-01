@@ -27,6 +27,8 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { myAddons, catalog } = useAddons();
+  const { profile } = useAuth();
+  const escritorioId = profile?.escritorioId;
 
   const [canal, setCanal] = useState<'email' | 'whatsapp'>('email');
   const [mensagem, setMensagem] = useState<string>('');
@@ -38,13 +40,71 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
     ? myAddons.some((a) => a.addon_id === whatsappAddon.id && a.status === 'ativo')
     : false;
 
+  const { data: escritorio } = useQuery({
+    queryKey: ['escritorio-aviso-cobranca', escritorioId],
+    enabled: !!escritorioId && open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('escritorios')
+        .select('nome, nome_fantasia, chave_pix')
+        .eq('id', escritorioId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const chavePix = escritorio?.chave_pix?.trim() || '';
+  const nomeEscritorio = escritorio?.nome_fantasia?.trim() || escritorio?.nome?.trim() || '';
+
+  const elegiveisRaw = useMemo(
+    () => cobrancas.filter((c) => c.status === 'pendente' || c.status === 'atrasado'),
+    [cobrancas],
+  );
+
+  const mensagemPadrao = useMemo(() => {
+    const blocoPix = chavePix
+      ? `\n\nCaso ainda não tenha pago, segue nossa chave Pix:\n🔑 ${chavePix}`
+      : '';
+    if (modo === 'individual' && elegiveisRaw.length === 1) {
+      const c = elegiveisRaw[0];
+      const nome = c.clientes?.nome?.split(' ')[0] || 'tudo bem';
+      const valor = formatCurrency(Number(c.valor));
+      const descricao = c.descricao || 'honorários contábeis';
+      const venc = formatDate(c.data_vencimento);
+      return (
+        `Olá ${nome}, tudo bem?\n\n` +
+        `Passando para lembrar que o honorário no valor de ${valor} referente a ${descricao} está em aberto (vencimento ${venc}).\n\n` +
+        `Se você já realizou o pagamento, por favor desconsidere este aviso. 🙂` +
+        blocoPix +
+        `\n\nQualquer dúvida, estamos à disposição.`
+      );
+    }
+    return (
+      `Olá {nome}, tudo bem?\n\n` +
+      `Passando para lembrar que o honorário no valor de R$ {valor} referente a {descricao} está em aberto (vencimento {vencimento}).\n\n` +
+      `Se você já realizou o pagamento, por favor desconsidere este aviso. 🙂` +
+      (chavePix
+        ? `\n\nCaso ainda não tenha pago, segue nossa chave Pix:\n🔑 {chave_pix}`
+        : '') +
+      `\n\nQualquer dúvida, estamos à disposição.`
+    );
+  }, [modo, elegiveisRaw, chavePix]);
+
   useEffect(() => {
     if (open) {
       setCanal('email');
-      setMensagem('');
       setExcluidos(new Set());
     }
   }, [open]);
+
+  // Pré-popula a mensagem assim que dados do escritório carregarem (somente se vazia)
+  useEffect(() => {
+    if (open && !mensagem.trim() && mensagemPadrao) {
+      setMensagem(mensagemPadrao);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, mensagemPadrao]);
 
   const elegiveis = useMemo(
     () => cobrancas.filter((c) => c.status === 'pendente' || c.status === 'atrasado'),
