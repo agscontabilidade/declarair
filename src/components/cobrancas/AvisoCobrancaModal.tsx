@@ -32,6 +32,7 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
 
   const [canal, setCanal] = useState<'email' | 'whatsapp'>('email');
   const [mensagem, setMensagem] = useState<string>('');
+  const [ccEmails, setCcEmails] = useState<string>('');
   const [enviando, setEnviando] = useState(false);
   const [excluidos, setExcluidos] = useState<Set<string>>(new Set());
 
