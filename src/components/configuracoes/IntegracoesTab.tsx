@@ -310,7 +310,8 @@ function ContaAzulSection({ escritorioId, isDono }: { escritorioId: string | nul
     queryFn: async () => {
       // Table not yet in generated types, use REST call
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/integracoes_contaazul?escritorio_id=eq.${escritorioId}&select=*`,
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/integracoes_contaazul?escritorio_id=eq.${escritorioId}&select=id,escritorio_id,client_id,token_expira_em,ativo,ultima_sincronizacao,created_at`,
+
         {
           headers: {
             'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
