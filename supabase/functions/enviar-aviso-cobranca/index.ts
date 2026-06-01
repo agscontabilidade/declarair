@@ -15,6 +15,7 @@ const BodySchema = z.object({
   canal: z.enum(["email", "whatsapp"]),
   cobrancaIds: z.array(z.string().uuid()).min(1).max(500),
   mensagem: z.string().max(2000).optional().default(""),
+  cc: z.array(z.string().email()).max(10).optional().default([]),
 });
 
 const PORTAL_BASE_URL = "https://declarair.com.br";
