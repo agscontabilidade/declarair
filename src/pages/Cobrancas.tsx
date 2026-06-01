@@ -106,6 +106,32 @@ export default function Cobrancas() {
     }
   };
 
+  const handleAvisarMassa = async () => {
+    if (!profile.escritorioId) return;
+    setLoadingMassa(true);
+    try {
+      const { data, error } = await supabase
+        .from('cobrancas')
+        .select('*, clientes:cliente_id(id, nome, email, telefone, cpf)')
+        .eq('escritorio_id', profile.escritorioId)
+        .in('status', ['pendente', 'atrasado'])
+        .order('data_vencimento', { ascending: true })
+        .limit(500);
+      if (error) throw error;
+      const lista = (data || []) as unknown as CobrancaComCliente[];
+      if (lista.length === 0) {
+        toast({ title: 'Nada a avisar', description: 'Nenhuma cobrança pendente ou atrasada.' });
+        return;
+      }
+      setAvisoModal({ cobrancas: lista, modo: 'massa' });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro inesperado';
+      toast({ title: 'Falha ao carregar', description: msg, variant: 'destructive' });
+    } finally {
+      setLoadingMassa(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
