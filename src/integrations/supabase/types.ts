@@ -1323,6 +1323,9 @@ export type Database = {
           asaas_customer_id: string | null
           chave_pix: string | null
           cnpj: string | null
+          cobranca_aviso_email_assunto: string | null
+          cobranca_aviso_email_corpo: string | null
+          cobranca_aviso_whatsapp_template: string | null
           cor_fundo_portal: string | null
           cor_primaria: string | null
           created_at: string
@@ -1362,6 +1365,9 @@ export type Database = {
           asaas_customer_id?: string | null
           chave_pix?: string | null
           cnpj?: string | null
+          cobranca_aviso_email_assunto?: string | null
+          cobranca_aviso_email_corpo?: string | null
+          cobranca_aviso_whatsapp_template?: string | null
           cor_fundo_portal?: string | null
           cor_primaria?: string | null
           created_at?: string
@@ -1401,6 +1407,9 @@ export type Database = {
           asaas_customer_id?: string | null
           chave_pix?: string | null
           cnpj?: string | null
+          cobranca_aviso_email_assunto?: string | null
+          cobranca_aviso_email_corpo?: string | null
+          cobranca_aviso_whatsapp_template?: string | null
           cor_fundo_portal?: string | null
           cor_primaria?: string | null
           created_at?: string
