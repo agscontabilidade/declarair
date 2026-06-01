@@ -53,7 +53,7 @@ const ProcessamentoReceitaConfirmadoEmail = ({
           ))
         ) : (
           <Text className="text-gray-800 text-[14px] leading-[24px]">
-            Sua Declaração de Imposto de Renda {anoBase || ''} foi <strong>processada sem erros pela Receita Federal</strong>.
+            Sua Declaração de Imposto de Renda {anoBase || ''} foi <strong>processada com sucesso pela Receita Federal</strong>.
             Em anexo o documento que comprova o processamento.
           </Text>
         )}
