@@ -95,13 +95,14 @@ export function AvisoCobrancaModal({ open, onOpenChange, cobrancas, modo }: Prop
   // Chave que identifica o alvo atual (muda quando cliente/cobrança muda)
   const alvoKey = useMemo(() => elegiveisRaw.map((c) => c.id).join(','), [elegiveisRaw]);
 
-  // Reseta canal/exclusões/mensagem ao abrir OU quando alvo muda
+  // Reseta canal/exclusões/mensagem/cc ao abrir OU quando alvo muda
   // Evita reaproveitar texto do cliente anterior
   useEffect(() => {
     if (open) {
       setCanal('email');
       setExcluidos(new Set());
       setMensagem('');
+      setCcEmails('');
     }
   }, [open, alvoKey]);
 
