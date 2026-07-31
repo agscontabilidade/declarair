@@ -13,7 +13,6 @@ import { StepDocumentos } from '@/components/formulario-ir/StepDocumentos';
 import { StepInfoAdicionais } from '@/components/formulario-ir/StepInfoAdicionais';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 
 
@@ -24,7 +23,6 @@ interface StepDef {
 
 export default function ClienteFormulario() {
   const { formData, updateField, declaracao, isLoading, saving, lastSaved, finalizar, clientCPF } = useFormularioIR();
-  const { profile } = useAuth();
   const [step, setStep] = useState(0);
   const [confirmado, setConfirmado] = useState(false);
   const [concluido, setConcluido] = useState(false);

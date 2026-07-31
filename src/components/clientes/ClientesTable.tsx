@@ -1,5 +1,5 @@
-import { Pencil, Trash2, DollarSign, Copy, Check, MessageSquareText, Send, Link2, RefreshCw, CheckCircle2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Pencil, Trash2, DollarSign, Copy, Check, MessageSquareText, Send, Link2, RefreshCw, CheckCircle2, Eye } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -97,6 +97,7 @@ function getConviteState(c: ClienteRow): ConviteState {
 }
 
 export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, onConvite, canEdit = true, canDelete = true, clientesComCobranca, clientesComObservacao }: Props) {
+  const navigate = useNavigate();
   if (isLoading) {
     return (
       <div className="space-y-3 p-3">
@@ -194,6 +195,19 @@ export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, o
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label="Ver portal do cliente"
+                              onClick={(e) => { e.stopPropagation(); navigate(`/clientes/${c.id}/portal`); }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">Ver portal do cliente</TooltipContent>
+                        </Tooltip>
                         {onCobranca && (
                           <Button
                             size="icon"

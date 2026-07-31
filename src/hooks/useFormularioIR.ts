@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useClienteAtivo } from '@/contexts/PortalViewContext';
 import { toast } from 'sonner';
 import type { TablesUpdate } from '@/integrations/supabase/types';
 import {
@@ -78,9 +78,8 @@ const INITIAL_DATA: FormularioData = {
 };
 
 export function useFormularioIR() {
-  const { profile } = useAuth();
   const queryClient = useQueryClient();
-  const clienteId = profile.clienteId;
+  const { clienteId } = useClienteAtivo();
   const [formData, setFormData] = useState<FormularioData>(INITIAL_DATA);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

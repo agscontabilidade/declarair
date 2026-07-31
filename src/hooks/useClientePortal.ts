@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useClienteAtivo } from '@/contexts/PortalViewContext';
 import { getAnoBaseAtual } from '@/lib/constants';
 import { calcularProgressoFormulario } from '@/lib/cliente-portal-progress';
 
@@ -14,8 +14,7 @@ interface Options {
 
 export function useClientePortal(options: Options = {}) {
   const { includeTimestamps = false } = options;
-  const { profile } = useAuth();
-  const clienteId = profile.clienteId;
+  const { clienteId } = useClienteAtivo();
 
   const { data: declaracao, isLoading: loadingDeclaracao, isError: errorDeclaracao, error: declError, refetch: refetchDeclaracao } = useQuery({
     queryKey: ['cliente-declaracao-ativa', clienteId],
