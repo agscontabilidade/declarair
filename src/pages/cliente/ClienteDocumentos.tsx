@@ -34,7 +34,6 @@ import { useClientePortal } from '@/hooks/useClientePortal';
 import { useClienteAtivo } from '@/contexts/PortalViewContext';
 import { useClienteUploadBloqueio } from '@/hooks/useNovosCadastrosBloqueio';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { CategoriaRF } from '@/lib/checklistPorPerfil';
@@ -67,7 +66,6 @@ const STATUS_META: Record<string, { label: string; icon: React.ElementType; colo
 
 export default function ClienteDocumentos() {
   const { declaracao, checklist, isLoading } = useClientePortal();
-  const { profile } = useAuth();
   const { clienteId, clienteNome } = useClienteAtivo();
   const queryClient = useQueryClient();
   const { bloqueado: uploadBloqueado, mensagem: uploadBloqueioMsg } = useClienteUploadBloqueio();
