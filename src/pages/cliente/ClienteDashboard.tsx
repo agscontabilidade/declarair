@@ -21,7 +21,7 @@ const EcacTutorialDialog = lazy(() => import('@/components/cliente-portal/EcacTu
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
-  const { clienteId, setView } = useClienteAtivo();
+  const { clienteId, clienteNome, setView } = useClienteAtivo();
   const { declaracao, arquivosReais, formulario, statusStep, progressoFormulario, stepTimestamps, isLoading, isError, error, refetch } = useClientePortal({ includeTimestamps: true });
   // Supabase generated types may not yet expose `status_documentos`; cast through a typed shape.
   type DeclaracaoExtra = { status_documentos?: string | null; status?: string | null };
@@ -65,7 +65,7 @@ export default function ClienteDashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">
-            Olá, {profile.nome || 'Cliente'}!
+            Olá, {clienteNome || profile.nome || 'Cliente'}!
           </h1>
           <p className="text-muted-foreground mt-1">Acompanhe o status da sua declaração de IR</p>
         </div>

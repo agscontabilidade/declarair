@@ -72,7 +72,11 @@ export function ClienteLayout({ children }: { children: React.ReactNode }) {
         <div className="flex flex-wrap items-center justify-between gap-2 bg-warning/15 border-b border-warning/30 px-3 sm:px-6 py-2 text-sm text-warning-foreground">
           <span className="flex items-center gap-2 font-medium text-warning">
             <Eye className="h-4 w-4 shrink-0" />
-            Você está visualizando o portal de {clienteNome} como contador
+            <span>
+              Você está visualizando o portal de{' '}
+              <strong className="font-bold underline decoration-warning/60 underline-offset-2">{clienteNome}</strong>{' '}
+              como contador
+            </span>
           </span>
           <button
             type="button"
