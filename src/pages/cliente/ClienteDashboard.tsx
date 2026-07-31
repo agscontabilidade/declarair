@@ -211,23 +211,48 @@ export default function ClienteDashboard() {
               </button>
 
               {/* Resultado */}
-              <Card className="shadow-sm">
+              <Card
+                className={`shadow-sm ${
+                  declaracao.status === 'transmitida'
+                    ? declaracao.tipo_resultado === 'pagamento'
+                      ? 'border-destructive/30 bg-destructive/5'
+                      : 'border-success/30 bg-success/5'
+                    : ''
+                }`}
+              >
                 <CardContent className="flex flex-col items-center py-8 text-center">
-                  <CheckCircle2 className={`h-10 w-10 mb-3 ${declaracao.status === 'transmitida' ? 'text-success' : 'text-muted-foreground/40'}`} />
+                  <CheckCircle2
+                    className={`h-10 w-10 mb-3 ${
+                      declaracao.status !== 'transmitida'
+                        ? 'text-muted-foreground/40'
+                        : declaracao.tipo_resultado === 'pagamento'
+                        ? 'text-destructive'
+                        : 'text-success'
+                    }`}
+                  />
                   <p className="font-medium">Resultado Final</p>
-                  {declaracao.status === 'transmitida' && declaracao.tipo_resultado ? (
+                  {declaracao.status === 'transmitida' && (declaracao.tipo_resultado === 'restituicao' || declaracao.tipo_resultado === 'pagamento') ? (
                     <Tooltip delayDuration={150}>
                       <TooltipTrigger asChild>
-                        <p className={`text-lg font-bold mt-1 cursor-help ${declaracao.tipo_resultado === 'restituicao' ? 'text-success' : declaracao.tipo_resultado === 'pagamento' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        <p className={`text-lg font-bold mt-1 cursor-help ${declaracao.tipo_resultado === 'restituicao' ? 'text-success' : 'text-destructive'}`}>
                           {STATUS_LABELS[declaracao.tipo_resultado]}: {declaracao.valor_resultado ? formatCurrency(Number(declaracao.valor_resultado)) : '—'}
                         </p>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="max-w-[260px] text-xs">
                         {declaracao.tipo_resultado === 'restituicao'
                           ? 'Valor que a Receita Federal vai te devolver. O pagamento segue o calendário oficial de lotes.'
-                          : declaracao.tipo_resultado === 'pagamento'
-                          ? 'Valor de imposto a pagar à Receita. Pode ser parcelado em até 8 cotas pelo aplicativo Meu Imposto de Renda.'
-                          : 'Sem restituição nem imposto a pagar nesta declaração.'}
+                          : 'Valor de imposto a pagar à Receita. Pode ser parcelado em até 8 cotas pelo aplicativo Meu Imposto de Renda.'}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : declaracao.status === 'transmitida' ? (
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <p className="text-sm font-semibold text-success mt-1 cursor-help">
+                          Sem imposto a restituir ou a pagar
+                        </p>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                        Sua declaração foi transmitida e não gerou restituição nem imposto a pagar.
                       </TooltipContent>
                     </Tooltip>
                   ) : (
