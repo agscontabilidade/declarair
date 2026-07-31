@@ -6,7 +6,7 @@ import { getAnoBaseAtual } from '@/lib/constants';
 import { calcularProgressoFormulario } from '@/lib/cliente-portal-progress';
 
 const DECLARACAO_SELECT =
-  'id, cliente_id, escritorio_id, contador_id, ano_base, status, status_documentos, tipo_resultado, valor_resultado, numero_recibo, data_transmissao, forma_tributacao, ultima_atualizacao_status, created_at, version, observacoes_cliente, observacoes_cliente_atualizado_em';
+  'id, cliente_id, escritorio_id, contador_id, ano_base, status, status_documentos, tipo_resultado, valor_resultado, numero_recibo, data_transmissao, forma_tributacao, ultima_atualizacao_status, created_at, version, observacoes_cliente, observacoes_cliente_atualizado_em, arquivo_declaracao_url, arquivo_declaracao_nome, arquivo_recibo_url, arquivo_recibo_nome';
 
 interface Options {
   includeTimestamps?: boolean;

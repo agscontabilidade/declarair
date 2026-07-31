@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { ClienteLayout } from '@/components/layout/ClienteLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,13 +9,15 @@ import { useClientePortal } from '@/hooks/useClientePortal';
 import { useClienteAtivo } from '@/contexts/PortalViewContext';
 import { StatusStepper } from '@/components/cliente-portal/StatusStepper';
 import { ChatFlutuante } from '@/components/cliente-portal/ChatFlutuante';
-import { FileText, ClipboardList, Upload, CheckCircle2, ShieldCheck, ChevronRight } from 'lucide-react';
+import { FileText, ClipboardList, Upload, CheckCircle2, ShieldCheck, ChevronRight, Download, Loader2 } from 'lucide-react';
 import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '@/hooks/useChat';
 import { QueryError } from '@/components/ui/QueryError';
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const EcacTutorialDialog = lazy(() => import('@/components/cliente-portal/EcacTutorialDialog'));
 
@@ -27,6 +29,33 @@ export default function ClienteDashboard() {
   type DeclaracaoExtra = { status_documentos?: string | null; status?: string | null };
   const decl = declaracao as (typeof declaracao & DeclaracaoExtra) | null | undefined;
   const navigate = useNavigate();
+
+  const [baixando, setBaixando] = useState<'declaracao' | 'recibo' | null>(null);
+  const declArquivos = declaracao as (typeof declaracao & {
+    arquivo_declaracao_url?: string | null;
+    arquivo_recibo_url?: string | null;
+  }) | null | undefined;
+  const arquivos = {
+    declaracao: declArquivos?.arquivo_declaracao_url || null,
+    recibo: declArquivos?.arquivo_recibo_url || null,
+  };
+
+  async function baixar(tipo: 'declaracao' | 'recibo', path: string) {
+    setBaixando(tipo);
+    try {
+      const { data, error: sErr } = await supabase.storage
+        .from('documentos-clientes')
+        .createSignedUrl(path, 60 * 5, { download: true });
+      if (sErr || !data?.signedUrl) throw sErr || new Error('Falha ao gerar link');
+      window.open(data.signedUrl, '_blank', 'noopener');
+    } catch {
+      toast.error('Não foi possível baixar o arquivo. Tente novamente.');
+    } finally {
+      setBaixando(null);
+    }
+  }
+
+
 
 
 
@@ -210,6 +239,36 @@ export default function ClienteDashboard() {
                         O resultado (restituição ou imposto a pagar) aparece aqui depois que seu contador transmitir a declaração à Receita.
                       </TooltipContent>
                     </Tooltip>
+                  )}
+
+                  {declaracao.status === 'transmitida' && (arquivos.declaracao || arquivos.recibo) && (
+                    <div className="w-full mt-4 pt-4 border-t space-y-2">
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Documentos</p>
+                      {arquivos.declaracao && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start gap-2"
+                          disabled={baixando === 'declaracao'}
+                          onClick={() => baixar('declaracao', arquivos.declaracao!)}
+                        >
+                          {baixando === 'declaracao' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          <span className="truncate">Declaração (PDF)</span>
+                        </Button>
+                      )}
+                      {arquivos.recibo && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start gap-2"
+                          disabled={baixando === 'recibo'}
+                          onClick={() => baixar('recibo', arquivos.recibo!)}
+                        >
+                          {baixando === 'recibo' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          <span className="truncate">Recibo de entrega (PDF)</span>
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </CardContent>
               </Card>
