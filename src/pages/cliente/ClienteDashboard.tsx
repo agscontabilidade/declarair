@@ -30,6 +30,33 @@ export default function ClienteDashboard() {
   const decl = declaracao as (typeof declaracao & DeclaracaoExtra) | null | undefined;
   const navigate = useNavigate();
 
+  const [baixando, setBaixando] = useState<'declaracao' | 'recibo' | null>(null);
+  const declArquivos = declaracao as (typeof declaracao & {
+    arquivo_declaracao_url?: string | null;
+    arquivo_recibo_url?: string | null;
+  }) | null | undefined;
+  const arquivos = {
+    declaracao: declArquivos?.arquivo_declaracao_url || null,
+    recibo: declArquivos?.arquivo_recibo_url || null,
+  };
+
+  async function baixar(tipo: 'declaracao' | 'recibo', path: string) {
+    setBaixando(tipo);
+    try {
+      const { data, error: sErr } = await supabase.storage
+        .from('documentos-clientes')
+        .createSignedUrl(path, 60 * 5, { download: true });
+      if (sErr || !data?.signedUrl) throw sErr || new Error('Falha ao gerar link');
+      window.open(data.signedUrl, '_blank', 'noopener');
+    } catch {
+      toast.error('Não foi possível baixar o arquivo. Tente novamente.');
+    } finally {
+      setBaixando(null);
+    }
+  }
+
+
+
 
 
   const { unreadCount } = useChat(
