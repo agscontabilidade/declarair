@@ -1,3 +1,4 @@
+import { dataInputParaISO } from '@/lib/formatters';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -57,18 +58,18 @@ export function ConfirmarDocumentoManualDialog({ open, onOpenChange, tipo, motiv
       // Declaração só registra o arquivo; resultado (restituição/pagar) vem do Recibo.
     } else if (tipo === 'recibo') {
       base.numero_recibo = numeroRecibo.trim();
-      base.data_transmissao = dataTransmissao;
+      base.data_transmissao = dataInputParaISO(dataTransmissao);
       base.tipo_resultado = tipoResultado;
       base.valor_resultado = tipoResultado === 'nenhum' ? 0 : parseMoney(valorResultado);
     } else if (tipo === 'mei') {
       base.cnpj = cnpj.replace(/\D/g, '');
       base.numero_recibo = numeroRecibo.trim() || undefined;
-      base.data_transmissao = dataTransmissao || undefined;
+      base.data_transmissao = dataTransmissao ? dataInputParaISO(dataTransmissao) : undefined;
     } else if (tipo === 'darf') {
       base.codigo_receita = codigoReceita;
       base.valor_principal = parseMoney(valorPrincipal);
       base.valor_total = parseMoney(valorTotal);
-      base.data_transmissao = dataTransmissao || undefined;
+      base.data_transmissao = dataTransmissao ? dataInputParaISO(dataTransmissao) : undefined;
     }
     onConfirm(base);
   }
