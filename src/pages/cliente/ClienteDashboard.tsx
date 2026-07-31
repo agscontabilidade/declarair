@@ -211,6 +211,36 @@ export default function ClienteDashboard() {
                       </TooltipContent>
                     </Tooltip>
                   )}
+
+                  {declaracao.status === 'transmitida' && (arquivos.declaracao || arquivos.recibo) && (
+                    <div className="w-full mt-4 pt-4 border-t space-y-2">
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Documentos</p>
+                      {arquivos.declaracao && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start gap-2"
+                          disabled={baixando === 'declaracao'}
+                          onClick={() => baixar('declaracao', arquivos.declaracao!)}
+                        >
+                          {baixando === 'declaracao' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          <span className="truncate">Declaração (PDF)</span>
+                        </Button>
+                      )}
+                      {arquivos.recibo && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start gap-2"
+                          disabled={baixando === 'recibo'}
+                          onClick={() => baixar('recibo', arquivos.recibo!)}
+                        >
+                          {baixando === 'recibo' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          <span className="truncate">Recibo de entrega (PDF)</span>
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
