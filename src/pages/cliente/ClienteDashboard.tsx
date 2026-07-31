@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { ClienteLayout } from '@/components/layout/ClienteLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,13 +9,15 @@ import { useClientePortal } from '@/hooks/useClientePortal';
 import { useClienteAtivo } from '@/contexts/PortalViewContext';
 import { StatusStepper } from '@/components/cliente-portal/StatusStepper';
 import { ChatFlutuante } from '@/components/cliente-portal/ChatFlutuante';
-import { FileText, ClipboardList, Upload, CheckCircle2, ShieldCheck, ChevronRight } from 'lucide-react';
+import { FileText, ClipboardList, Upload, CheckCircle2, ShieldCheck, ChevronRight, Download, Loader2 } from 'lucide-react';
 import { formatCurrency, STATUS_LABELS } from '@/lib/formatters';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '@/hooks/useChat';
 import { QueryError } from '@/components/ui/QueryError';
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const EcacTutorialDialog = lazy(() => import('@/components/cliente-portal/EcacTutorialDialog'));
 
