@@ -31,6 +31,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useClientePortal } from '@/hooks/useClientePortal';
+import { useClienteAtivo } from '@/contexts/PortalViewContext';
 import { useClienteUploadBloqueio } from '@/hooks/useNovosCadastrosBloqueio';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -67,6 +68,7 @@ const STATUS_META: Record<string, { label: string; icon: React.ElementType; colo
 export default function ClienteDocumentos() {
   const { declaracao, checklist, isLoading } = useClientePortal();
   const { profile } = useAuth();
+  const { clienteId } = useClienteAtivo();
   const queryClient = useQueryClient();
   const { bloqueado: uploadBloqueado, mensagem: uploadBloqueioMsg } = useClienteUploadBloqueio();
   const [uploading, setUploading] = useState(false);
@@ -85,11 +87,11 @@ export default function ClienteDocumentos() {
     console.log('[upload] start', {
       count: list.length,
       hasDeclaracao: !!declaracao,
-      clienteId: profile.clienteId,
+      clienteId: clienteId,
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'n/a',
     });
 
-    if (!profile.clienteId) {
+    if (!clienteId) {
       toast.error('Sessão inválida. Faça login novamente.');
       console.warn('[upload] aborted: no clienteId in profile');
       return;
@@ -102,7 +104,7 @@ export default function ClienteDocumentos() {
       const { data: cli, error: cliErr } = await supabase
         .from('clientes')
         .select('escritorio_id')
-        .eq('id', profile.clienteId)
+        .eq('id', clienteId)
         .maybeSingle();
       if (cliErr || !cli?.escritorio_id) {
         console.error('[upload] nao foi possivel obter escritorio_id do cliente', cliErr);
@@ -113,7 +115,7 @@ export default function ClienteDocumentos() {
       const { data: nova, error: novaErr } = await supabase
         .from('declaracoes')
         .insert({
-          cliente_id: profile.clienteId,
+          cliente_id: clienteId,
           escritorio_id: cli.escritorio_id,
           ano_base: anoAtual,
           status: 'aguardando_documentos',
@@ -161,7 +163,7 @@ export default function ClienteDocumentos() {
       const { data: doAno } = await supabase
         .from('declaracoes')
         .select('id, cliente_id, escritorio_id, ano_base, status')
-        .eq('cliente_id', profile.clienteId)
+        .eq('cliente_id', clienteId)
         .eq('ano_base', anoAtual)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -173,7 +175,7 @@ export default function ClienteDocumentos() {
         const { data: nova, error: novaErr } = await supabase
           .from('declaracoes')
           .insert({
-            cliente_id: profile.clienteId,
+            cliente_id: clienteId,
             escritorio_id: declaracaoAtiva.escritorio_id,
             ano_base: anoAtual,
             status: 'aguardando_documentos',
@@ -203,7 +205,7 @@ export default function ClienteDocumentos() {
       for (const file of list) {
         const timestamp = Date.now();
         const safeName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-        const path = `${declaracaoAtiva.escritorio_id}/${profile.clienteId}/geral/${safeName}`;
+        const path = `${declaracaoAtiva.escritorio_id}/${clienteId}/geral/${safeName}`;
 
         console.log('[upload] uploading', { name: file.name, size: file.size, type: file.type, path });
 

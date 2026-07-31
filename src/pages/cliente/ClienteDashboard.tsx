@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClientePortal } from '@/hooks/useClientePortal';
+import { useClienteAtivo } from '@/contexts/PortalViewContext';
 import { StatusStepper } from '@/components/cliente-portal/StatusStepper';
 import { ChatFlutuante } from '@/components/cliente-portal/ChatFlutuante';
 import { FileText, ClipboardList, Upload, CheckCircle2, ShieldCheck, ChevronRight } from 'lucide-react';
@@ -20,6 +21,7 @@ const EcacTutorialDialog = lazy(() => import('@/components/cliente-portal/EcacTu
 
 export default function ClienteDashboard() {
   const { profile, user } = useAuth();
+  const { clienteId, setView } = useClienteAtivo();
   const { declaracao, arquivosReais, formulario, statusStep, progressoFormulario, stepTimestamps, isLoading, isError, error, refetch } = useClientePortal({ includeTimestamps: true });
   // Supabase generated types may not yet expose `status_documentos`; cast through a typed shape.
   type DeclaracaoExtra = { status_documentos?: string | null; status?: string | null };
@@ -31,7 +33,7 @@ export default function ClienteDashboard() {
   const { unreadCount } = useChat(
     declaracao?.id,
     declaracao?.escritorio_id,
-    profile.clienteId || undefined,
+    clienteId || undefined,
     'cliente',
     user?.id
   );
@@ -91,7 +93,7 @@ export default function ClienteDashboard() {
               {/* Informações Cadastrais */}
               <button
                 type="button"
-                onClick={() => navigate('/cliente/formulario')}
+                onClick={() => (setView ? setView('formulario') : navigate('/cliente/formulario'))}
                 className="text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
               >
                 <Card
@@ -131,7 +133,7 @@ export default function ClienteDashboard() {
               {/* Envio de Documentos */}
               <button
                 type="button"
-                onClick={() => navigate('/cliente/documentos')}
+                onClick={() => (setView ? setView('documentos') : navigate('/cliente/documentos'))}
                 className="text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
               >
                 <Card
@@ -257,11 +259,11 @@ export default function ClienteDashboard() {
             </Card>
 
             {/* Floating chat */}
-            {profile.clienteId && (
+            {clienteId && (
               <ChatFlutuante
                 declaracaoId={declaracao.id}
                 escritorioId={declaracao.escritorio_id}
-                clienteId={profile.clienteId}
+                clienteId={clienteId}
                 unreadCount={unreadCount}
               />
             )}
