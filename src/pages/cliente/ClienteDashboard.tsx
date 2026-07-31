@@ -285,7 +285,7 @@ export default function ClienteDashboard() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-full justify-start gap-2"
+                          className="w-full justify-start gap-2 bg-success/10 border-success/30 text-success hover:bg-success/20 hover:text-success"
                           disabled={baixando === 'recibo'}
                           onClick={() => baixar('recibo', arquivos.recibo!)}
                         >
