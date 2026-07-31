@@ -68,7 +68,7 @@ const STATUS_META: Record<string, { label: string; icon: React.ElementType; colo
 export default function ClienteDocumentos() {
   const { declaracao, checklist, isLoading } = useClientePortal();
   const { profile } = useAuth();
-  const { clienteId } = useClienteAtivo();
+  const { clienteId, clienteNome } = useClienteAtivo();
   const queryClient = useQueryClient();
   const { bloqueado: uploadBloqueado, mensagem: uploadBloqueioMsg } = useClienteUploadBloqueio();
   const [uploading, setUploading] = useState(false);
@@ -272,7 +272,7 @@ export default function ClienteDocumentos() {
         const { error: notifErr } = await supabase.from('notificacoes').insert({
           escritorio_id: declaracaoAtiva.escritorio_id,
           titulo: '📂 Documentos Enviados',
-          mensagem: `O cliente ${profile.nome} enviou documentos.`,
+          mensagem: `O cliente ${clienteNome} enviou documentos.`,
           link_destino: `/declaracoes/${declaracaoAtiva.id}`,
         });
         if (notifErr) console.error('[upload] notificacao insert error', notifErr);
@@ -330,7 +330,7 @@ export default function ClienteDocumentos() {
       const { error: notifErr } = await supabase.from('notificacoes').insert({
         escritorio_id: declaracao.escritorio_id,
         titulo: '📂 Documentos Enviados',
-        mensagem: `O cliente ${profile.nome} enviou os documentos para conferência.`,
+        mensagem: `O cliente ${clienteNome} enviou os documentos para conferência.`,
         link_destino: `/declaracoes/${declaracao.id}`,
       });
       if (notifErr) console.error('[finalize] notificacao insert error', notifErr);
@@ -371,7 +371,7 @@ export default function ClienteDocumentos() {
       const { error: notifErr } = await supabase.from('notificacoes').insert({
         escritorio_id: declaracao.escritorio_id,
         titulo: '🗑️ Documento Removido',
-        mensagem: `O cliente ${profile.nome} removeu o documento "${fileName}" às ${new Date().toLocaleTimeString('pt-BR')}.`,
+        mensagem: `O cliente ${clienteNome} removeu o documento "${fileName}" às ${new Date().toLocaleTimeString('pt-BR')}.`,
         link_destino: `/clientes/${declaracao.cliente_id}`,
       });
       if (notifErr) console.error('[remove] notificacao insert error', notifErr);
@@ -606,7 +606,7 @@ export default function ClienteDocumentos() {
           <ObservacoesParaContador
             declaracaoId={declaracao.id}
             escritorioId={declaracao.escritorio_id}
-            clienteNome={profile.nome}
+            clienteNome={clienteNome}
             initialValue={(declaracao as { observacoes_cliente?: string | null }).observacoes_cliente ?? null}
           />
         )}
