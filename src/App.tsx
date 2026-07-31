@@ -39,6 +39,7 @@ const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteFormulario = lazy(() => import("./pages/cliente/ClienteFormulario"));
 const ClienteDocumentos = lazy(() => import("./pages/cliente/ClienteDocumentos"));
 const ClientePerfil = lazy(() => import("./pages/ClientePerfil"));
+const PortalClienteView = lazy(() => import("./pages/PortalClienteView"));
 const DeclaracaoDetalhe = lazy(() => import("./pages/DeclaracaoDetalhe"));
 const ConviteColaborador = lazy(() => import("./pages/ConviteColaborador"));
 const ConfiguracoesAPI = lazy(() => import("./pages/ConfiguracoesAPI"));
@@ -149,6 +150,7 @@ const App = () => (
 
               {/* Contador routes - billing gated */}
               <Route path="/dashboard" element={<ProtectedRoute allowedType="contador"><BillingGate><Dashboard /></BillingGate></ProtectedRoute>} />
+              <Route path="/clientes/:id/portal" element={<ProtectedRoute allowedType="contador"><BillingGate><PortalClienteView /></BillingGate></ProtectedRoute>} />
               <Route path="/clientes/:id" element={<ProtectedRoute allowedType="contador"><BillingGate><ClientePerfil /></BillingGate></ProtectedRoute>} />
               <Route path="/declaracoes/:id" element={<ProtectedRoute allowedType="contador"><BillingGate><DeclaracaoDetalhe /></BillingGate></ProtectedRoute>} />
               <Route path="/declaracoes" element={<ProtectedRoute allowedType="contador"><BillingGate><Declaracoes /></BillingGate></ProtectedRoute>} />
