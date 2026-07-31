@@ -97,6 +97,7 @@ function getConviteState(c: ClienteRow): ConviteState {
 }
 
 export function ClientesTable({ clientes, isLoading, onView, onEdit, onDelete, onCobranca, onConvite, canEdit = true, canDelete = true, clientesComCobranca, clientesComObservacao }: Props) {
+  const navigate = useNavigate();
   if (isLoading) {
     return (
       <div className="space-y-3 p-3">
