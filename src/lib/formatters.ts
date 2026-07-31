@@ -114,3 +114,14 @@ export const PAPEL_COLORS: Record<string, string> = {
   colaborador: 'bg-secondary text-secondary-foreground',
   operador: 'bg-muted text-muted-foreground',
 };
+
+/**
+ * Converte uma data "YYYY-MM-DD" (input type=date) em ISO no meio-dia do
+ * horário de Brasília, evitando que o fuso empurre a data para o dia anterior.
+ */
+export function dataInputParaISO(dateStr: string): string {
+  if (!dateStr) return dateStr;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr.trim());
+  if (!m) return dateStr;
+  return `${m[1]}-${m[2]}-${m[3]}T15:00:00.000Z`;
+}

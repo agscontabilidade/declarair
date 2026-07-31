@@ -355,7 +355,9 @@ Deno.serve(async (req) => {
       updates.recibo_extracao = extracao;
       updates.numero_recibo = String(extracao.numero_recibo);
       if (extracao?.data_transmissao) {
-        updates.data_transmissao = new Date(extracao.data_transmissao).toISOString();
+        updates.data_transmissao = /^\d{4}-\d{2}-\d{2}$/.test(String(extracao.data_transmissao).trim())
+          ? `${String(extracao.data_transmissao).trim()}T15:00:00.000Z`
+          : new Date(extracao.data_transmissao).toISOString();
       }
       if (extracao?.tipo_resultado && ["restituicao", "pagamento", "nenhum"].includes(extracao.tipo_resultado)) {
         updates.tipo_resultado = extracao.tipo_resultado;

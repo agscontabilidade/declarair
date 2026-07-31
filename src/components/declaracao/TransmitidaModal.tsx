@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { dataInputParaISO } from '@/lib/formatters';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Props {
@@ -30,7 +31,7 @@ export function TransmitidaModal({ open, onOpenChange, onSubmit, isPending }: Pr
     if (!isValid) return;
     onSubmit({
       numero_recibo: recibo.trim(),
-      data_transmissao: dataTransmissao,
+      data_transmissao: dataInputParaISO(dataTransmissao),
       tipo_resultado: tipoResultado,
       valor_resultado: tipoResultado !== 'nenhum' ? parseFloat(valorResultado) : null,
     });

@@ -39,22 +39,24 @@ interface StatusStepperProps {
   stepTimestamps?: (string | null | undefined)[];
 }
 
-function formatStamp(iso?: string | null) {
+function formatStamp(iso?: string | null, dateOnly = false) {
   if (!iso) return '';
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
+    if (dateOnly) return d.toLocaleDateString('pt-BR');
     return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   } catch {
     return '';
   }
 }
 
-function formatStampFull(iso?: string | null) {
+function formatStampFull(iso?: string | null, dateOnly = false) {
   if (!iso) return '';
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
+    if (dateOnly) return d.toLocaleDateString('pt-BR');
     return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   } catch {
     return '';
@@ -66,8 +68,10 @@ export function StatusStepper({ currentStep, stepTimestamps = [] }: StatusSteppe
   const currentMeta = STEPS[safeStep - 1];
   const CurrentIcon = currentMeta.icon;
   const progressPct = (safeStep / STEPS.length) * 100;
-  const currentStamp = formatStamp(stepTimestamps[safeStep - 1]);
-  const currentStampFull = formatStampFull(stepTimestamps[safeStep - 1]);
+  // A data de transmissão é informada como data (sem hora): mostrar só o dia.
+  const isTransmitidaStep = (i: number) => i === STEPS.length - 1;
+  const currentStamp = formatStamp(stepTimestamps[safeStep - 1], isTransmitidaStep(safeStep - 1));
+  const currentStampFull = formatStampFull(stepTimestamps[safeStep - 1], isTransmitidaStep(safeStep - 1));
 
   return (
     <>
@@ -126,8 +130,8 @@ export function StatusStepper({ currentStep, stepTimestamps = [] }: StatusSteppe
           const isCompleted = stepNum < safeStep;
           const isCurrent = stepNum === safeStep;
           const Icon = step.icon;
-          const stamp = formatStamp(stepTimestamps[i]);
-          const stampFull = formatStampFull(stepTimestamps[i]);
+          const stamp = formatStamp(stepTimestamps[i], isTransmitidaStep(i));
+          const stampFull = formatStampFull(stepTimestamps[i], isTransmitidaStep(i));
 
           return (
             <div key={i} className="flex items-start flex-1 last:flex-initial">
